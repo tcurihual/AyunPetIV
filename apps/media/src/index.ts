@@ -4,6 +4,8 @@ import helmet from "helmet"
 import morgan from "morgan"
 import { errorHandler, MEDIA_PORT } from "@repo/utils"
 
+import router from "./routes"
+
 const app = express()
 
 app.use(cors())
@@ -17,6 +19,8 @@ app.get("/", (_, res) => {
         message: "Microservicio Media funcionando correctamente",
     })
 })
+
+app.use("/api/media", router)
 
 app.use(errorHandler)
 app.listen(MEDIA_PORT, () => {
