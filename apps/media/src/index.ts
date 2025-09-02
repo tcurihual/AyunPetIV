@@ -2,8 +2,9 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, MEDIA_PORT } from "@repo/utils"
+import path from "path"
 
+import { errorHandler, MEDIA_PORT } from "@repo/utils"
 import router from "./routes"
 
 const app = express()
@@ -14,13 +15,8 @@ app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-app.get("/", (_, res) => {
-    return res.status(200).json({
-        message: "Microservicio Media funcionando correctamente",
-    })
-})
-
 app.use("/api/media", router)
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")))
 
 app.use(errorHandler)
 app.listen(MEDIA_PORT, () => {

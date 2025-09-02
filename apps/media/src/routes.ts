@@ -1,5 +1,8 @@
 import { Router } from "express"
 
+import upload from "./utils"
+import { postImage } from "./controller"
+
 const router = Router()
 
 router.get("/", (_, res) => {
@@ -7,5 +10,7 @@ router.get("/", (_, res) => {
         message: "Microservicio Media funcionando correctamente",
     })
 })
+
+router.post("/uploads/:entityType/:entityId", upload.array("images", 6), postImage)
 
 export default router

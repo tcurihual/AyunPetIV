@@ -25,8 +25,11 @@ const storage = diskStorage({
         cb(null, uploadPath)
     },
     filename: (req, file, cb) => {
+        const entityType = req.params.entityType
         const extension = path.extname(file.originalname)
-        cb(null, `${Date.now()}${extension}`)
+        const uniqueSuffix = Math.floor(1000 + Math.random() * 9000)
+
+        cb(null, `${entityType}-${uniqueSuffix}${extension}`)
     },
 })
 
