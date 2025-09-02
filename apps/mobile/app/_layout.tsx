@@ -9,14 +9,14 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: "#fff" }, // fondo blanco por defecto
+          contentStyle: { backgroundColor: "#fff" },
         }}
       >
-        <Stack.Screen name="auth/login" />
-        <Stack.Screen name="home" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(home)" />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </View>
   );
 }
@@ -24,6 +24,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff", // fondo general blanco
+    backgroundColor: "#fff",
   },
 });
