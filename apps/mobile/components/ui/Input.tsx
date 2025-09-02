@@ -1,99 +1,41 @@
-import React, { useState } from "react";
-import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
-} from "react-native";
-import {
   Controller,
-  Control,
-  FieldValues,
-  Path,
-  RegisterOptions,
-} from "react-hook-form";
+import { Controller } from "react-hook-form";
 
-type InputType = "text" | "email" | "password";
-
-type Props<T extends FieldValues> = {
-  name: Path<T>;
-  control: Control<T>;
+interface InputProps {
+  name: string;
+  control: any; // pal useForm()
   label?: string;
   placeholder?: string;
-  type?: InputType;
-  rules?: RegisterOptions<T, Path<T>>;
-  inputProps?: TextInputProps;
-};
+  type?: string;
+  rules?: object; //esto es pa la validacion
+}
 
-export default function Input<T extends FieldValues>({
-  name,
-  control,
-  label,
-  placeholder,
-  type = "text",
-  rules,
-  inputProps,
-}: Props<T>) {
-  const [show, setShow] = useState(false);
-  const isPassword = type === "password";
-
-  const keyboardType: TextInputProps["keyboardType"] =
-    type === "email" ? "email-address" : "default";
-  const autoCapitalize: TextInputProps["autoCapitalize"] =
-    type === "email" ? "none" : "sentences";
-
+const Input: React.FC<InputProps> = ({ name, control, label, placeholder, type = "text", rules }) => {
   return (
-    <View style={styles.container}>
-      {!!label && <Text style={styles.label}>{label}</Text>}
-
+    <div className="flex flex-col w-full mb-4">
+      {label && <label className="mb-1 text-sm font-semibold text-gray-700">{label}</label>}
+      
       <Controller
         name={name}
         control={control}
         rules={rules}
-        render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+        render={({ field, fieldState }) => (
           <>
-            <View style={[styles.inputWrapper, !!error && styles.inputWrapperError]}>
-              <TextInput
-                style={styles.input}
-                placeholder={placeholder}
-                value={(value as string) ?? ""}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={isPassword && !show}
-                keyboardType={keyboardType}
-                autoCapitalize={autoCapitalize}
-                {...inputProps}
-              />
-              {isPassword && (
-                <TouchableOpacity onPress={() => setShow((s) => !s)}>
-                  <Text style={styles.toggle}>{show ? "Ocultar" : "Ver"}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {!!error && <Text style={styles.error}>{error.message as string}</Text>}
+            <input
+              {...field}
+              type={type}
+              placeholder={placeholder}
+              className={`border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 
+              ${fieldState.error ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"}`}
+            />
+            {fieldState.error && (
+              <p className="text-red-500 text-xs mt-1">{fieldState.error.message}</p>
+            )}
           </>
         )}
       />
-    </View>
+    </div>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: { width: "100%", marginBottom: 12 },
-  label: { marginBottom: 6, fontWeight: "600", color: "#111827" },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#7c3aed",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-  },
-  inputWrapperError: { borderColor: "#dc2626" },
-  input: { flex: 1, height: 45 },
-  toggle: { paddingHorizontal: 6, color: "#7c3aed", fontWeight: "600" },
-  error: { marginTop: 4, color: "#dc2626" },
-});
+export default Input;
