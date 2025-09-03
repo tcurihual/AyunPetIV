@@ -1,7 +1,7 @@
 import { Router } from "express"
 
 import upload from "./utils"
-import { postImage } from "./controller"
+import { getImages, postImage, deleteImage } from "./controller"
 
 const router = Router()
 
@@ -11,6 +11,8 @@ router.get("/", (_, res) => {
     })
 })
 
+router.get("/uploads/:entityType", getImages)
 router.post("/uploads/:entityType/:entityId", upload.array("images", 6), postImage)
+router.delete("/uploads/:entityType/:entityId", deleteImage)
 
 export default router
