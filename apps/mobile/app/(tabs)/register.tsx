@@ -43,14 +43,11 @@ const steps: {
         ],
     },
     {
-        title: "Correo electrónico",
+        title: "Datos de Contacto",
         inputs: [
             { key: "email", placeholder: "Correo electrónico", keyboardType: "email-address" },
+            { key: "phone", placeholder: "Teléfono", keyboardType: "phone-pad" },
         ],
-    },
-    {
-        title: "Teléfono",
-        inputs: [{ key: "phone", placeholder: "Teléfono", keyboardType: "phone-pad" }],
     },
 ]
 
@@ -96,7 +93,7 @@ export default function RegisterScreen() {
                     />
                 </View>
                 <View style={styles.stepIndicator}>
-                    <Text style={styles.stepCircle}>{`${step + 1}/4`}</Text>
+                    <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
                     <Text style={styles.stepTitle}>{steps[step].title}</Text>
                 </View>
                 {steps[step].inputs.map((input) => (
@@ -125,21 +122,18 @@ export default function RegisterScreen() {
 }
 
 const useThemeStyles = () => {
-    const colorScheme = useColorScheme()
-    const isDark = colorScheme === "dark"
-
     return StyleSheet.create({
         scrollContainer: {
             flexGrow: 1,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: isDark ? "#222" : "#fff",
+            backgroundColor: "#fff",
         },
         container: {
             width: "100%",
             maxWidth: 420,
             alignSelf: "center",
-            backgroundColor: isDark ? "#222" : "#fff",
+            backgroundColor: "#fff",
             alignItems: "center",
             justifyContent: "flex-start",
             paddingTop: 0,
@@ -153,7 +147,7 @@ const useThemeStyles = () => {
             zIndex: 1,
         },
         header: {
-            backgroundColor: isDark ? "#333" : "#FFD24C",
+            backgroundColor: "#FFD24C",
             width: "110%",
             height: "20%",
             alignItems: "center",
@@ -167,7 +161,7 @@ const useThemeStyles = () => {
             fontWeight: "bold",
             marginTop: 24,
             marginBottom: 8,
-            color: isDark ? "#fff" : "#222",
+            color: "#222",
         },
         logo: {
             width: width * 0.45,
@@ -176,14 +170,14 @@ const useThemeStyles = () => {
         },
         semiCircle: {
             position: "absolute",
-            bottom: -40, // Ajusta esto para moverlo hacia abajo
-            width: "35%", // Ancho del semicírculo
-            height: "60%", // Mitad de la altura
+            bottom: -40,
+            width: "35%",
+            height: "60%",
             backgroundColor: "#fff",
             borderTopLeftRadius: 60,
             borderTopRightRadius: 60,
             alignSelf: "center",
-            zIndex: 0, // Mantiene el círculo detrás del logo
+            zIndex: 0,
         },
         stepIndicator: {
             flexDirection: "row",
@@ -204,28 +198,27 @@ const useThemeStyles = () => {
             color: "#A47CF3",
             marginRight: 12,
             fontWeight: "bold",
-            backgroundColor: isDark ? "#222" : "#fff",
-            // Ajusta el paddingTop para bajar el número
+            backgroundColor: "#fff",
             paddingTop: 5,
         },
         stepTitle: {
             fontSize: width < 350 ? 15 : 18,
             fontWeight: "bold",
-            color: isDark ? "#fff" : "#222",
+            color: "#222",
         },
         input: {
             width: "90%",
             minWidth: 220,
             maxWidth: 400,
             height: 40,
-            backgroundColor: isDark ? "#333" : "#fff",
+            backgroundColor: "#fff",
             borderRadius: 16,
             paddingHorizontal: 16,
             marginBottom: 12,
             fontSize: 15,
             borderWidth: 1,
             borderColor: "#A47CF3",
-            color: isDark ? "#fff" : "#222",
+            color: "#222",
         },
         button: {
             width: "80%",
@@ -255,7 +248,7 @@ const useThemeStyles = () => {
             marginTop: 12,
             borderWidth: 1,
             borderColor: "#FFD24C",
-            backgroundColor: isDark ? "#222" : "#fff",
+            backgroundColor: "#fff",
         },
         secondaryButtonText: {
             color: "#FFD24C",
