@@ -1,0 +1,30 @@
+{
+    "private": true,
+    "name": "ayunpet",
+    "scripts": {
+        "dev": "turbo dev",
+        "dev:web": "turbo dev --filter=\"!mobile\"",
+        "dev:example": "turbo dev --filter=\"{./apps/example}...\"",
+        "lint": "turbo lint",
+        "format": "turbo format",
+        "test": "turbo test",
+        "build": "turbo build",
+        "build:example": "turbo build --filter=\"...{./apps/example}\""
+    },
+    "devDependencies": {
+        "tsup": "^8.5.0",
+        "turbo": "^2.5.6",
+        "typescript": "^5.9.2"
+    },
+    "packageManager": "pnpm@10.14.0",
+    "dependencies": {
+        "dotenv-cli": "^10.0.0"
+    },
+    "pnpm": {
+        "overrides": {
+            "react": "19.0.0",
+            "react-dom": "19.0.0",
+            "@types/react": "~19.0.14"
+        }
+    }
+}
