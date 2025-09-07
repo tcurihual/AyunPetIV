@@ -1,21 +1,17 @@
-import { Text, View, StyleSheet } from "react-native"
+import { useEffect } from "react";
+import { View, Text } from "react-native";
+import { http } from "@/services/http";
 
-export default function Index() {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.text}>Ayün Pet</Text>
-        </View>
-    )
+export default function Home() {
+  useEffect(() => {
+    http.get("/ping")
+      .then(r => console.log("✅ PING:", r.data))
+      .catch(err => console.warn("❌ PING:", err?.response?.status, err?.message));
+  }, []);
+
+  return (
+    <View style={{ padding: 24 }}>
+      <Text>Home — revisa la consola de Metro</Text>
+    </View>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#25292e",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    text: {
-        color: "#fff",
-    },
-})

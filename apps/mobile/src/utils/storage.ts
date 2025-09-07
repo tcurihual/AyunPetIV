@@ -1,23 +1,25 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const TOKEN_KEY = "@ayunpet/token"
-const USER_KEY = "@ayunpet/user"
+const TOKEN_KEY = "auth_token"
+const USER_KEY = "auth_user"
 
-export const saveToken = (t: string) => AsyncStorage.setItem(TOKEN_KEY, t)
-export const getToken = () => AsyncStorage.getItem(TOKEN_KEY)
-export const removeToken = () => AsyncStorage.removeItem(TOKEN_KEY)
-
-export async function saveUser(user: unknown) {
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user))
+export async function saveToken(token: string) {
+  await AsyncStorage.setItem(TOKEN_KEY, token)
 }
 
-export async function getUser<T = any>() {
-    const raw = await AsyncStorage.getItem(USER_KEY)
-    return raw ? (JSON.parse(raw) as T) : null
+export async function getToken(): Promise<string | null> {
+  return AsyncStorage.getItem(TOKEN_KEY)
 }
 
-export const removeUser = () => AsyncStorage.removeItem(USER_KEY)
+export async function saveUser<T>(user: T) {
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+export async function getUser<T>(): Promise<T | null> {
+  const raw = await AsyncStorage.getItem(USER_KEY)
+  return raw ? JSON.parse(raw) : null
+}
 
 export async function clearAuth() {
-    await Promise.all([removeToken(), removeUser()])
+  await Promise.all([AsyncStorage.removeItem(TOKEN_KEY), AsyncStorage.removeItem(USER_KEY)])
 }
