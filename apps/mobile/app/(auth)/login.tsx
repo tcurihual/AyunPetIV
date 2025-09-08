@@ -1,4 +1,3 @@
-// app/auth/login.tsx
 import { useState } from "react";
 import {
   View,
@@ -132,7 +131,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
-  logo: { width: 220, height: 220, marginBottom: 40 },
+  logo: { width: 450, height: 450,  marginTop: "-30%", },
   input: { width: "100%", height: 45, borderWidth: 1, borderColor: "#7c3aed", borderRadius: 20, paddingHorizontal: 15, marginBottom: 8 },
   buttonPrimary: { backgroundColor: "#facc15", borderRadius: 20, paddingVertical: 12, paddingHorizontal: 25, width: "100%", alignItems: "center", marginTop: 10 },
   buttonSecondary: { marginTop: 25 },
