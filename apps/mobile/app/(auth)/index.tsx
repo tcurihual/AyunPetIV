@@ -1,9 +1,17 @@
-import React, { useEffect } from "react"
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native"
+import React from "react"
+import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
-import { isFirstLaunch, FirstLaunch, getToken } from "../../src/utils/storage"
+import { FirstLaunch } from "../../src/utils/storage"
+
 const Index = () => {
+    const { height } = useWindowDimensions()
     const router = useRouter()
+
+    const handlePress = async () => {
+        await FirstLaunch()
+        router.push("/(auth)/login")
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.childContainer}>
@@ -15,14 +23,14 @@ const Index = () => {
             </View>
             <TouchableOpacity
                 style={[styles.buttonPrimary, styles.buttonSecondary]}
-                onPress={() => router.push("/(auth)/login")}
+                onPress={handlePress}
             >
                 <Text style={styles.buttonText}>Quiero Adoptar!</Text>
             </TouchableOpacity>
             <View style={styles.childContainer}>
                 <Image
                     source={require("../../assets/images/welcome-pets.png")}
-                    style={styles.petImg}
+                    style={[styles.petImg, { top: -height * 0.12 }]}
                     resizeMode="none"
                 />
             </View>
@@ -51,7 +59,6 @@ const styles = StyleSheet.create({
     },
     petImg: {
         position: "absolute",
-        top: -100,
         left: "36%",
         width: "100%",
     },
