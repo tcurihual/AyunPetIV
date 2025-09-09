@@ -16,10 +16,10 @@ export default function Index() {
                 if (user) {
                     router.replace("/(home)")
                 } else {
-                    router.replace("/(auth)/login")
+                    router.replace("/(auth)")
                 }
             } catch {
-                router.replace("/(auth)/login")
+                router.replace("/(auth)")
             } finally {
                 setLoading(false)
             }

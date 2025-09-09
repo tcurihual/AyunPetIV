@@ -6,7 +6,7 @@ export default function TabsLayout() {
     const { status } = useAuthContext()
 
     if (status === "loading") return null
-    if (status !== "authenticated") return <Redirect href="/(auth)/login" />
+    if (status !== "authenticated") return <Redirect href="/(auth)" />
 
     return <Stack screenOptions={{ headerShown: false }} />
 }
