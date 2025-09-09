@@ -1,11 +1,12 @@
-import { Stack, Redirect } from "expo-router";
-import { useAuthContext } from "@/context/AuthContext";
+import React from "react"
+import { Stack, Redirect } from "expo-router"
+import { useAuthContext } from "../../src/context/AuthContext"
 
 export default function TabsLayout() {
-  const { status } = useAuthContext();
+    const { status } = useAuthContext()
 
-  if (status === "loading") return null;
-  if (status !== "authenticated") return <Redirect href="/(auth)/login" />; 
+    if (status === "loading") return null
+    if (status !== "authenticated") return <Redirect href="/(auth)/login" />
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+    return <Stack screenOptions={{ headerShown: false }} />
 }

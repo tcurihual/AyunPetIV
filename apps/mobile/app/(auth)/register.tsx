@@ -1,127 +1,258 @@
-import { StyleSheet, TouchableOpacity, View, Alert } from "react-native";
-import { useForm } from "react-hook-form";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as React from "react"
+import { useState } from "react"
+import {
+    View,
+    TextInput,
+    TouchableOpacity,
+    Text,
+    Image,
+    StyleSheet,
+    Dimensions,
+    ScrollView,
+} from "react-native"
+import { useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import Input from "@/components/ui/Input";
+const { width } = Dimensions.get("window")
 
-type RegisterForm = {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-};
-
-export default function Register() {
-  const router = useRouter();
-
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { isSubmitting },
-  } = useForm<RegisterForm>({
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
-    mode: "onTouched",
-  });
-
-  const pwd = watch("password");
-
-  const onSubmit = async (data: RegisterForm) => {
-    try {
-      // TODO: aquí va la llamada real a la API
-      await AsyncStorage.setItem(
-        "user",
-        JSON.stringify({ email: data.email, name: data.name, loggedAt: Date.now() })
-      );
-      router.replace("/(home)");
-    } catch (e) {
-      Alert.alert("Error", "No se pudo crear la cuenta.");
-    }
-  };
-
-  return (
-    <ThemedView style={styles.container} lightColor="#fff">
-      <View style={styles.header}>
-        <ThemedText type="title">Crear cuenta</ThemedText>
-        <ThemedText type="subtitle">Únete a AyunPet 🐾</ThemedText>
-      </View>
-
-      <Input<RegisterForm>
-        name="name"
-        control={control}
-        label="Nombre"
-        placeholder="Tu nombre"
-        type="text"
-        rules={{ required: "El nombre es obligatorio" }}
-      />
-
-      <Input<RegisterForm>
-        name="email"
-        control={control}
-        label="Correo electrónico"
-        placeholder="ejemplo@mail.com"
-        type="email"
-        rules={{
-          required: "El correo es obligatorio",
-          pattern: {
-            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-            message: "Formato de correo inválido",
-          },
-        }}
-      />
-
-      <Input<RegisterForm>
-        name="password"
-        control={control}
-        label="Contraseña"
-        placeholder="••••••••"
-        type="password"
-        rules={{
-          required: "La contraseña es obligatoria",
-          minLength: { value: 6, message: "Mínimo 6 caracteres" },
-        }}
-      />
-
-      <Input<RegisterForm>
-        name="confirmPassword"
-        control={control}
-        label="Confirmar contraseña"
-        placeholder="••••••••"
-        type="password"
-        rules={{
-          required: "Confirma tu contraseña",
-          validate: (v) => v === pwd || "Las contraseñas no coinciden",
-        }}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, isSubmitting && styles.buttonDisabled]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={isSubmitting}
-      >
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          {isSubmitting ? "Creando cuenta..." : "Registrarme"}
-        </ThemedText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.replace("/(auth)/login")}>
-        <ThemedText type="defaultSemiBold" style={styles.secondaryText}>
-          Ya tengo cuenta, iniciar sesión
-        </ThemedText>
-      </TouchableOpacity>
-    </ThemedView>
-  );
+type InputConfig = {
+    key: string
+    placeholder: string
+    autoCapitalize?: "none" | "sentences" | "words" | "characters"
+    keyboardType?: string
+    secureTextEntry?: boolean
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 20, justifyContent: "center" },
-  header: { marginBottom: 24, gap: 6 },
-  button: { marginTop: 16, backgroundColor: "#0a7ea4", paddingVertical: 14, borderRadius: 12 },
-  buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: "#fff", textAlign: "center" },
-  secondaryBtn: { marginTop: 12, paddingVertical: 12 },
-  secondaryText: { textAlign: "center", color: "#0a7ea4" },
-});
+const steps: {
+    title: string
+    inputs: InputConfig[]
+}[] = [
+    {
+        title: "Nombre y RUT",
+        inputs: [
+            { key: "name", placeholder: "Nombre completo", autoCapitalize: "words" },
+            { key: "rut", placeholder: "RUT", keyboardType: "default" },
+        ],
+    },
+    {
+        title: "Contraseña",
+        inputs: [
+            { key: "password", placeholder: "Contraseña", secureTextEntry: true },
+            { key: "repeatPassword", placeholder: "Repetir contraseña", secureTextEntry: true },
+        ],
+    },
+    {
+        title: "Datos de Contacto",
+        inputs: [
+            { key: "email", placeholder: "Correo electrónico", keyboardType: "email-address" },
+            { key: "phone", placeholder: "Teléfono", keyboardType: "phone-pad" },
+        ],
+    },
+]
+
+export default function RegisterScreen() {
+    const router = useRouter()
+    const styles = useThemeStyles()
+    const [step, setStep] = useState(0)
+    const [form, setForm] = useState({
+        name: "",
+        rut: "",
+        password: "",
+        repeatPassword: "",
+        email: "",
+        phone: "",
+    })
+
+    const handleChange = (key: string, value: string) => {
+        setForm({ ...form, [key]: value })
+    }
+
+    const handleNext = () => {
+        if (step < steps.length - 1) setStep(step + 1)
+    }
+
+    const handleBack = () => {
+        if (step > 0) setStep(step - 1)
+        else router.back()
+    }
+
+    return (
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.container}>
+                <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+                    <Ionicons name="arrow-back" size={28} color="black" />
+                </TouchableOpacity>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Datos de Registro</Text>
+                    <View style={styles.semiCircle} />
+                    <Image
+                        source={require("@/assets/images/ayun-pet.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                </View>
+                <View style={styles.stepIndicator}>
+                    <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
+                    <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                </View>
+                {steps[step].inputs.map((input) => (
+                    <TextInput
+                        key={input.key}
+                        style={styles.input}
+                        placeholder={input.placeholder}
+                        value={form[input.key as keyof typeof form]}
+                        onChangeText={(v) => handleChange(input.key, v)}
+                        autoCapitalize={input.autoCapitalize ?? "none"}
+                        keyboardType={(input.keyboardType as any) ?? "default"}
+                        secureTextEntry={input.secureTextEntry ?? false}
+                    />
+                ))}
+                <TouchableOpacity style={styles.button} onPress={handleNext}>
+                    <Text style={styles.buttonText}>
+                        {step === steps.length - 1 ? "Crear Cuenta" : "Continuar"}
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.secondaryButton} onPress={handleBack}>
+                    <Text style={styles.secondaryButtonText}>Volver</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
+    )
+}
+
+const useThemeStyles = () => {
+    return StyleSheet.create({
+        scrollContainer: {
+            flexGrow: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#fff",
+        },
+        container: {
+            width: "100%",
+            maxWidth: 420,
+            alignSelf: "center",
+            backgroundColor: "#fff",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            paddingTop: 0,
+            paddingHorizontal: 16,
+            minHeight: Dimensions.get("window").height,
+        },
+        backButton: {
+            position: "absolute",
+            top: 24,
+            left: 16,
+            zIndex: 1,
+        },
+        header: {
+            backgroundColor: "#FFD24C",
+            width: "110%",
+            height: "20%",
+            alignItems: "center",
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+            paddingBottom: 24,
+            marginBottom: 12,
+        },
+        headerTitle: {
+            fontSize: width < 350 ? 16 : 20,
+            fontWeight: "bold",
+            marginTop: 24,
+            marginBottom: 8,
+            color: "#222",
+        },
+        logo: {
+            width: width * 0.45,
+            height: width * 0.38,
+            top: 12,
+        },
+        semiCircle: {
+            position: "absolute",
+            bottom: -40,
+            width: "35%",
+            height: "60%",
+            backgroundColor: "#fff",
+            borderTopLeftRadius: 60,
+            borderTopRightRadius: 60,
+            alignSelf: "center",
+            zIndex: 0,
+        },
+        stepIndicator: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 18,
+            marginTop: 18,
+            width: "90%",
+        },
+        stepCircle: {
+            borderWidth: 2,
+            borderColor: "#A47CF3",
+            borderRadius: 20,
+            width: 40,
+            height: 40,
+            textAlign: "center",
+            textAlignVertical: "center",
+            fontSize: 18,
+            color: "#A47CF3",
+            marginRight: 12,
+            fontWeight: "bold",
+            backgroundColor: "#fff",
+            paddingTop: 5,
+        },
+        stepTitle: {
+            fontSize: width < 350 ? 15 : 18,
+            fontWeight: "bold",
+            color: "#222",
+        },
+        input: {
+            width: "90%",
+            minWidth: 220,
+            maxWidth: 400,
+            height: 40,
+            backgroundColor: "#fff",
+            borderRadius: 16,
+            paddingHorizontal: 16,
+            marginBottom: 12,
+            fontSize: 15,
+            borderWidth: 1,
+            borderColor: "#A47CF3",
+            color: "#222",
+        },
+        button: {
+            width: "80%",
+            minWidth: 180,
+            maxWidth: 350,
+            height: 40,
+            backgroundColor: "#FFD24C",
+            borderRadius: 16,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 18,
+            elevation: 2,
+        },
+        buttonText: {
+            color: "#fff",
+            fontWeight: "500",
+            fontSize: 15,
+        },
+        secondaryButton: {
+            width: "80%",
+            minWidth: 180,
+            maxWidth: 350,
+            height: 40,
+            borderRadius: 16,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 12,
+            borderWidth: 1,
+            borderColor: "#FFD24C",
+            backgroundColor: "#fff",
+        },
+        secondaryButtonText: {
+            color: "#FFD24C",
+            fontWeight: "500",
+            fontSize: 15,
+        },
+    })
+}

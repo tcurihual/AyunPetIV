@@ -1,3 +1,4 @@
+import React from "react"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
@@ -9,7 +10,7 @@ import "react-native-reanimated"
 import { useColorScheme } from "react-native"
 
 //  IMPORTA EL PROVIDER
-import { AuthProvider } from "@/context/AuthContext"
+import { AuthProvider } from "../src/context/AuthContext"
 
 // Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
@@ -40,10 +41,3 @@ export default function RootLayout() {
         </AuthProvider>
     )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-});
