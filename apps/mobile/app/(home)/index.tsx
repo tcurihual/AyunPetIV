@@ -2,6 +2,7 @@
 import React from "react"
 import { View, Text, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
+import BottomNavbar from "@/components/BottomNavbar"
 
 export default function Home() {
     const router = useRouter()
@@ -49,6 +50,7 @@ export default function Home() {
                     <Text style={{ color: "#fff", fontWeight: "bold" }}>Cerrar sesión</Text>
                 </TouchableOpacity>
             </View>
+            <BottomNavbar activeTab="home" onTabPress={(tab) => console.log(tab)} />
         </View>
     )
 }

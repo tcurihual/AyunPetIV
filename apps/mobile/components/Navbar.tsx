@@ -1,5 +1,6 @@
 // apps/mobile/components/Navbar.tsx
 import { View, Text, StyleSheet } from "react-native"
+import React from "react"
 
 export default function Navbar() {
     return (

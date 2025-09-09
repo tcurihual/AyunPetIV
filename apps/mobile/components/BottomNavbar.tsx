@@ -1,6 +1,7 @@
 // apps/mobile/components/BottomNavbar.tsx
 import { View, StyleSheet, Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import React from "react"
 
 type Props = {
     onTabPress?: (tab: string) => void
