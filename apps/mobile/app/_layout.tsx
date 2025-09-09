@@ -1,24 +1,44 @@
-// app/_layout.tsx
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { View, StyleSheet } from "react-native";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
+import { useFonts } from "expo-font"
+import { Stack } from "expo-router"
+import * as SplashScreen from "expo-splash-screen"
+import { StatusBar } from "expo-status-bar"
+import { useEffect } from "react"
+import "react-native-reanimated"
+
+import { useColorScheme } from "react-native"
+
+//  IMPORTA EL PROVIDER
+import { AuthProvider } from "@/context/AuthContext"
+
+// Evitar que la splash se oculte antes de cargar assets
+SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  return (
-    <View style={styles.container}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "#fff" },
-        }}
-      >
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(home)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="light" />
-    </View>
-  );
+    const colorScheme = useColorScheme()
+    const [loaded] = useFonts({
+        SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    })
+
+    useEffect(() => {
+        if (loaded) SplashScreen.hideAsync()
+    }, [loaded])
+
+    if (!loaded) return null
+
+    return (
+        <AuthProvider>
+            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                </Stack>
+
+                <StatusBar style="auto" />
+            </ThemeProvider>
+        </AuthProvider>
+    )
 }
 
 const styles = StyleSheet.create({

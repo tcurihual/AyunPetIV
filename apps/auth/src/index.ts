@@ -1,24 +1,20 @@
-import express from "express"
-import cors from "cors"
-import helmet from "helmet"
-import morgan from "morgan"
-import { errorHandler, AUTH_PORT } from "@repo/utils"
+import express from "express";
+import cors from "cors";
+import authRouter from "./routes/auth"; // tu router de auth
 
-const app = express()
+const app = express();
 
-app.use(cors())
-app.use(helmet())
-app.use(morgan("dev"))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(cors());
+app.use(express.json());
 
-app.get("/", (_, res) => {
-    return res.status(200).json({
-        message: "Microservicio Auth funcionando correctamente",
-    })
-})
+ // prefijo correcto
+ app.use("/api/auth", authRouter);
 
-app.use(errorHandler)
-app.listen(AUTH_PORT, () => {
-    console.log("🚀 Auth service running on http://localhost/api/auth")
-})
+ // ping de prueba (lo tienes)
+ app.get("/api/auth/ping", (req, res) => {
+   res.send("pong");
+ });
+
+app.listen(process.env.AUTH_PORT || 4000, () => {
+  console.log("Auth service running on", process.env.AUTH_PORT || 4000);
+});
