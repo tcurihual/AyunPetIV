@@ -28,11 +28,12 @@ export default function Home() {
             paddingHorizontal: 20,
             borderRadius: 8,
           }}
-          onPress={() => router.push("../camara")}
+          onPress={() => router.push("/camara")}
         >
           <Text style={{ fontWeight: "bold", color: "#fff" }}>Abrir cámara</Text>
         </TouchableOpacity>
 
+        {/* Botón para ir a perfil del dador */}
         <TouchableOpacity
           style={{
             marginTop: 12,
@@ -41,10 +42,26 @@ export default function Home() {
             paddingHorizontal: 20,
             borderRadius: 8,
           }}
-          onPress={() => router.push("/perfil")}
+          onPress={() => router.push("/(home)/perfil")}
         >
           <Text style={{ fontWeight: "bold", color: "#000" }}>
             Ir al perfil del dador
+          </Text>
+        </TouchableOpacity>
+
+        {/* Botón para ir a Solicitudes */}
+        <TouchableOpacity
+          style={{
+            marginTop: 12,
+            backgroundColor: "#F7C948",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 8,
+          }}
+          onPress={() => router.push("/requestList")}
+        >
+          <Text style={{ fontWeight: "bold", color: "#1C1C1C" }}>
+            Ir a Solicitudes
           </Text>
         </TouchableOpacity>
       </View>
@@ -76,15 +93,11 @@ export default function Home() {
       <BottomNavbar
         activeTab="home"
         onTabPress={(tab) => {
-          if (tab === "camara") {
-            router.push("../camara");
-            return;
-          }
-          if (tab === "home") {
-            router.replace("/(home)");
-            return;
-          }
-          console.log(tab);
+          if (tab === "home") return router.replace("/(home)");
+          if (tab === "camara") return router.push("/camara");
+          if (tab === "requests") return router.push("/requestList");
+          if (tab === "perfil") return router.push("/(home)/perfil");
+          console.log("Tab no mapeada:", tab);
         }}
       />
     </View>
