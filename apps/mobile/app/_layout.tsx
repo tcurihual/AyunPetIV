@@ -4,13 +4,15 @@ import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import "react-native-reanimated"
 
 import { useColorScheme } from "react-native"
 
 //  IMPORTA EL PROVIDER
 import { AuthProvider } from "../src/context/AuthContext"
+// IMPORTA EL LOADING
+import Loading from "@/components/Loading"
 
 // Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
@@ -20,6 +22,8 @@ export default function RootLayout() {
     const [loaded] = useFonts({
         SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     })
+
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (loaded) SplashScreen.hideAsync()
@@ -37,6 +41,8 @@ export default function RootLayout() {
                 </Stack>
 
                 <StatusBar style="auto" />
+                {/* Loader global */}
+                <Loading visible={loading} />
             </ThemeProvider>
         </AuthProvider>
     )
