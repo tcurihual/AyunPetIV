@@ -1,0 +1,117 @@
+{
+  "usuarios": [
+    {
+      "id": 1,
+      "nombre": "Fundación Patitas Felices",
+      "email": "contacto@patitasfelices.cl",
+      "rol": "fundacion"
+    },
+    {
+      "id": 2,
+      "nombre": "Juan Pérez",
+      "email": "juanperez@gmail.com",
+      "rol": "adoptante"
+    },
+    {
+      "id": 3,
+      "nombre": "Fundación Amigos de los Animales",
+      "email": "hola@faa.cl",
+      "rol": "fundacion"
+    },
+    {
+      "id": 4,
+      "nombre": "María López",
+      "email": "maria.lopez@example.com",
+      "rol": "adoptante"
+    }
+  ],
+  "mascotas": [
+    {
+      "id": 101,
+      "nombre": "Firulais",
+      "especie": "Perro",
+      "edad": 3,
+      "genero": "Macho",
+      "tamano": "Mediano",
+      "estado": "disponible",
+      "descripcion": "Muy juguetón y cariñoso",
+      "imagen": "https://ejemplo.com/firulais.png"
+    },
+    {
+      "id": 102,
+      "nombre": "Michi",
+      "especie": "Gato",
+      "edad": 2,
+      "genero": "Hembra",
+      "tamano": "Pequeño",
+      "estado": "adoptado",
+      "descripcion": "Gata tranquila y sociable",
+      "imagen": "https://ejemplo.com/michi.png"
+    },
+    {
+      "id": 103,
+      "nombre": "Rocky",
+      "especie": "Perro",
+      "edad": 1,
+      "genero": "Macho",
+      "tamano": "Grande",
+      "estado": "disponible",
+      "descripcion": "Energético, ideal para familias activas",
+      "imagen": "https://ejemplo.com/rocky.png"
+    },
+    {
+      "id": 104,
+      "nombre": "Luna",
+      "especie": "Gato",
+      "edad": 4,
+      "genero": "Hembra",
+      "tamano": "Mediano",
+      "estado": "disponible",
+      "descripcion": "Cariñosa y muy tranquila en interiores",
+      "imagen": "https://ejemplo.com/luna.png"
+    }
+  ],
+  "publicaciones": [
+    {
+      "id": 201,
+      "mascotaId": 101,
+      "usuarioId": 1,
+      "fecha": "2025-09-10"
+    },
+    {
+      "id": 202,
+      "mascotaId": 102,
+      "usuarioId": 3,
+      "fecha": "2025-09-08"
+    },
+    {
+      "id": 203,
+      "mascotaId": 103,
+      "usuarioId": 1,
+      "fecha": "2025-09-09"
+    }
+  ],
+  "solicitudes": [
+    {
+      "id": 301,
+      "mascotaId": 101,
+      "solicitanteId": 2,
+      "estado": "pendiente",
+      "mensaje": "Me encantó Firulais, tengo patio grande."
+    },
+    {
+      "id": 302,
+      "mascotaId": 102,
+      "solicitanteId": 4,
+      "estado": "aceptada",
+      "mensaje": "Busco una gata tranquila para departamento."
+    },
+    {
+      "id": 303,
+      "mascotaId": 103,
+      "solicitanteId": 2,
+      "estado": "rechazada",
+      "mensaje": "Puedo visitarlo fines de semana."
+    }
+  ]
+}
