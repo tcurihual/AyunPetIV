@@ -4,7 +4,12 @@
         "jsx": "react",
         "strict": true,
         "paths": {
-            "@/*": ["./*"]
+            "@/*": ["./*"],
+            "@ui/*": ["./components/ui/*"],
+            "@common/*": ["./components/common/*"],
+            "@images/*": ["./assets/images/*"],
+            "@fonts/*": ["./assets/fonts/*"],
+            "@animations/*": ["./assets/animations/*"]
         }
     },
     "skipLibCheck": true,

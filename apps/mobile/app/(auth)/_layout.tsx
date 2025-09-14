@@ -1,6 +1,6 @@
 import React from "react"
 import { Stack, Redirect } from "expo-router"
-import { useAuthContext } from "../../src/context/AuthContext"
+import { useAuthContext } from "@/context/AuthContext"
 
 export default function AuthLayout() {
     const { status } = useAuthContext()

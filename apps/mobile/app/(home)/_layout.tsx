@@ -1,37 +1,40 @@
-// app/(home)/_layout.tsx
 import React from "react"
-import { View, StyleSheet } from "react-native"
+import { StyleSheet } from "react-native"
 import { Slot, usePathname, router } from "expo-router"
-import BottomNavbar from "@/components/BottomNavbar"
+import BottomNavbar from "@common/BottomNavbar"
+import { StatusBar } from "expo-status-bar"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function HomeLayout() {
     const pathname = usePathname()
 
     // Detectar pestaña activa según la ruta actual
     let activeTab = "home"
-    if (pathname.includes("perfil")) activeTab = "perfil"
-    if (pathname.includes("camara")) activeTab = "camara"
+    if (pathname.includes("/profile")) activeTab = "perfil"
+    if (pathname.includes("/camera")) activeTab = "camara"
+    if (pathname.includes("/(requests)/requestList")) activeTab = "requests"
 
     return (
-        <View style={styles.container}>
-            {/* Aquí se renderiza la pantalla correspondiente (index, perfil, camara, etc.) */}
+        <SafeAreaView style={styles.container}>
+            <StatusBar style="inverted" />
             <Slot />
-
-            {/* Barra inferior global */}
             <BottomNavbar
                 activeTab={activeTab}
                 onTabPress={(tab) => {
-                    if (tab === "home") router.replace("/(home)")
-                    if (tab === "perfil") router.push("/(home)/perfil")
-                    if (tab === "camara") router.push("../camara")
+                    if (tab === "home") return router.replace("/")
+                    if (tab === "camera") return router.push("/camera")
+                    if (tab === "requests") return router.push("/(requests)/requestList")
+                    if (tab === "perfil") return router.push("/profile")
                 }}
             />
-        </View>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: "#F9C80E",
+        opacity: 1,
     },
 })
