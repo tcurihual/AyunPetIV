@@ -1,9 +1,19 @@
 import { Text, View, StyleSheet } from "react-native"
+import React from "react"
+import { useEffect } from "react"
+import { http } from "@/services/http"
 
-export default function Index() {
+export default function Home() {
+    useEffect(() => {
+        http.get("/ping")
+            .then((r) => console.log("✅ PING:", r.data))
+            .catch((err) => console.warn("❌ PING:", err?.response?.status, err?.message))
+    }, [])
+
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Ayün Pet</Text>
+            <Text style={styles.text}>Bienvenido a Ayün Pet</Text>
+            <Text>Home — revisa la consola de Metro</Text>
         </View>
     )
 }
@@ -11,11 +21,14 @@ export default function Index() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: "#25292e",
         alignItems: "center",
         justifyContent: "center",
+        paddingBottom: 70,
     },
     text: {
-        color: "#000",
+        fontSize: 18,
+        marginBottom: 20,
+        color: "#fff",
     },
 })

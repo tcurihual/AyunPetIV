@@ -2,11 +2,16 @@
     "extends": "expo/tsconfig.base",
     "compilerOptions": {
         "jsx": "react",
-        "jsx": "react",
         "strict": true,
         "paths": {
-            "@/*": ["./*"]
+            "@/*": ["./*"],
+            "@ui/*": ["./components/ui/*"],
+            "@common/*": ["./components/common/*"],
+            "@images/*": ["./assets/images/*"],
+            "@fonts/*": ["./assets/fonts/*"],
+            "@animations/*": ["./assets/animations/*"]
         }
     },
+    "skipLibCheck": true,
     "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }

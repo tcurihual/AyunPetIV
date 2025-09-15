@@ -1,5 +1,4 @@
-import * as React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import {
     View,
     TextInput,
@@ -12,7 +11,6 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { useColorScheme } from "react-native"
 
 const { width } = Dimensions.get("window")
 
@@ -87,7 +85,7 @@ export default function RegisterScreen() {
                     <Text style={styles.headerTitle}>Datos de Registro</Text>
                     <View style={styles.semiCircle} />
                     <Image
-                        source={require("@/assets/images/ayun-pet.png")}
+                        source={require("@images/ayun-pet.png")}
                         style={styles.logo}
                         resizeMode="contain"
                     />
