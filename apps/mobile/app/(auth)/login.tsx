@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } fro
 import { useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useForm, Controller } from "react-hook-form"
+import { useAlert } from "@/context/AlertContext"
 
 type LoginForm = {
     email: string
@@ -12,6 +13,7 @@ type LoginForm = {
 export default function LoginScreen() {
     const router = useRouter()
     const [submitting, setSubmitting] = useState(false)
+    const { showAlert } = useAlert()
 
     const {
         control,
@@ -32,7 +34,7 @@ export default function LoginScreen() {
 
             router.replace("/(home)")
         } catch (e) {
-            Alert.alert("Error", "No se pudo iniciar sesión")
+            showAlert("Error al iniciar sesión. Inténtalo de nuevo.", "error")
         } finally {
             setSubmitting(false)
         }

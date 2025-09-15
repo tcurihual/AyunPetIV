@@ -1,6 +1,6 @@
 import React from "react"
 import { View, Text, StyleSheet, Animated } from "react-native"
-import { useAlert } from "../context/AlertContext"
+import { useAlert } from "@/context/AlertContext"
 
 const alertColors = {
     success: "#4CAF50",
