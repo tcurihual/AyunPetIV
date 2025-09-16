@@ -31,7 +31,8 @@ export default function LoginScreen() {
                 "user",
                 JSON.stringify({ email: data.email, loggedAt: Date.now() })
             )
-
+            showAlert("Inicio de sesión exitoso, espere un momento", "success")
+            await new Promise((resolve) => setTimeout(resolve, 5000)) //para que se vea la alerta
             router.replace("/(home)")
         } catch (e) {
             showAlert("Error al iniciar sesión. Inténtalo de nuevo.", "error")

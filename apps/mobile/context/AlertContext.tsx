@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from "react"
+import * as React from "react"
+import { createContext, useContext, useState, ReactNode } from "react"
 
 type AlertType = "success" | "error" | "info" | "warning"
 
@@ -26,10 +27,9 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     const showAlert = (message: string, type: AlertType = "info") => {
         setAlert({ message, type, visible: true })
 
-        // Se oculta automáticamente después de 3 segundos
         setTimeout(() => {
             setAlert((prev) => ({ ...prev, visible: false }))
-        }, 3000)
+        }, 5000) // El valor está en milisegundos 5000ms -> 5s
     }
 
     const hideAlert = () => {
