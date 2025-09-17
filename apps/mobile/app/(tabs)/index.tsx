@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet } from "react-native"
 import React from "react"
 import { useEffect } from "react"
-import { http } from "../../src/services/http"
+import { http } from "@/services/http"
 
 export default function Home() {
     useEffect(() => {

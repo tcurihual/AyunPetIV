@@ -1,7 +1,7 @@
 import React from "react"
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
-import { FirstLaunch } from "../../src/utils/storage"
+import { FirstLaunch } from "@/utils/storage"
 
 const Index = () => {
     const { height } = useWindowDimensions()
@@ -29,7 +29,7 @@ const Index = () => {
             </TouchableOpacity>
             <View style={styles.childContainer}>
                 <Image
-                    source={require("../../assets/images/welcome-pets.png")}
+                    source={require("@images/welcome-pets.png")}
                     style={[styles.petImg, { top: -height * 0.12 }]}
                     resizeMode="none"
                 />

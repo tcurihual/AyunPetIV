@@ -24,7 +24,6 @@ type Post = {
 export default function GiverProfileScreen() {
     const { giverId } = useLocalSearchParams<{ giverId: string }>()
 
-    // MOCK: reemplaza con fetch a tu API
     const giver: Giver = {
         id: giverId ?? "1",
         displayName: "Fundación Amigos de los Animales",
@@ -65,7 +64,6 @@ export default function GiverProfileScreen() {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-            {/* Header dador */}
             <View style={styles.header}>
                 <Image source={{ uri: giver.avatarUrl }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
@@ -87,7 +85,6 @@ export default function GiverProfileScreen() {
                 </View>
             </View>
 
-            {/* Métricas */}
             <View style={styles.statsRow}>
                 <View style={styles.statCard}>
                     <Text style={styles.statNum}>{giver.metrics?.activePosts ?? 0}</Text>
@@ -105,10 +102,8 @@ export default function GiverProfileScreen() {
                 </View>
             </View>
 
-            {/* Bio */}
             {giver.bio ? <Text style={styles.bio}>{giver.bio}</Text> : null}
 
-            {/* Acciones */}
             <View style={styles.actions}>
                 <TouchableOpacity style={styles.buttonPrimary}>
                     <Text style={styles.buttonText}>Contactar</Text>
@@ -118,7 +113,6 @@ export default function GiverProfileScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Publicaciones activas */}
             <Text style={styles.sectionTitle}>Publicaciones activas</Text>
             {activePosts.length === 0 ? (
                 <View style={styles.emptyCard}>
@@ -145,7 +139,7 @@ export default function GiverProfileScreen() {
     )
 }
 
-const YELLOW = "#F9C80E" // acento
+const YELLOW = "#F9C80E"
 const BLACK = "#000000"
 const TEXT_MUTED = "#555"
 

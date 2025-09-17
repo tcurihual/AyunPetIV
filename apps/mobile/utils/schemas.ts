@@ -1,18 +1,19 @@
 import { z } from "zod"
+import { validarRUT } from "@/utils/rut"
 
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
     roletype: z.string("Se debe ingresar un string"),
 })
 
-export const LoginSchema = z.object({
+export const LoginFormSchema = z.object({
     email: z.email("Debes ingresar un correo válido"),
     password: z.string("La contraseña es obligatoria"),
 })
 
-export const RegisterSchema = z
+export const RegisterFormSchema = z
     .object({
-        rut: z.string(), // falta la utilidad de validar el rut
+        rut: z.string(),
         email: z.email("Debes ingresar un correo válido"),
         name: z.string("El nombre es obligatorio").min(8, "Debe ingresar ser nombre y apellido"),
         password: z
@@ -30,8 +31,12 @@ export const RegisterSchema = z
         message: "Las contraseñas no coinciden",
         path: ["verifyPassword"],
     })
+    .refine((data) => validarRUT(data.rut), {
+        message: "El RUT no es válido",
+        path: ["rut"],
+    })
 
-export const PostSchema = z.object({
+export const PostFormSchema = z.object({
     ownerId: z.number("Debe ingresar un id valido"),
     petId: z.number("Debe ingresar un id valido"),
     title: z
@@ -42,8 +47,8 @@ export const PostSchema = z.object({
         .min(10, "La descripción debe tener al menos 10 caracteres"),
 })
 
-export const PetSchema = z.object({
-    OwnerId: z.number("Debe ingresar un id valido"),
+export const PetFormSchema = z.object({
+    ownerId: z.number("Debe ingresar un id valido"),
     species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
     title: z
         .string("Debes ingresar el nombre de tu mascota")
@@ -54,20 +59,20 @@ export const PetSchema = z.object({
     sterilized: z.boolean(),
 })
 
-export const MessageSchema = z.object({
-    CreatorId: z.number("Debe ingresar un id valido"),
-    PostId: z.number("Debe ingresar un id valido"),
+export const MessageFormSchema = z.object({
+    creatorId: z.number("Debe ingresar un id valido"),
+    postId: z.number("Debe ingresar un id valido"),
     description: z.string("Debe incluir el mensaje").min(10, "el mensaje es muy corto"),
 })
 
-export const AdoptionRequestSchema = z.object({
-    PostId: z.number("Debe ingresar un id valido"),
-    UserId: z.number("Debe ingresar un id valido"),
+export const AdoptionFormRequestSchema = z.object({
+    postId: z.number("Debe ingresar un id valido"),
+    userId: z.number("Debe ingresar un id valido"),
     message: z.string("Debe incluir un mensaje").min(10, "El mensaje es muy corto"),
 })
 
-export const ReportSchema = z.object({
-    UserId: z.number("Debe ingresar un id valido"),
-    PostId: z.number("Debe ingresar un id valido"),
+export const ReportFormSchema = z.object({
+    userId: z.number("Debe ingresar un id valido"),
+    postId: z.number("Debe ingresar un id valido"),
     description: z.enum(["Inappropriate Content", "Spam", "Scam", "Other"]),
 })

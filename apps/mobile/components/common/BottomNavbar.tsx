@@ -1,5 +1,4 @@
-// apps/mobile/components/BottomNavbar.tsx
-import { View, StyleSheet, Pressable } from "react-native"
+import { View, StyleSheet, Pressable, useWindowDimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import React from "react"
 
@@ -9,14 +8,13 @@ type Props = {
 }
 
 export default function BottomNavbar({ onTabPress, activeTab }: Props) {
+    const { height } = useWindowDimensions()
     return (
-        <View style={styles.container}>
-            {/* Home */}
+        <View style={[styles.navbar, { height: height * 0.06 }]}>
             <Pressable style={styles.tab} onPress={() => onTabPress?.("home")}>
                 <Ionicons name="home" size={26} color={activeTab === "home" ? "#000" : "#555"} />
             </Pressable>
 
-            {/* Busquedas */}
             <Pressable style={styles.tab} onPress={() => onTabPress?.("search")}>
                 <Ionicons
                     name="search"
@@ -25,12 +23,10 @@ export default function BottomNavbar({ onTabPress, activeTab }: Props) {
                 />
             </Pressable>
 
-            {/* Añadir */}
             <Pressable style={styles.addBtn} onPress={() => onTabPress?.("add")}>
                 <Ionicons name="add" size={28} color="#fff" />
             </Pressable>
 
-            {/* Chat */}
             <Pressable style={styles.tab} onPress={() => onTabPress?.("chat")}>
                 <Ionicons
                     name="chatbubble"
@@ -39,7 +35,6 @@ export default function BottomNavbar({ onTabPress, activeTab }: Props) {
                 />
             </Pressable>
 
-            {/* Noti */}
             <Pressable style={styles.tab} onPress={() => onTabPress?.("notifications")}>
                 <Ionicons
                     name="notifications"
@@ -53,20 +48,15 @@ export default function BottomNavbar({ onTabPress, activeTab }: Props) {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+    },
+    navbar: {
         flexDirection: "row",
-        height: 70,
-        backgroundColor: "#FFD54F",
-        alignItems: "center",
+        backgroundColor: "#F9C80E",
+        alignItems: "flex-end",
         justifyContent: "space-around",
         paddingHorizontal: 12,
-        borderTopWidth: 1,
         borderTopColor: "#ddd",
-
-        // Fijo abajo
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
     },
     tab: {
         flex: 1,
@@ -76,11 +66,10 @@ const styles = StyleSheet.create({
     addBtn: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: 100,
         backgroundColor: "#9C27B0",
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 3, // lo levanta sobre la barra
         shadowColor: "#000",
         shadowOpacity: 0.2,
         shadowRadius: 5,

@@ -40,13 +40,8 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Image
-                source={require("../../assets/images/image.png")}
-                style={styles.logo}
-                resizeMode="contain"
-            />
+            <Image source={require("@images/image.png")} style={styles.logo} resizeMode="contain" />
 
-            {/* Email */}
             <Controller
                 control={control}
                 name="email"
@@ -75,7 +70,6 @@ export default function LoginScreen() {
             />
             {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
-            {/* Password */}
             <Controller
                 control={control}
                 name="password"

@@ -1,16 +1,17 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
-import { useEffect } from "react"
 import "react-native-reanimated"
-
 import { useColorScheme } from "react-native"
 
-//  IMPORTA EL PROVIDER
-import { AuthProvider } from "../src/context/AuthContext"
+import { AuthProvider } from "@/context/AuthContext"
+import { ModalProvider } from "@/context/ModalContext"
+
+import Loading from "@ui/Loading"
+import ModalHost from "@common/modals/ModalHost"
 
 // Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
@@ -18,8 +19,10 @@ SplashScreen.preventAutoHideAsync()
 export default function RootLayout() {
     const colorScheme = useColorScheme()
     const [loaded] = useFonts({
-        SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+        SpaceMono: require("@fonts/SpaceMono-Regular.ttf"),
     })
+
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (loaded) SplashScreen.hideAsync()
@@ -27,17 +30,24 @@ export default function RootLayout() {
 
     if (!loaded) return null
 
+// (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
+
     return (
         <AuthProvider>
-            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="+not-found" />
-                </Stack>
+            <ModalProvider>
+                <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                    <Stack screenOptions={{ headerShown: false }}>
+                        {/* <Stack.Screen name="(tabs)" />  */}
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="+not-found" />
+                    </Stack>
 
-                <StatusBar style="auto" />
-            </ThemeProvider>
+                    <ModalHost />
+                    <Loading visible={loading} />
+
+                    <StatusBar style="inverted" />
+                </ThemeProvider>
+            </ModalProvider>
         </AuthProvider>
     )
 }

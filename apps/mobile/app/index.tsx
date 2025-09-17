@@ -1,10 +1,9 @@
-// app/index.tsx
 import React from "react"
 import { useEffect, useState } from "react"
 import { View, ActivityIndicator } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
-import { isFirstLaunch } from "../src/utils/storage"
+import { isFirstLaunch } from "@/utils/storage"
 
 export default function Index() {
     const router = useRouter()
