@@ -2,6 +2,7 @@ import React from "react"
 import { StyleSheet } from "react-native"
 import { Slot, usePathname, router } from "expo-router"
 import BottomNavbar from "@common/BottomNavbar"
+import BackButton from "@common/BackButton"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaView } from "react-native-safe-area-context"
 
@@ -14,10 +15,15 @@ export default function HomeLayout() {
     if (pathname.includes("/camera")) activeTab = "camara"
     if (pathname.includes("/(requests)/requestList")) activeTab = "requests"
 
+    const showBackButton = pathname !== "/"
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar style="inverted" />
             <Slot />
+
+            {showBackButton && <BackButton />}
+
             <BottomNavbar
                 activeTab={activeTab}
                 onTabPress={(tab) => {
