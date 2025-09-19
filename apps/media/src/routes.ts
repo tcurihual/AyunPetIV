@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import upload from "./utils"
+import upload from "./middleware/upload"
 import { getImages, postImage, deleteImage } from "./controller"
 
 const router = Router()

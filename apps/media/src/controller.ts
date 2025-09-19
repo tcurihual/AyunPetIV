@@ -1,113 +1,98 @@
-import { Request, Response } from "express"
+import { Request, Response, NextFunction } from "express"
 import path from "path"
 import fs from "fs/promises"
-import { AppError } from "@repo/utils"
 
-const getAllFiles = async (dirPath: string, arrayOfFiles: string[] = []) => {
-    const files = await fs.readdir(dirPath)
+import { HttpError } from "./middleware/upload"
 
-    for (const file of files) {
-        const fullPath = path.join(dirPath, file)
-        const stats = await fs.stat(fullPath)
-        if (stats.isDirectory()) {
-            arrayOfFiles = await getAllFiles(fullPath, arrayOfFiles)
-        } else {
-            arrayOfFiles.push(fullPath)
-        }
+const UPLOADS_BASE = path.join(__dirname, "..", "uploads")
+
+const getAllFiles = async (dirPath: string, out: string[] = []): Promise<string[]> => {
+    const entries = await fs.readdir(dirPath)
+    for (const entry of entries) {
+        const full = path.join(dirPath, entry)
+        const st = await fs.stat(full)
+        if (st.isDirectory()) await getAllFiles(full, out)
+        else out.push(full)
     }
-
-    return arrayOfFiles
+    return out
 }
 
-export const postImage = (req: Request, res: Response) => {
-    const files = req.files as Express.Multer.File[]
-    if (!files || files.length === 0) {
-        throw new AppError(400, "No files were provided")
-    }
+export const postImage = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const many = (req.files as Express.Multer.File[]) ?? []
+        const one = req.file as Express.Multer.File | undefined
+        const files = many.length ? many : one ? [one] : []
 
-    const { entityType, entityId } = req.params
-    const uploadedImages = files.map((file) => {
-        return {
+        if (!files.length) throw new HttpError(400, "No files were provided")
+
+        const { entityType, entityId } = req.params
+        const uploaded = files.map((file) => ({
             url: `/uploads/${entityType}/${entityId}/${file.filename}`,
             fileName: file.filename,
-        }
-    })
+            size: file.size,
+            mime: file.mimetype,
+        }))
 
-    return res.status(201).json({
-        message: "Images uploaded succesfully",
-        data: uploadedImages,
-    })
+        return res.status(201).json({ message: "Images uploaded successfully", data: uploaded })
+    } catch (err) {
+        next(err)
+    }
 }
 
-export const getImages = async (req: Request, res: Response) => {
-    const { entityType } = req.params
-    const entityPath = path.join(__dirname, "..", "uploads", entityType)
-
+export const getImages = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await fs.access(entityPath)
-    } catch (error) {
-        throw new AppError(404, "No images found for this entity type")
+        const { entityType } = req.params
+        const entityPath = path.join(UPLOADS_BASE, entityType)
+
+        await fs.access(entityPath).catch(() => {
+            throw new HttpError(404, "No images found for this entity type")
+        })
+
+        const allFiles = await getAllFiles(entityPath)
+        const imageUrls = allFiles.map((abs) => {
+            const rel = path.relative(path.join(__dirname, ".."), abs)
+            return `/${rel.replace(/\\/g, "/")}`
+        })
+
+        return res.status(200).json({ message: "Images retrieved successfully", data: imageUrls })
+    } catch (err) {
+        next(err)
     }
-
-    const allFiles = await getAllFiles(entityPath)
-
-    const imageUrls = allFiles.map((filePath) => {
-        const relativePath = path.relative(path.join(__dirname, ".."), filePath)
-        return `/${relativePath.replace(/\\/g, "/")}`
-    })
-
-    return res.status(200).json({
-        message: "Images retrieved successfully",
-        data: imageUrls,
-    })
 }
 
-export const deleteImage = async (req: Request, res: Response) => {
-    const { entityType, entityId } = req.params
-    const { imageNamesArray } = req.body
+export const deleteImage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { entityType, entityId } = req.params
+        const { imageNamesArray } = req.body as { imageNamesArray?: string[] }
 
-    if (!imageNamesArray) {
-        throw new AppError(400, "Missing 'imageNamesArray' in the request body")
-    }
-
-    if (!entityType || !entityId || !Array.isArray(imageNamesArray)) {
-        throw new AppError(
-            400,
-            "Missing or invalid parameters. 'imageNamesArray' must be a valid array."
-        )
-    }
-
-    const results = {
-        deleted: [] as string[],
-        notFound: [] as string[],
-    }
-
-    const deletionPromises = imageNamesArray.map(async (imageName: string) => {
-        const imagePath = path.join(__dirname, "..", "uploads", entityType, entityId, imageName)
-        try {
-            await fs.access(imagePath)
-            await fs.unlink(imagePath)
-            results.deleted.push(imageName)
-        } catch (error: any) {
-            if (error.code === "ENOENT") {
-                results.notFound.push(imageName)
-            } else {
-                console.error(`Failed to delete ${imageName}:`, error)
-            }
+        if (!Array.isArray(imageNamesArray)) {
+            throw new HttpError(
+                400,
+                "Missing or invalid parameters. 'imageNamesArray' must be an array."
+            )
         }
-    })
 
-    await Promise.all(deletionPromises)
+        const results = { deleted: [] as string[], notFound: [] as string[] }
 
-    if (results.deleted.length > 0) {
-        return res.status(200).json({
-            message: "Images processed.",
+        await Promise.all(
+            imageNamesArray.map(async (name) => {
+                const p = path.join(UPLOADS_BASE, entityType, entityId, name)
+                try {
+                    await fs.unlink(p)
+                    results.deleted.push(name)
+                } catch (e: any) {
+                    if (e?.code === "ENOENT") results.notFound.push(name)
+                    else throw e
+                }
+            })
+        )
+
+        const ok = results.deleted.length > 0
+        return res.status(ok ? 200 : 404).json({
+            message: ok ? "Images processed." : "No images were found to be deleted.",
             data: results,
         })
-    } else {
-        return res.status(404).json({
-            message: "No images were found to be deleted.",
-            data: results,
-        })
+    } catch (err) {
+        next(err)
     }
 }
