@@ -90,9 +90,9 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => console.log("Recuperar contraseña")}>
-          <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+              <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.buttonPrimary, styles.buttonSecondary]}
