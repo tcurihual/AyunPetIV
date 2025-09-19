@@ -33,19 +33,17 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         borderRadius: 16,
         overflow: "hidden",
-        marginBottom: 16,
         marginHorizontal: 4,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 2,
-        elevation: 1,
-        width: 180, // Fijo ancho tipo card
-        flexGrow: 0,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        flex: 1, // Cambio: flexibilidad en lugar de ancho fijo
     },
     image: {
         width: "100%",
-        height: 120,
+        height: 140, // Incrementé la altura para mejor proporción
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         backgroundColor: "#eee",
