@@ -19,7 +19,7 @@ export default function HomeLayout() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar style="inverted" />
+            <StatusBar style="light" />
             <Slot />
 
             {showBackButton && <BackButton />}
