@@ -18,7 +18,7 @@ export default function Index() {
                     router.replace("/(home)")
                 } else {
                     if (firstTime) {
-                        router.replace("/(auth)")
+                        router.replace("/(auth)/intermediate-view")
                     } else {
                         router.replace("/(auth)/login")
                     }
