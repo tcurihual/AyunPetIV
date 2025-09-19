@@ -1,122 +1,137 @@
 import React, { useState } from "react"
 import {
-    View,
-    TextInput,
-    TouchableOpacity,
-    Text,
-    Image,
-    StyleSheet,
-    Dimensions,
-    ScrollView,
+  View, 
+  TouchableOpacity, 
+  Text, 
+  Image, 
+  StyleSheet, 
+  Dimensions, 
+  ScrollView, 
+  Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import Input from "../../components/ui/Input"
+import { RegisterFormSchema } from "@/utils/schemas"
+import { z } from "zod"
 
 const { width } = Dimensions.get("window")
+type RegisterForm = z.infer<typeof RegisterFormSchema>
 
-type InputConfig = {
-    key: string
-    placeholder: string
-    autoCapitalize?: "none" | "sentences" | "words" | "characters"
-    keyboardType?: string
-    secureTextEntry?: boolean
-}
-
-const steps: {
-    title: string
-    inputs: InputConfig[]
-}[] = [
-    {
-        title: "Nombre y RUT",
-        inputs: [
-            { key: "name", placeholder: "Nombre completo", autoCapitalize: "words" },
-            { key: "rut", placeholder: "RUT", keyboardType: "default" },
-        ],
-    },
-    {
-        title: "Contraseña",
-        inputs: [
-            { key: "password", placeholder: "Contraseña", secureTextEntry: true },
-            { key: "repeatPassword", placeholder: "Repetir contraseña", secureTextEntry: true },
-        ],
-    },
-    {
-        title: "Datos de Contacto",
-        inputs: [
-            { key: "email", placeholder: "Correo electrónico", keyboardType: "email-address" },
-            { key: "phone", placeholder: "Teléfono", keyboardType: "phone-pad" },
-        ],
-    },
+const steps: { title: string; fields: (keyof RegisterForm)[] }[] = [
+  { title: "Nombre y RUT", fields: ["name", "rut"] },
+  { title: "Contraseña", fields: ["password", "verifyPassword"] },
+  { title: "Datos de Contacto", fields: ["email", "phone"] },
 ]
 
 export default function RegisterScreen() {
-    const router = useRouter()
-    const styles = useThemeStyles()
-    const [step, setStep] = useState(0)
-    const [form, setForm] = useState({
-        name: "",
-        rut: "",
-        password: "",
-        repeatPassword: "",
-        email: "",
-        phone: "",
-    })
+  const router = useRouter()
+  const styles = useThemeStyles()
+  const [step, setStep] = useState(0)
 
-    const handleChange = (key: string, value: string) => {
-        setForm({ ...form, [key]: value })
+  const {
+    control,
+    handleSubmit,
+    trigger,
+    formState: { isSubmitting },
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(RegisterFormSchema),
+    mode: "onTouched",
+    defaultValues: {
+      name: "",
+      rut: "",
+      password: "",
+      verifyPassword: "",
+      email: "",
+      phone: "",
+    },
+  })
+
+  const onNext = async () => {
+    const ok = await trigger(steps[step].fields as any)
+    if (!ok) return
+    if (step < steps.length - 1) setStep((s) => s + 1)
+  }
+
+  const onBack = () => {
+    if (step > 0) setStep((s) => s - 1)
+    else router.back()
+  }
+
+  const onSubmit = async (data: RegisterForm) => {
+    try {
+      Alert.alert("Registro exitoso", "Cuenta creada")
+      router.replace("/(auth)/login")
+    } catch {
+      Alert.alert("Error", "No se pudo registrar la cuenta")
     }
+  }
 
-    const handleNext = () => {
-        if (step < steps.length - 1) setStep(step + 1)
+  const renderFields = () => {
+    switch (step) {
+      case 0:
+        return (
+          <>
+            <Input<RegisterForm> name="name" control={control} label="Nombre completo" placeholder="Juan Pérez" />
+            <Input<RegisterForm> name="rut" control={control} label="RUT" placeholder="12.345.678-9" />
+          </>
+        )
+      case 1:
+        return (
+          <>
+            <Input<RegisterForm> name="password" control={control} label="Contraseña" placeholder="••••••••" type="password" />
+            <Input<RegisterForm> name="verifyPassword" control={control} label="Repetir contraseña" placeholder="••••••••" type="password" />
+          </>
+        )
+      case 2:
+      default:
+        return (
+          <>
+            <Input<RegisterForm> name="email" control={control} label="Correo electrónico" placeholder="correo@dominio.com" type="email" />
+            <Input<RegisterForm> name="phone" control={control} label="Teléfono" placeholder="+56 9 1234 5678" inputProps={{ keyboardType: "phone-pad" }} />
+          </>
+        )
     }
+  }
 
-    const handleBack = () => {
-        if (step > 0) setStep(step - 1)
-        else router.back()
-    }
+  return (
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Ionicons name="arrow-back" size={28} color="black" />
+        </TouchableOpacity>
 
-    return (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.container}>
-                <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                    <Ionicons name="arrow-back" size={28} color="black" />
-                </TouchableOpacity>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Datos de Registro</Text>
-                    <View style={styles.semiCircle} />
-                    <Image
-                        source={require("@images/ayun-pet.png")}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
-                </View>
-                <View style={styles.stepIndicator}>
-                    <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
-                    <Text style={styles.stepTitle}>{steps[step].title}</Text>
-                </View>
-                {steps[step].inputs.map((input) => (
-                    <TextInput
-                        key={input.key}
-                        style={styles.input}
-                        placeholder={input.placeholder}
-                        value={form[input.key as keyof typeof form]}
-                        onChangeText={(v) => handleChange(input.key, v)}
-                        autoCapitalize={input.autoCapitalize ?? "none"}
-                        keyboardType={(input.keyboardType as any) ?? "default"}
-                        secureTextEntry={input.secureTextEntry ?? false}
-                    />
-                ))}
-                <TouchableOpacity style={styles.button} onPress={handleNext}>
-                    <Text style={styles.buttonText}>
-                        {step === steps.length - 1 ? "Crear Cuenta" : "Continuar"}
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.secondaryButton} onPress={handleBack}>
-                    <Text style={styles.secondaryButtonText}>Volver</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
-    )
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Datos de Registro</Text>
+          <View style={styles.semiCircle} />
+          <Image source={require("@images/ayun-pet.png")} style={styles.logo} resizeMode="contain" />
+        </View>
+
+        <View style={styles.stepIndicator}>
+          <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
+          <Text style={styles.stepTitle}>{steps[step].title}</Text>
+        </View>
+
+        {renderFields()}
+
+        {step < steps.length - 1 ? (
+          <TouchableOpacity style={styles.button} onPress={onNext} disabled={isSubmitting}>
+            <Text style={styles.buttonText}>Continuar</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
+            <Text style={styles.buttonText}>{isSubmitting ? "Creando..." : "Crear Cuenta"}</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
+          <Text style={styles.secondaryButtonText}>Volver</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  )
 }
 
 const useThemeStyles = () => {
@@ -157,14 +172,14 @@ const useThemeStyles = () => {
         headerTitle: {
             fontSize: width < 350 ? 16 : 20,
             fontWeight: "bold",
-            marginTop: 24,
-            marginBottom: 8,
+            marginTop: 40,
+            marginBottom: 0,
             color: "#222",
         },
         logo: {
             width: width * 0.45,
             height: width * 0.38,
-            top: 12,
+            top: 0,
         },
         semiCircle: {
             position: "absolute",
@@ -181,7 +196,7 @@ const useThemeStyles = () => {
             flexDirection: "row",
             alignItems: "center",
             marginBottom: 18,
-            marginTop: 18,
+            marginTop: 80,
             width: "90%",
         },
         stepCircle: {
@@ -196,7 +211,7 @@ const useThemeStyles = () => {
             color: "#A47CF3",
             marginRight: 12,
             fontWeight: "bold",
-            backgroundColor: "#fff",
+            backgroundColor: "#ffffffff",
             paddingTop: 5,
         },
         stepTitle: {
