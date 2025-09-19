@@ -10,6 +10,9 @@ import { useColorScheme } from "react-native"
 import { AuthProvider } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
 
+import { AlertProvider } from "@/context/AlertContext"
+import { Alert } from "@/components/ui/Alert"
+
 import Loading from "@ui/Loading"
 import ModalHost from "@common/modals/ModalHost"
 
@@ -30,23 +33,26 @@ export default function RootLayout() {
 
     if (!loaded) return null
 
-// (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
+    // (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
 
     return (
         <AuthProvider>
             <ModalProvider>
-                <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                    <Stack screenOptions={{ headerShown: false }}>
-                        {/* <Stack.Screen name="(tabs)" />  */}
-                        <Stack.Screen name="(auth)" />
-                        <Stack.Screen name="+not-found" />
-                    </Stack>
+                <AlertProvider>
+                    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                        <Stack screenOptions={{ headerShown: false }}>
+                            {/* <Stack.Screen name="(tabs)" />  */}
+                            <Stack.Screen name="(auth)" />
+                            <Stack.Screen name="+not-found" />
+                        </Stack>
 
-                    <ModalHost />
-                    <Loading visible={loading} />
+                        <ModalHost />
+                        <Loading visible={loading} />
+                        <Alert />
 
-                    <StatusBar style="inverted" />
-                </ThemeProvider>
+                        <StatusBar style="inverted" />
+                    </ThemeProvider>
+                </AlertProvider>
             </ModalProvider>
         </AuthProvider>
     )

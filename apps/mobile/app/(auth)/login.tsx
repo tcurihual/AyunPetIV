@@ -13,6 +13,7 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useAlert } from "@/context/AlertContext"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoginFormSchema } from "@/utils/schemas"
@@ -26,7 +27,8 @@ type LoginForm = z.infer<typeof LoginFormSchema>
 export default function LoginScreen() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
-
+  const { showAlert } = useAlert()
+  
   const {
     control,
     handleSubmit,
@@ -44,9 +46,11 @@ export default function LoginScreen() {
         "user",
         JSON.stringify({ email: data.email, loggedAt: Date.now() })
       )
+      showAlert("Inicio de sesión exitoso, espere un momento", "success")      
+      await new Promise((resolve) => setTimeout(resolve, 5000))
       router.replace("/(home)")
-    } catch {
-      Alert.alert("Error", "No se pudo iniciar sesión")
+    } catch (e){
+          showAlert("Error al iniciar sesión. Inténtalo de nuevo.", "error")
     } finally {
       setSubmitting(false)
     }
