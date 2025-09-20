@@ -2,42 +2,7 @@ import React from "react"
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import Animated from "react-native-reanimated"
-import { Pet } from "@/interfaces/pet"
-
-const mockPets: Pet[] = [
-    {
-        id: "1",
-        name: "Firulais",
-        gender: "Macho",
-        age: "2 años",
-        publisher: "Fundación X",
-        image: require("@/assets/images/perro1.jpg"),
-    },
-    {
-        id: "2",
-        name: "Pelusa",
-        gender: "Hembra",
-        age: "1 año y 2 meses",
-        publisher: "Pepito Pepe",
-        image: require("@/assets/images/Gato1-1.jpg"),
-    },
-    {
-        id: "3",
-        name: "Ayudante de Santa",
-        gender: "Macho",
-        age: "3 años",
-        publisher: "Fundación X",
-        image: require("@/assets/images/perro2.jpg"),
-    },
-    {
-        id: "4",
-        name: "Bola de nieve",
-        gender: "Hembra",
-        age: "6 meses",
-        publisher: "Fundación X",
-        image: require("@/assets/images/Gato1-2.jpg"),
-    },
-]
+import { mockPets } from "@/data/mockPets"
 
 export default function PublicationDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -54,10 +19,10 @@ export default function PublicationDetail() {
     }
 
     const getDescription = (petName: string) => {
-        if (petName === "Pelusa") {
-            return "Érase una vez una gata que por un incendio ocasionado por un ajuste de cuentas sus dueños lamentablemente fallecieron. Esta linda gatita busca un nuevo hogar, es tierno, cariñosa y muy limpia. Maulla muy bajo por lo que es muy silenciosa y cuidadosa."
-        }
-        return `${petName} es una mascota adorable que busca un nuevo hogar lleno de amor y cuidados. Es muy cariñosa y le encanta jugar.`
+        return (
+            pet.description ||
+            `${petName} es una mascota adorable que busca un nuevo hogar lleno de amor y cuidados. Es muy cariñosa y le encanta jugar.`
+        )
     }
 
     const getRaceType = (petName: string) => {
