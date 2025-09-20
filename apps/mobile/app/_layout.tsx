@@ -13,8 +13,8 @@ import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 
-import Loading from "@ui/Loading"
 import ModalHost from "@common/modals/ModalHost"
+import { LoadingProvider } from "@/context/LoadingContext"
 
 // Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
@@ -24,8 +24,6 @@ export default function RootLayout() {
     const [loaded] = useFonts({
         SpaceMono: require("@fonts/SpaceMono-Regular.ttf"),
     })
-
-    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (loaded) SplashScreen.hideAsync()
@@ -39,19 +37,20 @@ export default function RootLayout() {
         <AuthProvider>
             <ModalProvider>
                 <AlertProvider>
-                    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                        <Stack screenOptions={{ headerShown: false }}>
-                            {/* <Stack.Screen name="(tabs)" />  */}
-                            <Stack.Screen name="(auth)" />
-                            <Stack.Screen name="+not-found" />
-                        </Stack>
+                    <LoadingProvider>
+                        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                            <Stack screenOptions={{ headerShown: false }}>
+                                {/* <Stack.Screen name="(tabs)" />  */}
+                                <Stack.Screen name="(auth)" />
+                                <Stack.Screen name="+not-found" />
+                            </Stack>
 
-                        <ModalHost />
-                        <Loading visible={loading} />
-                        <Alert />
+                            <ModalHost />
+                            <Alert />
 
-                        <StatusBar style="inverted" />
-                    </ThemeProvider>
+                            <StatusBar style="inverted" />
+                        </ThemeProvider>
+                    </LoadingProvider>
                 </AlertProvider>
             </ModalProvider>
         </AuthProvider>
