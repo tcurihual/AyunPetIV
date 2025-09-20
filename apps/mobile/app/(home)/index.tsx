@@ -4,41 +4,7 @@ import { useRouter } from "expo-router"
 import PublicationCard from "@/components/common/PublicationCard"
 import FilterModal, { FilterOptions } from "@/components/common/modals/FilterModal"
 import { Pet } from "@/interfaces/pet"
-
-const mockPets: Pet[] = [
-    {
-        id: "1",
-        name: "Firulais",
-        gender: "Macho",
-        age: "2 años",
-        publisher: "Fundación X",
-        image: require("@/assets/images/perro1.jpg"),
-    },
-    {
-        id: "2",
-        name: "Pelusa",
-        gender: "Hembra",
-        age: "1 año",
-        publisher: "Fundación X",
-        image: require("@/assets/images/Gato1-1.jpg"),
-    },
-    {
-        id: "3",
-        name: "Ayudante de Santa",
-        gender: "Macho",
-        age: "3 años",
-        publisher: "Fundación X",
-        image: require("@/assets/images/perro2.jpg"),
-    },
-    {
-        id: "4",
-        name: "Bola de nieve",
-        gender: "Hembra",
-        age: "6 meses",
-        publisher: "Fundación X",
-        image: require("@/assets/images/Gato1-2.jpg"),
-    },
-]
+import { mockPets } from "@/data/mockPets"
 
 export default function Home() {
     const router = useRouter()
