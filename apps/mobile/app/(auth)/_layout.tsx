@@ -7,7 +7,7 @@ export default function AuthLayout() {
 
     if (status === "loading") return null
 
-    if (status === "authenticated") return <Redirect href="/(tabs)" />
+    if (status === "authenticated") return <Redirect href="/(home)" />
 
     return <Stack screenOptions={{ headerShown: false }} />
 }

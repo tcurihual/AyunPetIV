@@ -1,13 +1,21 @@
 import React from "react"
 import { StyleSheet } from "react-native"
-import { Slot, usePathname, router } from "expo-router"
+import { Slot, usePathname, router, Redirect } from "expo-router"
 import BottomNavbar from "@common/BottomNavbar"
 import BackButton from "@common/BackButton"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useAuthContext } from "@/context/AuthContext"
 
 export default function HomeLayout() {
     const pathname = usePathname()
+    const { status } = useAuthContext()
+
+    // Mostrar loading mientras verifica autenticación
+    if (status === "loading") return null
+
+    // Redirigir a auth si no está autenticado
+    if (status === "unauthenticated") return <Redirect href="/(auth)" />
 
     // Detectar pestaña activa según la ruta actual
     let activeTab = "home"
