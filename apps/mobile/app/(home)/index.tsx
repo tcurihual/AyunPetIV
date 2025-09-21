@@ -1,10 +1,11 @@
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions, Image } from "react-native"
 import { useRouter } from "expo-router"
 import PublicationCard from "@/components/common/PublicationCard"
 import FilterModal, { FilterOptions } from "@/components/common/modals/FilterModal"
 import { Pet } from "@/interfaces/pet"
-import { mockPets } from "@/data/mockPets"
+
+import ayunData from "@/data/mockData"
 
 export default function Home() {
     const router = useRouter()
@@ -16,40 +17,94 @@ export default function Home() {
         age: "all",
     })
 
-    const filteredPets = mockPets.filter((pet) => {
-        if (selectedCategory === "dog") {
-            if (!(pet.name === "Firulais" || pet.name === "Ayudante de Santa")) return false
-        }
-        if (selectedCategory === "cat") {
-            if (!(pet.name === "Pelusa" || pet.name === "Bola de nieve")) return false
-        }
+    const toType = (species?: string) => {
+        const s = (species ?? "").toLowerCase()
+        if (s === "perro") return "dog"
+        if (s === "gato") return "cat"
+        return "other"
+    }
 
-        if (activeFilters.type !== "all") {
-            if (
-                activeFilters.type === "dog" &&
-                !(pet.name === "Firulais" || pet.name === "Ayudante de Santa")
-            )
-                return false
-            if (
-                activeFilters.type === "cat" &&
-                !(pet.name === "Pelusa" || pet.name === "Bola de nieve")
-            )
-                return false
+    const activePostByPetId = useMemo(() => {
+        const map = new Map<number, boolean>()
+        for (const p of ayunData.post ?? []) {
+            if (p?.petid != null) map.set(p.petid, (p.status ?? "").toLowerCase() === "active")
         }
+        return map
+    }, [])
 
-        if (activeFilters.gender !== "all") {
-            if (activeFilters.gender === "male" && pet.gender !== "Macho") return false
-            if (activeFilters.gender === "female" && pet.gender !== "Hembra") return false
+    const userNameById = useMemo(() => {
+        const map = new Map<number, string>()
+        for (const u of ayunData.users ?? []) {
+            if (u?.id != null) map.set(u.id, u.name ?? u.email ?? "Usuario")
         }
+        return map
+    }, [])
 
+    const speciesById = useMemo(() => {
+        const map = new Map<string, string>()
+        for (const p of ayunData.pet ?? []) {
+            map.set(String(p.id), p.species ?? "")
+        }
+        return map
+    }, [])
+
+    const assetByName: Record<string, any> = {
+        firulais: require("@/assets/images/perro1.jpg"),
+        michi: require("@/assets/images/Gato1-1.jpg"),
+        rocky: require("@/assets/images/perro2.jpg"),
+        luna: require("@/assets/images/Gato1-2.jpg"),
+    }
+
+    const resolveImage = (name?: string) => {
+        const key = (name ?? "").toLowerCase().trim()
+        return assetByName[key]
+    }
+
+    const dataPets: Pet[] = useMemo(() => {
+        return (ayunData.pet ?? []).map((p) => ({
+            id: String(p.id),
+            name: p.name,
+            gender: p.gender,
+            age: `${p.age} años`,
+            publisher: userNameById.get(p.ownerid) ?? "Fundación Demo",
+            description: p.description,
+            image: resolveImage(p.name),
+        }))
+    }, [activePostByPetId, userNameById])
+
+    // buckets de edad
+    const matchAge = (ageStr: string, bucket: string) => {
+        const num = parseInt(ageStr) || 0
+        if (bucket === "young") return num <= 2
+        if (bucket === "adult") return num >= 3 && num <= 6
+        if (bucket === "senior") return num > 6
         return true
-    })
+    }
+
+    const filteredPets = useMemo(() => {
+        return dataPets.filter((pet) => {
+            const species = speciesById.get(pet.id)
+            const petType = toType(species)
+
+            if (selectedCategory === "dog" && petType !== "dog") return false
+            if (selectedCategory === "cat" && petType !== "cat") return false
+
+            if (activeFilters.type !== "all" && petType !== activeFilters.type) return false
+
+            if (activeFilters.gender !== "all") {
+                if (activeFilters.gender === "male" && pet.gender !== "Macho") return false
+                if (activeFilters.gender === "female" && pet.gender !== "Hembra") return false
+            }
+
+            if (activeFilters.age !== "all" && !matchAge(pet.age, activeFilters.age)) return false
+
+            return true
+        })
+    }, [dataPets, selectedCategory, activeFilters, speciesById])
 
     const handleApplyFilters = (filters: FilterOptions) => {
         setActiveFilters(filters)
-        if (filters.type !== "all") {
-            setSelectedCategory("all")
-        }
+        if (filters.type !== "all") setSelectedCategory("all")
     }
 
     const renderPetItem = ({ item }: { item: Pet }) => (
@@ -70,7 +125,7 @@ export default function Home() {
                         ]}
                         onPress={() => setSelectedCategory("dog")}
                     >
-                        <Text style={styles.categoryIcon}>🐕</Text>
+                        <Text style={styles.categoryIcon as any}>🐕</Text>
                         <Text style={styles.categoryText}>Perro</Text>
                     </TouchableOpacity>
 
@@ -81,7 +136,7 @@ export default function Home() {
                         ]}
                         onPress={() => setSelectedCategory("cat")}
                     >
-                        <Text style={styles.categoryIcon}>🐱</Text>
+                        <Text style={styles.categoryIcon as any}>🐱</Text>
                         <Text style={styles.categoryText}>Gato</Text>
                     </TouchableOpacity>
 
@@ -103,16 +158,16 @@ export default function Home() {
                 </View>
             </View>
 
-            {/* Grid de mascotas */}
             <FlatList
                 data={filteredPets}
                 renderItem={renderPetItem}
                 numColumns={2}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => String(item.id)}
                 contentContainerStyle={styles.petsGrid}
                 columnWrapperStyle={styles.row}
                 showsVerticalScrollIndicator={false}
             />
+
             <FilterModal
                 visible={showFilterModal}
                 onClose={() => setShowFilterModal(false)}
@@ -125,26 +180,10 @@ export default function Home() {
 const { width } = Dimensions.get("window")
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        marginTop: 16,
-        backgroundColor: "#fff",
-    },
-    categoriesSection: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        backgroundColor: "#fff",
-    },
-    categoriesTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#000",
-        marginBottom: 12,
-    },
-    categoriesContainer: {
-        flexDirection: "row",
-        gap: 12,
-    },
+    container: { flex: 1, marginTop: 16, backgroundColor: "#fff" },
+    categoriesSection: { paddingHorizontal: 16, paddingVertical: 16, backgroundColor: "#fff" },
+    categoriesTitle: { fontSize: 18, fontWeight: "bold", color: "#000", marginBottom: 12 },
+    categoriesContainer: { flexDirection: "row", gap: 12 },
     categoryButton: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -159,26 +198,11 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
-    categoryButtonActive: {
-        backgroundColor: "#FFD700",
-    },
-    categoryIcon: {
-        width: 16,
-        height: 16,
-        resizeMode: "contain",
-    },
-    categoryText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#000",
-    },
-    petsGrid: {
-        paddingHorizontal: 16,
-        paddingBottom: 20,
-    },
-    row: {
-        justifyContent: "space-between",
-    },
+    categoryButtonActive: { backgroundColor: "#FFD700" },
+    categoryIcon: { width: 16, height: 16, resizeMode: "contain" },
+    categoryText: { fontSize: 14, fontWeight: "600", color: "#000" },
+    petsGrid: { paddingHorizontal: 16, paddingBottom: 20 },
+    row: { justifyContent: "space-between" },
     cardContainer: {
         flex: 1,
         maxWidth: (width - 48) / 2,
