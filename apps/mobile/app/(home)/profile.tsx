@@ -1,6 +1,7 @@
 import React from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native"
-import { useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import { useAuthContext } from "@/context/AuthContext"
 
 type Giver = {
     id: string
@@ -23,6 +24,8 @@ type Post = {
 
 export default function GiverProfileScreen() {
     const { giverId } = useLocalSearchParams<{ giverId: string }>()
+    const { signOut, status } = useAuthContext()
+    const router = useRouter()
 
     const giver: Giver = {
         id: giverId ?? "1",
@@ -62,8 +65,25 @@ export default function GiverProfileScreen() {
         },
     ]
 
+    const handleLogout = async () => {
+        try {
+            await signOut()
+            router.replace("/(auth)/login")
+        } catch {}
+    }
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
+            <View style={styles.topBar}>
+                <TouchableOpacity
+                    onPress={handleLogout}
+                    style={[styles.logoutBtn, status === "loading" && { opacity: 0.6 }]}
+                    disabled={status === "loading"}
+                >
+                    <Text style={styles.logoutText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.header}>
                 <Image source={{ uri: giver.avatarUrl }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
@@ -145,6 +165,18 @@ const TEXT_MUTED = "#555"
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#fff", padding: 16 },
+
+    topBar: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 8 },
+    logoutBtn: {
+        borderWidth: 1,
+        borderColor: "#e5e7eb",
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: "#fd5353ff",
+    },
+    logoutText: { color: BLACK, fontWeight: "bold", fontSize: 12 },
+
     header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
     avatar: { width: 72, height: 72, borderRadius: 36, marginRight: 12 },
     name: { fontSize: 18, fontWeight: "bold", color: BLACK },

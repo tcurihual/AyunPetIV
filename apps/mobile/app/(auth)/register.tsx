@@ -1,13 +1,12 @@
 import React, { useState } from "react"
 import {
-  View, 
-  TouchableOpacity, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
-  ScrollView, 
-  Alert,
+    View,
+    TouchableOpacity,
+    Text,
+    Image,
+    StyleSheet,
+    Dimensions,
+    ScrollView,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -16,122 +15,185 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import Input from "../../components/ui/Input"
 import { RegisterFormSchema } from "@/utils/schemas"
 import { z } from "zod"
+import { useAuthContext } from "@/context/AuthContext"
+import { useAlert } from "@/context/AlertContext"
+import { useLoading } from "@/context/LoadingContext"
 
 const { width } = Dimensions.get("window")
 type RegisterForm = z.infer<typeof RegisterFormSchema>
 
 const steps: { title: string; fields: (keyof RegisterForm)[] }[] = [
-  { title: "Nombre y RUT", fields: ["name", "rut"] },
-  { title: "Contraseña", fields: ["password", "verifyPassword"] },
-  { title: "Datos de Contacto", fields: ["email", "phone"] },
+    { title: "Nombre y RUT", fields: ["name", "rut"] },
+    { title: "Contraseña", fields: ["password", "verifyPassword"] },
+    { title: "Datos de Contacto", fields: ["email", "phone"] },
 ]
 
 export default function RegisterScreen() {
-  const router = useRouter()
-  const styles = useThemeStyles()
-  const [step, setStep] = useState(0)
+    const router = useRouter()
+    const styles = useThemeStyles()
+    const [step, setStep] = useState(0)
 
-  const {
-    control,
-    handleSubmit,
-    trigger,
-    formState: { isSubmitting },
-  } = useForm<RegisterForm>({
-    resolver: zodResolver(RegisterFormSchema),
-    mode: "onTouched",
-    defaultValues: {
-      name: "",
-      rut: "",
-      password: "",
-      verifyPassword: "",
-      email: "",
-      phone: "",
-    },
-  })
+    const { signUp, status } = useAuthContext()
+    const { showAlert } = useAlert()
+    const { withLoading } = useLoading()
 
-  const onNext = async () => {
-    const ok = await trigger(steps[step].fields as any)
-    if (!ok) return
-    if (step < steps.length - 1) setStep((s) => s + 1)
-  }
+    const {
+        control,
+        handleSubmit,
+        trigger,
+        formState: { isSubmitting },
+    } = useForm<RegisterForm>({
+        resolver: zodResolver(RegisterFormSchema),
+        mode: "onTouched",
+        defaultValues: {
+            name: "",
+            rut: "",
+            password: "",
+            verifyPassword: "",
+            email: "",
+            phone: "",
+        },
+    })
 
-  const onBack = () => {
-    if (step > 0) setStep((s) => s - 1)
-    else router.back()
-  }
-
-  const onSubmit = async (data: RegisterForm) => {
-    try {
-      Alert.alert("Registro exitoso", "Cuenta creada")
-      router.replace("/(auth)/login")
-    } catch {
-      Alert.alert("Error", "No se pudo registrar la cuenta")
+    const onNext = async () => {
+        const ok = await trigger(steps[step].fields as any)
+        if (!ok) return
+        if (step < steps.length - 1) setStep((s) => s + 1)
     }
-  }
 
-  const renderFields = () => {
-    switch (step) {
-      case 0:
-        return (
-          <>
-            <Input<RegisterForm> name="name" control={control} label="Nombre completo" placeholder="Juan Pérez" />
-            <Input<RegisterForm> name="rut" control={control} label="RUT" placeholder="12.345.678-9" />
-          </>
-        )
-      case 1:
-        return (
-          <>
-            <Input<RegisterForm> name="password" control={control} label="Contraseña" placeholder="••••••••" type="password" />
-            <Input<RegisterForm> name="verifyPassword" control={control} label="Repetir contraseña" placeholder="••••••••" type="password" />
-          </>
-        )
-      case 2:
-      default:
-        return (
-          <>
-            <Input<RegisterForm> name="email" control={control} label="Correo electrónico" placeholder="correo@dominio.com" type="email" />
-            <Input<RegisterForm> name="phone" control={control} label="Teléfono" placeholder="+56 9 1234 5678" inputProps={{ keyboardType: "phone-pad" }} />
-          </>
-        )
+    const onBack = () => {
+        if (step > 0) setStep((s) => s - 1)
+        else router.back()
     }
-  }
 
-  return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={28} color="black" />
-        </TouchableOpacity>
+    const onSubmit = async (data: RegisterForm) => {
+        try {
+            await withLoading(async () => {
+                await signUp({
+                    name: data.name,
+                    email: data.email,
+                    password: data.password,
+                })
 
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Datos de Registro</Text>
-          <View style={styles.semiCircle} />
-          <Image source={require("@images/ayun-pet.png")} style={styles.logo} resizeMode="contain" />
-        </View>
+                showAlert("Registro exitoso. Redirigiendo…", "success")
+                router.replace("/(tabs)")
+            })
+        } catch (e: any) {
+            const msg =
+                typeof e?.message === "string" ? e.message : "No se pudo registrar la cuenta"
+            showAlert(msg, "error")
+        }
+    }
 
-        <View style={styles.stepIndicator}>
-          <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
-          <Text style={styles.stepTitle}>{steps[step].title}</Text>
-        </View>
+    const disabled = isSubmitting || status === "loading"
 
-        {renderFields()}
+    const renderFields = () => {
+        switch (step) {
+            case 0:
+                return (
+                    <>
+                        <Input<RegisterForm>
+                            name="name"
+                            control={control}
+                            label="Nombre completo"
+                            placeholder="Juan Pérez"
+                        />
+                        <Input<RegisterForm>
+                            name="rut"
+                            control={control}
+                            label="RUT"
+                            placeholder="12.345.678-9"
+                        />
+                    </>
+                )
+            case 1:
+                return (
+                    <>
+                        <Input<RegisterForm>
+                            name="password"
+                            control={control}
+                            label="Contraseña"
+                            placeholder="••••••••"
+                            type="password"
+                        />
+                        <Input<RegisterForm>
+                            name="verifyPassword"
+                            control={control}
+                            label="Repetir contraseña"
+                            placeholder="••••••••"
+                            type="password"
+                        />
+                    </>
+                )
+            case 2:
+            default:
+                return (
+                    <>
+                        <Input<RegisterForm>
+                            name="email"
+                            control={control}
+                            label="Correo electrónico"
+                            placeholder="correo@dominio.com"
+                            type="email"
+                        />
+                        <Input<RegisterForm>
+                            name="phone"
+                            control={control}
+                            label="Teléfono"
+                            placeholder="+56 9 1234 5678"
+                            inputProps={{ keyboardType: "phone-pad" }}
+                        />
+                    </>
+                )
+        }
+    }
 
-        {step < steps.length - 1 ? (
-          <TouchableOpacity style={styles.button} onPress={onNext} disabled={isSubmitting}>
-            <Text style={styles.buttonText}>Continuar</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
-            <Text style={styles.buttonText}>{isSubmitting ? "Creando..." : "Crear Cuenta"}</Text>
-          </TouchableOpacity>
-        )}
+    return (
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.container}>
+                <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                    <Ionicons name="arrow-back" size={28} color="black" />
+                </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-          <Text style={styles.secondaryButtonText}>Volver</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  )
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Datos de Registro</Text>
+                    <View style={styles.semiCircle} />
+                    <Image
+                        source={require("@images/ayun-pet.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                <View style={styles.stepIndicator}>
+                    <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
+                    <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                </View>
+
+                {renderFields()}
+
+                {step < steps.length - 1 ? (
+                    <TouchableOpacity style={[styles.button]} onPress={onNext} disabled={disabled}>
+                        <Text style={styles.buttonText}>Continuar</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={handleSubmit(onSubmit)}
+                        disabled={disabled}
+                    >
+                        <Text style={styles.buttonText}>
+                            {disabled ? "Creando..." : "Crear Cuenta"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+
+                <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
+                    <Text style={styles.secondaryButtonText}>Volver</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
+    )
 }
 
 const useThemeStyles = () => {

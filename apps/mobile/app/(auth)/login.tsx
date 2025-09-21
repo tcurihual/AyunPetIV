@@ -11,7 +11,6 @@ import {
     Dimensions,
 } from "react-native"
 import { useRouter } from "expo-router"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAlert } from "@/context/AlertContext"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,6 +18,7 @@ import { LoginFormSchema } from "@/utils/schemas"
 import Input from "../../components/ui/Input"
 import { z } from "zod"
 import { useLoading } from "@/context/LoadingContext"
+import { useAuthContext } from "@/context/AuthContext"
 
 const { width } = Dimensions.get("window")
 
@@ -28,6 +28,7 @@ export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
+    const { signIn, status } = useAuthContext()
 
     const {
         control,
@@ -42,21 +43,23 @@ export default function LoginScreen() {
     const onSubmit = async (data: LoginForm) => {
         try {
             await withLoading(async () => {
-                await AsyncStorage.setItem(
-                    "user",
-                    JSON.stringify({ email: data.email, loggedAt: Date.now() })
-                )
+                await signIn({ email: data.email, password: data.password })
+                await new Promise((r) => setTimeout(r, 700)) // simula un retardo para ver el loading
 
-                showAlert("Inicio de sesión exitoso, espere un momento", "success")
-
-                await new Promise((resolve) => setTimeout(resolve, 3000))
+                showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
 
                 router.replace("/(home)")
             })
-        } catch (e) {
-            showAlert("Error al iniciar sesión. Inténtalo de nuevo.", "error")
+        } catch (e: any) {
+            const msg =
+                typeof e?.message === "string"
+                    ? e.message
+                    : "Error al iniciar sesión. Inténtalo de nuevo."
+            showAlert(msg, "error")
         }
     }
+
+    const disabled = isSubmitting || status === "loading"
 
     return (
         <KeyboardAvoidingView
@@ -87,9 +90,9 @@ export default function LoginScreen() {
                 />
 
                 <TouchableOpacity
-                    style={[styles.buttonPrimary, isSubmitting && { opacity: 0.6 }]}
+                    style={[styles.buttonPrimary, disabled && { opacity: 0.6 }]}
                     onPress={handleSubmit(onSubmit)}
-                    disabled={isSubmitting}
+                    disabled={disabled}
                 >
                     <Text style={styles.buttonText}>Iniciar Sesión</Text>
                 </TouchableOpacity>

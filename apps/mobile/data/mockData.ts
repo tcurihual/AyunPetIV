@@ -1,14 +1,37 @@
-// apps/mobile/src/data/mock_ayun.ts
 export default {
     role: [
         { id: 1, roletype: "fundacion" },
         { id: 2, roletype: "adoptante" },
     ],
     users: [
-        { id: 1, role: 1, email: "contacto@patitasfelices.cl", name: "Fundación Patitas Felices" },
-        { id: 2, role: 2, email: "juanperez@gmail.com", name: "Juan Pérez" },
-        { id: 3, role: 1, email: "hola@faa.cl", name: "Fundación Amigos de los Animales" },
-        { id: 4, role: 2, email: "maria.lopez@example.com", name: "María López" },
+        {
+            id: 1,
+            role: 1,
+            email: "contacto@patitasfelices.cl",
+            name: "Fundación Patitas Felices",
+            password: "Patitas@2025",
+        },
+        {
+            id: 2,
+            role: 2,
+            email: "juanperez@gmail.com",
+            name: "Juan Pérez",
+            password: "Juan123@",
+        },
+        {
+            id: 3,
+            role: 1,
+            email: "hola@faa.cl",
+            name: "Fundación Amigos de los Animales",
+            password: "Faa_2025",
+        },
+        {
+            id: 4,
+            role: 2,
+            email: "maria.lopez@example.com",
+            name: "María López",
+            password: "MariaL-2025",
+        },
     ],
     pet: [
         {
