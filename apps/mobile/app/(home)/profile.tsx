@@ -1,6 +1,7 @@
 import React from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native"
-import { useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import { useAuthContext } from "@/context/AuthContext"
 
 type Giver = {
     id: string
@@ -23,6 +24,8 @@ type Post = {
 
 export default function GiverProfileScreen() {
     const { giverId } = useLocalSearchParams<{ giverId: string }>()
+    const router = useRouter()
+    const { signOut } = useAuthContext() 
 
     const giver: Giver = {
         id: giverId ?? "1",
@@ -62,6 +65,15 @@ export default function GiverProfileScreen() {
         },
     ]
 
+    const handleLogout = async () => {
+        try {
+            await signOut()
+            router.replace("/(auth)/login")
+        } catch (e) {
+            console.warn("Error al cerrar sesión", e)
+        }
+    }
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
             <View style={styles.header}>
@@ -83,6 +95,9 @@ export default function GiverProfileScreen() {
                         <Text style={styles.badge}>Dador</Text>
                     )}
                 </View>
+                <TouchableOpacity style={styles.logoutPill} onPress={handleLogout}>
+                    <Text style={styles.logoutPillText}>Cerrar sesión</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.statsRow}>
@@ -160,6 +175,17 @@ const styles = StyleSheet.create({
         borderRadius: 999,
         overflow: "hidden",
     },
+    logoutPill: {
+        marginLeft: 8,
+        backgroundColor: "#fff",
+        borderWidth: 1,
+        borderColor: "#f00",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+    },
+    logoutPillText: { color: "#f00", fontWeight: "bold", fontSize: 12 },
+
     statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
     statCard: {
         flex: 1,

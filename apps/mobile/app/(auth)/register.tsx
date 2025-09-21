@@ -63,7 +63,7 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       Alert.alert("Registro exitoso", "Cuenta creada")
-      router.replace("/(auth)/login")
+      router.replace("/(home)/IntermediateView")
     } catch {
       Alert.alert("Error", "No se pudo registrar la cuenta")
     }
