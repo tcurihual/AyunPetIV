@@ -1,35 +1,40 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import Animated from "react-native-reanimated"
-import { mockPets } from "@/data/mockPets"
+import ayunData from "@/data/mockData"
 
 export default function PublicationDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
     const router = useRouter()
 
-    const pet = mockPets.find((p) => p.id === id)
+    const raw = useMemo(() => {
+        return (ayunData.pet ?? []).find((p) => String(p.id) === String(id))
+    }, [id])
 
-    if (!pet) {
+    const publisherName = useMemo(() => {
+        if (!raw) return "Fundación Demo"
+        const u = (ayunData.users ?? []).find((x) => x.id === raw.ownerid)
+        return u?.name ?? u?.email ?? "Fundación Demo"
+    }, [raw])
+
+    if (!raw) {
         return (
-            <View style={styles.container}>
-                <Text>Publicación no encontrada</Text>
+            <View style={styles.center}>
+                <Text style={styles.empty}>Publicación no encontrada</Text>
             </View>
         )
     }
 
-    const getDescription = (petName: string) => {
-        return (
-            pet.description ||
-            `${petName} es una mascota adorable que busca un nuevo hogar lleno de amor y cuidados. Es muy cariñosa y le encanta jugar.`
-        )
-    }
-
-    const getRaceType = (petName: string) => {
-        if (petName === "Pelusa" || petName === "Bola de nieve") {
-            return "Gato"
-        }
-        return "Perro"
+    const pet = {
+        id: String(raw.id),
+        name: raw.name,
+        gender: raw.gender,
+        age: `${raw.age} años`,
+        publisher: publisherName,
+        description: raw.description,
+        image: raw.image,
+        species: raw.species,
     }
 
     return (
@@ -63,9 +68,7 @@ export default function PublicationDetail() {
                                     </Text>
                                     <Text style={styles.infoLabel}>
                                         Raza/Tipo:{" "}
-                                        <Text style={styles.infoValue}>
-                                            {getRaceType(pet.name)}
-                                        </Text>
+                                        <Text style={styles.infoValue}>{pet.species}</Text>
                                     </Text>
                                     <Text style={styles.infoLabel}>
                                         Edad: <Text style={styles.infoValue}>{pet.age}</Text>
@@ -79,9 +82,7 @@ export default function PublicationDetail() {
 
                             <View style={styles.descriptionContainer}>
                                 <Text style={styles.descriptionLabel}>Descripción: </Text>
-                                <Text style={styles.descriptionText}>
-                                    {getDescription(pet.name)}
-                                </Text>
+                                <Text style={styles.descriptionText}>{pet.description}</Text>
                             </View>
 
                             <View style={styles.commentsContainer}>
@@ -111,11 +112,7 @@ export default function PublicationDetail() {
 const { width, height } = Dimensions.get("window")
 
 const styles = StyleSheet.create({
-    screenContainer: {
-        flex: 1,
-        backgroundColor: "#fff",
-        padding: 16,
-    },
+    screenContainer: { flex: 1, backgroundColor: "#fff", padding: 16 },
     container: {
         flex: 1,
         backgroundColor: "#EFEFEF",
@@ -133,68 +130,19 @@ const styles = StyleSheet.create({
         width: width * 1,
         height: height * 0.4,
     },
-    mainImage: {
-        width: "100%",
-        height: "100%",
-    },
-    infoContainer: {
-        padding: 20,
-        flex: 1,
-    },
-    petName: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#222",
-        marginBottom: 16,
-    },
-    infoRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 12,
-    },
-    infoColumn: {
-        flex: 1,
-    },
-    infoLabel: {
-        fontSize: 14,
-        color: "#222",
-        marginBottom: 8,
-        fontWeight: "500",
-    },
-    infoValue: {
-        fontWeight: "normal",
-        color: "#666",
-    },
-    publisherName: {
-        fontSize: 14,
-        color: "#666",
-        fontWeight: "400",
-    },
-    descriptionContainer: {
-        marginTop: 12,
-        marginBottom: 24,
-    },
-    descriptionLabel: {
-        fontSize: 14,
-        fontWeight: "500",
-        color: "#222",
-        marginBottom: 4,
-    },
-    descriptionText: {
-        fontSize: 14,
-        color: "#666",
-        lineHeight: 20,
-        textAlign: "justify",
-    },
-    commentsContainer: {
-        marginTop: 8,
-    },
-    commentsTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#222",
-        marginBottom: 12,
-    },
+    mainImage: { width: "100%", height: "100%" },
+    infoContainer: { padding: 20, flex: 1 },
+    petName: { fontSize: 18, fontWeight: "bold", color: "#222", marginBottom: 16 },
+    infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
+    infoColumn: { flex: 1 },
+    infoLabel: { fontSize: 14, color: "#222", marginBottom: 8, fontWeight: "500" },
+    infoValue: { fontWeight: "normal", color: "#666" },
+    publisherName: { fontSize: 14, color: "#666", fontWeight: "400" },
+    descriptionContainer: { marginTop: 12, marginBottom: 24 },
+    descriptionLabel: { fontSize: 14, fontWeight: "500", color: "#222", marginBottom: 4 },
+    descriptionText: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "justify" },
+    commentsContainer: { marginTop: 8 },
+    commentsTitle: { fontSize: 16, fontWeight: "bold", color: "#222", marginBottom: 12 },
     commentsPlaceholder: {
         backgroundColor: "#F5F5F5",
         borderRadius: 8,
@@ -203,16 +151,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         minHeight: 80,
     },
-    commentsPlaceholderText: {
-        fontSize: 14,
-        color: "#999",
-        fontStyle: "italic",
-    },
-    buttonContainer: {
-        marginTop: 30,
-        marginBottom: 20,
-        paddingHorizontal: 20,
-    },
+    commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
+    buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
     sendRequestButton: {
         backgroundColor: "#FFD700",
         borderRadius: 8,
@@ -221,17 +161,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
     },
-    sendRequestButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#000",
-    },
+    sendRequestButtonText: { fontSize: 16, fontWeight: "600", color: "#000" },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
+    empty: { color: "#333" },
 })

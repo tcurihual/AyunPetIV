@@ -20,10 +20,11 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
 
     const handleViewDetails = () => {
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
-
         setTimeout(() => {
-            router.push(`/(home)/publication/${pet.id}`)
-
+            router.push({
+                pathname: "/(home)/publication/[id]",
+                params: { id: String(pet.id) }, 
+            })
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
         }, 100)
     }

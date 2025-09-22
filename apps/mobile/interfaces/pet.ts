@@ -1,3 +1,4 @@
+import { ImageSourcePropType } from "react-native"
 export interface Pet {
     id: string
     name: string
@@ -5,5 +6,5 @@ export interface Pet {
     age: string
     publisher: string
     description: string
-    image: string // URL de la imagen de la mascota
+    image: ImageSourcePropType
 }

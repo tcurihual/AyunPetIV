@@ -9,10 +9,8 @@ import { useColorScheme } from "react-native"
 
 import { AuthProvider } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
-
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
-
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 
@@ -39,9 +37,11 @@ export default function RootLayout() {
                 <AlertProvider>
                     <LoadingProvider>
                         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                            <Stack screenOptions={{ headerShown: false }}>
-                                {/* <Stack.Screen name="(tabs)" />  */}
+                            <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
+                                <Stack.Screen name="splash" /> 
+                                <Stack.Screen name="welcome" />
                                 <Stack.Screen name="(auth)" />
+                                <Stack.Screen name="(home)" />
                                 <Stack.Screen name="+not-found" />
                             </Stack>
 
