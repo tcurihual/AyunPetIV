@@ -1,29 +1,17 @@
 import React from "react"
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Dimensions,
-} from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native"
 import { useRouter } from "expo-router"
-import { useAlert } from "@/context/AlertContext"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { LoginFormSchema } from "@/utils/schemas"
-import Input from "../../components/ui/Input"
-import { z } from "zod"
-import { useLoading } from "@/context/LoadingContext"
-import { useAuthContext } from "@/context/AuthContext"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
-const { width } = Dimensions.get("window")
+import { useAuthContext } from "@/context/AuthContext"
+import { useLoading } from "@/context/LoadingContext"
+import { useAlert } from "@/context/AlertContext"
 
-type LoginForm = z.infer<typeof LoginFormSchema>
+import Input from "@ui/Input"
+import { LoginFormSchema } from "@/utils/schemas"
+import { LoginFormType } from "@/utils/types"
 
 export default function LoginScreen() {
     const router = useRouter()
@@ -35,17 +23,17 @@ export default function LoginScreen() {
         control,
         handleSubmit,
         formState: { isSubmitting },
-    } = useForm<LoginForm>({
+    } = useForm<LoginFormType>({
         resolver: zodResolver(LoginFormSchema),
         defaultValues: { email: "", password: "" },
         mode: "onTouched",
     })
 
-    const onSubmit = async (data: LoginForm) => {
+    const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
                 await signIn({ email: data.email, password: data.password })
-                await new Promise((r) => setTimeout(r, 700)) // simula un retardo para ver el loading
+                await new Promise((r) => setTimeout(r, 700))
 
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
 
@@ -73,7 +61,7 @@ export default function LoginScreen() {
             <Image source={require("@images/image.png")} style={styles.logo} resizeMode="contain" />
 
             <View style={{ width: "75%" }}>
-                <Input<LoginForm>
+                <Input<LoginFormType>
                     name="email"
                     control={control}
                     label="Correo"
@@ -81,7 +69,7 @@ export default function LoginScreen() {
                     type="email"
                 />
 
-                <Input<LoginForm>
+                <Input<LoginFormType>
                     name="password"
                     control={control}
                     label="Contraseña"
@@ -116,8 +104,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        // alignItems: "center",
-        // justifyContent: "center",
     },
     scrollContainer: {
         flexGrow: 1,
