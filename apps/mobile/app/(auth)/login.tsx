@@ -19,6 +19,7 @@ import Input from "../../components/ui/Input"
 import { z } from "zod"
 import { useLoading } from "@/context/LoadingContext"
 import { useAuthContext } from "@/context/AuthContext"
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 const { width } = Dimensions.get("window")
 
@@ -62,17 +63,16 @@ export default function LoginScreen() {
     const disabled = isSubmitting || status === "loading"
 
     return (
-        <KeyboardAvoidingView
+        <KeyboardAwareScrollView
             style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            contentContainerStyle={styles.scrollContainer}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            keyboardShouldPersistTaps="handled"
         >
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Image
-                    source={require("@images/image.png")}
-                    style={styles.logo}
-                    resizeMode="contain"
-                />
+            <Image source={require("@images/image.png")} style={styles.logo} resizeMode="contain" />
 
+            <View style={{ width: "75%" }}>
                 <Input<LoginForm>
                     name="email"
                     control={control}
@@ -88,27 +88,27 @@ export default function LoginScreen() {
                     placeholder="••••••••"
                     type="password"
                 />
+            </View>
 
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, disabled && { opacity: 0.6 }]}
-                    onPress={handleSubmit(onSubmit)}
-                    disabled={disabled}
-                >
-                    <Text style={styles.buttonText}>Iniciar Sesión</Text>
-                </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, disabled && { opacity: 0.6 }]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={disabled}
+            >
+                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
-                    <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
-                </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+                <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={() => router.push("/(auth)/register")}
-                >
-                    <Text style={styles.buttonText}>Registrarse</Text>
-                </TouchableOpacity>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, styles.buttonSecondary]}
+                onPress={() => router.push("/(auth)/register")}
+            >
+                <Text style={styles.buttonText}>Registrarse</Text>
+            </TouchableOpacity>
+        </KeyboardAwareScrollView>
     )
 }
 
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        alignItems: "center",
-        justifyContent: "center",
+        // alignItems: "center",
+        // justifyContent: "center",
     },
     scrollContainer: {
         flexGrow: 1,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingVertical: 15,
         paddingHorizontal: 30,
-        width: "90%",
+        width: "75%",
         alignItems: "center",
         marginTop: 20,
     },
