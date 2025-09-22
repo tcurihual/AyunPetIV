@@ -1,12 +1,7 @@
-import React, { useState } from "react"
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from "react-native"
+import React from "react"
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withSpring,
-} from "react-native-reanimated"
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import { Pet } from "@/interfaces/pet"
 
 interface PublicationCardProps {
@@ -23,7 +18,7 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         setTimeout(() => {
             router.push({
                 pathname: "/(home)/publication/[id]",
-                params: { id: String(pet.id) }, 
+                params: { id: String(pet.id) },
             })
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
         }, 100)

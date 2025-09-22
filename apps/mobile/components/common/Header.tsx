@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native"
+import { View, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 
@@ -16,7 +16,6 @@ export default function Header() {
 
             <Image source={require("@/assets/images/Ayun-pet-Logo.png")} style={styles.logo} />
 
-            {/* Icono del perfil */}
             <TouchableOpacity style={styles.profileCircle} onPress={() => router.push("/profile")}>
                 <Image
                     source={{ uri: "https://randomuser.me/api/portraits/women/44.jpg" }}

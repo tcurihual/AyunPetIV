@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
@@ -14,7 +14,6 @@ import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 
-// Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
@@ -38,7 +37,7 @@ export default function RootLayout() {
                     <LoadingProvider>
                         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
                             <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
-                                <Stack.Screen name="splash" /> 
+                                <Stack.Screen name="splash" />
                                 <Stack.Screen name="welcome" />
                                 <Stack.Screen name="(auth)" />
                                 <Stack.Screen name="(home)" />
