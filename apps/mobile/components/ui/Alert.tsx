@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"
-import { View, Text, StyleSheet, Animated, Dimensions } from "react-native"
+import { Text, StyleSheet, Animated, Dimensions } from "react-native"
 import { useAlert } from "@/context/AlertContext"
 
 const alertColors = {

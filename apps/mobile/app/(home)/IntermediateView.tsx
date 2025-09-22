@@ -17,7 +17,6 @@ type DistancePref = "any" | "5" | "10" | "25"
 export default function IntermediateView() {
   const router = useRouter()
 
-  // Estado de preferencias (simple y directo)
   const [petType, setPetType] = useState<PetType>("both")
   const [gender, setGender] = useState<GenderPref>("any")
   const [age, setAge] = useState<AgePref>("any")
