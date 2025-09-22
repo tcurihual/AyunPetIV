@@ -40,7 +40,7 @@ export default function SplashScreen() {
             const isFirstTime = await AsyncStorage.getItem("first_time")
             if (!isFirstTime) {
                 await AsyncStorage.setItem("first_time", "false")
-                router.replace("/welcome")
+                router.replace("/(auth)")
                 return
             }
 
