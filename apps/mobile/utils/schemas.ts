@@ -8,7 +8,7 @@ export const roleSchema = z.object({
 
 export const LoginFormSchema = z.object({
     email: z.email("Debes ingresar un correo válido"),
-    password: z.string("La contraseña es obligatoria"),
+    password: z.string("La contraseña es obligatoria").min(1, "Debe ingresar la contraseña"),
 })
 
 export const RegisterFormSchema = z

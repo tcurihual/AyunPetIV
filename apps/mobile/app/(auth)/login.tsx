@@ -1,28 +1,17 @@
 import React from "react"
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Dimensions,
-} from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native"
 import { useRouter } from "expo-router"
-import { useAlert } from "@/context/AlertContext"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { LoginFormSchema } from "@/utils/schemas"
-import Input from "../../components/ui/Input"
-import { z } from "zod"
-import { useLoading } from "@/context/LoadingContext"
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
+
 import { useAuthContext } from "@/context/AuthContext"
+import { useLoading } from "@/context/LoadingContext"
+import { useAlert } from "@/context/AlertContext"
 
-const { width } = Dimensions.get("window")
-
-type LoginForm = z.infer<typeof LoginFormSchema>
+import Input from "@ui/Input"
+import { LoginFormSchema } from "@/utils/schemas"
+import { LoginFormType } from "@/utils/types"
 
 export default function LoginScreen() {
     const router = useRouter()
@@ -34,17 +23,17 @@ export default function LoginScreen() {
         control,
         handleSubmit,
         formState: { isSubmitting },
-    } = useForm<LoginForm>({
+    } = useForm<LoginFormType>({
         resolver: zodResolver(LoginFormSchema),
         defaultValues: { email: "", password: "" },
         mode: "onTouched",
     })
 
-    const onSubmit = async (data: LoginForm) => {
+    const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
                 await signIn({ email: data.email, password: data.password })
-                await new Promise((r) => setTimeout(r, 700)) // simula un retardo para ver el loading
+                await new Promise((r) => setTimeout(r, 700))
 
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
 
@@ -62,18 +51,17 @@ export default function LoginScreen() {
     const disabled = isSubmitting || status === "loading"
 
     return (
-        <KeyboardAvoidingView
+        <KeyboardAwareScrollView
             style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            contentContainerStyle={styles.scrollContainer}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            keyboardShouldPersistTaps="handled"
         >
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Image
-                    source={require("@images/image.png")}
-                    style={styles.logo}
-                    resizeMode="contain"
-                />
+            <Image source={require("@images/image.png")} style={styles.logo} resizeMode="contain" />
 
-                <Input<LoginForm>
+            <View style={{ width: "75%" }}>
+                <Input<LoginFormType>
                     name="email"
                     control={control}
                     label="Correo"
@@ -81,34 +69,34 @@ export default function LoginScreen() {
                     type="email"
                 />
 
-                <Input<LoginForm>
+                <Input<LoginFormType>
                     name="password"
                     control={control}
                     label="Contraseña"
                     placeholder="••••••••"
                     type="password"
                 />
+            </View>
 
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, disabled && { opacity: 0.6 }]}
-                    onPress={handleSubmit(onSubmit)}
-                    disabled={disabled}
-                >
-                    <Text style={styles.buttonText}>Iniciar Sesión</Text>
-                </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, disabled && { opacity: 0.6 }]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={disabled}
+            >
+                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
-                    <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
-                </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+                <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={() => router.push("/(auth)/register")}
-                >
-                    <Text style={styles.buttonText}>Registrarse</Text>
-                </TouchableOpacity>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, styles.buttonSecondary]}
+                onPress={() => router.push("/(auth)/register")}
+            >
+                <Text style={styles.buttonText}>Registrarse</Text>
+            </TouchableOpacity>
+        </KeyboardAwareScrollView>
     )
 }
 
@@ -116,8 +104,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        alignItems: "center",
-        justifyContent: "center",
     },
     scrollContainer: {
         flexGrow: 1,
@@ -135,7 +121,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingVertical: 15,
         paddingHorizontal: 30,
-        width: "90%",
+        width: "75%",
         alignItems: "center",
         marginTop: 20,
     },
