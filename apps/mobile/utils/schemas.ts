@@ -24,8 +24,8 @@ export const RegisterFormSchema = z
         verifyPassword: z.string("Confirme su contraseña"),
         phone: z
             .string()
-            .length(9, "El número teléfonico debe tener 9 dígitos")
-            .regex(/^9\d{8}$/, "El teléfono debe comenzar con 9 y ser un número válido"),
+            .length(8, "El número teléfonico debe tener 8 dígitos")
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
