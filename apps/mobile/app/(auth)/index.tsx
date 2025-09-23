@@ -18,14 +18,14 @@ const Index = () => {
                 <Text style={styles.titleText}>Bienvenido a </Text>
                 <Text style={styles.titleText}>Ayün Pet </Text>
                 <Text></Text>
-                <Text style={styles.titleDesc}>Donde podras encontrar</Text>
+                <Text style={styles.titleDesc}>¡Donde podras encontrar</Text>
                 <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
             </View>
             <TouchableOpacity
                 style={[styles.buttonPrimary, styles.buttonSecondary]}
                 onPress={handlePress}
             >
-                <Text style={styles.buttonText}>Quiero Adoptar!</Text>
+                <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
             </TouchableOpacity>
             <View style={styles.childContainer}>
                 <Image
