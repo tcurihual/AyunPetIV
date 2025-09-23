@@ -22,7 +22,8 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
 
         setTimeout(() => {
-            router.push(`/(home)/publication/${pet.id}`)
+            //router.push(`/(home)/publication/${pet.id}`)
+            router.push("/(home)/my-profile")
 
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
         }, 100)
