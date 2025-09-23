@@ -33,6 +33,7 @@ export default function HomeLayout() {
                     if (tab === "camera") return router.push("/camera")
                     if (tab === "requests") return router.push("/(requests)/requestList")
                     if (tab === "perfil") return router.push("/profile")
+                    if (tab === "add") return router.push("/AddPetScreen")
                 }}
             />
         </SafeAreaView>
