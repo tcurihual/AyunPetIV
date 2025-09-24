@@ -20,6 +20,7 @@
         "@lottiefiles/dotlottie-react": "^0.16.0",
         "@react-native-async-storage/async-storage": "^2.1.2",
         "@react-native-community/netinfo": "^11.4.1",
+        "@react-native-picker/picker": "^2.11.2",
         "@react-navigation/bottom-tabs": "^7.2.0",
         "@react-navigation/native": "^7.0.14",
         "axios": "^1.11.0",
@@ -32,6 +33,7 @@
         "expo-font": "~13.3.2",
         "expo-haptics": "~14.1.4",
         "expo-image-picker": "~16.1.4",
+
         "expo-linking": "~7.1.7",
         "expo-media-library": "~17.1.7",
         "expo-network": "~7.1.5",

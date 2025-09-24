@@ -107,3 +107,84 @@ export const ReportFormSchema = z.object({
     postId: z.number("Debe ingresar un id valido"),
     description: z.enum(["Inappropriate Content", "Spam", "Scam", "Other"]),
 })
+
+export const UpdateUserSchema = z.object({
+    id: z.string("ID del usuario es requerido"),
+    role: z.string("Rol es requerido"),
+    rut: z
+        .string("RUT es obligatorio")
+        .min(11, "El RUT debe tener al menos 11 caracteres (ej: 12345678-9)")
+        .max(12, "El RUT no puede tener más de 12 caracteres")
+        .refine((rut) => validarRUT(rut), {
+            message: "El RUT no es válido. Formato: 12345678-9",
+        }),
+    email: z
+        .string("Email es obligatorio")
+        .email("Debe ser un email válido")
+        .max(100, "El email no puede tener más de 100 caracteres"),
+    name: z
+        .string("Nombre es obligatorio")
+        .min(2, "El nombre debe tener al menos 2 caracteres")
+        .max(50, "El nombre no puede tener más de 50 caracteres")
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo puede contener letras y espacios"),
+    password: z
+        .string()
+        .min(8, "La contraseña debe tener al menos 8 caracteres")
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, "Debe incluir al menos un carácter especial")
+        .regex(/\d/, "Debe incluir al menos un número")
+        .optional(),
+    validated: z.boolean().default(false),
+    address: z.string().max(200, "La dirección no puede tener más de 200 caracteres").optional(),
+    description: z
+        .string()
+        .max(500, "La descripción no puede tener más de 500 caracteres")
+        .optional(),
+})
+
+export const UserProfileSchema = z.object({
+    id: z.string("ID del usuario es requerido"),
+    name: z
+        .string("Nombre es obligatorio")
+        .min(2, "El nombre debe tener al menos 2 caracteres")
+        .max(50, "El nombre no puede tener más de 50 caracteres")
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo puede contener letras y espacios"),
+    email: z
+        .string("Email es obligatorio")
+        .email("Debe ser un email válido")
+        .max(100, "El email no puede tener más de 100 caracteres"),
+    rut: z
+        .string("RUT es obligatorio")
+        .min(11, "El RUT debe tener al menos 11 caracteres (ej: 12345678-9)")
+        .max(12, "El RUT no puede tener más de 12 caracteres")
+        .refine((rut) => validarRUT(rut), {
+            message: "El RUT no es válido. Formato: 12345678-9",
+        }),
+    address: z.string().max(200, "La dirección no puede tener más de 200 caracteres").optional(),
+    description: z
+        .string()
+        .max(500, "La descripción no puede tener más de 500 caracteres")
+        .optional(),
+})
+
+export const ChangePasswordSchema = z
+    .object({
+        currentPassword: z.string("Contraseña actual es obligatoria"),
+        newPassword: z
+            .string("Nueva contraseña es obligatoria")
+            .min(8, "Debe tener al menos 8 caracteres")
+            .regex(/[!@#$%^&*(),.?":{}|<>]/, "Debe incluir al menos un carácter especial")
+            .regex(/\d/, "Debe incluir al menos un número"),
+        confirmPassword: z.string("Confirme la nueva contraseña"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+        message: "Las contraseñas no coinciden",
+        path: ["confirmPassword"],
+    })
+    .refine((data) => data.currentPassword !== data.newPassword, {
+        message: "La nueva contraseña debe ser diferente a la actual",
+        path: ["newPassword"],
+    })
+
+export type UpdateUserData = z.infer<typeof UpdateUserSchema>
+export type UserProfileData = z.infer<typeof UserProfileSchema>
+export type ChangePasswordData = z.infer<typeof ChangePasswordSchema>
