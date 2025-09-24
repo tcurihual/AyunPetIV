@@ -1,8 +1,9 @@
-import React, { useEffect } from "react"
+﻿import React, { useEffect } from "react"
 import { View, Text, ActivityIndicator, StyleSheet, Alert, BackHandler } from "react-native"
 import NetInfo from "@react-native-community/netinfo"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
+import { getToken, getUser, isFirstLaunch } from "@/utils/storage"
+import type { User } from "@/context/AuthContext"
 
 export default function SplashScreen() {
     const router = useRouter()
@@ -37,20 +38,21 @@ export default function SplashScreen() {
                 return
             }
 
-            const isFirstTime = await AsyncStorage.getItem("first_time")
-            if (!isFirstTime) {
-                await AsyncStorage.setItem("first_time", "false")
-                router.replace("/(auth)")
+            const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
+
+            if (storedToken && storedUser) {
+                router.replace("/(home)")
                 return
             }
 
-            const token = await AsyncStorage.getItem("token")
-            if (token) {
-                router.replace("/(home)")
+            const firstTime = await isFirstLaunch()
+            if (firstTime) {
+                router.replace("/welcome")
             } else {
-                router.replace("/(auth)")
+                router.replace("/(auth)/login")
             }
-        } catch {
+        } catch (error) {
+            console.error("Error en splash:", error)
             Alert.alert("Error", "Ha ocurrido un problema al iniciar la app.", [
                 { text: "Reintentar", onPress: checkAppState },
                 { text: "Cerrar app", style: "destructive", onPress: () => BackHandler.exitApp() },

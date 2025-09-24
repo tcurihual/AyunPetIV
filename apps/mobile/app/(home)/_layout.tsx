@@ -1,6 +1,6 @@
 import React from "react"
 import { StyleSheet } from "react-native"
-import { Slot, usePathname, router } from "expo-router"
+import { Slot, usePathname, router, Redirect } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
 import BackButton from "@common/BackButton"

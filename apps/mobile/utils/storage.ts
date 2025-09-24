@@ -41,6 +41,7 @@ export async function hasPrefsDone(): Promise<boolean> {
 export async function FirstLaunch() {
     await AsyncStorage.setItem("first_launch", "true")
 }
+
 export async function isFirstLaunch(): Promise<boolean> {
     try {
         const hasLaunched = await AsyncStorage.getItem("first_launch")
@@ -49,4 +50,9 @@ export async function isFirstLaunch(): Promise<boolean> {
         console.error("Error al leer AsyncStorage:", error)
         return false
     }
+}
+
+// Función para desarrollo: resetear el estado de primera vez
+export async function resetFirstLaunch() {
+    await AsyncStorage.removeItem("first_launch")
 }

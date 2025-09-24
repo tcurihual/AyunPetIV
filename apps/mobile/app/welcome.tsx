@@ -1,12 +1,14 @@
 import React from "react"
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
+import { FirstLaunch } from "@/utils/storage"
 
 export default function Welcome() {
     const { height } = useWindowDimensions()
     const router = useRouter()
 
-    const handlePress = () => {
+    const handlePress = async () => {
+        await FirstLaunch()
         router.replace("/(auth)/login")
     }
 
