@@ -1,14 +1,16 @@
-import React from "react"
+import React, { useState } from "react"
 import { StyleSheet } from "react-native"
 import { Slot, usePathname, router } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
 import BackButton from "@common/BackButton"
+import DropdownMenu from "@common/DropdownMenu"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function HomeLayout() {
     const pathname = usePathname()
+    const [menuVisible, setMenuVisible] = useState(false)
 
     // Detectar pestaña activa según la ruta actual
     let activeTab = "home"
@@ -21,7 +23,10 @@ export default function HomeLayout() {
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar style="inverted" />
-            <Header />
+
+
+            <Header onMenuPress={() => setMenuVisible(true)} />
+
             <Slot />
 
             {showBackButton && <BackButton />}
@@ -36,6 +41,7 @@ export default function HomeLayout() {
                     if (tab === "add") return router.push("/AddPetScreen")
                 }}
             />
+            {menuVisible && <DropdownMenu onClose={() => setMenuVisible(false)} />}
         </SafeAreaView>
     )
 }
