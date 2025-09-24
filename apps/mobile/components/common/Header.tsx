@@ -5,18 +5,25 @@ import { useRouter } from "expo-router"
 
 const { width } = Dimensions.get("window")
 
-export default function Header() {
+type HeaderProps = {
+    onMenuPress?: () => void
+}
+
+export default function Header({ onMenuPress }: HeaderProps) {
     const router = useRouter()
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => console.log("Abrir menú")}>
+            <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
                 <Ionicons name="menu" size={width * 0.07} color="#000" />
             </TouchableOpacity>
 
             <Image source={require("@/assets/images/Ayun-pet-Logo.png")} style={styles.logo} />
 
-            <TouchableOpacity style={styles.profileCircle} onPress={() => router.push("/profile")}>
+            <TouchableOpacity
+                style={styles.profileCircle}
+                onPress={() => router.push("/profile" as const)}
+            >
                 <Image
                     source={{ uri: "https://randomuser.me/api/portraits/women/44.jpg" }}
                     style={styles.profileImage}
@@ -44,7 +51,6 @@ const styles = StyleSheet.create({
         height: width * 0.15,
         resizeMode: "contain",
     },
-
     profileCircle: {
         width: width * 0.12,
         height: width * 0.12,
