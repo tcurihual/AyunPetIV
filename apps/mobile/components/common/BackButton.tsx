@@ -1,16 +1,20 @@
 import React from "react"
-import { StyleSheet, TouchableOpacity, Dimensions } from "react-native"
+import { StyleSheet, TouchableOpacity, Dimensions, StyleProp, ViewStyle } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 
-const { width, height } = Dimensions.get("window")
+const { width } = Dimensions.get("window")
 
-export default function BackButton() {
+type BackButtonProps = {
+    style?: StyleProp<ViewStyle>
+}
+
+export default function BackButton({ style }: BackButtonProps) {
     const router = useRouter()
 
     return (
         <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, style]}
             onPress={() => {
                 if (router.canGoBack()) {
                     router.back()
@@ -27,8 +31,8 @@ export default function BackButton() {
 const styles = StyleSheet.create({
     button: {
         position: "absolute",
-        top: height * 0.03,
-        left: width * 0.05,
+        top: 135, 
+        left: 10, 
         backgroundColor: "#fff",
         borderRadius: width * 0.08,
         padding: width * 0.03,

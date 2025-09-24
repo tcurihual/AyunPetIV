@@ -18,13 +18,19 @@ export default function HomeLayout() {
 
     const showBackButton = pathname !== "/"
 
+    // Ajusta estilo del BackButton en las vistas a especificar
+    let backButtonStyle = {}
+    if (pathname.includes("/profile")) {
+        backButtonStyle = { top: 135, left: 10 }
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar style="inverted" />
             <Header />
             <Slot />
 
-            {showBackButton && <BackButton />}
+            {showBackButton && <BackButton style={backButtonStyle} />}
 
             <BottomNavbar
                 activeTab={activeTab}
