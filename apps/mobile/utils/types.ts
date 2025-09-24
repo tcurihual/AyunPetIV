@@ -5,6 +5,7 @@ import {
     PostFormSchema,
     PetFormSchema,
     MessageFormSchema,
+    GiverRegisterFormSchema,
 } from "@/utils/schemas"
 
 interface Role {
@@ -99,6 +100,7 @@ export interface Report {
 
 export type LoginFormType = z.infer<typeof LoginFormSchema>
 export type RegisterFormType = z.infer<typeof RegisterFormSchema>
+export type GiverRegisterFormType = z.infer<typeof GiverRegisterFormSchema>
 export type PostFormType = z.infer<typeof PostFormSchema>
 export type PetFormType = z.infer<typeof PetFormSchema>
 export type MessageFormType = z.infer<typeof MessageFormSchema>

@@ -7,9 +7,14 @@ const Index = () => {
     const { height } = useWindowDimensions()
     const router = useRouter()
 
-    const handlePress = async () => {
+    const handleAdoptPress = async () => {
         await FirstLaunch()
         router.push("/(auth)/login")
+    }
+
+    const handleGivePress = async () => {
+        await FirstLaunch()
+        router.push("/(auth)/giver_register")
     }
 
     return (
@@ -23,9 +28,15 @@ const Index = () => {
             </View>
             <TouchableOpacity
                 style={[styles.buttonPrimary, styles.buttonSecondary]}
-                onPress={handlePress}
+                onPress={handleAdoptPress}
             >
                 <Text style={styles.buttonText}>Quiero Adoptar!</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, styles.buttonSecondary]}
+                onPress={handleGivePress}
+            >
+                <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
             </TouchableOpacity>
             <View style={styles.childContainer}>
                 <Image
@@ -70,6 +81,6 @@ const styles = StyleSheet.create({
         width: "70%",
         alignItems: "center",
     },
-    buttonSecondary: { marginTop: 25 },
+    buttonSecondary: { marginTop: 0 }, // Reducido el margen entre los botones
     buttonText: { color: "#fff", fontSize: 16 },
 })

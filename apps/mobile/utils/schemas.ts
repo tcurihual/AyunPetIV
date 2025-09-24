@@ -36,6 +36,37 @@ export const RegisterFormSchema = z
         path: ["rut"],
     })
 
+export const GiverRegisterFormSchema = z
+    .object({
+        name: z
+            .string("El nombre es obligatorio")
+            .min(8, "Debe ingresar un nombre completo (nombre y apellido)"),
+        rut: z.string("El RUT es obligatorio").refine((data) => validarRUT(data), {
+            message: "El RUT no es válido",
+        }),
+        email: z.email("Debes ingresar un correo válido"),
+        password: z
+            .string("La contraseña es obligatoria")
+            .min(8, "Debe tener al menos 8 caracteres")
+            .regex(/[!@#$%^&*(),.?":{}|<>]/, "Debe incluir al menos un carácter especial")
+            .regex(/\d/, "Debe incluir al menos un número"),
+        verifyPassword: z
+            .string("Confirma la contraseña")
+            .min(8, "Debe tener al menos 8 caracteres"),
+        phone: z
+            .string()
+            .length(8, "El número de teléfono debe tener 8 dígitos")
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+        files: z
+            .array(z.string())
+            .min(1, "Debes subir al menos un archivo (imagen o PDF)")
+            .or(z.string().min(1, "Debes subir al menos un archivo (imagen o PDF)")),
+    })
+    .refine((data) => data.password === data.verifyPassword, {
+        message: "Las contraseñas no coinciden",
+        path: ["verifyPassword"],
+    })
+
 export const PostFormSchema = z.object({
     ownerId: z.number("Debe ingresar un id valido"),
     petId: z.number("Debe ingresar un id valido"),
