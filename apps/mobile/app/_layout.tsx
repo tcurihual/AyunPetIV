@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
@@ -9,14 +9,11 @@ import { useColorScheme } from "react-native"
 
 import { AuthProvider } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
-
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
-
-import Loading from "@ui/Loading"
 import ModalHost from "@common/modals/ModalHost"
+import { LoadingProvider } from "@/context/LoadingContext"
 
-// Evitar que la splash se oculte antes de cargar assets
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
@@ -24,8 +21,6 @@ export default function RootLayout() {
     const [loaded] = useFonts({
         SpaceMono: require("@fonts/SpaceMono-Regular.ttf"),
     })
-
-    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (loaded) SplashScreen.hideAsync()
@@ -39,19 +34,22 @@ export default function RootLayout() {
         <AuthProvider>
             <ModalProvider>
                 <AlertProvider>
-                    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                        <Stack screenOptions={{ headerShown: false }}>
-                            <Stack.Screen name="(auth)" />
-                            <Stack.Screen name="(home)" />
-                            <Stack.Screen name="+not-found" />
-                        </Stack>
+                    <LoadingProvider>
+                        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                            <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
+                                <Stack.Screen name="splash" />
+                                <Stack.Screen name="welcome" />
+                                <Stack.Screen name="(auth)" />
+                                <Stack.Screen name="(home)" />
+                                <Stack.Screen name="+not-found" />
+                            </Stack>
 
-                        <ModalHost />
-                        <Loading visible={loading} />
-                        <Alert />
+                            <ModalHost />
+                            <Alert />
 
-                        <StatusBar style="inverted" />
-                    </ThemeProvider>
+                            <StatusBar style="inverted" />
+                        </ThemeProvider>
+                    </LoadingProvider>
                 </AlertProvider>
             </ModalProvider>
         </AuthProvider>

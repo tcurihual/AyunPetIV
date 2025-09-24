@@ -8,7 +8,7 @@ export const roleSchema = z.object({
 
 export const LoginFormSchema = z.object({
     email: z.email("Debes ingresar un correo válido"),
-    password: z.string("La contraseña es obligatoria"),
+    password: z.string("La contraseña es obligatoria").min(1, "Debe ingresar la contraseña"),
 })
 
 export const RegisterFormSchema = z
@@ -24,8 +24,8 @@ export const RegisterFormSchema = z
         verifyPassword: z.string("Confirme su contraseña"),
         phone: z
             .string()
-            .length(9, "El número teléfonico debe tener 9 dígitos")
-            .regex(/^9\d{8}$/, "El teléfono debe comenzar con 9 y ser un número válido"),
+            .length(8, "El número teléfonico debe tener 8 dígitos")
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",

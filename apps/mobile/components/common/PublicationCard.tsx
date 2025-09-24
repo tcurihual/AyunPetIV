@@ -1,5 +1,7 @@
 import React from "react"
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { useRouter } from "expo-router"
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import { Pet } from "@/interfaces/pet"
 
 interface PublicationCardProps {
@@ -7,24 +9,62 @@ interface PublicationCardProps {
 }
 
 const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
+    const router = useRouter()
+
+    const scale = useSharedValue(1)
+
+    const handleViewDetails = () => {
+        scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
+        setTimeout(() => {
+            router.push({
+                pathname: "/(home)/publication/[id]",
+                params: { id: String(pet.id) },
+            })
+            scale.value = withSpring(1, { damping: 15, stiffness: 300 })
+        }, 100)
+    }
+
+    const handlePressIn = () => {
+        scale.value = withSpring(0.98, { damping: 15, stiffness: 250 })
+    }
+
+    const handlePressOut = () => {
+        scale.value = withSpring(1, { damping: 15, stiffness: 250 })
+    }
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: scale.value }],
+        }
+    })
+
     return (
-        <View style={styles.card}>
-            <Image
+        <Animated.View
+            style={[styles.card, animatedStyle]}
+            sharedTransitionTag={`pet-card-${pet.id}`}
+        >
+            <Animated.Image
                 style={styles.image}
                 source={typeof pet.image === "string" ? { uri: pet.image } : pet.image}
-            ></Image>
+                sharedTransitionTag={`pet-image-${pet.id}`}
+            />
             <View style={styles.infoContainer}>
-                <Text style={styles.name}>{pet.name}</Text>
+                <Animated.Text style={styles.name} sharedTransitionTag={`pet-name-${pet.id}`}>
+                    {pet.name}
+                </Animated.Text>
                 <Text style={styles.details}>{`${pet.gender} ${pet.age}`}</Text>
                 <Text style={styles.publisher}>Publicado por: {pet.publisher}</Text>
             </View>
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => console.log("Ver información de la mascota:", pet.name)}
+                onPress={handleViewDetails}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.8}
             >
                 <Text style={styles.buttonText}>Ver Información</Text>
             </TouchableOpacity>
-        </View>
+        </Animated.View>
     )
 }
 
@@ -33,19 +73,17 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         borderRadius: 16,
         overflow: "hidden",
-        marginBottom: 16,
         marginHorizontal: 4,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 2,
-        elevation: 1,
-        width: 180, // Fijo ancho tipo card
-        flexGrow: 0,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        flex: 1,
     },
     image: {
         width: "100%",
-        height: 120,
+        height: 140,
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         backgroundColor: "#eee",

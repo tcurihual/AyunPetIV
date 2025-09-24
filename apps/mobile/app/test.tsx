@@ -11,6 +11,7 @@ export default function Index() {
         gender: "male",
         publisher: "John Doe",
         image: require("../assets/images/ayun-pet.png"),
+        description: "Perrito muy lindo y juguetón",
     }
 
     return (

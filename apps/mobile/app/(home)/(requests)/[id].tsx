@@ -3,7 +3,6 @@ import { View, Alert } from "react-native"
 import { useLocalSearchParams } from "expo-router"
 import RequestDetailCard, { Status } from "@/components/common/RequestDetailCard"
 
-// Datos de prueba (igual que en requestList)
 const MOCK = [
     {
         id: "1",

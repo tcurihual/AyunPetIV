@@ -29,7 +29,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
 
         setTimeout(() => {
             setAlert((prev) => ({ ...prev, visible: false }))
-        }, 5000) // El valor está en milisegundos 5000ms -> 5s
+        }, 5000)
     }
 
     const hideAlert = () => {
@@ -43,7 +43,6 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     )
 }
 
-// Hook personalizado
 export const useAlert = () => {
     const context = useContext(AlertContext)
     if (!context) {

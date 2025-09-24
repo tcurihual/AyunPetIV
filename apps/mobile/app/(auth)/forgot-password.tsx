@@ -55,7 +55,10 @@ export default function ForgotPasswordScreen() {
                     autoCapitalize="none"
                 />
 
-                <TouchableOpacity style={styles.button}>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => router.push("/(auth)/recovery-pin")}
+                >
                     <Text style={styles.buttonText}>Enviar</Text>
                 </TouchableOpacity>
 

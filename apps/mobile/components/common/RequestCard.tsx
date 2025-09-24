@@ -13,9 +13,9 @@ export interface RequestCardProps {
 }
 
 const statusStyles: Record<RequestStatus, { bg: string; fg: string }> = {
-    Pendiente: { bg: "#FFE8A3", fg: "#6A4B00" }, // amarillo suave
-    Aceptada: { bg: "#D1F3DA", fg: "#0E6B2B" }, // verde
-    Rechazada: { bg: "#FAD2D2", fg: "#8B1A1A" }, // rojo
+    Pendiente: { bg: "#FFE8A3", fg: "#6A4B00" },
+    Aceptada: { bg: "#D1F3DA", fg: "#0E6B2B" },
+    Rechazada: { bg: "#FAD2D2", fg: "#8B1A1A" },
 }
 
 export default function RequestCard({
