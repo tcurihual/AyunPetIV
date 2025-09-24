@@ -9,6 +9,7 @@ import {
     Platform,
     ScrollView,
     TextInput,
+    Dimensions,
 } from "react-native"
 
 interface ReportModalProps {
@@ -63,7 +64,10 @@ export default function ReportModal({
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    bounces={false}
+                    overScrollMode="never"
                 >
                     <View style={styles.modalContainer}>
                         <View style={styles.modalContent}>
@@ -82,6 +86,14 @@ export default function ReportModal({
                                     onChangeText={setDescription}
                                     textAlignVertical="top"
                                     maxLength={500}
+                                    scrollEnabled={true}
+                                    textBreakStrategy="simple"
+                                    blurOnSubmit={false}
+                                    returnKeyType="default"
+                                    autoCorrect={true}
+                                    spellCheck={true}
+                                    textContentType="none"
+                                    keyboardType="default"
                                 />
                             </View>
 
@@ -116,6 +128,8 @@ export default function ReportModal({
     )
 }
 
+const { width: screenWidth } = Dimensions.get("window")
+const maxModalWidth = Math.min(screenWidth * 0.9, 400)
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
@@ -127,17 +141,21 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         alignItems: "center",
-        paddingHorizontal: 20,
+        paddingHorizontal: "5%",
         paddingVertical: 40,
+        width: "100%",
+        maxWidth: "100%",
     },
     modalContainer: {
         width: "100%",
-        maxWidth: 400,
+        maxWidth: maxModalWidth,
+        alignSelf: "center",
+        overflow: "hidden",
     },
     modalContent: {
         backgroundColor: "#fff",
         borderRadius: 16,
-        padding: 24,
+        padding: "6%",
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
@@ -146,6 +164,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 8,
         elevation: 8,
+        width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
+        alignSelf: "stretch",
+        flexShrink: 1,
     },
     title: {
         fontSize: 16,
@@ -160,6 +183,11 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         marginBottom: 8,
         minHeight: 120,
+        width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
+        alignSelf: "stretch",
+        flexShrink: 1,
     },
     textArea: {
         padding: 16,
@@ -168,6 +196,13 @@ const styles = StyleSheet.create({
         minHeight: 120,
         maxHeight: 200,
         textAlignVertical: "top",
+        width: "100%",
+        maxWidth: "100%",
+        flexWrap: "wrap",
+        textAlign: "left",
+        alignSelf: "stretch",
+        flexShrink: 1,
+        includeFontPadding: false,
     },
     characterCount: {
         fontSize: 12,
@@ -182,6 +217,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         alignItems: "center",
         marginBottom: 12,
+        width: "100%",
     },
     submitButtonDisabled: {
         backgroundColor: "#FFB3B0",
@@ -196,6 +232,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 24,
         alignItems: "center",
+        width: "100%",
     },
     cancelButtonText: {
         color: "#666",
