@@ -1,20 +1,15 @@
-import express from "express";
-import cors from "cors";
-import authRouter from "./routes/auth"; // tu router de auth
+import express from "express"
+import cors from "cors"
+import authRouter from "./routes/auth"
+import { AUTH_PORT } from "@repo/utils"
 
-const app = express();
+const app = express()
 
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 
- // prefijo correcto
- app.use("/api/auth", authRouter);
+app.use("/", authRouter)
 
- // ping de prueba (lo tienes)
- app.get("/api/auth/ping", (req, res) => {
-   res.send("pong");
- });
-
-app.listen(process.env.AUTH_PORT || 4000, () => {
-  console.log("Auth service running on", process.env.AUTH_PORT || 4000);
-});
+app.listen(AUTH_PORT || 4000, () => {
+    console.log("Auth service running on", process.env.AUTH_PORT || 4000)
+})
