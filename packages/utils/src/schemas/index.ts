@@ -1,5 +1,5 @@
 import { z } from "./zod-extended"
-import { validarRUT } from "../validations"
+import { validarRUT } from "../rut"
 
 export * from "./entities"
 export * from "./responses"

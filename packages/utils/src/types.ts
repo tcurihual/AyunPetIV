@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { loginResponseSchema } from "./schemas"
+import { loginResponseSchema, userSchema } from "./schemas"
 
 export type JsonResponse<T> = {
     status?: number
@@ -9,3 +9,4 @@ export type JsonResponse<T> = {
 }
 
 export type loginResponseType = z.infer<typeof loginResponseSchema>
+export type User = z.infer<typeof userSchema>

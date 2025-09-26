@@ -1,24 +1,21 @@
 import { Router } from "express"
 import { supabase } from "../"
-import { AppError, AppResponse } from "@repo/utils"
+import { AppError, AppResponse, comparePassword, User } from "@repo/utils"
 const router = Router()
 
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body || {}
-    // TODO: validar contra tu DB. Por ahora, finge OK si vienen ambos:
-    if (!email || !password) return res.status(400).json({ msg: "Missing credentials" })
+    const { email, password } = req.body
+    if (!email || !password) throw new AppError(404, "Missing credentials")
+    // ejemplo de como hacer query
+    const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
+    if (error) throw new AppError(404, "User not found")
+    // ejemplo de como tipear la query
+    const user: User = data
 
-    // token fake para probar (reemplaza por JWT real)
-    const token = "fake.jwt.token"
-    const user = { id: "1", name: "Demo", email, role: "adoptante" }
+    // TODO: comparar password, generar token, realizar response
+    // comparePassword(password, user.password)
 
-    return res.json({ values: { token, user } })
-})
-
-router.get("/me", async (req, res) => {
-    let { data: users, error } = await supabase.from("users").select("*")
-
-    return AppResponse(res, 200, "USUARIOS INSANOS OBTENIDOs", users)
+    return AppResponse(res, 200, "Inicio de sesión exitoso", user)
 })
 
 export default router
