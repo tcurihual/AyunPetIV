@@ -1,4 +1,6 @@
 import { Router } from "express"
+import { supabase } from "../"
+import { AppError, AppResponse } from "@repo/utils"
 const router = Router()
 
 router.post("/login", async (req, res) => {
@@ -10,12 +12,13 @@ router.post("/login", async (req, res) => {
     const token = "fake.jwt.token"
     const user = { id: "1", name: "Demo", email, role: "adoptante" }
 
-    return res.json({ token, user })
+    return res.json({ values: { token, user } })
 })
 
-router.get("/me", (req, res) => {
-    // en real, parsea el JWT y devuelve el usuario
-    return res.json({ id: "1", name: "Demo", email: "demo@mail.com", role: "adoptante" })
+router.get("/me", async (req, res) => {
+    let { data: users, error } = await supabase.from("users").select("*")
+
+    return AppResponse(res, 200, "USUARIOS INSANOS OBTENIDOs", users)
 })
 
 export default router

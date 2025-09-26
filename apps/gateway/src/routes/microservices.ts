@@ -1,13 +1,13 @@
 import { Router } from "express"
 import { createProxyMiddleware } from "http-proxy-middleware"
-import { SERVER_URL, AUTH_PORT, ADOPTIONS_PORT, ENTITIES_PORT, MEDIA_PORT } from "@repo/utils"
+import { AUTH_URL, ADOPTIONS_URL, ENTITIES_URL, MEDIA_URL } from "@repo/utils"
 
 export const msRouter = Router()
 
 msRouter.use(
     "/auth",
     createProxyMiddleware({
-        target: `${SERVER_URL}:${AUTH_PORT}`,
+        target: `${AUTH_URL}`,
         changeOrigin: true,
         pathRewrite: {
             "^/v1/auth": "",
@@ -19,7 +19,7 @@ msRouter.use(
 msRouter.use(
     "/adoptions",
     createProxyMiddleware({
-        target: `${SERVER_URL}:${ADOPTIONS_PORT}`,
+        target: `${ADOPTIONS_URL}`,
         changeOrigin: true,
         pathRewrite: {
             "^/v1/adoptions": "",
@@ -30,7 +30,7 @@ msRouter.use(
 msRouter.use(
     "/entities",
     createProxyMiddleware({
-        target: `${SERVER_URL}:${ENTITIES_PORT}`,
+        target: `${ENTITIES_URL}`,
         changeOrigin: true,
         pathRewrite: {
             "^/v1/entities": "",
@@ -41,7 +41,7 @@ msRouter.use(
 msRouter.use(
     "/media",
     createProxyMiddleware({
-        target: `${SERVER_URL}:${MEDIA_PORT}`,
+        target: `${MEDIA_URL}`,
         changeOrigin: true,
         pathRewrite: {
             "^/v1/media": "",

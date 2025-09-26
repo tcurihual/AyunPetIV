@@ -3,8 +3,11 @@
     "name": "ayunpet",
     "scripts": {
         "dev": "turbo dev",
-        "dev:web": "turbo dev --filter=\"!mobile\"",
-        "dev:example": "turbo dev --filter=\"{./apps/example}...\"",
+        "api": "turbo dev --filter=\"!mobile\" --filter=\"!web\"",
+        "web": "turbo dev --filter=\"web\"",
+        "mobile": "turbo dev --filter=\"mobile\"",
+        "api:web": "turbo dev --filter=\"!mobile\"",
+        "api:mobile": "turbo dev --filter=\"!web\"",
         "lint": "turbo lint",
         "format": "turbo format",
         "test": "turbo test",

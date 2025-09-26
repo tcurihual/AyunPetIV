@@ -21,5 +21,5 @@ app.get("/", (_, res) => {
 app.use(errorHandler)
 
 app.listen(ENTITIES_PORT, () => {
-    console.log("🚀 Entities service running on http://localhost/api/entities")
+    console.log(`🚀 Entities service running on ${ENTITIES_PORT}`)
 })
