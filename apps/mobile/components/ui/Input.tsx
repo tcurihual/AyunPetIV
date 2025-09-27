@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from "react-native"
 import { Controller, Control, FieldValues, Path, RegisterOptions } from "react-hook-form"
 
-type InputType = "text" | "email" | "password"
+type InputType = "text" | "email" | "password" | "number"
 
 type Props<T extends FieldValues> = {
     name: Path<T>
@@ -27,8 +27,11 @@ export default function Input<T extends FieldValues>({
     const isPassword = type === "password"
 
     const keyboardType: TextInputProps["keyboardType"] =
-        type === "email" ? "email-address" : "default"
-    const autoCapitalize: TextInputProps["autoCapitalize"] = type === "email" ? "none" : "sentences"
+        type === "email" ? "email-address" :
+        type === "number" ? "number-pad" : "default"
+
+    const autoCapitalize: TextInputProps["autoCapitalize"] = 
+        type === "email" ? "none" : "sentences"
 
     return (
         <Controller
@@ -45,8 +48,15 @@ export default function Input<T extends FieldValues>({
                             style={styles.input}
                             placeholder={placeholder}
                             placeholderTextColor="#A0A0A0"
-                            value={(value as string) ?? ""}
-                            onChangeText={onChange}
+                            value={(value as string | number | undefined)?.toString() ?? ""}
+                            onChangeText={(txt) => {
+                                if (type === "number") {
+                                const cleaned = txt.replace(/[^\d]/g, "")
+                                onChange(cleaned)
+                                } else {
+                                onChange(txt)
+                                }
+                            }}
                             onBlur={onBlur}
                             secureTextEntry={isPassword && !show}
                             keyboardType={keyboardType}
