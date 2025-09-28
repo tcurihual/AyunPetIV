@@ -10,7 +10,7 @@ export function buildOpenApi() {
 
     return generator.generateDocument({
         openapi: "3.0.3",
-        info: { title: "Gateway API", version: "1.0.0" },
+        info: { title: "Ayün Pet API Gateway", version: "1.0.0" },
         servers: [{ url: "/" }],
     })
 }
