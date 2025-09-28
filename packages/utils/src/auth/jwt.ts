@@ -1,11 +1,10 @@
-import jwt, { JwtPayload, SignOptions } from "jsonwebtoken"
-import { Request, Response, NextFunction } from "express"
+import jwt, { JwtPayload } from "jsonwebtoken"
 
-import { JWT_SECRET, JWT_EXPIRATION } from "../constants"
+import { JWT_SECRET } from "../constants"
 
 export type TokenPayload = JwtPayload & {
-    id: string
-    role: string
+    id: number
+    role: number | null
 }
 
 export const generateAuthToken = (payload: TokenPayload) => {

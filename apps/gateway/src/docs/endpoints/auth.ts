@@ -1,10 +1,10 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import {
-    loginSchema,
-    loginResponseSchema,
-    registerSchema,
-    baseResponseSchema,
-    errorValuesSchema,
+    LoginSchema,
+    LoginResponseSchema,
+    RegisterSchema,
+    BaseResponseSchema,
+    ErrorValuesSchema,
 } from "@repo/utils"
 
 export function registerAuthPaths(registry: OpenAPIRegistry) {
@@ -14,17 +14,21 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         request: {
             body: {
-                content: { "application/json": { schema: loginSchema } },
+                content: { "application/json": { schema: LoginSchema } },
             },
         },
         responses: {
             200: {
                 description: "Inicio de sesión exitoso",
-                content: { "application/json": { schema: loginResponseSchema } },
+                content: { "application/json": { schema: LoginResponseSchema } },
+            },
+            404: {
+                description: "Usuario no existe",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             401: {
                 description: "Credenciales inválidas",
-                content: { "application/json": { schema: errorValuesSchema } },
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
@@ -35,17 +39,17 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         request: {
             body: {
-                content: { "application/json": { schema: registerSchema } },
+                content: { "application/json": { schema: RegisterSchema } },
             },
         },
         responses: {
-            200: {
+            201: {
                 description: "Creación de cuenta exitosa",
-                content: { "application/json": { schema: baseResponseSchema } },
+                content: { "application/json": { schema: BaseResponseSchema } },
             },
-            401: {
-                description: "Error al crear cuenta",
-                content: { "application/json": { schema: errorValuesSchema } },
+            409: {
+                description: "Conflicto de crendeciales",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
