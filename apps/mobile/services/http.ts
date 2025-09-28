@@ -22,6 +22,8 @@ export const http = axios.create({
     baseURL: resolveAuthBaseURL(),
 })
 
+console.log(">>> ENV EXPO_PUBLIC_MEDIA_BASE =", process.env.EXPO_PUBLIC_MEDIA_BASE)
+
 export const mediaHttp = axios.create({
     baseURL: resolveMediaBaseURL(),
 })

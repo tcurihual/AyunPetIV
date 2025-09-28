@@ -15,6 +15,9 @@ import FilterModal, { FilterOptions } from "@/components/common/modals/FilterMod
 import { Pet } from "@/interfaces/pet"
 import ayunData from "@/data/mockData"
 import { hasPrefsDone } from "@/utils/storage"
+import { getLocalPets, LocalPet } from "@/services/petStorage"
+import { listMedia } from "@/services/media"
+import { http } from "@/services/http"
 
 const { width } = Dimensions.get("window")
 
