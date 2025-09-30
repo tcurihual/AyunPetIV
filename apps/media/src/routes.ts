@@ -1,7 +1,8 @@
 import { Router } from "express"
 
-import upload from "./middleware/upload"
-import { getFiles, postFiles, deleteFiles } from "./controller"
+import { publicUpload, uploadAccountRequest } from "./middleware/upload"
+import { getFiles, postFiles, deleteFiles } from "./controllers/images"
+import { giverPost } from "./controllers/giverRequest"
 
 const router = Router()
 
@@ -11,8 +12,11 @@ router.get("/", (_, res) => {
     })
 })
 
+// TODO: middleware por roles, solo para admin, para todas las rutas de abajo
+router.post("/uploads/account-request/:rut", uploadAccountRequest.array("files", 10), giverPost)
+
 router.get("/uploads/:entityType", getFiles)
-router.post("/uploads/:entityType/:entityId", upload.array("files", 10), postFiles)
+router.post("/uploads/:entityType/:entityId", publicUpload.array("files", 10), postFiles)
 router.delete("/uploads/:entityType/:entityId", deleteFiles)
 
 export default router

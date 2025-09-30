@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from "express"
 import path from "path"
 import fs from "fs/promises"
 
-import { HttpError } from "./middleware/upload"
+import { HttpError } from "../middleware/upload"
+import { AppResponse } from "@repo/utils"
 
 const UPLOADS_BASE = path.join(__dirname, "..", "uploads")
 
@@ -33,7 +34,7 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
             mime: file.mimetype,
         }))
 
-        return res.status(201).json({ message: "Files uploaded successfully", data: uploaded })
+        return AppResponse(res, 201, "Files uploaded successfully", uploaded)
     } catch (err) {
         next(err)
     }

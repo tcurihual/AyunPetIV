@@ -2,7 +2,7 @@ import multer, { diskStorage } from "multer"
 import path from "path"
 import fs from "fs"
 
-class HttpError extends Error {
+export class HttpError extends Error {
     constructor(public status: number, message: string) {
         super(message)
         this.name = "HttpError"
@@ -13,12 +13,29 @@ const ensureDir = (dir: string) => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 }
 
+export function safeOriginalName(original: string) {
+    const base = path.basename(original)
+    return base.replace(/[\/\\]/g, "_")
+}
+
+export function uniqueName(dir: string, name: string) {
+    const ext = path.extname(name)
+    const base = path.basename(name, ext)
+    let candidate = path.join(dir, base + ext)
+    let i = 1
+    while (fs.existsSync(candidate)) {
+        candidate = path.join(dir, `${base}-${i}${ext}`)
+        i++
+    }
+    return path.basename(candidate)
+}
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_MIME = ["image/jpeg", "image/png", "application/pdf"]
 
-const storage = diskStorage({
+const publicStorage = diskStorage({
     destination: (req, _file, cb) => {
-        const { entityType, entityId } = req.params as { entityType?: string; entityId?: string }
+        const { entityType, entityId } = req.params
         if (!entityType || !entityId)
             return cb(new HttpError(400, "entityType y entityId son requeridos"), "")
         const uploadPath = path.join(__dirname, "..", "uploads", entityType, entityId)
@@ -32,8 +49,8 @@ const storage = diskStorage({
     },
 })
 
-const upload = multer({
-    storage,
+export const publicUpload = multer({
+    storage: publicStorage,
     limits: { fileSize: MAX_FILE_SIZE },
     fileFilter: (_req, file, cb) => {
         if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true)
@@ -41,5 +58,28 @@ const upload = multer({
     },
 })
 
-export default upload
-export { HttpError }
+export const accountRequestStorage = diskStorage({
+    destination: (req, _file, cb) => {
+        const { rut } = req.params
+        if (!rut) return cb(new HttpError(400, "rut es requerido"), "")
+        const uploadPath = path.join(__dirname, "..", "uploads", "accountRequest", rut)
+        ensureDir(uploadPath)
+        cb(null, uploadPath)
+    },
+    filename: (req, file, cb) => {
+        const original = safeOriginalName(file.originalname)
+        const dir = path.join(__dirname, "..", "uploads", "accountRequest", req.params.rut)
+        const final = uniqueName(dir, original)
+
+        cb(null, final)
+    },
+})
+
+export const uploadAccountRequest = multer({
+    storage: accountRequestStorage,
+    limits: { fileSize: MAX_FILE_SIZE },
+    fileFilter: (_req, file, cb) => {
+        if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true)
+        cb(new HttpError(415, "Formato no permitido (JPG/PNG/PDF)"))
+    },
+})
