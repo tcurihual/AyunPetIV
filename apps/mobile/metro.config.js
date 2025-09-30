@@ -3,6 +3,11 @@ const { getDefaultConfig } = require("expo/metro-config")
 const { FileStore } = require("metro-cache")
 const path = require("path")
 
+// Load environment variables from root .env
+require("dotenv").config({
+    path: path.resolve(__dirname, "../../.env")
+})
+
 // Create the default Expo config for Metro
 // This includes the automatic monorepo configuration for workspaces
 // See: https://docs.expo.dev/guides/monorepos/#automatic-configuration
