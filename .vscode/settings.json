@@ -18,5 +18,6 @@
         ".env": ".env.example, nginx.conf, nginx.old.conf",
         "README.md": "LICENSE.md",
         "app.json": "app.json, babel.config.js, eas.json, expo-env.d.ts, metro.config.js"
-    }
+    },
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

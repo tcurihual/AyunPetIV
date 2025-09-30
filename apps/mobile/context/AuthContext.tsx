@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         ;(async () => {
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
+
                 if (!mounted) return
 
                 if (!storedToken) {
@@ -70,12 +71,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
                 setAuthToken(storedToken)
                 setTokenState(storedToken)
-
-                if (storedUser) {
-                    setUser(storedUser)
-                    setStatus("authenticated")
-                    return
-                }
 
                 try {
                     if (USE_MOCK) {
@@ -91,7 +86,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                         setUser(me)
                         setStatus("authenticated")
                     }
-                } catch {
+                } catch (error) {
                     await clearDown()
                     setStatus("unauthenticated")
                 }

@@ -47,7 +47,6 @@ export default function ShelterDashboard() {
     const series = useMemo(() => makeSeries(24, 10), [])
 
     const handleTabPress = (tab: string) => {
-        console.log("Tab pressed:", tab)
         if (tab === "home") return router.replace("/(shelter)/dashboard")
     }
 
