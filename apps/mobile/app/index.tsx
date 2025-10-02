@@ -1,22 +1,26 @@
 import React from "react"
 import { useEffect, useState } from "react"
 import { View, ActivityIndicator } from "react-native"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import { isFirstLaunch } from "@/utils/storage"
+import { useAuthContext } from "@/context/AuthContext"
 
 export default function Index() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
+    const { status } = useAuthContext()
 
     useEffect(() => {
-        const checkStorage = async () => {
+        const checkFirstLaunch = async () => {
             try {
-                const user = await AsyncStorage.getItem("user")
                 const firstTime = await isFirstLaunch()
-                if (user) {
-                    router.replace("/(home)")
-                } else {
+
+                if (status === "loading") {
+                    setLoading(true)
+                    return
+                }
+
+                if (status === "unauthenticated") {
                     if (firstTime) {
                         router.replace("/(auth)/intermediate-view")
                     } else {
@@ -24,15 +28,15 @@ export default function Index() {
                     }
                 }
             } catch {
-                router.replace("/(auth)")
+                router.replace("/(auth)/login")
             } finally {
                 setLoading(false)
             }
         }
-        checkStorage()
-    }, [router])
+        checkFirstLaunch()
+    }, [router, status])
 
-    if (loading) {
+    if (loading || status === "loading") {
         return (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                 <ActivityIndicator size="large" />

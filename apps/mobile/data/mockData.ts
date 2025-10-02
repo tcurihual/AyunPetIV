@@ -2,6 +2,7 @@ export default {
     role: [
         { id: 1, roletype: "fundacion" },
         { id: 2, roletype: "adoptante" },
+        { id: 21, roletype: "shelter" },
     ],
     users: [
         {
@@ -34,6 +35,14 @@ export default {
             name: "María López",
             email: "maria.lopez@example.com",
             password: "MariaL-2025",
+            files: [],
+        },
+        {
+            id: 5,
+            role: 21,
+            name: "Shelter Admin",
+            email: "admin@shelter.com",
+            password: "Shelter123@",
             files: [],
         },
     ],

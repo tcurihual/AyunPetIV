@@ -17,7 +17,7 @@ export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-    const { signIn, status } = useAuthContext()
+    const { signIn, status, user } = useAuthContext()
 
     const {
         control,
@@ -36,8 +36,6 @@ export default function LoginScreen() {
                 await new Promise((r) => setTimeout(r, 700))
 
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
-
-                router.replace("/(home)")
             })
         } catch (e: any) {
             const msg =
