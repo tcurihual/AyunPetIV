@@ -30,7 +30,6 @@ export default function HomeLayout() {
         <SafeAreaView style={styles.container}>
             <StatusBar style="inverted" />
 
-
             <Header onMenuPress={() => setMenuVisible(true)} />
 
             <Slot />
@@ -55,7 +54,7 @@ export default function HomeLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F9C80E",
+        backgroundColor: "#FFD24C",
         opacity: 1,
     },
 })

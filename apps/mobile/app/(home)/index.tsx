@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
-    categoryButtonActive: { backgroundColor: "#FFD700" },
+    categoryButtonActive: { backgroundColor: "#FFD24C" },
     categoryEmoji: { fontSize: 16, lineHeight: 18 },
     categoryIcon: { width: 16, height: 16, resizeMode: "contain" },
     categoryText: { fontSize: 14, fontWeight: "600", color: "#000" },

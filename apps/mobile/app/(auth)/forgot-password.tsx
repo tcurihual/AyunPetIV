@@ -16,7 +16,7 @@ const { width, height } = Dimensions.get("window")
 export default function ForgotPasswordScreen() {
     const router = useRouter()
     const [email, setEmail] = useState("")
-    const styles = useThemeStyles()
+    const styles = useThemeStyles(width, height)
 
     return (
         <View style={styles.container}>
@@ -24,7 +24,7 @@ export default function ForgotPasswordScreen() {
                 <Ionicons name="arrow-back" size={28} color="black" />
             </TouchableOpacity>
 
-            {/* Header igual al Register */}
+            {/* Header unificado */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Recuperar contraseña</Text>
                 <View style={styles.semiCircle} />
@@ -70,50 +70,57 @@ export default function ForgotPasswordScreen() {
     )
 }
 
-const useThemeStyles = () =>
-    StyleSheet.create({
+const useThemeStyles = (width: number, height: number) => {
+    const headerHeight = Math.max(height * 0.25, 180)
+    const logoSize = Math.min(width * 0.4, 150)
+
+    return StyleSheet.create({
         container: {
             flex: 1,
             backgroundColor: "#fff",
             alignItems: "center",
-            justifyContent: "flex-start",
         },
         backButton: {
             position: "absolute",
-            top: 24,
-            left: 16,
-            zIndex: 1,
+            top: height * 0.05,
+            left: width * 0.05,
+            zIndex: 10,
+            backgroundColor: "rgba(255,255,255,0.2)",
+            borderRadius: 20,
+            padding: 8,
         },
         header: {
             backgroundColor: "#FFD24C",
             width: "110%",
-            height: height * 0.22,
+            height: headerHeight,
             alignItems: "center",
-            borderBottomLeftRadius: 20,
-            borderBottomRightRadius: 20,
-            paddingBottom: 20,
-            marginBottom: 12,
+            justifyContent: "center",
+            borderBottomLeftRadius: 25,
+            borderBottomRightRadius: 25,
+            position: "relative",
+            marginBottom: 20,
         },
         headerTitle: {
-            fontSize: width < 350 ? 16 : 20,
+            fontSize: width < 350 ? 18 : 22,
             fontWeight: "bold",
-            marginTop: 24,
-            marginBottom: 8,
             color: "#222",
+            marginTop: height * 0.07,
+            textAlign: "center",
         },
         logo: {
-            width: width * 0.45,
-            height: width * 0.38,
-            top: 12,
+            width: logoSize,
+            height: logoSize * 0.85,
+            top: 20,
+            zIndex: 1,
         },
         semiCircle: {
             position: "absolute",
-            bottom: -40,
-            width: "35%",
-            height: "60%",
+            bottom: Math.max(-logoSize * 0.27, -40),
+            width: Math.max(logoSize * 1.2, 100),
+            height: Math.max(logoSize * 0.7, 70),
             backgroundColor: "#fff",
-            borderTopLeftRadius: 60,
-            borderTopRightRadius: 60,
+            borderTopLeftRadius: Math.max(logoSize * 0.6, 50),
+            borderTopRightRadius: Math.max(logoSize * 0.6, 50),
             alignSelf: "center",
             zIndex: 0,
         },
@@ -122,7 +129,7 @@ const useThemeStyles = () =>
             alignItems: "center",
             paddingHorizontal: 20,
             width: "100%",
-            marginTop: 20,
+            marginTop: 30,
         },
         row: {
             flexDirection: "row",
@@ -146,11 +153,9 @@ const useThemeStyles = () =>
         },
         input: {
             width: "90%",
-            minWidth: 220,
-            maxWidth: 400,
-            height: 40,
+            height: 45,
             backgroundColor: "#fff",
-            borderRadius: 16,
+            borderRadius: 12,
             paddingHorizontal: 16,
             marginBottom: 18,
             fontSize: 15,
@@ -160,37 +165,34 @@ const useThemeStyles = () =>
         },
         button: {
             width: "80%",
-            minWidth: 180,
-            maxWidth: 350,
-            height: 40,
+            height: 45,
             backgroundColor: "#FFD24C",
-            borderRadius: 16,
+            borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
             marginTop: 10,
-            elevation: 2,
+            elevation: 3,
         },
         buttonText: {
-            color: "#fff",
-            fontWeight: "500",
-            fontSize: 15,
+            color: "#222",
+            fontWeight: "600",
+            fontSize: 16,
         },
         secondaryButton: {
             width: "80%",
-            minWidth: 180,
-            maxWidth: 350,
-            height: 40,
-            borderRadius: 16,
+            height: 45,
+            borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
             marginTop: 12,
-            borderWidth: 1,
+            borderWidth: 2,
             borderColor: "#FFD24C",
             backgroundColor: "#fff",
         },
         secondaryButtonText: {
             color: "#FFD24C",
-            fontWeight: "500",
-            fontSize: 15,
+            fontWeight: "600",
+            fontSize: 16,
         },
     })
+}
