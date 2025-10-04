@@ -1,21 +1,10 @@
-import { Router } from "express";
-const router = Router();
+import { Router } from "express"
+import { login, register } from "../controllers/auth"
 
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body || {};
-  // TODO: validar contra tu DB. Por ahora, finge OK si vienen ambos:
-  if (!email || !password) return res.status(400).json({ msg: "Missing credentials" });
+const router = Router()
 
-  // token fake para probar (reemplaza por JWT real)
-  const token = "fake.jwt.token";
-  const user = { id: "1", name: "Demo", email, role: "adoptante" };
+router.post("/login", login)
 
-  return res.json({ token, user });
-});
+router.post("/register/:variation", register)
 
-router.get("/me", (req, res) => {
-  // en real, parsea el JWT y devuelve el usuario
-  return res.json({ id: "1", name: "Demo", email: "demo@mail.com", role: "adoptante" });
-});
-
-export default router;
+export default router

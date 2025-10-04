@@ -13,6 +13,7 @@ import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
+import AuthRedirect from "@/components/AuthRedirect"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -41,11 +42,13 @@ export default function RootLayout() {
                                 <Stack.Screen name="welcome" />
                                 <Stack.Screen name="(auth)" />
                                 <Stack.Screen name="(home)" />
+                                <Stack.Screen name="(shelter)" />
                                 <Stack.Screen name="+not-found" />
                             </Stack>
 
                             <ModalHost />
                             <Alert />
+                            <AuthRedirect />
 
                             <StatusBar style="inverted" />
                         </ThemeProvider>

@@ -4,18 +4,19 @@ import { Platform } from "react-native"
 let accessToken: string | null = null
 
 function resolveAuthBaseURL() {
-    const env = process.env.EXPO_PUBLIC_API_AUTH?.trim()
-    if (env && !env.includes("localhost")) return env
-    if (Platform.OS === "android") return "http://10.0.2.2:4000/api/auth"
-    return "http://localhost:4000/api/auth"
+    if (process.env.EXPO_PUBLIC_API_AUTH) {
+        return process.env.EXPO_PUBLIC_API_AUTH
+    }
+
+    return Platform.OS === "android" ? "http://10.0.2.2:4000" : "http://localhost:4000"
 }
 
 function resolveMediaBaseURL() {
-    const env = process.env.EXPO_PUBLIC_MEDIA_BASE?.trim()
-    if (env) return env
+    if (process.env.EXPO_PUBLIC_API_MEDIA) {
+        return process.env.EXPO_PUBLIC_API_MEDIA
+    }
 
-    if (Platform.OS === "android") return "http://10.0.2.2:8080"
-    return "http://localhost:8080"
+    return Platform.OS === "android" ? "http://10.0.2.2:7000" : "http://localhost:7000"
 }
 
 export const http = axios.create({

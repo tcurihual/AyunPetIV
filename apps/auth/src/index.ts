@@ -1,20 +1,23 @@
-import express from "express";
-import cors from "cors";
-import authRouter from "./routes/auth"; // tu router de auth
+import express from "express"
+import cors from "cors"
+import helmet from "helmet"
+import morgan from "morgan"
 
-const app = express();
+import { createSupabaseClient, AUTH_PORT, errorHandler } from "@repo/utils"
+import authRouter from "./routes/auth"
 
-app.use(cors());
-app.use(express.json());
+export const supabase = createSupabaseClient()
+const app = express()
 
- // prefijo correcto
- app.use("/api/auth", authRouter);
+app.use(cors())
+app.use(helmet())
+app.use(morgan("dev"))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
- // ping de prueba (lo tienes)
- app.get("/api/auth/ping", (req, res) => {
-   res.send("pong");
- });
+app.use("/", authRouter)
 
-app.listen(process.env.AUTH_PORT || 4000, () => {
-  console.log("Auth service running on", process.env.AUTH_PORT || 4000);
-});
+app.use(errorHandler)
+app.listen(AUTH_PORT, () => {
+    console.log(`🚀 Adoptions service running on ${AUTH_PORT}`)
+})

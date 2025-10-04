@@ -5,6 +5,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import router from "./routes"
 import { errorHandler } from "./middleware/error"
+import { MEDIA_PORT } from "@repo/utils"
 
 const app = express()
 
@@ -26,7 +27,4 @@ app.use("/", router)
 app.use((_req, res) => res.status(404).json({ error: "Not Found" }))
 app.use(errorHandler)
 
-const port = Number(process.env.PORT ?? 8080)
-app.listen(port, () => {
-  console.log(`Media listo en http://localhost:${port}`)
-})
+app.listen(MEDIA_PORT, () => console.log(`🚀 Entities service running on ${MEDIA_PORT}`))

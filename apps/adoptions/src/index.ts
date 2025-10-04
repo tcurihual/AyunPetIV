@@ -20,5 +20,5 @@ app.get("/", (_, res) => {
 
 app.use(errorHandler)
 app.listen(ADOPTIONS_PORT, () => {
-    console.log(`🚀 Adoptions service running on http://localhost/api/adoptions`)
+    console.log(`🚀 Adoptions service running on ${ADOPTIONS_PORT}`)
 })

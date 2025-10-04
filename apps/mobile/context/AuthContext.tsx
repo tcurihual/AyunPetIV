@@ -12,7 +12,7 @@ import {
     type Session as MockSession,
 } from "@/services/mockAuth"
 
-type Role = "adoptante" | "fundacion" | "admin"
+type Role = "adoptante" | "fundacion" | "admin" | "shelter"
 
 export interface User {
     id: string
@@ -48,7 +48,7 @@ interface AuthContextType {
     refreshUser: () => Promise<void>
 }
 
-const USE_MOCK = true
+const USE_MOCK = false
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         ;(async () => {
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
+
                 if (!mounted) return
 
                 if (!storedToken) {
@@ -70,12 +71,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
                 setAuthToken(storedToken)
                 setTokenState(storedToken)
-
-                if (storedUser) {
-                    setUser(storedUser)
-                    setStatus("authenticated")
-                    return
-                }
 
                 try {
                     if (USE_MOCK) {
@@ -91,7 +86,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                         setUser(me)
                         setStatus("authenticated")
                     }
-                } catch {
+                } catch (error) {
                     await clearDown()
                     setStatus("unauthenticated")
                 }
@@ -108,14 +103,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signIn(data: LoginPayload) {
         setStatus("loading")
         try {
-            const { token: tk, user } = USE_MOCK
+            const response = USE_MOCK
                 ? await signInViaMock(data)
-                : await http
-                      .post<AuthResponse>("/apps/mobile/app/(auth)/login.tsx", data)
-                      .then((r) => r.data)
+                : await http.post("/login", data).then((r) => r.data)
 
+            const { token: tk, user } = response.data
             await afterAuthSuccess(tk, user)
-        } catch (e) {
+        } catch (e: any) {
             setStatus("unauthenticated")
             throw e
         }
@@ -127,7 +121,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             const { token: tk, user } = USE_MOCK
                 ? await signUpViaMock(data)
                 : await http
-                      .post<AuthResponse>("/apps/mobile/app/(auth)/register.tsx", data)
+                      .post<AuthResponse>(`/register/${data.role || "adoptante"}`, data)
                       .then((r) => r.data)
 
             await afterAuthSuccess(tk, user)

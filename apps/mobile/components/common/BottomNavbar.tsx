@@ -1,59 +1,45 @@
 import { View, StyleSheet, Pressable, useWindowDimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import React from "react"
+import { useRouter } from "expo-router"
 
-type Props = {
-    onTabPress?: (tab: string) => void
-    activeTab?: string
-}
-
-export default function BottomNavbar({ onTabPress, activeTab }: Props) {
+export default function BottomNavbar() {
     const { height } = useWindowDimensions()
+    const router = useRouter()
+
     return (
         <View style={[styles.navbar, { height: height * 0.06 }]}>
-            <Pressable style={styles.tab} onPress={() => onTabPress?.("home")}>
-                <Ionicons name="home" size={26} color={activeTab === "home" ? "#000" : "#555"} />
+            <Pressable style={styles.tab} onPress={() => router.push("/(home)")}>
+                <Ionicons name="home" size={26} color="#000" />
             </Pressable>
 
-            <Pressable style={styles.tab} onPress={() => onTabPress?.("search")}>
-                <Ionicons
-                    name="search"
-                    size={26}
-                    color={activeTab === "search" ? "#000" : "#555"}
-                />
+            <Pressable
+                style={styles.tab}
+                onPress={() => router.push("/(home)/(requests)/requestList")}
+            >
+                <Ionicons name="search" size={26} color="#000" />
             </Pressable>
 
-            <Pressable style={styles.addBtn} onPress={() => onTabPress?.("add")}>
+            <Pressable style={styles.addBtn} onPress={() => router.push("/(home)/AddPetScreen")}>
                 <Ionicons name="add" size={28} color="#fff" />
             </Pressable>
 
-            <Pressable style={styles.tab} onPress={() => onTabPress?.("chat")}>
-                <Ionicons
-                    name="chatbubble"
-                    size={26}
-                    color={activeTab === "chat" ? "#000" : "#555"}
-                />
+            <Pressable style={styles.tab} onPress={() => router.push("/(home)/my-publications")}>
+                <Ionicons name="list" size={26} color="#000" />
             </Pressable>
 
-            <Pressable style={styles.tab} onPress={() => onTabPress?.("notifications")}>
-                <Ionicons
-                    name="notifications"
-                    size={26}
-                    color={activeTab === "notifications" ? "#000" : "#555"}
-                />
+            <Pressable style={styles.tab} onPress={() => router.push("/(home)/my-profile")}>
+                <Ionicons name="person" size={26} color="#000" />
             </Pressable>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     navbar: {
         flexDirection: "row",
         backgroundColor: "#F9C80E",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 12,
         borderTopColor: "#ddd",
@@ -74,5 +60,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 5,
         elevation: 5,
+        marginHorizontal: 6,
     },
 })
