@@ -4,6 +4,30 @@ import { validarRUT } from "../rut"
 export * from "./entities"
 export * from "./responses"
 
+export const LoginSchema = z.object({
+    email: z.email("Debes ingresar un correo válido"),
+    password: z.string("La contraseña es obligatoria").min(1, "La contraseña no puede estar vacía"),
+})
+
+export const UserInsertSchema = z.object({
+    email: z.email("Debes ingresar un correo válido"),
+    name: z.string("El nombre es obligatorio").min(2, "El nombre debe tener al menos 2 caracteres"),
+    rut: z.string("El RUT es obligatorio").refine((data) => validarRUT(data), {
+        message: "El RUT no es válido",
+    }),
+    password: z
+        .string("La contraseña es obligatoria")
+        .min(8, "Debe tener al menos 8 caracteres")
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, "Debe incluir al menos un carácter especial")
+        .regex(/\d/, "Debe incluir al menos un número"),
+    address: z.string().optional(),
+    description: z.string().optional(),
+    validated: z.boolean().optional(),
+    role: z.number().optional(),
+    createdat: z.string().optional(),
+    updatedat: z.string().optional(),
+})
+
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
     roletype: z.string("Se debe ingresar un string"),

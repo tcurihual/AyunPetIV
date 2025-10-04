@@ -7,42 +7,78 @@ import {
     User,
     generateAuthToken,
     hashPassword,
+    LoginSchema,
+    UserInsertSchema,
 } from "@repo/utils"
 
 type Variation = "user" | "giver" | "shelter"
 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body
-    if (!email || !password) throw new AppError(404, "Faltan crendenciales")
+    const validation = LoginSchema.safeParse(req.body)
+    if (!validation.success) {
+        const errors = validation.error.issues.map((issue) => issue.message).join(", ")
+        throw new AppError(400, `Datos inválidos: ${errors}`)
+    }
+
+    const { email, password } = validation.data
 
     const { data: user, error } = await supabase
         .from("users")
         .select("*")
         .eq("email", email)
         .single()
-    if (error) throw new AppError(404, "El usuario no existe")
+
+    if (error || !user) {
+        throw new AppError(404, "El usuario no existe")
+    }
+
+    if (!user.validated) {
+        throw new AppError(403, "Usuario no validado. Verifica tu email antes de continuar.")
+    }
 
     const isPasswordValid = await comparePassword(password, user.password)
-    if (!isPasswordValid) throw new AppError(401, "Datos ingresados no son validos")
+    if (!isPasswordValid) {
+        throw new AppError(401, "Credenciales inválidas")
+    }
 
     const payload = {
         id: user.id,
         role: user.role,
+        email: user.email,
     }
-    const token = generateAuthToken(payload)
-    if (!token) throw new AppError(500, "Ocurrio un error inesperado")
 
-    return AppResponse(res, 200, "Inicio de sesión exitoso", { user, token })
+    const token = generateAuthToken(payload)
+    if (!token) {
+        throw new AppError(500, "Error al generar token de autenticación")
+    }
+
+    const { password: _, ...userWithoutPassword } = user
+
+    return AppResponse(res, 200, "Inicio de sesión exitoso", {
+        user: userWithoutPassword,
+        token,
+    })
 }
 
 export const register = async (
-    req: Request<{ variation: Variation }, any, User["Row"]>,
+    req: Request<{ variation: Variation }, any, User["Insert"]>,
     res: Response
 ) => {
     const { variation } = req.params
-    const user = req.body
 
-    if (!variation) throw new AppError(500, "No se ingresaron params")
+    const validation = UserInsertSchema.safeParse(req.body)
+    if (!validation.success) {
+        const errors = validation.error.issues.map((issue) => issue.message).join(", ")
+        throw new AppError(400, `Datos inválidos: ${errors}`)
+    }
+
+    const user = validation.data
+
+    if (!variation) throw new AppError(400, "No se especificó el tipo de usuario")
+
+    if (!["user", "giver", "shelter"].includes(variation)) {
+        throw new AppError(400, "Tipo de usuario inválido. Debe ser: user, giver o shelter")
+    }
 
     const { data: userExists, error: findError } = await supabase
         .from("users")
@@ -63,10 +99,10 @@ export const register = async (
         .eq("roletype", variation)
         .single()
 
-    if (roleError) throw new AppError(500, "Ocurrio un error inesperado")
+    if (roleError) throw new AppError(500, "Tipo de rol no encontrado")
 
     const hashedPassword = await hashPassword(user.password)
-    if (!hashedPassword) throw new AppError(500, "Ocurrio un error inesperado")
+    if (!hashedPassword) throw new AppError(500, "Error al procesar la contraseña")
 
     const payload: User["Insert"] = {
         name: user.name,
@@ -74,9 +110,11 @@ export const register = async (
         rut: user.rut,
         password: hashedPassword,
         role: roleSelect.id,
-        validated: false,
+        validated: user.validated ?? false,
         address: user.address ?? null,
         description: user.description ?? null,
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString(),
     }
 
     // TODO: envio de correos a usuarios, según rol
