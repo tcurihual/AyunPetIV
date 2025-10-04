@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         try {
             const response = USE_MOCK
                 ? await signInViaMock(data)
-                : await http.post("/login", data).then((r) => r.data)
+                : await http.post("/v1/auth/login", data).then((r) => r.data)
 
             const { token: tk, user } = response.data
             await afterAuthSuccess(tk, user)

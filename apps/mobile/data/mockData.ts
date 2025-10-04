@@ -7,7 +7,7 @@ export default {
     users: [
         {
             id: 1,
-            role: 1,
+            role: 21,
             name: "Fundación Patitas Felices",
             email: "contacto@patitasfelices.cl",
             password: "Patitas@2025",
@@ -15,7 +15,7 @@ export default {
         },
         {
             id: 2,
-            role: 2,
+            role: 20,
             name: "Juan Pérez",
             email: "juanperez@gmail.com",
             password: "Juan123@",
@@ -23,7 +23,7 @@ export default {
         },
         {
             id: 3,
-            role: 1,
+            role: 21,
             name: "Fundación Amigos de los Animales",
             email: "hola@faa.cl",
             password: "Faa_2025",
@@ -31,7 +31,7 @@ export default {
         },
         {
             id: 4,
-            role: 2,
+            role: 20,
             name: "María López",
             email: "maria.lopez@example.com",
             password: "MariaL-2025",

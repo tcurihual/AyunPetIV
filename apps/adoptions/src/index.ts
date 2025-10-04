@@ -18,6 +18,14 @@ app.get("/", (_, res) => {
     })
 })
 
+app.use((req, res) => {
+    return res.status(404).json({
+        error: "Route not found",
+        message: `La ruta '${req.originalUrl}' no existe`,
+        suggestion: "Verifica la URL",
+    })
+})
+
 app.use(errorHandler)
 app.listen(ADOPTIONS_PORT, () => {
     console.log(`🚀 Adoptions service running on ${ADOPTIONS_PORT}`)

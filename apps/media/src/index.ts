@@ -11,7 +11,13 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")))
 
 app.use("/", router)
 
-app.use((_req, res) => res.status(404).json({ error: "Not Found" }))
+app.use((_req, res) =>
+    res.status(404).json({
+        error: "Route not found",
+        message: `La ruta '${_req.originalUrl}' no existe`,
+        suggestion: "Verifica la URL",
+    })
+)
 
 app.use(errorHandler)
 
