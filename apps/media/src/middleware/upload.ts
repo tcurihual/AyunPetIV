@@ -62,13 +62,13 @@ export const accountRequestStorage = diskStorage({
     destination: (req, _file, cb) => {
         const { rut } = req.params
         if (!rut) return cb(new HttpError(400, "rut es requerido"), "")
-        const uploadPath = path.join(__dirname, "..", "uploads", "accountRequest", rut)
+        const uploadPath = path.join(__dirname, "..", "uploads", "account-request", rut)
         ensureDir(uploadPath)
         cb(null, uploadPath)
     },
     filename: (req, file, cb) => {
         const original = safeOriginalName(file.originalname)
-        const dir = path.join(__dirname, "..", "uploads", "accountRequest", req.params.rut)
+        const dir = path.join(__dirname, "..", "uploads", "account-request", req.params.rut)
         const final = uniqueName(dir, original)
 
         cb(null, final)

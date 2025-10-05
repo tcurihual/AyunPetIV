@@ -3,19 +3,68 @@ import path from "path"
 import fs from "fs/promises"
 
 import { HttpError } from "../middleware/upload"
+import { PUBLIC_ENTITIES, UPLOADS_BASE, getAllFiles } from "../utils"
 import { AppResponse } from "@repo/utils"
 
-const UPLOADS_BASE = path.join(__dirname, "..", "uploads")
+export const getFiles = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { entityType } = req.params
 
-const getAllFiles = async (dirPath: string, out: string[] = []): Promise<string[]> => {
-    const entries = await fs.readdir(dirPath)
-    for (const entry of entries) {
-        const full = path.join(dirPath, entry)
-        const st = await fs.stat(full)
-        if (st.isDirectory()) await getAllFiles(full, out)
-        else out.push(full)
+        if (!PUBLIC_ENTITIES.includes(entityType)) {
+            throw new HttpError(403, "Access denied to this entity type")
+        }
+
+        const entityPath = path.join(UPLOADS_BASE, entityType)
+
+        await fs.access(entityPath).catch(() => {
+            throw new HttpError(404, "No files found for this entity type")
+        })
+
+        const allFiles = await getAllFiles(entityPath)
+        const grouped: Record<string, string[]> = {}
+
+        for (const abs of allFiles) {
+            const rel = path.relative(path.join(__dirname, ".."), abs)
+            const url = `/${rel.replace(/\\/g, "/")}`
+
+            const parts = url.split("/")
+            console.log(parts)
+            const entityId = parts[3]
+
+            if (!grouped[entityId]) grouped[entityId] = []
+            grouped[entityId].push(url)
+        }
+
+        return AppResponse(res, 200, "Files retrieved successfully", grouped)
+    } catch (err) {
+        next(err)
     }
-    return out
+}
+
+export const getFilesById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { entityType, entityId } = req.params
+
+        if (!PUBLIC_ENTITIES.includes(entityType)) {
+            throw new HttpError(403, "Access denied to this entity type")
+        }
+
+        const entityPath = path.join(UPLOADS_BASE, entityType, entityId)
+
+        await fs.access(entityPath).catch(() => {
+            throw new HttpError(404, "No files found for this entityId")
+        })
+
+        const allFiles = await getAllFiles(entityPath)
+        const fileUrls = allFiles.map((abs) => {
+            const rel = path.relative(path.join(__dirname, ".."), abs)
+            return `/${rel.replace(/\\/g, "/")}`
+        })
+
+        return AppResponse(res, 200, "Files retrieved successfully", fileUrls)
+    } catch (err) {
+        next(err)
+    }
 }
 
 export const postFiles = (req: Request, res: Response, next: NextFunction) => {
@@ -35,27 +84,6 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
         }))
 
         return AppResponse(res, 201, "Files uploaded successfully", uploaded)
-    } catch (err) {
-        next(err)
-    }
-}
-
-export const getFiles = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { entityType } = req.params
-        const entityPath = path.join(UPLOADS_BASE, entityType)
-
-        await fs.access(entityPath).catch(() => {
-            throw new HttpError(404, "No files found for this entity type")
-        })
-
-        const allFiles = await getAllFiles(entityPath)
-        const fileUrls = allFiles.map((abs) => {
-            const rel = path.relative(path.join(__dirname, ".."), abs)
-            return `/${rel.replace(/\\/g, "/")}`
-        })
-
-        return res.status(200).json({ message: "Files retrieved successfully", data: fileUrls })
     } catch (err) {
         next(err)
     }
@@ -89,10 +117,12 @@ export const deleteFiles = async (req: Request, res: Response, next: NextFunctio
         )
 
         const ok = results.deleted.length > 0
-        return res.status(ok ? 200 : 404).json({
-            message: ok ? "Files processed." : "No files were found to be deleted.",
-            data: results,
-        })
+        return AppResponse(
+            res,
+            ok ? 200 : 404,
+            ok ? "Files processed." : "No files were found to be deleted.",
+            results
+        )
     } catch (err) {
         next(err)
     }
