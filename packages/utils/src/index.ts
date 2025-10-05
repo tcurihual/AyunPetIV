@@ -7,3 +7,5 @@ export * from "./auth"
 export * from "./types"
 export * from "./database.types"
 export * from "./supabase"
+export * from "./middlewares"
+

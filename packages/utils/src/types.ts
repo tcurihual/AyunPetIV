@@ -1,6 +1,14 @@
+import { Request } from "express"
 import { z } from "zod"
 import { LoginResponseSchema, UserSchema } from "./schemas"
 import { Database } from "database.types"
+
+export interface AuthenticatedRequest extends Request {
+    user?: {
+        id: number
+        role: number | null
+    }
+}
 
 export type JsonResponse<T> = {
     status?: number
