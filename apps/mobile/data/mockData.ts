@@ -107,7 +107,7 @@ export default {
             petid: 101,
             title: "Firulais en adopción",
             description: "Muy juguetón y cariñoso",
-            status: "active",
+            status: "activo",
             createdat: "2025-09-10T00:00:00Z",
         },
         {
@@ -116,7 +116,7 @@ export default {
             petid: 102,
             title: "Michi en adopción",
             description: "Gata tranquila y sociable",
-            status: "closed",
+            status: "cerrado",
             createdat: "2025-09-08T00:00:00Z",
         },
         {
@@ -125,7 +125,7 @@ export default {
             petid: 103,
             title: "Rocky en adopción",
             description: "Energético, ideal para familias activas",
-            status: "active",
+            status: "activo",
             createdat: "2025-09-09T00:00:00Z",
         },
     ],
