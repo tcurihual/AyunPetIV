@@ -6,7 +6,7 @@ const { width } = Dimensions.get("window")
 interface Publication {
     id: string
     name: string
-    image: string
+    image: string | number
     publishedDate: string
     status: "active" | "inactive" | "closed"
     requestsCount: number
@@ -70,7 +70,14 @@ export default function MyPublicationCard({
 
     return (
         <View style={styles.container}>
-            <Image source={{ uri: publication.image }} style={styles.image} />
+            <Image
+                source={
+                    typeof publication.image === "string"
+                        ? { uri: publication.image }
+                        : publication.image
+                }
+                style={styles.image}
+            />
 
             <View style={styles.content}>
                 <View style={styles.header}>
