@@ -21,6 +21,15 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/v1/docs", swaggerUi.serve, swaggerUi.setup(spec, { explorer: true }))
 
+app.use((req, res) => {
+    return res.status(404).json({
+        error: "Route not found",
+        message: `La ruta '${req.originalUrl}' no existe`,
+        suggestion:
+            "Todas las rutas de API deben empezar con /v1/. Consulta /v1/docs para más información",
+    })
+})
+
 app.use(errorHandler)
 app.listen(API_GATEWAY_PORT, () => {
     console.log(`🚀 API Gateway running on ${API_GATEWAY_PORT}`)

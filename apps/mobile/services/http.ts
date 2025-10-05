@@ -3,30 +3,16 @@ import { Platform } from "react-native"
 
 let accessToken: string | null = null
 
-function resolveAuthBaseURL() {
-    if (process.env.EXPO_PUBLIC_API_AUTH) {
-        return process.env.EXPO_PUBLIC_API_AUTH
+function resolveGatewayBaseURL() {
+    if (process.env.EXPO_PUBLIC_API_GATEWAY) {
+        return process.env.EXPO_PUBLIC_API_GATEWAY
     }
 
-    return Platform.OS === "android" ? "http://10.0.2.2:4000" : "http://localhost:4000"
-}
-
-function resolveMediaBaseURL() {
-    if (process.env.EXPO_PUBLIC_API_MEDIA) {
-        return process.env.EXPO_PUBLIC_API_MEDIA
-    }
-
-    return Platform.OS === "android" ? "http://10.0.2.2:7000" : "http://localhost:7000"
+    return Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000"
 }
 
 export const http = axios.create({
-    baseURL: resolveAuthBaseURL(),
-})
-
-console.log(">>> ENV EXPO_PUBLIC_MEDIA_BASE =", process.env.EXPO_PUBLIC_MEDIA_BASE)
-
-export const mediaHttp = axios.create({
-    baseURL: resolveMediaBaseURL(),
+    baseURL: resolveGatewayBaseURL(),
 })
 
 export function setAuthToken(token: string | null) {
@@ -34,13 +20,6 @@ export function setAuthToken(token: string | null) {
 }
 
 http.interceptors.request.use((config) => {
-    if (accessToken && config.headers) {
-        config.headers.Authorization = `Bearer ${accessToken}`
-    }
-    return config
-})
-
-mediaHttp.interceptors.request.use((config) => {
     if (accessToken && config.headers) {
         config.headers.Authorization = `Bearer ${accessToken}`
     }
@@ -81,7 +60,7 @@ export const mediaService = {
             } as any)
         })
 
-        const response = await mediaHttp.post(`/uploads/${entityType}/${entityId}`, formData, {
+        const response = await http.post(`/v1/media/uploads/${entityType}/${entityId}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -91,7 +70,7 @@ export const mediaService = {
     },
 
     getFiles: async (entityType: string): Promise<{ message: string; data: string[] }> => {
-        const response = await mediaHttp.get(`/uploads/${entityType}`)
+        const response = await http.get(`/v1/media/uploads/${entityType}`)
         return response.data
     },
 
@@ -100,7 +79,7 @@ export const mediaService = {
         entityId: string,
         fileNames: string[]
     ): Promise<any> => {
-        const response = await mediaHttp.delete(`/uploads/${entityType}/${entityId}`, {
+        const response = await http.delete(`/v1/media/uploads/${entityType}/${entityId}`, {
             data: { fileNamesArray: fileNames },
         })
         return response.data
