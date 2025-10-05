@@ -19,6 +19,8 @@ export type JsonResponse<T> = {
 
 export type loginResponseType = z.infer<typeof LoginResponseSchema>
 
+export type RoleType = "admin" | "user" | "shelter"
+
 export type User = {
     Row: Database["public"]["Tables"]["users"]["Row"]
     Insert: Database["public"]["Tables"]["users"]["Insert"]

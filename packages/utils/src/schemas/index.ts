@@ -6,7 +6,7 @@ export * from "./responses"
 
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
-    roletype: z.string("Se debe ingresar un string"),
+    roletype: z.enum(["admin", "user", "shelter"], "Se debe ingresar un rol válido"),
 })
 
 export const RegisterFormSchema = z
@@ -108,7 +108,7 @@ export const ReportFormSchema = z.object({
 
 export const UpdateUserSchema = z.object({
     id: z.string("ID del usuario es requerido"),
-    role: z.string("Rol es requerido"),
+    role: z.enum(["admin", "user", "shelter"], "Rol es requerido"),
     rut: z
         .string("RUT es obligatorio")
         .min(11, "El RUT debe tener al menos 11 caracteres (ej: 12345678-9)")
