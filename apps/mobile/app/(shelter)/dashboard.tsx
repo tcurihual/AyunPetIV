@@ -37,6 +37,15 @@ const recientes = [
     { who: "José M.", what: "perro", when: "3 horas" },
     { who: "Ana G.", what: "gato", when: "12 horas" },
     { who: "Luis R.", what: "perro", when: "1 día" },
+    { who: "María S.", what: "gato", when: "2 días" },
+    { who: "Carlos T.", what: "conejo", when: "3 días" },
+    { who: "Elena V.", what: "perro", when: "4 días" },
+    { who: "Diego P.", what: "hamster", when: "5 días" },
+    { who: "Sofia Q.", what: "gato", when: "6 días" },
+    { who: "Roberto K.", what: "perro", when: "1 semana" },
+    { who: "Lucia M.", what: "tortuga", when: "1 semana" },
+    { who: "Fernando J.", what: "gato", when: "2 semanas" },
+    { who: "Isabel N.", what: "perro", when: "2 semanas" },
 ]
 
 export default function ShelterDashboard() {
@@ -96,19 +105,32 @@ export default function ShelterDashboard() {
                             <Text style={styles.selectedValueText}>{selectedBarValue}</Text>
                         </View>
                     )}
-                    <BarChart
-                        data={publicacionesPorTipo.map((d, index) => ({
-                            value: d.value,
-                            label: d.label,
-                            frontColor: ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6"][index % 4],
-                            onPress: () => setSelectedBarValue(`${d.label}: ${d.value}`),
-                        }))}
-                        barWidth={22}
-                        isAnimated
-                        noOfSections={4}
-                        xAxisLabelTextStyle={{ color: "#6b7280" }}
-                        yAxisTextStyle={{ color: "#6b7280" }}
-                    />
+                    <View style={styles.barChartContainer}>
+                        <BarChart
+                            data={publicacionesPorTipo.map((d, index) => ({
+                                value: d.value,
+                                label: d.label,
+                                frontColor: ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6"][index % 4],
+                                onPress: () => setSelectedBarValue(`${d.label}: ${d.value}`),
+                            }))}
+                            barWidth={18}
+                            isAnimated
+                            noOfSections={4}
+                            xAxisLabelTextStyle={{ color: "#6b7280", fontSize: 12 }}
+                            yAxisTextStyle={{ color: "#6b7280" }}
+                            spacing={30}
+                            width={300}
+                            height={180}
+                            xAxisThickness={1}
+                            yAxisThickness={1}
+                            rulesType="solid"
+                            rulesColor="#e5e7eb"
+                            showVerticalLines={false}
+                            hideRules={false}
+                            yAxisColor="#e5e7eb"
+                            xAxisColor="#e5e7eb"
+                        />
+                    </View>
                 </View>
 
                 <View style={styles.card}>
@@ -153,28 +175,36 @@ export default function ShelterDashboard() {
 
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Solicitudes recientes</Text>
-                    {recientes.map((r, i) => (
-                        <View
-                            key={i}
-                            style={[
-                                styles.listItem,
-                                i < recientes.length - 1 && styles.listDivider,
-                            ]}
+                    <View style={styles.recientesContainer}>
+                        <ScrollView 
+                            style={styles.recientesScrollView} 
+                            showsVerticalScrollIndicator={true}
+                            nestedScrollEnabled={true}
                         >
-                            <View style={styles.bullet} />
-                            <Text style={styles.listText}>
-                                <Text style={{ fontWeight: "700" }}>{r.who}</Text> solicitó adoptar
-                                un {r.what}
-                            </Text>
-                            <Text style={styles.time}>{r.when}</Text>
-                        </View>
-                    ))}
+                            {recientes.map((r, i) => (
+                                <View
+                                    key={i}
+                                    style={[
+                                        styles.listItem,
+                                        i < recientes.length - 1 && styles.listDivider,
+                                    ]}
+                                >
+                                    <View style={styles.bullet} />
+                                    <Text style={styles.listText}>
+                                        <Text style={{ fontWeight: "700" }}>{r.who}</Text> solicitó adoptar
+                                        un {r.what}
+                                    </Text>
+                                    <Text style={styles.time}>{r.when}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
                 </View>
 
                 <View style={{ height: 24 }} />
             </ScrollView>
 
-            <BottomNavbar activeTab="home" onTabPress={handleTabPress} />
+            <BottomNavbar />
 
             {menuVisible && <DropdownMenu onClose={() => setMenuVisible(false)} />}
         </SafeAreaView>
@@ -217,6 +247,13 @@ const styles = StyleSheet.create({
         color: "#374151",
     },
 
+    barChartContainer: {
+        alignItems: "center",
+        paddingHorizontal: 5,
+        paddingVertical: 10,
+        overflow: "hidden",
+    },
+
     kpiRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
     kpi: { flex: 1, padding: 12, borderRadius: 16, alignItems: "center", justifyContent: "center" },
     kpiLabel: { fontSize: 12, color: "#374151" },
@@ -248,6 +285,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#374151",
         fontWeight: "500",
+    },
+
+    recientesContainer: {
+        height: 200,
+        borderRadius: 8,
+        backgroundColor: "#f9fafb",
+        padding: 4,
+    },
+    recientesScrollView: {
+        flex: 1,
+        paddingHorizontal: 8,
     },
 
     listItem: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
