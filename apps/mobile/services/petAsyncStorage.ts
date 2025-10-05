@@ -13,7 +13,7 @@ export interface Pet {
     sterilized: boolean
     adopted: boolean
     ownerId: string
-    status: "active" | "archived"
+    status: "activo" | "inactivo" | "cerrado"
     createdAt: string
     updatedAt: string
     imageId?: number
@@ -32,7 +32,7 @@ const initializePetsFromMock = async (): Promise<Pet[]> => {
         sterilized: pet.sterilized,
         adopted: pet.adopted,
         ownerId: pet.ownerid.toString(),
-        status: pet.adopted ? "archived" : "active",
+        status: pet.adopted ? "cerrado" : "activo",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         imageId: pet.id, // Para mapear a las imágenes

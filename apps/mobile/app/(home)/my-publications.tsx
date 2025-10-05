@@ -24,7 +24,7 @@ type PubItem = {
     name: string
     image: string | number
     publishedDate: string
-    status: "active" | "inactive" | "closed"
+    status: "activo" | "inactivo" | "cerrado"
     requestsCount: number
 }
 
@@ -66,7 +66,7 @@ export default function MyPublications() {
                     month: "long",
                     year: "numeric",
                 }),
-                status: pet.status === "archived" ? "closed" : "active",
+                status: pet.status === "cerrado" ? "cerrado" : "activo",
                 requestsCount: 0,
             }))
             setItems(mapped)
@@ -89,9 +89,9 @@ export default function MyPublications() {
         return items.filter((publication) => {
             switch (selectedFilter) {
                 case "pending":
-                    return publication.status === "active" && publication.requestsCount > 0
+                    return publication.status === "activo" && publication.requestsCount > 0
                 case "adopted":
-                    return publication.status === "closed"
+                    return publication.status === "cerrado"
                 case "no-requests":
                     return publication.requestsCount === 0
                 default:

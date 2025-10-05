@@ -8,7 +8,7 @@ interface Publication {
     name: string
     image: string | number
     publishedDate: string
-    status: "active" | "inactive" | "closed"
+    status: "activo" | "inactivo" | "cerrado"
     requestsCount: number
 }
 
@@ -29,19 +29,19 @@ export default function MyPublicationCard({
 }: MyPublicationCardProps) {
     const getStatusConfig = (status: Publication["status"]) => {
         switch (status) {
-            case "active":
+            case "activo":
                 return {
                     label: "Activa",
                     backgroundColor: "#4CAF50",
                     textColor: "#fff",
                 }
-            case "inactive":
+            case "inactivo":
                 return {
                     label: "Inactiva",
                     backgroundColor: "#FF9800",
                     textColor: "#fff",
                 }
-            case "closed":
+            case "cerrado":
                 return {
                     label: "Cerrada",
                     backgroundColor: "#F44336",
@@ -53,7 +53,7 @@ export default function MyPublicationCard({
     const statusConfig = getStatusConfig(publication.status)
 
     const getActionButton = () => {
-        if (publication.status === "closed") {
+        if (publication.status === "cerrado") {
             return (
                 <TouchableOpacity style={styles.disabledButton} disabled>
                     <Text style={styles.disabledButtonText}>No disponible</Text>
