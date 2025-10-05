@@ -1,10 +1,23 @@
 import express from "express"
 import path from "path"
+import cors from "cors"
+import helmet from "helmet"
+import morgan from "morgan"
 import router from "./routes"
 import { errorHandler } from "./middleware/error"
 import { MEDIA_PORT } from "@repo/utils"
 
 const app = express()
+
+app.use(cors({
+  origin: true,
+  credentials: false,
+  methods: ["GET","POST","DELETE","OPTIONS"],
+}))
+
+app.use(helmet({ crossOriginResourcePolicy: false }))
+
+app.use(morgan("dev"))
 app.use(express.json())
 
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")))
