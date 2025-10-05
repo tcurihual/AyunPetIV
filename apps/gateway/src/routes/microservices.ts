@@ -29,13 +29,15 @@ msRouter.use(
             "^/v1/adoptions": "",
         },
         proxyTimeout: 5000,
-        onProxyReq: (proxyReq: ClientRequest, req: Request) => {
-            if (req.user) {
-                proxyReq.setHeader("x-user-id", req.user.id)
-                proxyReq.setHeader("x-user-role", req.user.role!!)
-            }
+        on: {
+            proxyReq: (proxyReq: ClientRequest, req: Request) => {
+                if (req.user) {
+                    proxyReq.setHeader("x-user-id", req.user.id)
+                    proxyReq.setHeader("x-user-role", req.user.role!!)
+                }
+            },
         },
-    } as Options)
+    })
 )
 msRouter.use(
     "/entities",
@@ -47,13 +49,15 @@ msRouter.use(
             "^/v1/entities": "",
         },
         proxyTimeout: 5000,
-        onProxyReq: (proxyReq: ClientRequest, req: Request) => {
-            if (req.user) {
-                proxyReq.setHeader("x-user-id", req.user.id)
-                proxyReq.setHeader("x-user-role", req.user.role!!)
-            }
+        on: {
+            proxyReq: (proxyReq: ClientRequest, req: Request) => {
+                if (req.user) {
+                    proxyReq.setHeader("x-user-id", req.user.id)
+                    proxyReq.setHeader("x-user-role", req.user.role!!)
+                }
+            },
         },
-    } as Options)
+    })
 )
 msRouter.use(
     "/media",
@@ -65,11 +69,13 @@ msRouter.use(
             "^/v1/media": "",
         },
         proxyTimeout: 5000,
-        onProxyReq: (proxyReq: ClientRequest, req: Request) => {
-            if (req.user) {
-                proxyReq.setHeader("x-user-id", req.user.id)
-                proxyReq.setHeader("x-user-role", req.user.role!!)
-            }
+        on: {
+            proxyReq: (proxyReq: ClientRequest, req: Request) => {
+                if (req.user) {
+                    proxyReq.setHeader("x-user-id", req.user.id)
+                    proxyReq.setHeader("x-user-role", req.user.role!!)
+                }
+            },
         },
-    } as Options)
+    })
 )

@@ -5,20 +5,24 @@ import helmet from "helmet"
 import morgan from "morgan"
 import router from "./routes"
 import { errorHandler } from "./middleware/error"
-import { MEDIA_PORT } from "@repo/utils"
+import { MEDIA_PORT, getHeaders } from "@repo/utils"
 
 const app = express()
 
-app.use(cors({
-  origin: true,
-  credentials: false,
-  methods: ["GET","POST","DELETE","OPTIONS"],
-}))
+app.use(
+    cors({
+        origin: true,
+        credentials: false,
+        methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    })
+)
 
 app.use(helmet({ crossOriginResourcePolicy: false }))
 
 app.use(morgan("dev"))
 app.use(express.json())
+
+app.use(getHeaders)
 
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")))
 
@@ -35,3 +39,14 @@ app.use((_req, res) =>
 app.use(errorHandler)
 
 app.listen(MEDIA_PORT, () => console.log(`🚀 Entities service running on ${MEDIA_PORT}`))
+
+declare global {
+    namespace Express {
+        interface Request {
+            user: {
+                id: number
+                role: number | null
+            }
+        }
+    }
+}

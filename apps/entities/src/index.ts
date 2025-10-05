@@ -2,7 +2,13 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ENTITIES_PORT, authenticateToken, requireRole } from "@repo/utils"
+import {
+    errorHandler,
+    ENTITIES_PORT,
+    authenticateToken,
+    requireRole,
+    getHeaders,
+} from "@repo/utils"
 
 const app = express()
 
@@ -10,6 +16,8 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
+app.use(getHeaders)
+
 app.use(express.urlencoded({ extended: true }))
 
 // Ruta pública
@@ -75,3 +83,14 @@ app.use(errorHandler)
 app.listen(ENTITIES_PORT, () => {
     console.log(`🚀 Entities service running on ${ENTITIES_PORT}`)
 })
+
+declare global {
+    namespace Express {
+        interface Request {
+            user: {
+                id: number
+                role: number | null
+            }
+        }
+    }
+}

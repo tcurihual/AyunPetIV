@@ -2,7 +2,7 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ADOPTIONS_PORT } from "@repo/utils"
+import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
 
 const app = express()
 
@@ -10,6 +10,7 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
+app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.get("/", (_, res) => {
@@ -30,3 +31,14 @@ app.use(errorHandler)
 app.listen(ADOPTIONS_PORT, () => {
     console.log(`🚀 Adoptions service running on ${ADOPTIONS_PORT}`)
 })
+
+declare global {
+    namespace Express {
+        interface Request {
+            user: {
+                id: number
+                role: number | null
+            }
+        }
+    }
+}

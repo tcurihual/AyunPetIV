@@ -3,7 +3,7 @@ import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 
-import { createSupabaseClient, AUTH_PORT, errorHandler } from "@repo/utils"
+import { createSupabaseClient, AUTH_PORT, errorHandler, getHeaders } from "@repo/utils"
 import authRouter from "./routes/auth"
 
 export const supabase = createSupabaseClient()
@@ -13,6 +13,7 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
+app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", authRouter)

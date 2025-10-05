@@ -1,17 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import { AppError, verifyAuthToken } from "@repo/utils"
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                id: number
-                role: number | null
-            }
-        }
-    }
-}
-
 export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization
 
@@ -29,4 +18,15 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     req.user = payload
 
     next()
+}
+
+declare global {
+    namespace Express {
+        interface Request {
+            user: {
+                id: number
+                role: number | null
+            }
+        }
+    }
 }

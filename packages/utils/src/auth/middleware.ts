@@ -1,16 +1,10 @@
 import { Request, Response, NextFunction } from "express"
 import { verifyAuthToken } from "./jwt"
-
-export interface AuthenticatedRequest extends Request {
-    user?: {
-        id: number
-        role: number | null
-    }
-}
+import { AuthenticatedRequest } from "types"
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization
-    const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
+    const token = authHeader && authHeader.split(" ")[1]
 
     if (!token) {
         return res.status(401).json({
