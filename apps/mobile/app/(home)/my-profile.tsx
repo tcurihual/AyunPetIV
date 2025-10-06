@@ -16,22 +16,23 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { UserProfileSchema } from "@/utils/schemas"
 import type { UserProfileData } from "@/utils/schemas"
 import Input from "@/components/ui/Input"
-
-// Mock data para probar
-const mockUser = {
-    id: "1",
-    name: "Alexis Sánchez",
-    email: "alexis.sanchez@example.com",
-    rut: "12345678-9",
-    address: "Mi casa #777, Tacna, Perú",
-    description:
-        "Dog Lover Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse erat arcu, tincidunt nec urna et, vehicula pretium arcu. Donec porta.",
-    avatarUrl:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
-}
+import { useAuthContext } from "@/context/AuthContext"
+import { useRouter } from "expo-router"
 
 export default function MyProfileScreen() {
+    const { user, signOut } = useAuthContext()
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
+
+    const userData = {
+        id: user?.id || "1",
+        name: user?.name || "Usuario",
+        email: user?.email || "usuario@example.com",
+        rut: user?.rut || "No especificado",
+        address: user?.address || "No especificada",
+        description: user?.description || "Descripción no disponible",
+        avatarUrl: user?.avatar || "https://randomuser.me/api/portraits/women/44.jpg",
+    }
 
     const {
         control,
@@ -41,12 +42,12 @@ export default function MyProfileScreen() {
     } = useForm<UserProfileData>({
         resolver: zodResolver(UserProfileSchema),
         defaultValues: {
-            id: mockUser.id,
-            name: mockUser.name,
-            email: mockUser.email,
-            rut: mockUser.rut,
-            address: mockUser.address || "",
-            description: mockUser.description || "",
+            id: userData.id,
+            name: userData.name,
+            email: userData.email,
+            rut: userData.rut,
+            address: userData.address || "",
+            description: userData.description || "",
         },
     })
 
@@ -73,7 +74,15 @@ export default function MyProfileScreen() {
             {
                 text: "Cerrar Sesión",
                 style: "destructive",
-                onPress: () => Alert.alert("Sesión cerrada"),
+                onPress: async () => {
+                    try {
+                        await signOut()
+                        router.replace("/(auth)/login")
+                    } catch (error) {
+                        console.error("Error al cerrar sesión:", error)
+                        Alert.alert("Error", "No se pudo cerrar la sesión")
+                    }
+                },
             },
         ])
     }
@@ -81,28 +90,28 @@ export default function MyProfileScreen() {
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.profileCard}>
-                <Image source={{ uri: mockUser.avatarUrl }} style={styles.profileImage} />
+                <Image source={{ uri: userData.avatarUrl }} style={styles.profileImage} />
 
-                <Text style={styles.userName}>{mockUser.name}</Text>
+                <Text style={styles.userName}>{userData.name}</Text>
 
                 <View style={styles.infoSection}>
                     <Text style={styles.infoLabel}>Email: </Text>
-                    <Text style={styles.infoText}>{mockUser.email}</Text>
+                    <Text style={styles.infoText}>{userData.email}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
                     <Text style={styles.infoLabel}>RUT: </Text>
-                    <Text style={styles.infoText}>{mockUser.rut}</Text>
+                    <Text style={styles.infoText}>{userData.rut}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
                     <Text style={styles.infoLabel}>Descripción: </Text>
-                    <Text style={styles.infoText}>{mockUser.description}</Text>
+                    <Text style={styles.infoText}>{userData.description}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
                     <Text style={styles.infoLabel}>Dirección: </Text>
-                    <Text style={styles.infoText}>{mockUser.address}</Text>
+                    <Text style={styles.infoText}>{userData.address}</Text>
                 </View>
 
                 <View style={styles.buttonSection}>

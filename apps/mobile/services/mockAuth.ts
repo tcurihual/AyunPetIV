@@ -17,6 +17,13 @@ export type MockUser = {
     email: string
     name: string
     password?: string
+    avatar?: string
+    phone?: string
+    address?: string
+    city?: string
+    region?: string
+    rut?: string
+    description?: string
 }
 
 const STORAGE = {

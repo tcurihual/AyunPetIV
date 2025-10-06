@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
+import ayunData from "@/data/mockData"
 
 type Giver = {
     id: string
@@ -19,51 +20,54 @@ type Post = {
     id: string
     name: string
     ageGender: string
-    imageUrl: string
+    imageUrl: string | any
 }
 
 export default function GiverProfileScreen() {
     const { giverId } = useLocalSearchParams<{ giverId: string }>()
     const router = useRouter()
-    const { signOut, status } = useAuthContext()
+    const { signOut, status, user } = useAuthContext()
 
     const giver: Giver = {
-        id: giverId ?? "1",
-        displayName: "Fundación Amigos de los Animales",
-        isFoundation: true,
-        city: "Temuco",
-        region: "Araucanía",
-        avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
-        bio: "Rescatamos y damos en adopción perros y gatos. Promovemos la tenencia responsable.",
-        metrics: { activePosts: 4, adoptions: 18, rating: 4.8 },
+        id: user?.id || "1",
+        displayName: user?.name || "Usuario",
+        isFoundation: user?.role === "fundacion",
+        city: user?.city || "",
+        region: user?.region || "",
+        avatarUrl: user?.avatar || "https://randomuser.me/api/portraits/women/44.jpg",
+        bio: user?.description || "Sin descripción",
+        metrics: {
+            activePosts: ayunData.post.filter(
+                (p) =>
+                    p.creatorid.toString() === (user?.id || "").toString() && p.status === "active"
+            ).length,
+            adoptions: ayunData.post.filter(
+                (p) =>
+                    p.creatorid.toString() === (user?.id || "").toString() && p.status === "closed"
+            ).length,
+            rating: undefined,
+        },
     }
 
-    const activePosts: Post[] = [
-        {
-            id: "p1",
-            name: "Firulais",
-            ageGender: "Macho adulto",
-            imageUrl: "https://place-puppy.com/300x300",
-        },
-        {
-            id: "p2",
-            name: "Pelusa",
-            ageGender: "Hembra adulta",
-            imageUrl: "https://placekitten.com/300/300",
-        },
-        {
-            id: "p3",
-            name: "Bola de Nieve",
-            ageGender: "Hembra cachorro",
-            imageUrl: "https://placekitten.com/301/301",
-        },
-        {
-            id: "p4",
-            name: "Ayudante de Santa",
-            ageGender: "Macho joven",
-            imageUrl: "https://place-puppy.com/301x301",
-        },
-    ]
+    const activePosts: Post[] = (() => {
+        if (!user?.id) return []
+
+        const userPosts = ayunData.post.filter(
+            (post) => post.creatorid.toString() === user.id.toString() && post.status === "active"
+        )
+
+        return userPosts.map((post) => {
+            const pet = ayunData.pet.find((p) => p.id === post.petid)
+            return {
+                id: post.id.toString(),
+                name: pet?.name || "Mascota",
+                ageGender: pet
+                    ? `${pet.gender} ${pet.age} año${pet.age !== 1 ? "s" : ""}`
+                    : "Info no disponible",
+                imageUrl: pet?.image || "https://place-puppy.com/300x300",
+            }
+        })
+    })()
 
     const handleLogout = async () => {
         try {
@@ -76,16 +80,6 @@ export default function GiverProfileScreen() {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-            <View style={styles.topBar}>
-                <TouchableOpacity
-                    onPress={handleLogout}
-                    style={[styles.logoutBtn, status === "loading" && { opacity: 0.6 }]}
-                    disabled={status === "loading"}
-                >
-                    <Text style={styles.logoutText}>Cerrar sesión</Text>
-                </TouchableOpacity>
-            </View>
-
             <View style={styles.header}>
                 <Image source={{ uri: giver.avatarUrl }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
@@ -134,8 +128,11 @@ export default function GiverProfileScreen() {
             {giver.bio ? <Text style={styles.bio}>{giver.bio}</Text> : null}
 
             <View style={styles.actions}>
-                <TouchableOpacity style={styles.buttonPrimary}>
-                    <Text style={styles.buttonText}>Contactar</Text>
+                <TouchableOpacity
+                    style={styles.buttonPrimary}
+                    onPress={() => router.push("/(home)/my-profile")}
+                >
+                    <Text style={styles.buttonText}>Ver Datos</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.buttonPrimary}>
                     <Text style={styles.buttonText}>Ver todas</Text>
@@ -154,7 +151,14 @@ export default function GiverProfileScreen() {
                 <View style={styles.grid}>
                     {activePosts.map((p) => (
                         <View key={p.id} style={styles.card}>
-                            <Image source={{ uri: p.imageUrl }} style={styles.petImage} />
+                            <Image
+                                source={
+                                    typeof p.imageUrl === "string"
+                                        ? { uri: p.imageUrl }
+                                        : p.imageUrl
+                                }
+                                style={styles.petImage}
+                            />
                             <Text style={styles.petName}>{p.name}</Text>
                             <Text style={styles.petMeta}>{p.ageGender}</Text>
                             <TouchableOpacity style={styles.infoButton}>
@@ -228,15 +232,19 @@ const styles = StyleSheet.create({
     statNum: { fontSize: 16, fontWeight: "bold", color: BLACK },
     statLabel: { fontSize: 12, color: TEXT_MUTED },
     bio: { fontSize: 14, color: "#333", marginBottom: 16, lineHeight: 20 },
-    actions: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
+    actions: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 16,
+        gap: 8,
+    },
     buttonPrimary: {
         backgroundColor: YELLOW,
         borderRadius: 10,
         paddingVertical: 10,
         paddingHorizontal: 16,
-        flex: 1,
         alignItems: "center",
-        marginHorizontal: 4,
+        flex: 1,
     },
     buttonText: { color: BLACK, fontWeight: "bold" },
     sectionTitle: { fontSize: 16, fontWeight: "bold", color: BLACK, marginBottom: 12 },
