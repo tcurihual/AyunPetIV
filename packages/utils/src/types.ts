@@ -1,10 +1,10 @@
 import { Request } from "express"
 import { z } from "zod"
-import { LoginResponseSchema, UserSchema } from "./schemas"
+import { LoginResponseSchema } from "./schemas"
 import { Database } from "database.types"
 
 export interface AuthenticatedRequest extends Request {
-    user?: {
+    user: {
         id: number
         role: number | null
     }
@@ -18,8 +18,6 @@ export type JsonResponse<T> = {
 }
 
 export type loginResponseType = z.infer<typeof LoginResponseSchema>
-
-export type RoleType = "admin" | "user" | "shelter"
 
 export type User = {
     Row: Database["public"]["Tables"]["users"]["Row"]
