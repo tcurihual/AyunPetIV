@@ -2,8 +2,16 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ENTITIES_PORT, authenticateToken, requireRole } from "@repo/utils"
+import {
+    errorHandler,
+    ENTITIES_PORT,
+    authenticateToken,
+    requireRole,
+    createSupabaseClient,
+} from "@repo/utils"
+import adoptionHistoryRouter from "./routes/adoptionHistory"
 
+export const supabase = createSupabaseClient()
 const app = express()
 
 app.use(cors())
@@ -11,6 +19,8 @@ app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+app.use("/adoption-history", adoptionHistoryRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
@@ -31,8 +41,8 @@ app.get("/protected", authenticateToken, (req: any, res) => {
     })
 })
 
-// Ruta que requiere rol admin (rol 19)
-app.get("/admin-only", authenticateToken, requireRole(19), (req: any, res) => {
+// Ruta que requiere rol admin
+app.get("/admin-only", authenticateToken, requireRole("admin"), (req: any, res) => {
     return res.status(200).json({
         message: "Acceso de administrador exitoso",
         user: req.user,
@@ -44,8 +54,8 @@ app.get("/admin-only", authenticateToken, requireRole(19), (req: any, res) => {
     })
 })
 
-// Ruta que requiere rol shelter (rol 21)
-app.get("/shelter-only", authenticateToken, requireRole(21), (req: any, res) => {
+// Ruta que requiere rol shelter
+app.get("/shelter-only", authenticateToken, requireRole("shelter"), (req: any, res) => {
     return res.status(200).json({
         message: "Acceso de shelter exitoso",
         user: req.user,
@@ -57,8 +67,8 @@ app.get("/shelter-only", authenticateToken, requireRole(21), (req: any, res) => 
     })
 })
 
-// Ruta que requiere rol user (rol 20)
-app.get("/user-only", authenticateToken, requireRole(20), (req: any, res) => {
+// Ruta que requiere rol user
+app.get("/user-only", authenticateToken, requireRole("user"), (req: any, res) => {
     return res.status(200).json({
         message: "Acceso de usuario regular exitoso",
         user: req.user,
