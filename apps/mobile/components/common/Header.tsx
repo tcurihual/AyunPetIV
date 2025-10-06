@@ -27,7 +27,7 @@ export default function Header({ onMenuPress }: HeaderProps) {
 
             <TouchableOpacity
                 style={styles.profileCircle}
-                onPress={() => router.push("/my-profile" as const)}
+                onPress={() => router.push("/(home)/profile" as const)}
             >
                 <Image source={{ uri: userAvatar }} style={styles.profileImage} />
 
