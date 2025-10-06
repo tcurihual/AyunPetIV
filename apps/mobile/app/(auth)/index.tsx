@@ -23,21 +23,26 @@ const Index = () => {
                 <Text style={styles.titleText}>Bienvenido a </Text>
                 <Text style={styles.titleText}>Ayün Pet </Text>
                 <Text></Text>
-                <Text style={styles.titleDesc}>¡Donde podras encontrar</Text>
+                <Text style={styles.titleDesc}>¡Donde podrás encontrar</Text>
                 <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
             </View>
-            <TouchableOpacity
-                style={[styles.buttonPrimary, styles.buttonSecondary]}
-                onPress={handleAdoptPress}
-            >
-                <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.buttonPrimary, styles.buttonSecondary]}
-                onPress={handleGivePress}
-            >
-                <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
-            </TouchableOpacity>
+
+            <View style={{ gap: 16, alignItems: "center", width: "100%" }}>
+                <TouchableOpacity
+                    style={[styles.buttonPrimary, styles.buttonSecondary]}
+                    onPress={handleAdoptPress}
+                >
+                    <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.buttonPrimary, styles.buttonSecondary]}
+                    onPress={handleGivePress}
+                >
+                    <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.childContainer}>
                 <Image
                     source={require("@images/welcome-pets.png")}

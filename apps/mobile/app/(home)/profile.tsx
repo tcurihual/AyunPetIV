@@ -105,13 +105,6 @@ export default function GiverProfileScreen() {
                         <Text style={styles.badge}>Dador</Text>
                     )}
                 </View>
-                <TouchableOpacity
-                    style={styles.logoutPill}
-                    onPress={handleLogout}
-                    disabled={status === "loading"}
-                >
-                    <Text style={styles.logoutPillText}>Cerrar sesión</Text>
-                </TouchableOpacity>
             </View>
 
             <View style={styles.statsRow}>
