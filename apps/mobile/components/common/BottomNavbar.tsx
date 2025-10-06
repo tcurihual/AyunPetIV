@@ -38,11 +38,13 @@ export default function BottomNavbar() {
 const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
-        backgroundColor: "#F9C80E",
+        backgroundColor: "#FFD24C",
         alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 12,
         borderTopColor: "#ddd",
+        zIndex: 1000,
+        elevation: 1000,
     },
     tab: {
         flex: 1,

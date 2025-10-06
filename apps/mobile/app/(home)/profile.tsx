@@ -76,16 +76,6 @@ export default function GiverProfileScreen() {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-            <View style={styles.topBar}>
-                <TouchableOpacity
-                    onPress={handleLogout}
-                    style={[styles.logoutBtn, status === "loading" && { opacity: 0.6 }]}
-                    disabled={status === "loading"}
-                >
-                    <Text style={styles.logoutText}>Cerrar sesión</Text>
-                </TouchableOpacity>
-            </View>
-
             <View style={styles.header}>
                 <Image source={{ uri: giver.avatarUrl }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
