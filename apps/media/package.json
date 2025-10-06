@@ -1,29 +1,29 @@
 {
-  "name": "media",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "scripts": {
-    "dev": "cross-env PORT=7000 tsup src/index.ts --watch --silent --onSuccess \"node dist/index.js\"",
-    "build": "tsup src/index.ts",
-    "start": "cross-env PORT=7000 node dist/index.js"
-  },
-  "dependencies": {
-    "@repo/utils": "workspace:*",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "helmet": "^8.1.0",
-    "morgan": "^1.10.1",
-    "multer": "^2.0.2"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/morgan": "^1.9.10",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^24.3.0",
-    "cross-env": "^10.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "tsup": "^8.0.0"
-  }
+    "name": "media",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "dev": "tsup src/index.ts --watch --silent --onSuccess \"echo '🔃 Reloading...' && node dist/index.js\"",
+        "build": "tsup src/index.ts",
+        "start": "cross-env PORT=7000 node dist/index.js"
+    },
+    "dependencies": {
+        "@repo/utils": "workspace:*",
+        "cors": "^2.8.5",
+        "express": "^5.1.0",
+        "helmet": "^8.1.0",
+        "morgan": "^1.10.1",
+        "multer": "^2.0.2"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.3",
+        "@types/morgan": "^1.9.10",
+        "@types/multer": "^2.0.0",
+        "@types/node": "^24.3.0",
+        "cross-env": "^10.0.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.2",
+        "tsup": "^8.0.0"
+    }
 }
