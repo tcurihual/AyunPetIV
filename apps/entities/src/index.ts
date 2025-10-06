@@ -8,6 +8,7 @@ import {
     getHeaders,
 } from "@repo/utils"
 
+export const supabase = createSupabaseClient()
 const app = express()
 
 app.use(cors())
@@ -17,6 +18,8 @@ app.use(express.json())
 app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
+
+app.use("/adoption-history", adoptionHistoryRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
