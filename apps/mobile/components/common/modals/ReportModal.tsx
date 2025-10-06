@@ -62,7 +62,10 @@ export default function ReportModal({
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { flexGrow: 1, justifyContent: "center", alignItems: "center" },
+                    ]}
                     showsVerticalScrollIndicator={false}
                     showsHorizontalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
