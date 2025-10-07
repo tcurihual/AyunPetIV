@@ -4,6 +4,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import { errorHandler, ENTITIES_PORT, getHeaders } from "@repo/utils"
 import "dotenv/config"
+import router from "./routes"
 
 const app = express()
 
@@ -15,12 +16,16 @@ app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
 
+app.use("/api/entities", router)
+
 // Ruta pública
 app.get("/", (_, res) => {
     return res.status(200).json({
         message: "Microservicio Entities funcionando correctamente",
     })
 })
+
+
 
 // Ruta protegida (requiere token válido)
 // app.get("/protected", authenticateToken, (req: any, res) => {

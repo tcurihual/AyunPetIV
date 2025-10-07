@@ -3,6 +3,7 @@ import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
+import router from "./routes" 
 
 const app = express()
 
@@ -18,6 +19,8 @@ app.get("/", (_, res) => {
         message: "Microservicio Adoptions funcionando correctamente",
     })
 })
+
+app.use("/api/adoptions", router)
 
 app.use((req, res) => {
     return res.status(404).json({
