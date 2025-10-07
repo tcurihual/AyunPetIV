@@ -19,6 +19,15 @@ export interface User {
     name: string
     email: string
     role: Role
+    avatar?: string
+    phone?: string
+    address?: string
+    city?: string
+    region?: string
+    rut?: string
+    description?: string
+    dateOfBirth?: string
+    profileComplete?: boolean
 }
 
 interface LoginPayload {
@@ -212,7 +221,24 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         const roleName =
             (data.role as Array<{ id: number; roletype: string }>).find((r) => r.id === roleId)
                 ?.roletype ?? "adoptante"
-        return { id: String(id), email, name, role: roleName as Role }
+
+        // Buscar el usuario completo en los datos mock para obtener todos los campos
+        const fullUser = (data.users as Array<any>).find((u) => u.id === id)
+
+        return {
+            id: String(id),
+            email,
+            name,
+            role: roleName as Role,
+            avatar: fullUser?.avatar,
+            phone: fullUser?.phone,
+            address: fullUser?.address,
+            city: fullUser?.city,
+            region: fullUser?.region,
+            rut: fullUser?.rut,
+            description: fullUser?.description,
+            profileComplete: !!(fullUser?.phone && fullUser?.address),
+        }
     }
 }
 

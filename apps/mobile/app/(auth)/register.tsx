@@ -256,7 +256,7 @@ const useThemeStyles = (width: number, height: number) => {
         },
         header: {
             backgroundColor: "#FFD24C",
-            width: "110%",
+            width: "112%",
             height: headerHeight,
             alignItems: "center",
             justifyContent: "center",
