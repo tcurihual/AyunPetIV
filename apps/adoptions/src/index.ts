@@ -3,7 +3,7 @@ import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
-import router from "./routes" 
+import mineRequestRoutes from "./routes/mineRequest"
 
 const app = express()
 
@@ -14,13 +14,13 @@ app.use(express.json())
 app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
+app.use("/", mineRequestRoutes)
+
 app.get("/", (_, res) => {
     return res.status(200).json({
         message: "Microservicio Adoptions funcionando correctamente",
     })
 })
-
-app.use("/api/adoptions", router)
 
 app.use((req, res) => {
     return res.status(404).json({
