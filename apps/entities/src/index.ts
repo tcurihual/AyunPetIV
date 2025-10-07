@@ -5,6 +5,7 @@ import morgan from "morgan"
 
 import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
+import adoptionRequestRouter from "./routes/adoptionRequest"
 
 export const supabase = createSupabaseClient()
 const app = express()
@@ -18,6 +19,7 @@ app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/adoption-history", adoptionHistoryRouter)
+app.use("/adoption-requests", adoptionRequestRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
