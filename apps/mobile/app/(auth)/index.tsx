@@ -22,10 +22,16 @@ export default function Index() {
             }
 
             if (status === "authenticated" && user) {
+                console.log(status === "authenticated" && user)
                 router.replace(user.role === 21 ? "/(shelter)" : "/(home)")
                 return
             }
 
+            if (status === "unauthenticated") {
+                const target = user ? "/(auth)/remembered-login" : "/(auth)/login"
+                router.replace(target)
+                return
+            }
             setChecking(false)
         })()
     }, [status, user])

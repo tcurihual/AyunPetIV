@@ -29,8 +29,6 @@ export default function RootLayout() {
 
     if (!loaded) return null
 
-    // (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
-
     return (
         <AuthProvider>
             <ModalProvider>

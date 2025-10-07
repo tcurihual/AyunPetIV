@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
         width: "70%",
         alignItems: "center",
     },
-    buttonSecondary: { marginTop: 0 }, // Reducido el margen entre los botones
+    buttonSecondary: { marginTop: 0 },
     buttonText: { color: "#fff", fontSize: 16 },
 })

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { http, setAuthToken } from "@/services/http"
 import { clearAuth, clearToken, getToken, getUser, saveToken, saveUser } from "@/utils/storage"
+import { useRouter } from "expo-router"
 
 type Role = 19 | 20 | 21
 
@@ -53,6 +54,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const [status, setStatus] = useState<Status>("loading")
     const [user, setUser] = useState<User | null>(null)
     const [token, setTokenState] = useState<string | null>(null)
+    const router = useRouter()
 
     useEffect(() => {
         let mounted = true
@@ -119,6 +121,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     async function signOut() {
         await clearToken()
+        setAuthToken(null)
+        setTokenState(null)
+        router.replace("/(auth)/login")
         setStatus("unauthenticated")
     }
 

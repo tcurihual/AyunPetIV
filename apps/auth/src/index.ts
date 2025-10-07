@@ -28,7 +28,7 @@ app.use((req, res) => {
 
 app.use(errorHandler)
 app.listen(AUTH_PORT, () => {
-    console.log(`🚀 Adoptions service running on ${AUTH_PORT}`)
+    console.log(`🚀 Auth service running on ${AUTH_PORT}`)
 })
 
 declare global {

@@ -3,7 +3,7 @@ import { JWT_SECRET } from "../constants"
 
 export type TokenPayload = JwtPayload & {
     id: number
-    roleId?: number | null
+    role: number | null
 }
 
 export const generateAuthToken = (payload: TokenPayload) =>

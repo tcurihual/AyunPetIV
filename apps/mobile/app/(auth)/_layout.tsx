@@ -1,13 +1,6 @@
 import React from "react"
-import { Stack, Redirect } from "expo-router"
-import { useAuthContext } from "@/context/AuthContext"
+import { Stack } from "expo-router"
 
 export default function AuthLayout() {
-    const { status, user } = useAuthContext()
-
-    // if (status === "loading") return null
-
-    // if (status === "authenticated") return <Redirect href="/(home)" />
-
     return <Stack screenOptions={{ headerShown: false }} />
 }
