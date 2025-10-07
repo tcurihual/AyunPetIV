@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
 import { FirstLaunch } from "@/utils/storage"
+import { Colors } from "@/constants/Colors"
 
 const Index = () => {
     const { height } = useWindowDimensions()
@@ -46,7 +47,7 @@ const Index = () => {
             <View style={styles.childContainer}>
                 <Image
                     source={require("@images/welcome-pets.png")}
-                    style={[styles.petImg, { top: -height * 0.12 }]}
+                    style={[styles.petImg, { top: -height * 0.08 }]}
                     resizeMode="none"
                 />
             </View>
@@ -58,7 +59,7 @@ export default Index
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#F9C53D",
+        backgroundColor: `${Colors.yellow}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-evenly",

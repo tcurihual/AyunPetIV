@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react"
 
-/** ===== Tipos de props por modal ===== */
 export type AdoptionRequestProps = {
     petId: string
     petName?: string

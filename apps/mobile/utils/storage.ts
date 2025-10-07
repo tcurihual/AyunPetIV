@@ -19,6 +19,10 @@ export async function getUser<T>(): Promise<T | null> {
     return raw ? JSON.parse(raw) : null
 }
 
+export async function clearToken() {
+    await AsyncStorage.removeItem(TOKEN_KEY)
+}
+
 export async function clearAuth() {
     await Promise.all([AsyncStorage.removeItem(TOKEN_KEY), AsyncStorage.removeItem(USER_KEY)])
 }

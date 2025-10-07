@@ -2,6 +2,7 @@ import { View, StyleSheet, Pressable, useWindowDimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import React from "react"
 import { useRouter } from "expo-router"
+import { Colors } from "@/constants/Colors"
 
 export default function BottomNavbar() {
     const { height } = useWindowDimensions()
@@ -38,7 +39,7 @@ export default function BottomNavbar() {
 const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
-        backgroundColor: "#F9C80E",
+        backgroundColor: `${Colors.yellow}`,
         alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 12,

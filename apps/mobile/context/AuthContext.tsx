@@ -1,16 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { http, setAuthToken } from "@/services/http"
-import { clearAuth, getToken, getUser, saveToken, saveUser } from "@/utils/storage"
-
-import {
-    login as mockLogin,
-    register as mockRegister,
-    restoreSession as mockRestore,
-    logout as mockLogout,
-    getUserById,
-    getAllUsers,
-    type Session as MockSession,
-} from "@/services/mockAuth"
+import { clearAuth, clearToken, getToken, getUser, saveToken, saveUser } from "@/utils/storage"
 
 type Role = "adoptante" | "fundacion" | "admin" | "shelter"
 
@@ -34,15 +24,16 @@ interface LoginPayload {
     email: string
     password: string
 }
+
 interface RegisterPayload {
     name: string
     email: string
     password: string
     role?: Role
 }
+
 interface AuthResponse {
-    token: string
-    user: User
+    data: { token: string; user: User }
 }
 
 type Status = "loading" | "authenticated" | "unauthenticated"
@@ -54,10 +45,8 @@ interface AuthContextType {
     signIn: (data: LoginPayload) => Promise<void>
     signUp: (data: RegisterPayload) => Promise<void>
     signOut: () => Promise<void>
-    refreshUser: () => Promise<void>
 }
 
-const USE_MOCK = false
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -69,41 +58,23 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         let mounted = true
         ;(async () => {
             try {
-                const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
-
+                const storedUser = await getUser<User>()
                 if (!mounted) return
 
-                if (!storedToken) {
-                    setStatus("unauthenticated")
-                    return
+                if (storedUser) {
+                    setUser(storedUser)
                 }
 
-                setAuthToken(storedToken)
-                setTokenState(storedToken)
-
-                try {
-                    if (USE_MOCK) {
-                        const session = await mockRestore()
-                        if (!session) throw new Error("No session")
-                        const me = await resolveUserFromMock(session)
-                        await saveUser(me)
-                        setUser(me)
-                        setStatus("authenticated")
-                    } else {
-                        const me = await http.get<User>("/me").then((r) => r.data)
-                        await saveUser(me)
-                        setUser(me)
-                        setStatus("authenticated")
-                    }
-                } catch (error) {
-                    await clearDown()
-                    setStatus("unauthenticated")
-                }
-            } catch {
+                setTokenState(null)
+                setAuthToken(null)
+                setStatus("unauthenticated")
+            } catch (e) {
+                console.error("Error al restaurar sesión:", e)
                 await clearDown()
                 if (mounted) setStatus("unauthenticated")
             }
         })()
+
         return () => {
             mounted = false
         }
@@ -112,13 +83,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signIn(data: LoginPayload) {
         setStatus("loading")
         try {
-            const response = USE_MOCK
-                ? await signInViaMock(data)
-                : await http.post("/v1/auth/login", data).then((r) => r.data)
-
-            const { token: tk, user } = response.data
-            await afterAuthSuccess(tk, user)
-        } catch (e: any) {
+            const response = await http.post<AuthResponse>("/v1/auth/login", data)
+            const { token, user } = response.data.data
+            await afterAuthSuccess(token, user)
+        } catch (e) {
+            console.error("Error al iniciar sesión:", e)
             setStatus("unauthenticated")
             throw e
         }
@@ -127,42 +96,34 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signUp(data: RegisterPayload) {
         setStatus("loading")
         try {
-            const { token: tk, user } = USE_MOCK
-                ? await signUpViaMock(data)
-                : await http
-                      .post<AuthResponse>(`/register/${data.role || "adoptante"}`, data)
-                      .then((r) => r.data)
-
-            await afterAuthSuccess(tk, user)
+            const response = await http.post<AuthResponse>(
+                `/v1/auth/register/${data.role || "adoptante"}`,
+                data
+            )
+            if (response.status === 201) {
+                console.log("logeo exitoso")
+            }
         } catch (e) {
+            console.error("Error al registrar usuario:", e)
             setStatus("unauthenticated")
             throw e
         }
     }
 
     async function signOut() {
-        if (USE_MOCK) await mockLogout().catch(() => {})
-        await clearDown()
+        await clearToken()
         setStatus("unauthenticated")
     }
 
-    async function refreshUser() {
-        try {
-            const me = USE_MOCK
-                ? await httpLikeGetMeFromMock()
-                : await http.get<User>("/me").then((r) => r.data)
-
-            setUser(me)
-            await saveUser(me)
-        } catch (e) {
-            await clearDown()
-            setStatus("unauthenticated")
-            throw e
-        }
-    }
-
     const value = useMemo(
-        () => ({ status, user, token, signIn, signUp, signOut, refreshUser }),
+        () => ({
+            status,
+            user,
+            token,
+            signIn,
+            signUp,
+            signOut,
+        }),
         [status, user, token]
     )
 
@@ -181,64 +142,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setAuthToken(null)
         setTokenState(null)
         setUser(null)
-    }
-
-    async function signInViaMock(data: LoginPayload): Promise<AuthResponse> {
-        const s = await mockLogin(data.email, data.password)
-        const me = await resolveUserFromMock(s)
-        return { token: s.token, user: me }
-    }
-
-    async function signUpViaMock(data: RegisterPayload): Promise<AuthResponse> {
-        const roleType = data.role === "fundacion" ? "fundacion" : "adoptante"
-        const s = await mockRegister({
-            email: data.email,
-            name: data.name,
-            role: roleType,
-            password: data.password,
-        })
-        const me = await resolveUserFromMock(s)
-        return { token: s.token, user: me }
-    }
-
-    async function httpLikeGetMeFromMock(): Promise<User> {
-        const session = await mockRestore()
-        if (session) return resolveUserFromMock(session)
-        const all = await getAllUsers()
-        if (!all.length) throw new Error("Usuario mock no encontrado")
-        const anything = all[0]
-        return mapMockToUser(anything.id, anything.email, anything.name, anything.role)
-    }
-
-    async function resolveUserFromMock(session: MockSession): Promise<User> {
-        const m = await getUserById(session.userId)
-        if (!m) throw new Error("Usuario mock no encontrado")
-        return mapMockToUser(m.id, m.email, m.name, m.role)
-    }
-
-    function mapMockToUser(id: number, email: string, name: string, roleId: number): User {
-        const data = require("@/data/mockData").default as any
-        const roleName =
-            (data.role as Array<{ id: number; roletype: string }>).find((r) => r.id === roleId)
-                ?.roletype ?? "adoptante"
-
-        // Buscar el usuario completo en los datos mock para obtener todos los campos
-        const fullUser = (data.users as Array<any>).find((u) => u.id === id)
-
-        return {
-            id: String(id),
-            email,
-            name,
-            role: roleName as Role,
-            avatar: fullUser?.avatar,
-            phone: fullUser?.phone,
-            address: fullUser?.address,
-            city: fullUser?.city,
-            region: fullUser?.region,
-            rut: fullUser?.rut,
-            description: fullUser?.description,
-            profileComplete: !!(fullUser?.phone && fullUser?.address),
-        }
     }
 }
 
