@@ -18,7 +18,7 @@ export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-    const { signIn, status, user } = useAuthContext()
+    const { signIn, status } = useAuthContext()
     const {
         control,
         handleSubmit,

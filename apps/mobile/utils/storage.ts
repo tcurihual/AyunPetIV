@@ -42,15 +42,20 @@ export async function hasPrefsDone(): Promise<boolean> {
     }
 }
 
-export async function FirstLaunch() {
-    await AsyncStorage.setItem("first_launch", "true")
-}
 export async function isFirstLaunch(): Promise<boolean> {
     try {
-        const hasLaunched = await AsyncStorage.getItem("first_launch")
-        return hasLaunched === null
+        const value = await AsyncStorage.getItem("first_launch")
+        return value === null || value === undefined
     } catch (error) {
         console.error("Error al leer AsyncStorage:", error)
         return false
     }
+}
+
+export async function getFirstLaunch() {
+    await AsyncStorage.getItem("first_launch")
+}
+
+export async function markFirstLaunch() {
+    await AsyncStorage.setItem("first_launch", "done")
 }

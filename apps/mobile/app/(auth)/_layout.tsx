@@ -5,9 +5,9 @@ import { useAuthContext } from "@/context/AuthContext"
 export default function AuthLayout() {
     const { status, user } = useAuthContext()
 
-    if (status === "loading") return null
+    // if (status === "loading") return null
 
-    if (status === "authenticated") return <Redirect href="/(home)" />
+    // if (status === "authenticated") return <Redirect href="/(home)" />
 
     return <Stack screenOptions={{ headerShown: false }} />
 }

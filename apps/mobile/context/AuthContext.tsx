@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { http, setAuthToken } from "@/services/http"
 import { clearAuth, clearToken, getToken, getUser, saveToken, saveUser } from "@/utils/storage"
 
-type Role = "adoptante" | "fundacion" | "admin" | "shelter"
+type Role = 19 | 20 | 21
 
 export interface User {
     id: string
@@ -58,20 +58,27 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         let mounted = true
         ;(async () => {
             try {
-                const storedUser = await getUser<User>()
-                if (!mounted) return
+                const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
 
-                if (storedUser) {
-                    setUser(storedUser)
+                if (!storedToken && !storedUser) {
+                    setStatus("unauthenticated")
+                    return
                 }
 
-                setTokenState(null)
-                setAuthToken(null)
-                setStatus("unauthenticated")
+                if (!storedToken && storedUser) {
+                    setUser(storedUser)
+                    setStatus("unauthenticated")
+                    return
+                }
+
+                setAuthToken(storedToken!)
+                setTokenState(storedToken!)
+                if (storedUser) setUser(storedUser)
+                setStatus("authenticated")
             } catch (e) {
                 console.error("Error al restaurar sesión:", e)
                 await clearDown()
-                if (mounted) setStatus("unauthenticated")
+                setStatus("unauthenticated")
             }
         })()
 
