@@ -6,6 +6,10 @@ import { errorHandler, ENTITIES_PORT, getHeaders } from "@repo/utils"
 import "dotenv/config"
 import giverRequestRouter from "./routes/giverRequest"
 
+import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
+import adoptionHistoryRouter from "./routes/adoptionHistory"
+
+export const supabase = createSupabaseClient()
 const app = express()
 
 app.use(cors())

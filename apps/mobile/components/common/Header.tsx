@@ -1,7 +1,8 @@
 import React from "react"
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native"
+import { View, TouchableOpacity, Image, StyleSheet, Dimensions, Text } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useAuthContext } from "@/context/AuthContext"
 
 const { width } = Dimensions.get("window")
 
@@ -11,6 +12,10 @@ type HeaderProps = {
 
 export default function Header({ onMenuPress }: HeaderProps) {
     const router = useRouter()
+    const { user } = useAuthContext()
+
+    const defaultAvatar = "https://randomuser.me/api/portraits/women/44.jpg"
+    const userAvatar = user?.avatar || defaultAvatar
 
     return (
         <View style={styles.container}>
@@ -22,12 +27,15 @@ export default function Header({ onMenuPress }: HeaderProps) {
 
             <TouchableOpacity
                 style={styles.profileCircle}
-                onPress={() => router.push("/profile" as const)}
+                onPress={() => router.push("/(home)/profile" as const)}
             >
-                <Image
-                    source={{ uri: "https://randomuser.me/api/portraits/women/44.jpg" }}
-                    style={styles.profileImage}
-                />
+                <Image source={{ uri: userAvatar }} style={styles.profileImage} />
+
+                {!user && (
+                    <View style={styles.noUserIndicator}>
+                        <Text style={styles.noUserText}>?</Text>
+                    </View>
+                )}
             </TouchableOpacity>
         </View>
     )
@@ -64,5 +72,20 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
         resizeMode: "cover",
+    },
+    noUserIndicator: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    noUserText: {
+        color: "#fff",
+        fontSize: width * 0.04,
+        fontWeight: "bold",
     },
 })

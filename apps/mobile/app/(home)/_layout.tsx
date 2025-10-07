@@ -14,7 +14,7 @@ export default function HomeLayout() {
 
     // Detectar pestaña activa según la ruta actual
     let activeTab = "home"
-    if (pathname.includes("/profile")) activeTab = "perfil"
+    if (pathname.includes("/my-profile")) activeTab = "perfil"
     if (pathname.includes("/camera")) activeTab = "camara"
     if (pathname.includes("/(requests)/requestList")) activeTab = "requests"
 
@@ -22,7 +22,7 @@ export default function HomeLayout() {
 
     // Ajusta estilo del BackButton en las vistas a especificar
     let backButtonStyle = {}
-    if (pathname.includes("/profile")) {
+    if (pathname.includes("/my-profile")) {
         backButtonStyle = { top: 135, left: 10 }
     }
 
@@ -42,7 +42,7 @@ export default function HomeLayout() {
                     if (tab === "home") return router.replace("/")
                     if (tab === "camera") return router.push("/camera")
                     if (tab === "requests") return router.push("/(requests)/requestList")
-                    if (tab === "perfil") return router.push("/profile")
+                    if (tab === "perfil") return router.push("/my-profile")
                     if (tab === "add") return router.push("/AddPetScreen")
                 }}
             />

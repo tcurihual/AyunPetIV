@@ -349,3 +349,213 @@ export const verifyOwnserhip = (req: Request, res: Response, next: NextFunction)
 ```
 
 _Middleware que verifica si el elemento a listar, modificar, eliminar le pertenece al usuario que envia la request_
+
+---
+
+### Microservicio Entities
+
+Prefijo para acceder a cualquier endpoint de este microservicio: `api/entities`
+
+#### Obtener Historial de Adopciones
+
+Método: <span style="color:green">GET</span>\
+Endpoint: `/adoption-history`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin`, `shelter`\
+Request Body: No requiere
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "status": 200,
+    "message": "Historial de adopciones obtenido exitosamente",
+    "type": "success",
+    "data": [
+        {
+            "id": 1,
+            "petid": 123,
+            "fromownerid": 456,
+            "toownerid": 789,
+            "postid": 101,
+            "createdat": "2025-10-05T12:00:00.000Z"
+        }
+    ]
+}
+```
+
+**Códigos de error:**
+
+-   `401`: Token inválido o ausente
+-   `403`: Permisos insuficientes
+-   `500`: Error interno del servidor
+
+#### Obtener Historial de Adopción por ID
+
+Método: <span style="color:green">GET</span>\
+Endpoint: `/adoption-history/:id`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin`, `shelter`\
+Parámetros: `id` (número) - ID del registro de historial\
+Request Body: No requiere
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "status": 200,
+    "message": "Historial de adopción obtenido exitosamente",
+    "type": "success",
+    "data": {
+        "id": 1,
+        "petid": 123,
+        "fromownerid": 456,
+        "toownerid": 789,
+        "postid": 101,
+        "createdat": "2025-10-05T12:00:00.000Z"
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: ID inválido (no es un número)
+-   `401`: Token inválido o ausente
+-   `403`: Permisos insuficientes
+-   `404`: Historial de adopción no encontrado
+-   `500`: Error interno del servidor
+
+#### Crear Historial de Adopción
+
+Método: <span style="color:yellow">POST</span>\
+Endpoint: `/adoption-history`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin`, `shelter`\
+Request Body:
+
+```json
+{
+    "petid": 123,
+    "fromownerid": 456,
+    "toownerid": 789,
+    "postid": 101
+}
+```
+
+**Campos requeridos:**
+
+-   `petid`: ID de la mascota (requerido)
+
+**Campos opcionales:**
+
+-   `fromownerid`: ID del propietario anterior
+-   `toownerid`: ID del nuevo propietario
+-   `postid`: ID del post relacionado
+-   `createdat`: Fecha de creación (se asigna automáticamente si no se proporciona)
+
+Código de respuesta: `201`\
+Response Body:
+
+```json
+{
+    "status": 201,
+    "message": "Historial de adopción creado exitosamente",
+    "type": "success",
+    "data": {
+        "id": 1,
+        "petid": 123,
+        "fromownerid": 456,
+        "toownerid": 789,
+        "postid": 101,
+        "createdat": "2025-10-05T12:00:00.000Z"
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: Datos requeridos ausentes (petid)
+-   `401`: Token inválido o ausente
+-   `403`: Permisos insuficientes
+-   `404`: Usuario o mascota o post no encontrados
+-   `500`: Error interno del servidor
+
+#### Actualizar Historial de Adopción
+
+Método: <span style="color:blue">PUT</span>\
+Endpoint: `/adoption-history/:id`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin`, `shelter`\
+Parámetros: `id` (número) - ID del registro a actualizar\
+Request Body:
+
+```json
+{
+    "petid": 123,
+    "fromownerid": 456,
+    "toownerid": 789,
+    "postid": 101
+}
+```
+
+**Nota:** Todos los campos son opcionales. Solo se actualizarán los campos proporcionados.
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "status": 200,
+    "message": "Historial de adopción actualizado exitosamente",
+    "type": "success",
+    "data": {
+        "id": 1,
+        "petid": 123,
+        "fromownerid": 456,
+        "toownerid": 789,
+        "postid": 101,
+        "createdat": "2025-10-05T12:00:00.000Z"
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: ID inválido (no es un número)
+-   `401`: Token inválido o ausente
+-   `403`: Permisos insuficientes
+-   `404`: Historial de adopción, usuario, mascota o post no encontrados
+-   `500`: Error interno del servidor
+
+#### Eliminar Historial de Adopción
+
+Método: <span style="color:red">DELETE</span>\
+Endpoint: `/adoption-history/:id`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin`\
+Parámetros: `id` (número) - ID del registro a eliminar\
+Request Body: No requiere
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "status": 200,
+    "message": "Historial de adopción eliminado exitosamente",
+    "type": "success",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: ID inválido (no es un número)
+-   `401`: Token inválido o ausente
+-   `403`: Permisos insuficientes (solo admin puede eliminar)
+-   `404`: Historial de adopción no encontrado
+-   `500`: Error interno del servidor
