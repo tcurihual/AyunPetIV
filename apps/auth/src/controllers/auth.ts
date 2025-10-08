@@ -7,6 +7,7 @@ import {
     User,
     generateAuthToken,
     hashPassword,
+    enqueueMail,
 } from "@repo/utils"
 
 type Variation = "user" | "giver" | "shelter"
@@ -29,9 +30,10 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         role: user.role,
     }
+
     const token = generateAuthToken(payload)
     if (!token) throw new AppError(500, "Ocurrio un error inesperado")
-
+    enqueueMail(email, "Inicio de sesión", "Tu sesión se inició correctamente ✅")
     return AppResponse(res, 200, "Inicio de sesión exitoso", { user, token })
 }
 
