@@ -9,6 +9,8 @@ import {
     StatusBar,
     useWindowDimensions,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -457,58 +459,64 @@ export default function RegisterScreen() {
     return (
         <>
             <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <View style={styles.container}>
-                    <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                        <Ionicons name="arrow-back" size={28} color="black" />
-                    </TouchableOpacity>
 
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Registro</Text>
-                        <Image
-                            source={require("@images/ayun-pet.png")}
-                            style={styles.logo}
-                            resizeMode="contain"
-                        />
-                        <View style={styles.semiCircle} />
-                    </View>
-
-                    <View style={styles.stepIndicator}>
-                        <View style={styles.stepCircleContainer}>
-                            <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
-                        </View>
-                        <Text style={styles.stepTitle}>{steps[step].title}</Text>
-                    </View>
-
-                    <View style={styles.formContent}>
-                        {renderFields()}
-
-                        {step < steps.length - 1 ? (
-                            <TouchableOpacity
-                                style={[styles.button]}
-                                onPress={onNext}
-                                disabled={disabled}
-                            >
-                                <Text style={styles.buttonText}>Continuar</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity
-                                style={[styles.button]}
-                                onPress={handleSubmit(onSubmit)}
-                                disabled={disabled}
-                            >
-                                <Text style={styles.buttonText}>
-                                    {disabled ? "Creando..." : "Crear Cuenta"}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-
-                        <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-                            <Text style={styles.secondaryButtonText}>Volver</Text>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <View style={styles.container}>
+                        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                            <Ionicons name="arrow-back" size={28} color="black" />
                         </TouchableOpacity>
+
+                        <View style={styles.header}>
+                            <Text style={styles.headerTitle}>Registro</Text>
+                            <Image
+                                source={require("@images/ayun-pet.png")}
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
+                            <View style={styles.semiCircle} />
+                        </View>
+
+                        <View style={styles.stepIndicator}>
+                            <View style={styles.stepCircleContainer}>
+                                <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
+                            </View>
+                            <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                        </View>
+
+                        <View style={styles.formContent}>
+                            {renderFields()}
+
+                            {step < steps.length - 1 ? (
+                                <TouchableOpacity
+                                    style={[styles.button]}
+                                    onPress={onNext}
+                                    disabled={disabled}
+                                >
+                                    <Text style={styles.buttonText}>Continuar</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[styles.button]}
+                                    onPress={handleSubmit(onSubmit)}
+                                    disabled={disabled}
+                                >
+                                    <Text style={styles.buttonText}>
+                                        {disabled ? "Creando..." : "Crear Cuenta"}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
+                                <Text style={styles.secondaryButtonText}>Volver</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </>
     )
 }
@@ -541,15 +549,17 @@ const useThemeStyles = (width: number, height: number) => {
         },
         header: {
             backgroundColor: "#FFD24C",
-            width: "110%",
+            width: "112%",
             height: headerHeight,
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             borderBottomLeftRadius: 25,
             borderBottomRightRadius: 25,
+            paddingTop: 20,
             marginBottom: 0,
             position: "relative",
         },
+
         headerTitle: {
             fontSize: isSmallScreen ? 18 : 22,
             fontWeight: "bold",

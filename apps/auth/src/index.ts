@@ -30,3 +30,14 @@ app.use(errorHandler)
 app.listen(AUTH_PORT, () => {
     console.log(`🚀 Adoptions service running on ${AUTH_PORT}`)
 })
+
+declare global {
+    namespace Express {
+        interface Request {
+            user: {
+                id: number
+                role: number | null
+            }
+        }
+    }
+}

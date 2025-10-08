@@ -11,6 +11,14 @@ export default {
             name: "Fundación Patitas Felices",
             email: "contacto@patitasfelices.cl",
             password: "Patitas@2025",
+            avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+            phone: "+56912345678",
+            address: "Av. Providencia 1234",
+            city: "Santiago",
+            region: "Región Metropolitana",
+            rut: "76.123.456-7",
+            description:
+                "Fundación dedicada al rescate y adopción responsable de mascotas. Trabajamos por el bienestar animal desde 2010.",
             files: [],
         },
         {
@@ -19,6 +27,14 @@ export default {
             name: "Juan Pérez",
             email: "juanperez@gmail.com",
             password: "Juan123@",
+            avatar: "https://randomuser.me/api/portraits/men/2.jpg",
+            phone: "+56987654321",
+            address: "Las Condes 5678",
+            city: "Santiago",
+            region: "Región Metropolitana",
+            rut: "12.345.678-9",
+            description:
+                "Amante de los animales y defensor de la adopción responsable. Busco dar un hogar lleno de amor.",
             files: [],
         },
         {
@@ -27,6 +43,14 @@ export default {
             name: "Fundación Amigos de los Animales",
             email: "hola@faa.cl",
             password: "Faa_2025",
+            avatar: "https://randomuser.me/api/portraits/women/3.jpg",
+            phone: "+56911223344",
+            address: "Ñuñoa 9101",
+            city: "Santiago",
+            region: "Región Metropolitana",
+            rut: "65.789.012-3",
+            description:
+                "ONG comprometida con el rescate, rehabilitación y reubicación de animales en situación de abandono.",
             files: [],
         },
         {
@@ -35,6 +59,14 @@ export default {
             name: "María López",
             email: "maria.lopez@example.com",
             password: "MariaL-2025",
+            avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+            phone: "+56955667788",
+            address: "Maipú 1122",
+            city: "Santiago",
+            region: "Región Metropolitana",
+            rut: "19.876.543-2",
+            description:
+                "Madre de familia que busca una mascota para acompañar a sus hijos y enseñarles sobre la responsabilidad.",
             files: [],
         },
         {
