@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import { Pet } from "@/interfaces/pet"
+import { Colors } from "@/constants/Colors"
 
 interface PublicationCardProps {
     pet: Pet
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     button: {
-        backgroundColor: "#FFD700",
+        backgroundColor: `${Colors.yellow}`,
         borderRadius: 8,
         paddingVertical: 8,
         marginHorizontal: 12,

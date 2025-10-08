@@ -7,6 +7,7 @@ import BackButton from "@common/BackButton"
 import DropdownMenu from "@common/DropdownMenu"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { Colors } from "@/constants/Colors"
 
 export default function HomeLayout() {
     const pathname = usePathname()
@@ -54,7 +55,7 @@ export default function HomeLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFD24C",
+        backgroundColor: `${Colors.yellow}`,
         opacity: 1,
     },
 })

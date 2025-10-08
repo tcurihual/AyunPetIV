@@ -24,7 +24,6 @@ export default function ForgotPasswordScreen() {
                 <Ionicons name="arrow-back" size={28} color="black" />
             </TouchableOpacity>
 
-            {/* Header unificado */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Recuperar contraseña</Text>
                 <View style={styles.semiCircle} />

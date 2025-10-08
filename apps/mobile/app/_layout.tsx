@@ -13,7 +13,7 @@ import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/components/AuthRedirect"
+import AuthRedirect from "@/features/AuthRedirect"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -29,8 +29,6 @@ export default function RootLayout() {
 
     if (!loaded) return null
 
-    // (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
-
     return (
         <AuthProvider>
             <ModalProvider>
@@ -39,7 +37,6 @@ export default function RootLayout() {
                         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
                             <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
                                 <Stack.Screen name="splash" />
-                                <Stack.Screen name="welcome" />
                                 <Stack.Screen name="(auth)" />
                                 <Stack.Screen name="(home)" />
                                 <Stack.Screen name="(shelter)" />
@@ -50,7 +47,7 @@ export default function RootLayout() {
                             <Alert />
                             <AuthRedirect />
 
-                            <StatusBar style="inverted" />
+                            <StatusBar style="inverted" backgroundColor="#000" />
                         </ThemeProvider>
                     </LoadingProvider>
                 </AlertProvider>
