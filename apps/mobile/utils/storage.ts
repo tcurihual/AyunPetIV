@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as SecureStore from "expo-secure-store"
 
 const TOKEN_KEY = "auth_token"
 const USER_KEY = "auth_user"
@@ -58,4 +59,12 @@ export async function getFirstLaunch() {
 
 export async function markFirstLaunch() {
     await AsyncStorage.setItem("first_launch", "done")
+}
+
+export async function savePlainPassword(password: string) {
+    await SecureStore.setItemAsync("plainPassword", password)
+}
+
+export async function getPlainPassword() {
+    return await SecureStore.getItemAsync("plainPassword")
 }

@@ -32,7 +32,7 @@ export default function LoginScreen() {
     const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
-                await signIn({ email: data.email, password: data.password })
+                await signIn(data)
                 await new Promise((r) => setTimeout(r, 700))
 
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")

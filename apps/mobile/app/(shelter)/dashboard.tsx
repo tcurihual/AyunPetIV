@@ -61,7 +61,7 @@ export default function ShelterDashboard() {
 
     return (
         <SafeAreaView style={styles.screen}>
-            <StatusBar style="inverted" />
+            <StatusBar style="auto" />
 
             <Header onMenuPress={() => setMenuVisible(true)} />
 
@@ -176,8 +176,8 @@ export default function ShelterDashboard() {
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Solicitudes recientes</Text>
                     <View style={styles.recientesContainer}>
-                        <ScrollView 
-                            style={styles.recientesScrollView} 
+                        <ScrollView
+                            style={styles.recientesScrollView}
                             showsVerticalScrollIndicator={true}
                             nestedScrollEnabled={true}
                         >
@@ -191,8 +191,8 @@ export default function ShelterDashboard() {
                                 >
                                     <View style={styles.bullet} />
                                     <Text style={styles.listText}>
-                                        <Text style={{ fontWeight: "700" }}>{r.who}</Text> solicitó adoptar
-                                        un {r.what}
+                                        <Text style={{ fontWeight: "700" }}>{r.who}</Text> solicitó
+                                        adoptar un {r.what}
                                     </Text>
                                     <Text style={styles.time}>{r.when}</Text>
                                 </View>

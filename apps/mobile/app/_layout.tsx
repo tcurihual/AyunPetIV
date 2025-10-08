@@ -13,7 +13,7 @@ import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/components/AuthRedirect"
+import AuthRedirect from "@/features/AuthRedirect"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -47,7 +47,7 @@ export default function RootLayout() {
                             <Alert />
                             <AuthRedirect />
 
-                            <StatusBar style="inverted" />
+                            <StatusBar style="inverted" backgroundColor="#000" />
                         </ThemeProvider>
                     </LoadingProvider>
                 </AlertProvider>

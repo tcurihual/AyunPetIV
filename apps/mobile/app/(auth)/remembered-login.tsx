@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native"
 import { useRouter } from "expo-router"
 import { useForm } from "react-hook-form"
@@ -13,12 +13,19 @@ import Input from "@ui/Input"
 import { LoginFormSchema } from "@/utils/schemas"
 import { LoginFormType } from "@/utils/types"
 import { Colors } from "@/constants/Colors"
+import { useBiometricLogin } from "@/hooks/useBiometricsLogin"
 
 export default function rememberedLogin() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
     const { signIn, status, user } = useAuthContext()
+    const { tryBiometricLogin } = useBiometricLogin()
+
+    useEffect(() => {
+        tryBiometricLogin()
+    }, [])
+
     const {
         control,
         handleSubmit,

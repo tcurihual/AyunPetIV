@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { http, setAuthToken } from "@/services/http"
-import { clearAuth, clearToken, getToken, getUser, saveToken, saveUser } from "@/utils/storage"
+import {
+    clearAuth,
+    clearToken,
+    getToken,
+    getUser,
+    savePlainPassword,
+    saveToken,
+    saveUser,
+} from "@/utils/storage"
 import { useRouter } from "expo-router"
 
 type Role = 19 | 20 | 21
@@ -57,36 +65,16 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const router = useRouter()
 
     useEffect(() => {
-        let mounted = true
         ;(async () => {
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
-
-                if (!storedToken && !storedUser) {
-                    setStatus("unauthenticated")
-                    return
-                }
-
-                if (!storedToken && storedUser) {
-                    setUser(storedUser)
-                    setStatus("unauthenticated")
-                    return
-                }
-
-                setAuthToken(storedToken!)
-                setTokenState(storedToken!)
                 if (storedUser) setUser(storedUser)
-                setStatus("authenticated")
+                setStatus("unauthenticated")
             } catch (e) {
-                console.error("Error al restaurar sesión:", e)
                 await clearDown()
                 setStatus("unauthenticated")
             }
         })()
-
-        return () => {
-            mounted = false
-        }
     }, [])
 
     async function signIn(data: LoginPayload) {
@@ -95,6 +83,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             const response = await http.post<AuthResponse>("/v1/auth/login", data)
             const { token, user } = response.data.data
             await afterAuthSuccess(token, user)
+            await savePlainPassword(data.password)
         } catch (e) {
             console.error("Error al iniciar sesión:", e)
             setStatus("unauthenticated")
@@ -120,11 +109,23 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
 
     async function signOut() {
+        await clearDown()
+        router.replace("/(auth)/login")
+        setStatus("unauthenticated")
+    }
+
+    async function afterAuthSuccess(tk: string, usr: User) {
+        await Promise.all([saveToken(tk), saveUser(usr)])
+        setAuthToken(tk)
+        setTokenState(tk)
+        setUser(usr)
+        setStatus("authenticated")
+    }
+
+    async function clearDown() {
         await clearToken()
         setAuthToken(null)
         setTokenState(null)
-        router.replace("/(auth)/login")
-        setStatus("unauthenticated")
     }
 
     const value = useMemo(
@@ -140,21 +141,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-
-    async function afterAuthSuccess(tk: string, usr: User) {
-        await Promise.all([saveToken(tk), saveUser(usr)])
-        setAuthToken(tk)
-        setTokenState(tk)
-        setUser(usr)
-        setStatus("authenticated")
-    }
-
-    async function clearDown() {
-        await clearAuth()
-        setAuthToken(null)
-        setTokenState(null)
-        setUser(null)
-    }
 }
 
 export function useAuthContext() {

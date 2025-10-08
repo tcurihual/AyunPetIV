@@ -14,7 +14,6 @@ export default function Index() {
             const first = await isFirstLaunch()
 
             if (status === "loading") return
-
             if (first) {
                 await markFirstLaunch()
                 router.replace("/(auth)/welcome")
@@ -22,7 +21,6 @@ export default function Index() {
             }
 
             if (status === "authenticated" && user) {
-                console.log(status === "authenticated" && user)
                 router.replace(user.role === 21 ? "/(shelter)" : "/(home)")
                 return
             }
