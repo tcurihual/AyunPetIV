@@ -3,6 +3,7 @@ import { login, register, verifyEmail } from "../controllers/auth"
 // import { sendEmail } from "../utils/sendEmail"
 // import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 // import jwt from "jsonwebtoken"
+import { forgotPassword } from "../controllers/auth"
 
 const router = Router()
 
@@ -12,7 +13,7 @@ const router = Router()
 router.post("/login", login)
 router.post("/register/:variation", register)
 router.post("/verify-email", verifyEmail)
-
+router.post("/forgot-password", forgotPassword)
 // ------------------------
 //  Ruta temporal para pruebas locales (comentar antes de subir)
 // ------------------------
