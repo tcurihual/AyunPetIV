@@ -97,3 +97,45 @@ export const register = async (
 
     return AppResponse(res, 201, "Usuario creado exitosamente", {})
 }
+
+export const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { token } = req.body
+
+        if (!token) throw new AppError(400, "Token no proporcionado")
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string }
+
+        const { data: user, error: findError } = await supabase
+            .from("users")
+            .select("email, validated")
+            .eq("email", decoded.id)
+            .single()
+
+        if (findError || !user) throw new AppError(404, "Usuario no encontrado")
+
+        if (user.validated)
+            return AppResponse(res, 200, "El correo ya estaba validado anteriormente", {})
+
+        const { error: updateError } = await supabase
+            .from("users")
+            .update({ validated: true })
+            .eq("email", decoded.id)
+
+        if (updateError) throw new AppError(500, "Error al actualizar el estado de validación")
+
+        return AppResponse(res, 200, "Correo verificado correctamente ✅", {})
+    } catch (error: any) {
+        if (error.name === "TokenExpiredError") {
+            throw new AppError(
+                401,
+                "El token ha expirado. Solicita un nuevo correo de verificación."
+            )
+        }
+        if (error.name === "JsonWebTokenError") {
+            throw new AppError(400, "Token inválido")
+        }
+        console.error(error)
+        throw new AppError(500, "Ocurrió un error al verificar el correo")
+    }
+}
