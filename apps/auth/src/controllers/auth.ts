@@ -8,6 +8,9 @@ import {
     generateAuthToken,
     hashPassword,
 } from "@repo/utils"
+import jwt from "jsonwebtoken"
+import { sendEmail } from "../utils/sendEmail"
+import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 
 type Variation = "user" | "giver" | "shelter"
 
@@ -79,7 +82,14 @@ export const register = async (
         description: user.description ?? null,
     }
 
-    // TODO: envio de correos a usuarios, según rol
+    const token = jwt.sign({ id: user.email }, process.env.JWT_SECRET!, { expiresIn: "1h" })
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`
+
+    await sendEmail({
+        to: user.email,
+        subject: "Verifica tu cuenta en Ayün Pet 🐾",
+        html: emailTemplate(verificationLink),
+    })
 
     const { error: insertError } = await supabase.from("users").insert([payload])
 
