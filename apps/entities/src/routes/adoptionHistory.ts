@@ -18,7 +18,7 @@ router.get("/:id", getAdoptionHistory)
 // POST: Solo admins pueden crear historial de adopción
 router.post("/", extractUserFromHeaders, requireRole(19), createAdoptionHistory)
 
-// PUT/DELETE: Solo el propietario (fromownerid o toownerid) o admin puede modificar
+// PUT/DELETE: Solo el propietario o admin puede modificar
 // El historial de adopción tiene fromownerid y toownerid, verificamos fromownerid
 router.put(
     "/:id",
