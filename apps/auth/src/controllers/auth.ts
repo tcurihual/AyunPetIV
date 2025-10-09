@@ -9,10 +9,9 @@ import {
     hashPassword,
 } from "@repo/utils"
 import jwt from "jsonwebtoken"
-import { sendEmail } from "../utils/sendEmail"
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
-
+import { sendEmail } from "@repo/utils"
 type Variation = "user" | "giver" | "shelter"
 
 export const login = async (req: Request, res: Response) => {
@@ -142,33 +141,32 @@ export const verifyEmail = async (req: Request, res: Response) => {
 }
 
 export const forgotPassword = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body
+    try {
+        const { email } = req.body
 
-    if (!email) throw new AppError(400, "Debe proporcionar un correo electrónico")
+        if (!email) throw new AppError(400, "Debe proporcionar un correo electrónico")
 
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("email")
-      .eq("email", email)
-      .single()
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("email")
+            .eq("email", email)
+            .single()
 
-    if (error || !user) throw new AppError(404, "No existe un usuario con ese correo")
+        if (error || !user) throw new AppError(404, "No existe un usuario con ese correo")
 
-   
-    const token = jwt.sign({ id: user.email }, process.env.JWT_SECRET!, { expiresIn: "30m" })
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+        const token = jwt.sign({ id: user.email }, process.env.JWT_SECRET!, { expiresIn: "30m" })
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
 
-    // Enviar correo
-    await sendEmail({
-      to: email,
-      subject: "Recupera tu contraseña — Ayün Pet 🐾",
-      html: resetPasswordTemplate(resetLink),
-    })
+        // Enviar correo
+        await sendEmail({
+            to: email,
+            subject: "Recupera tu contraseña — Ayün Pet 🐾",
+            html: resetPasswordTemplate(resetLink),
+        })
 
-    return AppResponse(res, 200, "Correo de recuperación enviado correctamente", {})
-  } catch (error) {
-    console.error("❌ ERROR EN forgotPassword:", error)
-    throw new AppError(500, "Error al enviar el correo de recuperación")
-  }
+        return AppResponse(res, 200, "Correo de recuperación enviado correctamente", {})
+    } catch (error) {
+        console.error("❌ ERROR EN forgotPassword:", error)
+        throw new AppError(500, "Error al enviar el correo de recuperación")
+    }
 }
