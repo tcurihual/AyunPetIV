@@ -4,7 +4,6 @@ import { useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { LineChart, PieChart, BarChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
 import DropdownMenu from "@common/DropdownMenu"
@@ -61,8 +60,6 @@ export default function ShelterDashboard() {
 
     return (
         <SafeAreaView style={styles.screen}>
-            <StatusBar style="auto" />
-
             <Header onMenuPress={() => setMenuVisible(true)} />
 
             <ScrollView contentContainerStyle={styles.container}>

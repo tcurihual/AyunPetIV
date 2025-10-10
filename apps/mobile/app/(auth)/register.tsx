@@ -6,7 +6,6 @@ import {
     Image,
     StyleSheet,
     ScrollView,
-    StatusBar,
     useWindowDimensions,
 } from "react-native"
 import { useRouter } from "expo-router"
@@ -170,7 +169,6 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.container}>
                     <TouchableOpacity style={styles.backButton} onPress={onBack}>

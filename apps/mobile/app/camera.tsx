@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert } from "react-native"
 import { useRouter } from "expo-router"
 import { CameraView, useCameraPermissions } from "expo-camera"
+import StatusBar from "@common/StatusBar"
 import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from "expo-file-system"
 
@@ -127,6 +128,7 @@ export default function CameraScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: "black" }}>
+            <StatusBar variant="transparent" translucent />
             {/* Botón volver fijo arriba */}
             <View style={{ position: "absolute", top: 40, left: 20, zIndex: 5 }}>
                 <TouchableOpacity

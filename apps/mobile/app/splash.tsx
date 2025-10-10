@@ -1,5 +1,6 @@
 import React, { useEffect } from "react"
 import { View, Text, ActivityIndicator, StyleSheet, Alert, BackHandler } from "react-native"
+import StatusBar from "@common/StatusBar"
 import NetInfo from "@react-native-community/netinfo"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
@@ -63,10 +64,13 @@ export default function SplashScreen() {
     }, [])
 
     return (
-        <View style={styles.container}>
-            <ActivityIndicator size="large" color="#000" />
-            <Text style={styles.text}>Cargando...</Text>
-        </View>
+        <>
+            <StatusBar variant="white" />
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#000" />
+                <Text style={styles.text}>Cargando...</Text>
+            </View>
+        </>
     )
 }
 

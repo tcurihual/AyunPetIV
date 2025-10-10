@@ -29,7 +29,15 @@
                 "READ_MEDIA_IMAGES",
                 "READ_EXTERNAL_STORAGE"
             ],
-            "package": "com.anonymous.expomonorepo"
+            "package": "com.anonymous.expomonorepo",
+            "navigationBar": {
+                "backgroundColor": "#ffffff",
+                "borderColor": "#F9C53D"
+            },
+            "statusBar": {
+                "backgroundColor": "#F9C53D",
+                "barStyle": "dark-content"
+            }
         },
         "web": {
             "bundler": "metro",

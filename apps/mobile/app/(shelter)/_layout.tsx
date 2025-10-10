@@ -1,6 +1,12 @@
 import React from "react"
 import { Stack } from "expo-router"
+import StatusBar from "@common/StatusBar"
 
-export default function Layout() {
-    return <Stack screenOptions={{ headerShown: false }} />
+export default function ShelterLayout() {
+    return (
+        <>
+            <StatusBar variant="yellow" />
+            <Stack screenOptions={{ headerShown: false }} />
+        </>
+    )
 }

@@ -6,7 +6,6 @@ import {
     Image,
     StyleSheet,
     ScrollView,
-    StatusBar,
     useWindowDimensions,
     Alert,
     KeyboardAvoidingView,
@@ -458,8 +457,6 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
-
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
