@@ -1,91 +1,46 @@
-import React from "react"
-import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
+import React, { useEffect, useState } from "react"
+import { View, ActivityIndicator } from "react-native"
 import { useRouter } from "expo-router"
-import { FirstLaunch } from "@/utils/storage"
+import { isFirstLaunch, markFirstLaunch } from "@/utils/storage"
+import { useAuthContext } from "@/context/AuthContext"
 
-const Index = () => {
-    const { height } = useWindowDimensions()
+export default function Index() {
     const router = useRouter()
+    const { status, user } = useAuthContext()
+    const [checking, setChecking] = useState(true)
 
-    const handleAdoptPress = async () => {
-        await FirstLaunch()
-        router.push("/(auth)/login")
+    useEffect(() => {
+        ;(async () => {
+            const first = await isFirstLaunch()
+
+            if (status === "loading") return
+            if (first) {
+                await markFirstLaunch()
+                router.replace("/(auth)/welcome")
+                return
+            }
+
+            if (status === "authenticated" && user) {
+                router.replace(user.role === 21 ? "/(shelter)" : "/(home)")
+                return
+            }
+
+            if (status === "unauthenticated") {
+                const target = user ? "/(auth)/remembered-login" : "/(auth)/login"
+                router.replace(target)
+                return
+            }
+            setChecking(false)
+        })()
+    }, [status, user])
+
+    if (checking || status === "loading") {
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" />
+            </View>
+        )
     }
 
-    const handleGivePress = async () => {
-        await FirstLaunch()
-        router.push("/(auth)/giver_register")
-    }
-
-    return (
-        <View style={styles.container}>
-            <View style={styles.childContainer}>
-                <Text style={styles.titleText}>Bienvenido a </Text>
-                <Text style={styles.titleText}>Ayün Pet </Text>
-                <Text></Text>
-                <Text style={styles.titleDesc}>¡Donde podrás encontrar</Text>
-                <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
-            </View>
-
-            <View style={{ gap: 16, alignItems: "center", width: "100%" }}>
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={handleAdoptPress}
-                >
-                    <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={handleGivePress}
-                >
-                    <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.childContainer}>
-                <Image
-                    source={require("@images/welcome-pets.png")}
-                    style={[styles.petImg, { top: -height * 0.12 }]}
-                    resizeMode="none"
-                />
-            </View>
-        </View>
-    )
+    return null
 }
-
-export default Index
-
-const styles = StyleSheet.create({
-    container: {
-        backgroundColor: "#F9C53D",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-evenly",
-        flex: 1,
-        flexDirection: "column",
-    },
-    childContainer: { width: "80%" },
-    titleText: {
-        fontSize: 30,
-        fontWeight: "bold",
-    },
-    titleDesc: {
-        fontSize: 16,
-    },
-    petImg: {
-        position: "absolute",
-        left: "36%",
-        width: "100%",
-    },
-    buttonPrimary: {
-        backgroundColor: "#9B6DD7",
-        borderRadius: 20,
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        width: "70%",
-        alignItems: "center",
-    },
-    buttonSecondary: { marginTop: 0 }, // Reducido el margen entre los botones
-    buttonText: { color: "#fff", fontSize: 16 },
-})

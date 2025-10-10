@@ -1,26 +1,25 @@
 import React, { useState } from "react"
 import { StyleSheet } from "react-native"
-import { Slot, usePathname, router } from "expo-router"
+import { Slot, usePathname, Redirect } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
 import BackButton from "@common/BackButton"
 import DropdownMenu from "@common/DropdownMenu"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { Colors } from "@/constants/Colors"
+import { useAuthContext } from "@/context/AuthContext"
 
 export default function HomeLayout() {
     const pathname = usePathname()
     const [menuVisible, setMenuVisible] = useState(false)
+    const { user } = useAuthContext()
 
-    // Detectar pestaña activa según la ruta actual
-    let activeTab = "home"
-    if (pathname.includes("/my-profile")) activeTab = "perfil"
-    if (pathname.includes("/camera")) activeTab = "camara"
-    if (pathname.includes("/(requests)/requestList")) activeTab = "requests"
+
+    if (!user) return <Redirect href="/(auth)/login" />
+    if (user.role !== 19) return <Redirect href="/(shelter)" />
 
     const showBackButton = pathname !== "/"
-
-    // Ajusta estilo del BackButton en las vistas a especificar
     let backButtonStyle = {}
     if (pathname.includes("/my-profile")) {
         backButtonStyle = { top: 135, left: 10 }
@@ -31,21 +30,12 @@ export default function HomeLayout() {
             <StatusBar style="inverted" />
 
             <Header onMenuPress={() => setMenuVisible(true)} />
-
             <Slot />
 
             {showBackButton && <BackButton style={backButtonStyle} />}
 
-            <BottomNavbar
-                activeTab={activeTab}
-                onTabPress={(tab) => {
-                    if (tab === "home") return router.replace("/")
-                    if (tab === "camera") return router.push("/camera")
-                    if (tab === "requests") return router.push("/(requests)/requestList")
-                    if (tab === "perfil") return router.push("/my-profile")
-                    if (tab === "add") return router.push("/AddPetScreen")
-                }}
-            />
+            <BottomNavbar />
+
             {menuVisible && <DropdownMenu onClose={() => setMenuVisible(false)} />}
         </SafeAreaView>
     )
@@ -54,7 +44,7 @@ export default function HomeLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFD24C",
+        backgroundColor: Colors.yellow,
         opacity: 1,
     },
 })

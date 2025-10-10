@@ -12,13 +12,13 @@ import { useAlert } from "@/context/AlertContext"
 import Input from "@ui/Input"
 import { LoginFormSchema } from "@/utils/schemas"
 import { LoginFormType } from "@/utils/types"
+import { Colors } from "@/constants/Colors"
 
 export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-    const { signIn, status, user } = useAuthContext()
-
+    const { signIn, status } = useAuthContext()
     const {
         control,
         handleSubmit,
@@ -32,7 +32,7 @@ export default function LoginScreen() {
     const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
-                await signIn({ email: data.email, password: data.password })
+                await signIn(data)
                 await new Promise((r) => setTimeout(r, 700))
 
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     buttonPrimary: {
-        backgroundColor: "#facc15",
+        backgroundColor: `${Colors.yellow}`,
         borderRadius: 16,
         paddingVertical: 15,
         paddingHorizontal: 30,

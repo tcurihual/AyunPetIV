@@ -7,15 +7,32 @@ import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
 import { useColorScheme } from "react-native"
 
-import { AuthProvider } from "@/context/AuthContext"
+import { AuthProvider, useAuthContext } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/components/AuthRedirect"
+import AuthRedirect from "@/features/AuthRedirect"
+import { router } from "expo-router"
+
 
 SplashScreen.preventAutoHideAsync()
+function RoleRedirect() {
+  const { user } = useAuthContext()
+
+  if (!user) return null
+
+  if (user.role === 20) {
+    router.replace("/(shelter)")
+  } else if (user.role === 19) {
+    router.replace("/(home)")
+  } else if (user.role === 21) {
+    router.replace("/(home)")
+  }
+
+  return null
+}
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -29,8 +46,6 @@ export default function RootLayout() {
 
     if (!loaded) return null
 
-    // (tabs) se encuentra commentado ya que no se encuentra del flujo, pero
-
     return (
         <AuthProvider>
             <ModalProvider>
@@ -39,7 +54,6 @@ export default function RootLayout() {
                         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
                             <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
                                 <Stack.Screen name="splash" />
-                                <Stack.Screen name="welcome" />
                                 <Stack.Screen name="(auth)" />
                                 <Stack.Screen name="(home)" />
                                 <Stack.Screen name="(shelter)" />
@@ -49,8 +63,9 @@ export default function RootLayout() {
                             <ModalHost />
                             <Alert />
                             <AuthRedirect />
+                            <RoleRedirect />
 
-                            <StatusBar style="inverted" />
+                            <StatusBar style="inverted" backgroundColor="#000" />
                         </ThemeProvider>
                     </LoadingProvider>
                 </AlertProvider>

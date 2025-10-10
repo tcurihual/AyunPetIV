@@ -2,10 +2,10 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-
+import "dotenv/config"
+import giverRequestRouter from "./routes/giverRequest"
 import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
-
 export const supabase = createSupabaseClient()
 const app = express()
 
@@ -17,6 +17,7 @@ app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
 
+app.use("/", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
 
 // Ruta pública

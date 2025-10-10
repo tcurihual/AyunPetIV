@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as SecureStore from "expo-secure-store"
 
 const TOKEN_KEY = "auth_token"
 const USER_KEY = "auth_user"
@@ -17,6 +18,10 @@ export async function saveUser<T>(user: T) {
 export async function getUser<T>(): Promise<T | null> {
     const raw = await AsyncStorage.getItem(USER_KEY)
     return raw ? JSON.parse(raw) : null
+}
+
+export async function clearToken() {
+    await AsyncStorage.removeItem(TOKEN_KEY)
 }
 
 export async function clearAuth() {
@@ -38,15 +43,28 @@ export async function hasPrefsDone(): Promise<boolean> {
     }
 }
 
-export async function FirstLaunch() {
-    await AsyncStorage.setItem("first_launch", "true")
-}
 export async function isFirstLaunch(): Promise<boolean> {
     try {
-        const hasLaunched = await AsyncStorage.getItem("first_launch")
-        return hasLaunched === null
+        const value = await AsyncStorage.getItem("first_launch")
+        return value === null || value === undefined
     } catch (error) {
         console.error("Error al leer AsyncStorage:", error)
         return false
     }
+}
+
+export async function getFirstLaunch() {
+    await AsyncStorage.getItem("first_launch")
+}
+
+export async function markFirstLaunch() {
+    await AsyncStorage.setItem("first_launch", "done")
+}
+
+export async function savePlainPassword(password: string) {
+    await SecureStore.setItemAsync("plainPassword", password)
+}
+
+export async function getPlainPassword() {
+    return await SecureStore.getItemAsync("plainPassword")
 }
