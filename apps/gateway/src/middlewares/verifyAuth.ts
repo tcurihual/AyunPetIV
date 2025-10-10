@@ -5,13 +5,13 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization
 
     if (!authHeader) {
-        throw new AppError(401, "Authorization not found in the header")
+        throw new AppError(401, "No estás autenticado. Debes incluir un token de autorización")
     }
 
     const [type, token] = authHeader.split(" ")
 
     if (type !== "Bearer" || !token) {
-        throw new AppError(401, "Wrong format of authorization bearer token")
+        throw new AppError(401, "Formato de token inválido. Debe ser: Bearer <token>")
     }
 
     const payload = verifyAuthToken(token)
