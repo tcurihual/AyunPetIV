@@ -18,6 +18,7 @@ app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", giverRequestRouter)
+app.use("/adoption-history", adoptionHistoryRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
