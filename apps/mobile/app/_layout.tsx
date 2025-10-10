@@ -14,6 +14,7 @@ import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 import AuthRedirect from "@/features/AuthRedirect"
+import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { router } from "expo-router"
 
@@ -49,6 +50,7 @@ export default function RootLayout() {
 
     return (
         <AuthProvider>
+            <ReportProvider>
             <AdoptionRequestProvider>
                 <ModalProvider>
                     <AlertProvider>
@@ -72,6 +74,7 @@ export default function RootLayout() {
                     </LoadingProvider>
                 </AlertProvider>
             </ModalProvider>
+            </ReportProvider>
             </AdoptionRequestProvider>
         </AuthProvider>
     )
