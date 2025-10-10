@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
 import { useColorScheme } from "react-native"
 
-import { AuthProvider } from "@/context/AuthContext"
+import { AuthProvider, useAuthContext } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
@@ -15,8 +15,25 @@ import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 import AuthRedirect from "@/features/AuthRedirect"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
+import { router } from "expo-router"
+
 
 SplashScreen.preventAutoHideAsync()
+function RoleRedirect() {
+  const { user } = useAuthContext()
+
+  if (!user) return null
+
+  if (user.role === 20) {
+    router.replace("/(shelter)")
+  } else if (user.role === 19) {
+    router.replace("/(home)")
+  } else if (user.role === 21) {
+    router.replace("/(home)")
+  }
+
+  return null
+}
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -48,6 +65,7 @@ export default function RootLayout() {
                             <ModalHost />
                             <Alert />
                             <AuthRedirect />
+                            <RoleRedirect />
 
                             <StatusBar style="inverted" backgroundColor="#000" />
                         </ThemeProvider>

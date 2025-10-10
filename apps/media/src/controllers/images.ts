@@ -28,7 +28,6 @@ export const getFiles = async (req: Request, res: Response, next: NextFunction) 
             const url = `/${rel.replace(/\\/g, "/")}`
 
             const parts = url.split("/")
-            console.log(parts)
             const entityId = parts[3]
 
             if (!grouped[entityId]) grouped[entityId] = []
