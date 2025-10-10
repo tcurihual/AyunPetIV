@@ -14,6 +14,7 @@ import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 import AuthRedirect from "@/features/AuthRedirect"
+import { MessageProvider } from "@/context/MessageContext"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -31,17 +32,18 @@ export default function RootLayout() {
 
     return (
         <AuthProvider>
-            <ModalProvider>
-                <AlertProvider>
-                    <LoadingProvider>
-                        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                            <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
-                                <Stack.Screen name="splash" />
-                                <Stack.Screen name="(auth)" />
-                                <Stack.Screen name="(home)" />
-                                <Stack.Screen name="(shelter)" />
-                                <Stack.Screen name="+not-found" />
-                            </Stack>
+            <MessageProvider>
+                <ModalProvider>
+                    <AlertProvider>
+                        <LoadingProvider>
+                            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                                <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
+                                    <Stack.Screen name="splash" />
+                                    <Stack.Screen name="(auth)" />
+                                    <Stack.Screen name="(home)" />
+                                    <Stack.Screen name="(shelter)" />
+                                    <Stack.Screen name="+not-found" />
+                                </Stack>
 
                             <ModalHost />
                             <Alert />
@@ -52,6 +54,7 @@ export default function RootLayout() {
                     </LoadingProvider>
                 </AlertProvider>
             </ModalProvider>
+            </MessageProvider>
         </AuthProvider>
     )
 }
