@@ -2,11 +2,9 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ENTITIES_PORT, getHeaders } from "@repo/utils"
+import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
 import "dotenv/config"
 import giverRequestRouter from "./routes/giverRequest"
-
-import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
 
 export const supabase = createSupabaseClient()
@@ -21,6 +19,7 @@ app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", giverRequestRouter)
+app.use("/adoption-history", adoptionHistoryRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
