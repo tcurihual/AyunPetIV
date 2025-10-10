@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express"
 import multer from "multer"
 import { HttpError } from "./upload"
+import { AppError } from "@repo/utils"
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
     if (err instanceof multer.MulterError) {
@@ -11,5 +12,12 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
         return res.status(400).json({ error: err.message })
     }
     if (err instanceof HttpError) return res.status(err.status).json({ error: err.message })
+    if (err instanceof AppError) {
+        return res.status(err.statusCode).json({
+            message: err.message,
+            type: "error",
+            data: err.data
+        })
+    }
     return res.status(500).json({ error: "Error interno" })
 }
