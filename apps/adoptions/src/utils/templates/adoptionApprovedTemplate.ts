@@ -1,26 +1,3 @@
-export interface AdoptionApprovedData {
-  adopter: {
-    name: string;
-    email: string;
-  };
-  pet: {
-    name: string;
-    type: string;
-    breed?: string;
-  };
-  shelter: {
-    name: string;
-    address: string;
-    phone: string;
-    email: string;
-  };
-  adoptionCode: string;
-  meetingReminder: {
-    importance: string;
-    nextSteps: string;
-  };
-}
-
 export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => {
   return `
 <!DOCTYPE html>
@@ -28,12 +5,12 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Solicitud de Adopción Aprobada!</title>
+    <title>¡Solicitud de Adopción Aprobada! - AyünPet</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #11181C;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
@@ -47,30 +24,30 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
         }
         .header {
             text-align: center;
-            border-bottom: 3px solid #4CAF50;
+            border-bottom: 3px solid #F9C53D;
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
         .success-icon {
             font-size: 48px;
-            color: #4CAF50;
+            color: #F9C53D;
             margin-bottom: 10px;
         }
         h1 {
-            color: #4CAF50;
+            color: #F9C53D;
             margin: 0;
             font-size: 28px;
         }
         .pet-info {
-            background: #f0f8f0;
+            background: #FFF9E6;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #F9C53D;
         }
         .adoption-code {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+            background: #FFF9E6;
+            border: 2px solid #F9C53D;
             padding: 15px;
             border-radius: 8px;
             text-align: center;
@@ -80,19 +57,19 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
             font-family: 'Courier New', monospace;
             font-size: 24px;
             font-weight: bold;
-            color: #856404;
+            color: #D4A017;
             letter-spacing: 2px;
         }
         .warning {
-            background: #ffe6e6;
+            background: #FFE6E6;
             border-left: 4px solid #dc3545;
             padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
         }
         .meeting-reminder {
-            background: #e7f3ff;
-            border-left: 4px solid #007bff;
+            background: #E6F3FF;
+            border-left: 4px solid #0a7ea4;
             padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
@@ -108,17 +85,18 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #eee;
-            color: #666;
+            color: #687076;
             font-size: 14px;
         }
         .button {
             display: inline-block;
-            background: #4CAF50;
-            color: white;
+            background: #F9C53D;
+            color: #11181C;
             padding: 12px 24px;
             text-decoration: none;
             border-radius: 6px;
             margin: 10px 0;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -138,8 +116,10 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
             <h3>📋 Información de tu futura mascota:</h3>
             <ul>
                 <li><strong>Nombre:</strong> ${data.pet.name}</li>
-                <li><strong>Tipo:</strong> ${data.pet.type}</li>
-                ${data.pet.breed ? `<li><strong>Raza:</strong> ${data.pet.breed}</li>` : ''}
+                <li><strong>Especie:</strong> ${data.pet.species}</li>
+                <li><strong>Género:</strong> ${data.pet.gender}</li>
+                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age} años</li>` : ''}
+                ${data.pet.size ? `<li><strong>Tamaño:</strong> ${data.pet.size}</li>` : ''}
             </ul>
         </div>
 
@@ -170,8 +150,7 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
         <div class="shelter-info">
             <h3>🏠 Información del Refugio</h3>
             <p><strong>${data.shelter.name}</strong></p>
-            <p>📍 <strong>Dirección:</strong> ${data.shelter.address}</p>
-            <p>📞 <strong>Teléfono:</strong> ${data.shelter.phone}</p>
+            ${data.shelter.address ? `<p>� <strong>Dirección:</strong> ${data.shelter.address}</p>` : ''}
             <p>✉️ <strong>Email:</strong> ${data.shelter.email}</p>
             <p><em>Por favor, contacta al refugio para coordinar tu visita.</em></p>
         </div>
@@ -180,7 +159,7 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
 
         <div class="footer">
             <p>Con cariño,<br>
-            <strong>El equipo de ${data.shelter.name}</strong></p>
+            <strong>El equipo de AyünPet 🐾</strong></p>
             <p><small>Este es un correo automático, por favor no respondas a esta dirección.</small></p>
         </div>
     </div>

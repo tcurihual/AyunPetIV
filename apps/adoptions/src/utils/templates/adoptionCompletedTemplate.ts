@@ -1,26 +1,3 @@
-export interface AdoptionCompletedData {
-  adopter: {
-    name: string;
-    email: string;
-  };
-  pet: {
-    name: string;
-    type: string;
-    breed?: string;
-    adoptionDate: string;
-  };
-  shelter: {
-    name: string;
-    email: string;
-    supportPhone?: string;
-  };
-  adoptionCode: string;
-  support: {
-    resources: string[];
-    emergencyContact?: string;
-  };
-}
-
 export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string => {
   return `
 <!DOCTYPE html>
@@ -28,12 +5,12 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Adopción Completada Exitosamente!</title>
+    <title>¡Adopción Completada Exitosamente! - AyünPet</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #11181C;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
@@ -47,37 +24,38 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
         }
         .header {
             text-align: center;
-            border-bottom: 3px solid #ff6b6b;
+            border-bottom: 3px solid #F9C53D;
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
         .heart-icon {
             font-size: 48px;
-            color: #ff6b6b;
+            color: #F9C53D;
             margin-bottom: 10px;
         }
         h1 {
-            color: #ff6b6b;
+            color: #F9C53D;
             margin: 0;
             font-size: 28px;
         }
         .celebration {
-            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-            color: white;
+            background: linear-gradient(135deg, #F9C53D, #FFD700);
+            color: #11181C;
             padding: 20px;
             border-radius: 12px;
             text-align: center;
             margin: 20px 0;
+            font-weight: bold;
         }
         .adoption-details {
-            background: #fff5f5;
+            background: #FFF9E6;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
-            border-left: 4px solid #ff6b6b;
+            border-left: 4px solid #F9C53D;
         }
         .completion-badge {
-            background: #d4edda;
+            background: #E6FFE6;
             border: 2px solid #28a745;
             padding: 15px;
             border-radius: 8px;
@@ -90,8 +68,8 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             color: #155724;
         }
         .care-tips {
-            background: #e7f3ff;
-            border-left: 4px solid #007bff;
+            background: #E6F3FF;
+            border-left: 4px solid #0a7ea4;
             padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
@@ -103,7 +81,7 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             margin: 20px 0;
         }
         .resources-list {
-            background: #f0f8f0;
+            background: #FFF9E6;
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
@@ -117,12 +95,12 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #eee;
-            color: #666;
+            color: #687076;
             font-size: 14px;
         }
         .thank-you {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: #FFF9E6;
+            border: 1px solid #F9C53D;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
@@ -130,7 +108,7 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
         }
         .paw-prints {
             font-size: 24px;
-            color: #ff6b6b;
+            color: #F9C53D;
             margin: 10px 0;
         }
     </style>
@@ -161,9 +139,11 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             <h3>📋 Detalles de la Adopción</h3>
             <ul>
                 <li><strong>Mascota adoptada:</strong> ${data.pet.name}</li>
-                <li><strong>Tipo:</strong> ${data.pet.type}</li>
-                ${data.pet.breed ? `<li><strong>Raza:</strong> ${data.pet.breed}</li>` : ''}
-                <li><strong>Fecha de adopción:</strong> ${data.pet.adoptionDate}</li>
+                <li><strong>Especie:</strong> ${data.pet.species}</li>
+                <li><strong>Género:</strong> ${data.pet.gender}</li>
+                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age} años</li>` : ''}
+                ${data.pet.size ? `<li><strong>Tamaño:</strong> ${data.pet.size}</li>` : ''}
+                <li><strong>Fecha de adopción:</strong> ${data.adoptionDate}</li>
                 <li><strong>Nuevo hogar:</strong> ${data.adopter.name}</li>
             </ul>
         </div>
@@ -194,7 +174,6 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             <p>Recuerda que siempre estamos aquí para apoyarte:</p>
             <p><strong>Refugio:</strong> ${data.shelter.name}</p>
             <p>✉️ <strong>Email de soporte:</strong> ${data.shelter.email}</p>
-            ${data.shelter.supportPhone ? `<p>📞 <strong>Teléfono de emergencia:</strong> ${data.shelter.supportPhone}</p>` : ''}
             ${data.support.emergencyContact ? `<p>🚨 <strong>Contacto de emergencia:</strong> ${data.support.emergencyContact}</p>` : ''}
             
             <p><em>No dudes en contactarnos si tienes alguna pregunta o necesitas orientación. Estamos comprometidos con el bienestar de ${data.pet.name} y tu familia.</em></p>
@@ -211,7 +190,7 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
 
         <div class="footer">
             <p>Con amor y gratitud infinita,<br>
-            <strong>Todo el equipo de ${data.shelter.name}</strong></p>
+            <strong>Todo el equipo de AyünPet 🐾</strong></p>
             <div class="paw-prints">🐾</div>
             <p><small>Este es un correo de confirmación automático. Para soporte, responde a ${data.shelter.email}</small></p>
         </div>
