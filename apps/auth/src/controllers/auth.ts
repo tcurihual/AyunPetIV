@@ -170,3 +170,44 @@ export const forgotPassword = async (req: Request, res: Response) => {
         throw new AppError(500, "Error al enviar el correo de recuperación")
     }
 }
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body
+
+    if (!token || !newPassword)
+      throw new AppError(400, "Token y nueva contraseña son requeridos")
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string }
+
+    const { data: user, error: findError } = await supabase
+      .from("users")
+      .select("email")
+      .eq("email", decoded.id)
+      .single()
+
+    if (findError || !user)
+      throw new AppError(404, "Usuario no encontrado o token inválido")
+
+    const hashedPassword = await hashPassword(newPassword)
+    if (!hashedPassword) throw new AppError(500, "Error al encriptar la contraseña")
+
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ password: hashedPassword })
+      .eq("email", user.email)
+
+    if (updateError) throw new AppError(500, "Error al actualizar la contraseña")
+
+    return AppResponse(res, 200, "Contraseña restablecida correctamente ✅", {})
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      throw new AppError(401, "El token ha expirado. Solicita un nuevo correo de recuperación.")
+    }
+    if (error.name === "JsonWebTokenError") {
+      throw new AppError(400, "Token inválido")
+    }
+    console.error("❌ ERROR EN resetPassword:", error)
+    throw new AppError(500, "Error al restablecer la contraseña")
+  }
+}
