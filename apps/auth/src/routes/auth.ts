@@ -1,10 +1,8 @@
 import { Router } from "express"
-import { login, register, verifyEmail } from "../controllers/auth"
-import { sendEmail } from "@repo/utils"
-import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
-import jwt from "jsonwebtoken"
-import { forgotPassword } from "../controllers/auth"
-import { resetPassword } from "../controllers/auth"
+import { login, register, verifyEmail, forgotPassword, resetPassword } from "../controllers/auth"
+// import { sendEmail } from "@repo/utils"
+// import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
+// import jwt from "jsonwebtoken"
 
 const router = Router()
 

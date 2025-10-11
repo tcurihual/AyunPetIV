@@ -2,11 +2,13 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
-import mineRequestRoutes from "./routes/mineRequest"
+
+import { errorHandler, ADOPTIONS_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
+import mineRequestRoutes from "./routes/requests"
 import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
 
+export const supabase = createSupabaseClient()
 
 const app = express()
 
@@ -19,7 +21,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/", mineRequestRoutes)
 app.use("/reports", reportRoutes)
-app.use(messagesRoutes)
+app.use("/messages", messagesRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({

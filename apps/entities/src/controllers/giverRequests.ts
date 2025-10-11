@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 import axios from "axios"
-import { createSupabaseClient, MEDIA_URL, sendAccountValidationEmail } from "@repo/utils"
+import { MEDIA_URL, AppError, AppResponse, sendAccountValidationEmail } from "@repo/utils"
+import { supabase } from "../index"
 
 type GiverItem = {
     id: number
@@ -12,8 +13,7 @@ type GiverItem = {
 }
 
 export const listGiverRequests = async (_req: Request, res: Response) => {
-    const supa = createSupabaseClient()
-    const { data: users, error } = await supa
+    const { data: users, error } = await supabase
         .from("users")
         .select("id,name,email,role,rut,validated")
         .eq("validated", false)
@@ -21,7 +21,7 @@ export const listGiverRequests = async (_req: Request, res: Response) => {
         .order("id", { ascending: true })
 
     if (error) {
-        return res.status(500).json({ type: "error", message: error.message, data: null })
+        throw new AppError(500, error.message)
     }
 
     const items: GiverItem[] = await Promise.all(
@@ -54,19 +54,12 @@ export const listGiverRequests = async (_req: Request, res: Response) => {
             }
         })
     )
-
-    return res.json({ type: "success", message: "OK", data: items })
+    return AppResponse(res, 200, "Listado de solicitudes de creación de cuentas", items)
 }
 
-/**
- * Valida la cuenta de un dador de mascota
- * Solo accesible por administradores
- */
 export const validateGiverAccount = async (req: Request, res: Response) => {
-    const supa = createSupabaseClient()
     const { userId } = req.params
 
-    // Validar que se proporcione el userId
     if (!userId || isNaN(Number(userId))) {
         return res.status(400).json({
             type: "error",
@@ -76,8 +69,7 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
     }
 
     try {
-        // Verificar que el usuario existe y no está validado
-        const { data: user, error: findError } = await supa
+        const { data: user, error: findError } = await supabase
             .from("users")
             .select("id,email,name,validated,role")
             .eq("id", Number(userId))
@@ -99,8 +91,7 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
             })
         }
 
-        // Actualizar el estado de validación a true
-        const { error: updateError } = await supa
+        const { error: updateError } = await supabase
             .from("users")
             .update({ validated: true })
             .eq("id", Number(userId))
@@ -113,7 +104,6 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
             })
         }
 
-        // Enviar correo de confirmación de validación
         try {
             const emailSent = await sendAccountValidationEmail(user.email, user.name)
             if (emailSent) {
@@ -124,7 +114,6 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
                 )
             }
         } catch (emailError) {
-            // No fallar la validación si el correo no se puede enviar
             console.error("❌ Error al enviar correo de validación:", emailError)
         }
 
