@@ -14,6 +14,7 @@ import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
 import AuthRedirect from "@/features/AuthRedirect"
+import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { router } from "expo-router"
@@ -46,40 +47,41 @@ export default function RootLayout() {
     }, [loaded])
 
     if (!loaded) return null
-
+  
     return (
         <AuthProvider>
-            <ReportProvider>
-                <AdoptionRequestProvider>
-                    <ModalProvider>
-                        <AlertProvider>
-                            <LoadingProvider>
-                                <ThemeProvider
-                                    value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                                >
-                                    <Stack
-                                        initialRouteName="splash"
-                                        screenOptions={{ headerShown: false }}
+            <MessageProvider>
+                <ReportProvider>
+                    <AdoptionRequestProvider>
+                        <ModalProvider>
+                            <AlertProvider>
+                                <LoadingProvider>
+                                    <ThemeProvider
+                                        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
                                     >
-                                        <Stack.Screen name="splash" />
-                                        <Stack.Screen name="(auth)" />
-                                        <Stack.Screen name="(home)" />
-                                        <Stack.Screen name="(shelter)" />
-                                        <Stack.Screen name="+not-found" />
-                                    </Stack>
+                                        <Stack
+                                            initialRouteName="splash"
+                                            screenOptions={{ headerShown: false }}
+                                        >
+                                            <Stack.Screen name="splash" />
+                                            <Stack.Screen name="(auth)" />
+                                            <Stack.Screen name="(home)" />
+                                            <Stack.Screen name="(shelter)" />
+                                            <Stack.Screen name="+not-found" />
+                                        </Stack>
 
-                                    <ModalHost />
-                                    <Alert />
-                                    <AuthRedirect />
-                                    {/* <RoleRedirect /> */}
-
-                                    <StatusBar style="inverted" backgroundColor="#000" />
-                                </ThemeProvider>
-                            </LoadingProvider>
-                        </AlertProvider>
-                    </ModalProvider>
-                </AdoptionRequestProvider>
-            </ReportProvider>
+                                        <ModalHost />
+                                        <Alert />
+                                        <AuthRedirect />
+                                        {/* <RoleRedirect /> */}
+                                        <StatusBar style="inverted" backgroundColor="#000" />
+                                    </ThemeProvider>
+                                </LoadingProvider>
+                            </AlertProvider>
+                        </ModalProvider>
+                    </AdoptionRequestProvider>
+                </ReportProvider>
+            </MessageProvider>
         </AuthProvider>
     )
 }
