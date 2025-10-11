@@ -5,6 +5,8 @@ import morgan from "morgan"
 import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
 import mineRequestRoutes from "./routes/mineRequest"
 import reportRoutes from "./routes/reports"
+import messagesRoutes from "./routes/messages"
+
 
 const app = express()
 
@@ -17,6 +19,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/", mineRequestRoutes)
 app.use("/reports", reportRoutes)
+app.use(messagesRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({
