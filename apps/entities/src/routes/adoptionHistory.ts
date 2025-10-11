@@ -6,7 +6,6 @@ import {
     deleteAdoptionHistory,
 } from "../controllers/adoptionHistory"
 import { requireRole, requireOwnership } from "@repo/utils"
-import { extractUserFromHeaders } from "../middleware/extractUser"
 
 const router = Router()
 
@@ -16,20 +15,18 @@ router.get("/:id", getAdoptionHistory)
 
 // Rutas protegidas - requieren autenticación
 // POST: Solo admins pueden crear historial de adopción
-router.post("/", extractUserFromHeaders, requireRole(19), createAdoptionHistory)
+router.post("/", requireRole(19), createAdoptionHistory)
 
 // PUT/DELETE: Solo el propietario o admin puede modificar
 // El historial de adopción tiene fromownerid y toownerid, verificamos fromownerid
 router.put(
     "/:id",
-    extractUserFromHeaders,
     requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
     updateAdoptionHistory
 )
 
 router.delete(
     "/:id",
-    extractUserFromHeaders,
     requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
     deleteAdoptionHistory
 )

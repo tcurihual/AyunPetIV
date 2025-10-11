@@ -19,23 +19,22 @@ import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { router } from "expo-router"
 
-
 SplashScreen.preventAutoHideAsync()
-function RoleRedirect() {
-  const { user } = useAuthContext()
+// function RoleRedirect() {
+//     const { user } = useAuthContext()
 
-  if (!user) return null
+//     useEffect(() => {
+//         if (!user) return
 
-  if (user.role === 20) {
-    router.replace("/(shelter)")
-  } else if (user.role === 19) {
-    router.replace("/(home)")
-  } else if (user.role === 21) {
-    router.replace("/(home)")
-  }
+//         if (user.role === 20) {
+//             router.replace("/(shelter)")
+//         } else if (user.role === 19 || user.role === 21) {
+//             router.replace("/(home)")
+//         }
+//     }, [user])
 
-  return null
-}
+//     return null
+// }
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -48,37 +47,41 @@ export default function RootLayout() {
     }, [loaded])
 
     if (!loaded) return null
-
+  
     return (
         <AuthProvider>
             <MessageProvider>
-            <ReportProvider>
-            <AdoptionRequestProvider>
-                <ModalProvider>
-                    <AlertProvider>
-                        <LoadingProvider>
-                            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                                <Stack initialRouteName="splash" screenOptions={{ headerShown: false }}>
-                                    <Stack.Screen name="splash" />
-                                    <Stack.Screen name="(auth)" />
-                                    <Stack.Screen name="(home)" />
-                                    <Stack.Screen name="(shelter)" />
-                                    <Stack.Screen name="+not-found" />
-                                </Stack>
+                <ReportProvider>
+                    <AdoptionRequestProvider>
+                        <ModalProvider>
+                            <AlertProvider>
+                                <LoadingProvider>
+                                    <ThemeProvider
+                                        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                                    >
+                                        <Stack
+                                            initialRouteName="splash"
+                                            screenOptions={{ headerShown: false }}
+                                        >
+                                            <Stack.Screen name="splash" />
+                                            <Stack.Screen name="(auth)" />
+                                            <Stack.Screen name="(home)" />
+                                            <Stack.Screen name="(shelter)" />
+                                            <Stack.Screen name="+not-found" />
+                                        </Stack>
 
-                            <ModalHost />
-                            <Alert />
-                            <AuthRedirect />
-                            <RoleRedirect />
-
-                            <StatusBar style="inverted" backgroundColor="#000" />
-                        </ThemeProvider>
-                    </LoadingProvider>
-                </AlertProvider>
-            </ModalProvider>
+                                        <ModalHost />
+                                        <Alert />
+                                        <AuthRedirect />
+                                        {/* <RoleRedirect /> */}
+                                        <StatusBar style="inverted" backgroundColor="#000" />
+                                    </ThemeProvider>
+                                </LoadingProvider>
+                            </AlertProvider>
+                        </ModalProvider>
+                    </AdoptionRequestProvider>
+                </ReportProvider>
             </MessageProvider>
-            </ReportProvider>
-            </AdoptionRequestProvider>
         </AuthProvider>
     )
 }

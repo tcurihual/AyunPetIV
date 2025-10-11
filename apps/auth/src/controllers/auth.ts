@@ -1,4 +1,6 @@
 import { Request, Response } from "express"
+import jwt from "jsonwebtoken"
+
 import { supabase } from "../"
 import {
     AppError,
@@ -7,15 +9,18 @@ import {
     User,
     generateAuthToken,
     hashPassword,
+    sendEmail,
+    JWT_SECRET,
 } from "@repo/utils"
-import jwt from "jsonwebtoken"
-import { sendEmail } from "../utils/sendEmail"
+
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
+import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
 
 type Variation = "user" | "giver" | "shelter"
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body
+
     if (!email || !password) throw new AppError(404, "Faltan crendenciales")
 
     const { data: user, error } = await supabase
@@ -82,7 +87,7 @@ export const register = async (
         description: user.description ?? null,
     }
 
-    const token = jwt.sign({ id: user.email }, process.env.JWT_SECRET!, { expiresIn: "1h" })
+    const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`
 
     await sendEmail({
@@ -104,7 +109,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
         if (!token) throw new AppError(400, "Token no proporcionado")
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string }
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string }
 
         const { data: user, error: findError } = await supabase
             .from("users")
@@ -137,5 +142,79 @@ export const verifyEmail = async (req: Request, res: Response) => {
         }
         console.error(error)
         throw new AppError(500, "Ocurrió un error al verificar el correo")
+    }
+}
+
+export const forgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body
+
+        if (!email) throw new AppError(400, "Debe proporcionar un correo electrónico")
+
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("email")
+            .eq("email", email)
+            .single()
+
+        if (error || !user) throw new AppError(404, "No existe un usuario con ese correo")
+
+        const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "30m" })
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+
+        // Enviar correo
+        await sendEmail({
+            to: email,
+            subject: "Recupera tu contraseña — Ayün Pet 🐾",
+            html: resetPasswordTemplate(resetLink),
+        })
+
+        return AppResponse(res, 200, "Correo de recuperación enviado correctamente", {})
+    } catch (error) {
+        console.error("❌ ERROR EN forgotPassword:", error)
+        throw new AppError(500, "Error al enviar el correo de recuperación")
+    }
+}
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { token, newPassword } = req.body
+
+        if (!token || !newPassword)
+            throw new AppError(400, "Token y nueva contraseña son requeridos")
+
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string }
+
+        const { data: user, error: findError } = await supabase
+            .from("users")
+            .select("email")
+            .eq("email", decoded.id)
+            .single()
+
+        if (findError || !user) throw new AppError(404, "Usuario no encontrado o token inválido")
+
+        const hashedPassword = await hashPassword(newPassword)
+        if (!hashedPassword) throw new AppError(500, "Error al encriptar la contraseña")
+
+        const { error: updateError } = await supabase
+            .from("users")
+            .update({ password: hashedPassword })
+            .eq("email", user.email)
+
+        if (updateError) throw new AppError(500, "Error al actualizar la contraseña")
+
+        return AppResponse(res, 200, "Contraseña restablecida correctamente ✅", {})
+    } catch (error: any) {
+        if (error.name === "TokenExpiredError") {
+            throw new AppError(
+                401,
+                "El token ha expirado. Solicita un nuevo correo de recuperación."
+            )
+        }
+        if (error.name === "JsonWebTokenError") {
+            throw new AppError(400, "Token inválido")
+        }
+        console.error("❌ ERROR EN resetPassword:", error)
+        throw new AppError(500, "Error al restablecer la contraseña")
     }
 }
