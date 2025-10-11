@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { supabase } from "../"
+import { supabase } from "../index"
 import {
     AppError,
     AppResponse,

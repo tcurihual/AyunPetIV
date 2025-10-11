@@ -4,7 +4,7 @@ import {
     createAdoptionHistory,
     updateAdoptionHistory,
     deleteAdoptionHistory,
-} from "../controllers/adoptionHistory"
+} from "../controllers/request"
 // import { authenticateToken, requireRole } from "@repo/utils"
 
 const router = Router()

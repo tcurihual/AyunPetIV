@@ -2,8 +2,10 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
-import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
-import mineRequestRoutes from "./routes/mineRequest"
+import { errorHandler, ADOPTIONS_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
+import mineRequestRoutes from "./routes/routesRequest"
+
+export const supabase = createSupabaseClient()
 
 const app = express()
 

@@ -1,8 +1,13 @@
 import { Router } from "express"
-
 import { publicUpload, uploadAccountRequest } from "./middleware/upload"
-import { getFiles, postFiles, deleteFiles, getFilesById } from "./controllers/images"
-import { getGiverFiles, giverPost } from "./controllers/giverRequest"
+import {
+    getFiles,
+    postFiles,
+    deleteFiles,
+    getFilesById,
+    getGiverFiles,
+    giverPost,
+} from "./controllers/request"
 import { requireRole } from "@repo/utils"
 
 const router = Router()
