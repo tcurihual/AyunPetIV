@@ -43,7 +43,9 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
         })
     }
 
-    const handleNavigate = (path: `/profile` | `/settings` | `/about` | `/help` | `/login`) => {
+    const handleNavigate = (
+        path: `/(auth)` | `/profile` | `/settings` | `/about` | `/help` | `/login`
+    ) => {
         handleClose()
         router.push(path)
     }
@@ -55,7 +57,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                     <Animated.View
                         style={[styles.menu, { transform: [{ translateX: slideAnim }] }]}
                     >
-                        {/* Barra amarilla con logo */}
                         <View style={styles.headerBar}>
                             <Image
                                 source={require("@/assets/images/Ayun-pet-Logo.png")}
@@ -63,14 +64,12 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                             />
                         </View>
 
-                        {/* Perfil debajo */}
                         <View style={styles.profileSection}>
                             <Ionicons name="person-circle-outline" size={64} color="#000" />
                             <Text style={styles.name}>Nombre Usuario</Text>
                             <Text style={styles.email}>usuario@email.com</Text>
                         </View>
 
-                        {/* Opciones */}
                         <TouchableOpacity
                             style={styles.item}
                             onPress={() => handleNavigate("/profile")}
@@ -107,7 +106,7 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                             style={[styles.item, styles.logout]}
                             onPress={async () => {
                                 await signOut()
-                                handleNavigate("/login")
+                                handleNavigate("/(auth)")
                             }}
                         >
                             <Ionicons name="log-out-outline" size={22} color="red" />
@@ -137,7 +136,7 @@ const styles = StyleSheet.create({
     },
     headerBar: {
         width: "100%",
-        height: 80,
+        height: 120,
         backgroundColor: "#FFD24C",
         alignItems: "center",
         justifyContent: "center",

@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Image, StyleSheet, Dimensions, Text } from "rea
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
+import { Colors } from "@/constants/Colors"
 
 const { width } = Dimensions.get("window")
 
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#FFD24C",
+        backgroundColor: `${Colors.yellow}`,
         paddingHorizontal: width * 0.05,
         paddingVertical: width * 0.02,
     },

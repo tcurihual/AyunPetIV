@@ -1,3 +1,4 @@
+import { AppError } from "error"
 import { NextFunction, Response } from "express"
 import { AuthenticatedRequest } from "types"
 
@@ -10,6 +11,8 @@ export const getHeaders = (req: AuthenticatedRequest, res: Response, next: NextF
             id: Number(userId),
             role: Number(role),
         }
+    } else {
+        throw new AppError(401, "Unauthorized")
     }
 
     next()

@@ -1,7 +1,6 @@
 import React, { useEffect } from "react"
 import { View, Text, ActivityIndicator, StyleSheet, Alert, BackHandler } from "react-native"
 import NetInfo from "@react-native-community/netinfo"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 
 export default function SplashScreen() {
@@ -37,19 +36,7 @@ export default function SplashScreen() {
                 return
             }
 
-            const isFirstTime = await AsyncStorage.getItem("first_time")
-            if (!isFirstTime) {
-                await AsyncStorage.setItem("first_time", "false")
-                router.replace("/(auth)")
-                return
-            }
-
-            const token = await AsyncStorage.getItem("token")
-            if (token) {
-                router.replace("/(home)")
-            } else {
-                router.replace("/(auth)")
-            }
+            router.replace("/(auth)")
         } catch {
             Alert.alert("Error", "Ha ocurrido un problema al iniciar la app.", [
                 { text: "Reintentar", onPress: checkAppState },

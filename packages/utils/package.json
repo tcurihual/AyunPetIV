@@ -25,6 +25,7 @@
     "devDependencies": {
         "@types/bcrypt": "^6.0.0",
         "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "^24.3.0"
+        "@types/node": "^24.3.0",
+        "@types/nodemailer": "^7.0.2"
     }
 }

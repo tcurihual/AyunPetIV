@@ -1,3 +1,4 @@
+import { Colors } from "@/constants/Colors"
 import React, { useState } from "react"
 import {
     View,
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     optionButtonActive: {
-        backgroundColor: "#F9C80E",
+        backgroundColor: `${Colors.yellow}`,
     },
     optionIcon: {
         fontSize: 16,

@@ -1,9 +1,11 @@
 import { Router } from "express"
 
+import { requireRole } from "@repo/utils"
+
 import { publicUpload, uploadAccountRequest } from "./middleware/upload"
 import { getFiles, postFiles, deleteFiles, getFilesById } from "./controllers/images"
-import { getGiverFiles, giverPost } from "./controllers/giverRequest"
-import { requireRole } from "@repo/utils"
+import { getGiverFiles, giverPost } from "./controllers/giverRequests"
+import { requireFileOwnership } from "./middleware/requireFileOwnership"
 
 const router = Router()
 
@@ -21,6 +23,8 @@ router.get("/uploads/account-request", getGiverFiles)
 router.get("/uploads/:entityType", requireRole(19, 21), getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)
 router.post("/uploads/:entityType/:entityId", publicUpload.array("files", 10), postFiles)
-router.delete("/uploads/:entityType/:entityId", deleteFiles)
+
+// DELETE: Solo el propietario de la entidad (post/pet) o admin puede eliminar archivos
+router.delete("/uploads/:entityType/:entityId", requireFileOwnership, deleteFiles)
 
 export default router
