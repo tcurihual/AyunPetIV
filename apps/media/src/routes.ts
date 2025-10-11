@@ -4,7 +4,6 @@ import { publicUpload, uploadAccountRequest } from "./middleware/upload"
 import { getFiles, postFiles, deleteFiles, getFilesById } from "./controllers/images"
 import { getGiverFiles, giverPost } from "./controllers/giverRequest"
 import { requireRole } from "@repo/utils"
-import { extractUserFromHeaders } from "./middleware/extractUser"
 import { requireFileOwnership } from "./middleware/requireFileOwnership"
 
 const router = Router()
@@ -25,11 +24,6 @@ router.get("/uploads/:entityType/:entityId", getFilesById)
 router.post("/uploads/:entityType/:entityId", publicUpload.array("files", 10), postFiles)
 
 // DELETE: Solo el propietario de la entidad (post/pet) o admin puede eliminar archivos
-router.delete(
-    "/uploads/:entityType/:entityId",
-    extractUserFromHeaders,
-    requireFileOwnership,
-    deleteFiles
-)
+router.delete("/uploads/:entityType/:entityId", requireFileOwnership, deleteFiles)
 
 export default router

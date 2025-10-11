@@ -26,3 +26,6 @@ export const SUPABASE_KEY = process.env.SUPABASE_KEY
 
 export const JWT_SECRET: Secret = process.env.JWT_SECRET ?? "JWT_SECRET"
 export const JWT_EXPIRATION = process.env.JWT_EXPIRATION ?? "24h"
+
+export const MAIL_USER = process.env.MAIL_USER
+export const MAIL_PASS = process.env.MAIL_USER

@@ -13,11 +13,10 @@ import { useAuthContext } from "@/context/AuthContext"
 export default function HomeLayout() {
     const pathname = usePathname()
     const [menuVisible, setMenuVisible] = useState(false)
-    const { user } = useAuthContext()
+    // const { user } = useAuthContext()
 
-
-    if (!user) return <Redirect href="/(auth)/login" />
-    if (user.role !== 19) return <Redirect href="/(shelter)" />
+    // if (!user) return <Redirect href="/(auth)/login" />
+    // if (user.role !== 19) return <Redirect href="/(shelter)" />
 
     const showBackButton = pathname !== "/"
     let backButtonStyle = {}

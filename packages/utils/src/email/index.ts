@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer"
 
 // Configuración del transporter
-const createTransporter = () => {
+export const createTransporter = () => {
     const isDevelopment = process.env.NODE_ENV !== "production"
 
     if (isDevelopment) {
@@ -87,7 +87,7 @@ export const sendAccountValidationEmail = async (
         <tr>
             <td align="center">
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    
+
                     <!-- Header con color amarillo característico -->
                     <tr>
                         <td style="background-color: #FFD24C; padding: 40px 30px; text-align: center;">
@@ -96,19 +96,19 @@ export const sendAccountValidationEmail = async (
                             </h1>
                         </td>
                     </tr>
-                    
+
                     <!-- Contenido -->
                     <tr>
                         <td style="padding: 40px 30px; color: #333333; line-height: 1.6;">
                             <p style="margin: 0 0 20px 0; font-size: 16px;">
                                 Hola <strong>${userName}</strong>,
                             </p>
-                            
+
                             <p style="margin: 0 0 20px 0; font-size: 16px;">
-                                Nos complace informarte que tu cuenta de <strong>dador de mascotas</strong> ha sido 
+                                Nos complace informarte que tu cuenta de <strong>dador de mascotas</strong> ha sido
                                 <span style="color: #4CAF50; font-weight: bold;">validada exitosamente</span> por nuestro equipo de administración.
                             </p>
-                            
+
                             <div style="background-color: #f9f9f9; border-left: 4px solid #FFD24C; padding: 15px; margin: 20px 0;">
                                 <p style="margin: 0 0 10px 0; font-weight: bold; color: #333333;">Ahora puedes:</p>
                                 <ul style="margin: 0; padding-left: 20px;">
@@ -118,42 +118,42 @@ export const sendAccountValidationEmail = async (
                                     <li style="margin: 5px 0;">✅ Conectar con adoptantes potenciales</li>
                                 </ul>
                             </div>
-                            
+
                             <p style="margin: 20px 0; font-size: 16px;">
-                                Gracias por ser parte de nuestra comunidad y ayudarnos a encontrar hogares amorosos 
+                                Gracias por ser parte de nuestra comunidad y ayudarnos a encontrar hogares amorosos
                                 para las mascotas que tanto lo necesitan. 🐾
                             </p>
-                            
+
                             <!-- Botón de acción -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                                 <tr>
                                     <td align="center">
                                         <a href="${
                                             process.env.WEB_URL || "https://ayunpet.com"
-                                        }/login" 
-                                           style="display: inline-block; padding: 15px 40px; background-color: #4CAF50; 
-                                                  color: #ffffff; text-decoration: none; border-radius: 5px; 
+                                        }/login"
+                                           style="display: inline-block; padding: 15px 40px; background-color: #4CAF50;
+                                                  color: #ffffff; text-decoration: none; border-radius: 5px;
                                                   font-weight: bold; font-size: 16px;">
                                             Iniciar Sesión
                                         </a>
                                     </td>
                                 </tr>
                             </table>
-                            
+
                             <p style="margin: 20px 0 0 0; font-size: 16px;">
                                 Si tienes alguna pregunta, no dudes en contactarnos.
                             </p>
-                            
+
                             <p style="margin: 20px 0 0 0; font-size: 16px;">
                                 Saludos cordiales,<br>
                                 <strong>El equipo de Ayün Pet</strong> 🐕🐈
                             </p>
                         </td>
                     </tr>
-                    
+
                     <!-- Footer -->
                     <tr>
-                        <td style="background-color: #f9f9f9; padding: 20px 30px; text-align: center; 
+                        <td style="background-color: #f9f9f9; padding: 20px 30px; text-align: center;
                                    border-top: 1px solid #eeeeee;">
                             <p style="margin: 0 0 10px 0; font-size: 12px; color: #666666;">
                                 Este es un correo automático, por favor no respondas a este mensaje.
@@ -163,7 +163,7 @@ export const sendAccountValidationEmail = async (
                             </p>
                         </td>
                     </tr>
-                    
+
                 </table>
             </td>
         </tr>
