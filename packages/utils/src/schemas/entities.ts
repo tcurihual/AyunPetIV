@@ -131,3 +131,33 @@ export const RegisterSchema = UserSchema.omit({
     createdat: true,
     updatedat: true,
 })
+
+export const GiverRequestResponseSchema = z.object({
+  type: z.literal("success"),
+  message: z.string(),
+  data: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string().email(),
+      role: z.number(),
+      rut: z.string(),
+      files: z.array(z.string()),
+    })
+  ),
+})
+
+export const AdoptionHistoryResponseSchema = z.object({
+  type: z.literal("success"),
+  message: z.string(),
+  data: z.array(
+    z.object({
+      id: z.number(),
+      petid: z.number(),
+      fromownerid: z.number(),
+      toownerid: z.number(),
+      postid: z.number(),
+      createdat: z.string(),
+    })
+  ),
+})

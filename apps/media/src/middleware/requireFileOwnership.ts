@@ -16,7 +16,6 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
             throw new AppError(401, "No estás autenticado")
         }
 
-        // Admin bypass (rol 19)
         if (user.role === 19) {
             return next()
         }
@@ -28,7 +27,6 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
             throw new AppError(400, "ID de entidad inválido")
         }
 
-        // Verificar ownership según el tipo de entidad
         switch (entityType) {
             case "post": {
                 const { data: post, error } = await supabase
@@ -72,7 +70,6 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
 
             case "giver":
             case "account-request": {
-                // Solo admins pueden eliminar archivos de solicitudes de cuenta
                 throw new AppError(403, "Solo administradores pueden modificar estos archivos")
             }
 

@@ -1,9 +1,10 @@
 import { Router } from "express"
 
+import { requireRole } from "@repo/utils"
+
 import { publicUpload, uploadAccountRequest } from "./middleware/upload"
 import { getFiles, postFiles, deleteFiles, getFilesById } from "./controllers/images"
-import { getGiverFiles, giverPost } from "./controllers/giverRequest"
-import { requireRole } from "@repo/utils"
+import { getGiverFiles, giverPost } from "./controllers/giverRequests"
 import { requireFileOwnership } from "./middleware/requireFileOwnership"
 
 const router = Router()
