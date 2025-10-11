@@ -72,7 +72,6 @@ export default function GiverProfileScreen() {
     const handleLogout = async () => {
         try {
             await signOut()
-            router.replace("/(auth)/login")
         } catch (e) {
             console.warn("Error al cerrar sesión", e)
         }

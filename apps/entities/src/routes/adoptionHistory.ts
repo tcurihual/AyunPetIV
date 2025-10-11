@@ -4,22 +4,32 @@ import {
     createAdoptionHistory,
     updateAdoptionHistory,
     deleteAdoptionHistory,
-} from "../controllers/request"
-// import { authenticateToken, requireRole } from "@repo/utils"
+} from "../controllers/adoptionHistory"
+
+import { requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
 
-// TODO: implementar middlewares, los de abajo comentados no estan correctamente implementados
+// Rutas públicas - solo lectura
 router.get("/", getAdoptionHistory)
 router.get("/:id", getAdoptionHistory)
-router.post("/", createAdoptionHistory)
-router.put("/:id", updateAdoptionHistory)
-router.delete("/:id", deleteAdoptionHistory)
 
-// router.get("/", authenticateToken, requireRole("admin"), getAdoptionHistory)
-// router.get("/:id", authenticateToken, requireRole("admin"), getAdoptionHistory)
-// router.post("/", authenticateToken, requireRole("admin"), createAdoptionHistory)
-// router.put("/:id", authenticateToken, requireRole("admin"), updateAdoptionHistory)
-// router.delete("/:id", authenticateToken, requireRole("admin"), deleteAdoptionHistory)
+// Rutas protegidas - requieren autenticación
+// POST: Solo admins pueden crear historial de adopción
+router.post("/", requireRole(19), createAdoptionHistory)
+
+// PUT/DELETE: Solo el propietario o admin puede modificar
+// El historial de adopción tiene fromownerid y toownerid, verificamos fromownerid
+router.put(
+    "/:id",
+    requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
+    updateAdoptionHistory
+)
+
+router.delete(
+    "/:id",
+    requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
+    deleteAdoptionHistory
+)
 
 export default router
