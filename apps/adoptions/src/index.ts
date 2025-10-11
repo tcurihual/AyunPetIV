@@ -4,6 +4,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import { errorHandler, ADOPTIONS_PORT, getHeaders } from "@repo/utils"
 import mineRequestRoutes from "./routes/mineRequest"
+import reportRoutes from "./routes/reports"
 
 const app = express()
 
@@ -15,6 +16,7 @@ app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", mineRequestRoutes)
+app.use("/reports", reportRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({
