@@ -7,60 +7,47 @@ const Welcome = () => {
     const { height } = useWindowDimensions()
     const router = useRouter()
 
+    const handleAdoptPress = async () => {
+        router.push("/(auth)/login")
+    }
+
+    const handleGivePress = async () => {
+        router.push("/(auth)/giver_register")
+    }
+
     return (
         <View style={styles.container}>
-            {/* 🔹 Texto principal */}
-            <View style={styles.textContainer}>
-                <Text style={styles.title}>Bienvenido a</Text>
-                <Text style={[styles.title, styles.highlight]}>Ayün Pet</Text>
-                <Text style={styles.subtitle}>¡Donde podrás encontrar</Text>
-                <Text style={styles.subtitle}>mascotas en un solo lugar!</Text>
+            <View style={styles.childContainer}>
+                <Text style={styles.titleText}>Bienvenido a </Text>
+                <Text style={styles.titleText}>Ayün Pet </Text>
+                <Text></Text>
+                <Text style={styles.titleDesc}>¡Donde podrás encontrar</Text>
+                <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
             </View>
 
-            <View style={styles.buttonsContainer}>
+            <View style={{ gap: 16, alignItems: "center", width: "100%" }}>
                 <TouchableOpacity
-                    style={[styles.button, { backgroundColor: "#7C3AED" }]}
-                    onPress={() => router.push("/(auth)/login")}
-                >
-                    <Text style={styles.buttonText}>Ya tengo una cuenta</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: "#9B6DD7" }]}
-                    onPress={() => router.push("/(auth)/register")}
+                    style={[styles.buttonPrimary, styles.buttonSecondary]}
+                    onPress={handleAdoptPress}
                 >
                     <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.button, { backgroundColor: "#4C1D95" }]}
-                    onPress={() => router.push("/(auth)/giver_register")}
+                    style={[styles.buttonPrimary, styles.buttonSecondary]}
+                    onPress={handleGivePress}
                 >
                     <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
                 </TouchableOpacity>
             </View>
 
-            <Image
-                source={require("@images/welcome-pets.png")}
-                style={[styles.bottomImage, { height: height * 0.35 }]}
-                resizeMode="contain"
-            />
-
-            <Image
-                source={require("@images/paw.png")}
-                style={[styles.paw, { top: 40, right: 50, transform: [{ rotate: "-20deg" }] }]}
-                resizeMode="contain"
-            />
-            <Image
-                source={require("@images/paw.png")}
-                style={[styles.paw, { top: 100, right: 90, transform: [{ rotate: "15deg" }] }]}
-                resizeMode="contain"
-            />
-            <Image
-                source={require("@images/paw.png")}
-                style={[styles.paw, { top: 160, right: 30, transform: [{ rotate: "-10deg" }] }]}
-                resizeMode="contain"
-            />
+            <View style={styles.childContainer}>
+                <Image
+                    source={require("@images/welcome-pets.png")}
+                    style={[styles.petImg, { top: -height * 0.08 }]}
+                    resizeMode="none"
+                />
+            </View>
         </View>
     )
 }
@@ -69,59 +56,34 @@ export default Welcome
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: `${Colors.yellow}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-evenly",
         flex: 1,
-        backgroundColor: Colors.yellow,
-        alignItems: "center",
-        justifyContent: "flex-start",
-        paddingTop: 150,
+        flexDirection: "column",
     },
-    textContainer: {
-        alignItems: "center",
-        marginBottom: 40,
-        zIndex: 2,
-    },
-    title: {
+    childContainer: { width: "80%" },
+    titleText: {
         fontSize: 30,
         fontWeight: "bold",
-        color: "#000",
-        textAlign: "center",
     },
-    highlight: {
-        color: "#9B6DD7",
-        marginBottom: 8,
-    },
-    subtitle: {
+    titleDesc: {
         fontSize: 16,
-        color: "#000",
-        textAlign: "center",
     },
-    buttonsContainer: {
-        width: "80%",
-        gap: 15,
-        marginTop: 20,
-        alignItems: "center",
-        zIndex: 2,
-    },
-    button: {
+    petImg: {
+        position: "absolute",
+        left: "36%",
         width: "100%",
-        borderRadius: 25,
+    },
+    buttonPrimary: {
+        backgroundColor: "#9B6DD7",
+        borderRadius: 20,
         paddingVertical: 12,
+        paddingHorizontal: 25,
+        width: "70%",
         alignItems: "center",
     },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    bottomImage: {
-        position: "absolute",
-        bottom: 0,
-        width: "100%",
-    },
-    paw: {
-        position: "absolute",
-        width: 40,
-        height: 40,
-        opacity: 0.45,
-    },
+    buttonSecondary: { marginTop: 0 },
+    buttonText: { color: "#fff", fontSize: 16 },
 })
