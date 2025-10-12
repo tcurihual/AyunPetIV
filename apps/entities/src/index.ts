@@ -4,7 +4,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import "dotenv/config"
 
-import { errorHandler, ENTITIES_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
+import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
 
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
@@ -18,7 +18,6 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
-app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
 

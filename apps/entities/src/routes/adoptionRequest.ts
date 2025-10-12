@@ -5,8 +5,11 @@ import {
     updateAdoptionRequest,
     deleteAdoptionRequest,
 } from "../controllers/adoptionRequest"
+import { requireAuth } from "@repo/utils"
 
 const router = Router()
+
+router.use(requireAuth)
 
 // Create
 router.post("/", createAdoptionRequest)

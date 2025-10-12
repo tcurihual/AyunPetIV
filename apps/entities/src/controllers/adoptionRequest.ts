@@ -1,8 +1,8 @@
 import { Request, Response } from "express"
 import { supabase } from "../"
-import { AppError, AppResponse, AdoptionRequest } from "@repo/utils"
+import { AppError, AppResponse, AdoptionRequest, AuthenticatedRequest } from "@repo/utils"
 
-export const getAdoptionRequests = async (req: Request, res: Response) => {
+export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
 
     try {
@@ -47,11 +47,8 @@ export const getAdoptionRequests = async (req: Request, res: Response) => {
     }
 }
 
-export const createAdoptionRequest = async (
-    req: Request<{}, any, AdoptionRequest["Insert"]>,
-    res: Response
-) => {
-    const adoptionRequestData = req.body
+export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+    const adoptionRequestData: AdoptionRequest["Insert"] = req.body
 
     try {
         if (!adoptionRequestData.userid || !adoptionRequestData.postid) {
@@ -117,12 +114,9 @@ export const createAdoptionRequest = async (
     }
 }
 
-export const updateAdoptionRequest = async (
-    req: Request<{ id: string }, any, AdoptionRequest["Update"]>,
-    res: Response
-) => {
+export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
-    const updateData = req.body
+    const updateData: AdoptionRequest["Update"] = req.body
 
     try {
         const numericId = parseInt(id)
@@ -184,7 +178,7 @@ export const updateAdoptionRequest = async (
     }
 }
 
-export const deleteAdoptionRequest = async (req: Request, res: Response) => {
+export const deleteAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
 
     try {
