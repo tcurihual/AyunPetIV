@@ -4,8 +4,6 @@ import { useRouter } from "expo-router"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
-import * as LocalAuthentication from "expo-local-authentication"
-import { Ionicons } from "@expo/vector-icons"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { useLoading } from "@/context/LoadingContext"
@@ -15,15 +13,12 @@ import Input from "@ui/Input"
 import { LoginFormSchema } from "@/utils/schemas"
 import { LoginFormType } from "@/utils/types"
 import { Colors } from "@/constants/Colors"
-import { getUser, getPlainPassword } from "@/utils/storage"
-import type { User } from "@/context/AuthContext"
 
 export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
     const { signIn, status } = useAuthContext()
-
     const {
         control,
         handleSubmit,
@@ -34,12 +29,12 @@ export default function LoginScreen() {
         mode: "onTouched",
     })
 
-    // 🔹 Login normal con correo y contraseña
     const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
                 await signIn(data)
                 await new Promise((r) => setTimeout(r, 700))
+
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
             })
         } catch (e: any) {
@@ -52,43 +47,6 @@ export default function LoginScreen() {
     }
 
     const disabled = isSubmitting || status === "loading"
-
-    const handleBiometricLogin = async () => {
-        try {
-            const hasHardware = await LocalAuthentication.hasHardwareAsync()
-            const enrolled = await LocalAuthentication.isEnrolledAsync()
-
-            if (!hasHardware || !enrolled) {
-                showAlert("Tu dispositivo no tiene huella configurada.", "error")
-                return
-            }
-
-            const result = await LocalAuthentication.authenticateAsync({
-                promptMessage: "Usar huella para iniciar sesión",
-                cancelLabel: "Cancelar",
-            })
-
-            if (result.success) {
-                const storedUser = await getUser<User>()
-                const storedPassword = await getPlainPassword()
-
-                if (storedUser?.email && storedPassword) {
-                    await withLoading(async () => {
-                        await signIn({
-                            email: storedUser.email,
-                            password: storedPassword,
-                        })
-                    })
-                    showAlert("Inicio de sesión con huella exitoso ✅", "success")
-                } else {
-                    showAlert("No se encontraron credenciales guardadas.", "error")
-                }
-            }
-        } catch (error) {
-            console.error("Error en autenticación biométrica:", error)
-            showAlert("No se pudo usar la autenticación biométrica.", "error")
-        }
-    }
 
     return (
         <KeyboardAwareScrollView
@@ -126,30 +84,16 @@ export default function LoginScreen() {
                 <Text style={styles.buttonText}>Iniciar Sesión</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleBiometricLogin} style={styles.biometricButton}>
-                <Ionicons name="finger-print" size={40} color="#7C3AED" />
-                <Text style={styles.biometricText}>Usar huella</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
                 <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
-            <View style={styles.registerContainer}>
-                <TouchableOpacity
-                    style={[styles.buttonSecondary, { backgroundColor: "#9B6DD7" }]}
-                    onPress={() => router.push("/(auth)/register")}
-                >
-                    <Text style={styles.buttonSecondaryText}>Registrarme como Adoptante</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.buttonSecondary, { backgroundColor: "#4C1D95" }]}
-                    onPress={() => router.push("/(auth)/giver_register")}
-                >
-                    <Text style={styles.buttonSecondaryText}>Registrarme como Organización</Text>
-                </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+                style={[styles.buttonPrimary, styles.buttonSecondary]}
+                onPress={() => router.push("/(auth)/register")}
+            >
+                <Text style={styles.buttonText}>Registrarse</Text>
+            </TouchableOpacity>
         </KeyboardAwareScrollView>
     )
 }
@@ -163,7 +107,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         alignItems: "center",
-        paddingBottom: 40,
+        paddingBottom: 20,
     },
     logo: {
         width: 300,
@@ -171,7 +115,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     buttonPrimary: {
-        backgroundColor: Colors.yellow,
+        backgroundColor: `${Colors.yellow}`,
         borderRadius: 16,
         paddingVertical: 15,
         paddingHorizontal: 30,
@@ -179,47 +123,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 20,
     },
+    buttonSecondary: {
+        marginTop: 20,
+    },
     buttonText: {
         color: "#000",
         fontSize: 16,
         fontWeight: "bold",
     },
-    biometricButton: {
-        alignItems: "center",
-        marginTop: 10,
-    },
-    biometricText: {
-        fontSize: 14,
-        color: "#7C3AED",
-        fontWeight: "500",
-        marginTop: 4,
-    },
     forgotPassword: {
         marginTop: 15,
         color: "#7c3aed",
         textDecorationLine: "underline",
-    },
-    registerContainer: {
-        marginTop: 25,
-        alignItems: "center",
-        width: "75%",
-        gap: 12,
-    },
-    registerTitle: {
-        fontSize: 15,
-        fontWeight: "600",
-        marginBottom: 4,
-        color: "#333",
-    },
-    buttonSecondary: {
-        borderRadius: 16,
-        paddingVertical: 14,
-        width: "100%",
-        alignItems: "center",
-    },
-    buttonSecondaryText: {
-        color: "#fff",
-        fontSize: 15,
-        fontWeight: "600",
     },
 })
