@@ -54,15 +54,15 @@ export const createAdoptionHistory = async (
     const adoptionHistoryData = req.body
 
     try {
-        if (!adoptionHistoryData.petid) {
+        if (!adoptionHistoryData.pet_id) {
             throw new AppError(400, "petid es un campo requerido")
         }
 
-        if (adoptionHistoryData.fromownerid) {
+        if (adoptionHistoryData.from_owner_id) {
             const { data: fromOwner, error: fromOwnerError } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", adoptionHistoryData.fromownerid)
+                .eq("id", adoptionHistoryData.from_owner_id)
                 .single()
 
             if (fromOwnerError || !fromOwner) {
@@ -70,11 +70,11 @@ export const createAdoptionHistory = async (
             }
         }
 
-        if (adoptionHistoryData.toownerid) {
+        if (adoptionHistoryData.to_owner_id) {
             const { data: toOwner, error: toOwnerError } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", adoptionHistoryData.toownerid)
+                .eq("id", adoptionHistoryData.to_owner_id)
                 .single()
 
             if (toOwnerError || !toOwner) {
@@ -85,24 +85,25 @@ export const createAdoptionHistory = async (
         const { data: pet, error: petError } = await supabase
             .from("pet")
             .select("id")
-            .eq("id", adoptionHistoryData.petid)
+            .eq("id", adoptionHistoryData.pet_id)
             .single()
 
         if (petError || !pet) {
             throw new AppError(404, "Mascota no encontrada")
         }
 
-        if (adoptionHistoryData.postid) {
-            const { data: post, error: postError } = await supabase
-                .from("post")
-                .select("id")
-                .eq("id", adoptionHistoryData.postid)
-                .single()
+        // TODO: es necesario este bloque?
+        // if (adoptionHistoryData.) {
+        //     const { data: post, error: postError } = await supabase
+        //         .from("post")
+        //         .select("id")
+        //         .eq("id", adoptionHistoryData.post_id)
+        //         .single()
 
-            if (postError || !post) {
-                throw new AppError(404, "Post no encontrado")
-            }
-        }
+        //     if (postError || !post) {
+        //         throw new AppError(404, "Post no encontrado")
+        //     }
+        // }
 
         const { data: newAdoptionHistory, error: insertError } = await supabase
             .from("adoption_history")
@@ -153,11 +154,11 @@ export const updateAdoptionHistory = async (
             throw new AppError(404, "Historial de adopción no encontrado")
         }
 
-        if (updateData.fromownerid) {
+        if (updateData.from_owner_id) {
             const { data: fromOwner, error: fromOwnerError } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", updateData.fromownerid)
+                .eq("id", updateData.from_owner_id)
                 .single()
 
             if (fromOwnerError || !fromOwner) {
@@ -165,11 +166,11 @@ export const updateAdoptionHistory = async (
             }
         }
 
-        if (updateData.toownerid) {
+        if (updateData.to_owner_id) {
             const { data: toOwner, error: toOwnerError } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", updateData.toownerid)
+                .eq("id", updateData.to_owner_id)
                 .single()
 
             if (toOwnerError || !toOwner) {
@@ -177,11 +178,11 @@ export const updateAdoptionHistory = async (
             }
         }
 
-        if (updateData.petid) {
+        if (updateData.pet_id) {
             const { data: pet, error: petError } = await supabase
                 .from("pet")
                 .select("id")
-                .eq("id", updateData.petid)
+                .eq("id", updateData.pet_id)
                 .single()
 
             if (petError || !pet) {
@@ -189,17 +190,18 @@ export const updateAdoptionHistory = async (
             }
         }
 
-        if (updateData.postid) {
-            const { data: post, error: postError } = await supabase
-                .from("post")
-                .select("id")
-                .eq("id", updateData.postid)
-                .single()
+        // TODO: es necesario este bloque?
+        // if (updateData.post_id) {
+        //     const { data: post, error: postError } = await supabase
+        //         .from("post")
+        //         .select("id")
+        //         .eq("id", updateData.post_id)
+        //         .single()
 
-            if (postError || !post) {
-                throw new AppError(404, "Post no encontrado")
-            }
-        }
+        //     if (postError || !post) {
+        //         throw new AppError(404, "Post no encontrado")
+        //     }
+        // }
 
         const { data: updatedAdoptionHistory, error: updateError } = await supabase
             .from("adoption_history")

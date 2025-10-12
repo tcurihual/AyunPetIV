@@ -15,9 +15,8 @@ export const sendEmail = async ({ to, subject, html }: EmailOptions) => {
             pass: MAIL_PASS,
         },
     })
-
     await transporter.sendMail({
-        from: `"Ayün Pet 🐾" <${process.env.MAIL_USER}>`,
+        from: `"Ayün Pet 🐾" <${MAIL_USER}>`,
         to,
         subject,
         html,

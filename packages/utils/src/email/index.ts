@@ -39,7 +39,7 @@ interface EmailOptions {
 /**
  * Envía un correo electrónico
  */
-export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
+export const sendEmailPro = async (options: EmailOptions): Promise<boolean> => {
     try {
         const transporter = createTransporter()
 
@@ -191,5 +191,5 @@ Saludos cordiales,
 El equipo de Ayün Pet
     `
 
-    return sendEmail({ to: email, subject, html, text })
+    return sendEmailPro({ to: email, subject, html, text })
 }

@@ -10,6 +10,7 @@ import {
     hashPassword,
     sendEmail,
     JWT_SECRET,
+    WEB_URL,
 } from "@repo/utils"
 
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
@@ -57,7 +58,7 @@ export const register = async (
         .or(`email.eq.${user.email},rut.eq.${user.rut}`)
         .maybeSingle()
 
-    if (findError) throw new AppError(500, "Ocurrio un error inesperado")
+    if (findError) throw new AppError(500, findError.message)
 
     if (userExists) {
         const rut = userExists.rut === user.rut
@@ -67,10 +68,10 @@ export const register = async (
     const { data: roleSelect, error: roleError } = await supabase
         .from("role")
         .select("id")
-        .eq("roletype", variation)
+        .eq("role_type", variation)
         .single()
 
-    if (roleError) throw new AppError(500, "Ocurrio un error inesperado")
+    if (roleError) throw new AppError(500, roleError.message)
 
     const hashedPassword = await hashPassword(user.password)
     if (!hashedPassword) throw new AppError(500, "Ocurrio un error inesperado")
@@ -87,7 +88,7 @@ export const register = async (
     }
 
     const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`
+    const verificationLink = `${WEB_URL}/verify-email?token=${token}`
 
     await sendEmail({
         to: user.email,
@@ -97,7 +98,7 @@ export const register = async (
 
     const { error: insertError } = await supabase.from("users").insert([payload])
 
-    if (insertError) throw new AppError(500, "Ocurrio un problema al crear el usuario")
+    if (insertError) throw new AppError(500, insertError.message)
 
     return AppResponse(res, 201, "Usuario creado exitosamente", {})
 }
@@ -159,7 +160,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         if (error || !user) throw new AppError(404, "No existe un usuario con ese correo")
 
         const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "30m" })
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+        const resetLink = `${WEB_URL}/reset-password?token=${token}`
 
         // Enviar correo
         await sendEmail({

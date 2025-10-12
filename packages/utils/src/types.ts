@@ -1,7 +1,7 @@
 import { Request } from "express"
 import { z } from "zod"
 import { LoginResponseSchema } from "./schemas"
-import { Database } from "database.types"
+import { Database, Tables, TablesInsert, TablesUpdate, Enums } from "database.types"
 
 export interface AuthenticatedRequest extends Request {
     user: {
@@ -20,49 +20,93 @@ export type JsonResponse<T> = {
 export type loginResponseType = z.infer<typeof LoginResponseSchema>
 
 export type User = {
-    Row: Database["public"]["Tables"]["users"]["Row"]
-    Insert: Database["public"]["Tables"]["users"]["Insert"]
-    Update: Database["public"]["Tables"]["users"]["Update"]
+    Row: Tables<"users">
+    Insert: TablesInsert<"users">
+    Update: TablesUpdate<"users">
 }
 
 export type Role = {
-    Row: Database["public"]["Tables"]["role"]["Row"]
-    Insert: Database["public"]["Tables"]["role"]["Insert"]
-    Update: Database["public"]["Tables"]["users"]["Update"]
+    Row: Tables<"role">
+    Insert: TablesInsert<"role">
+    Update: TablesUpdate<"role">
 }
 
 export type Pet = {
-    Row: Database["public"]["Tables"]["pet"]["Row"]
-    Insert: Database["public"]["Tables"]["pet"]["Insert"]
-    Update: Database["public"]["Tables"]["pet"]["Update"]
+    Row: Tables<"pet">
+    Insert: TablesInsert<"pet">
+    Update: TablesUpdate<"pet">
 }
 
 export type Post = {
-    Row: Database["public"]["Tables"]["post"]["Row"]
-    Insert: Database["public"]["Tables"]["post"]["Insert"]
-    Update: Database["public"]["Tables"]["post"]["Update"]
+    Row: Tables<"post">
+    Insert: TablesInsert<"post">
+    Update: TablesUpdate<"post">
 }
 
 export type Message = {
-    Row: Database["public"]["Tables"]["message"]["Row"]
-    Insert: Database["public"]["Tables"]["message"]["Insert"]
-    Update: Database["public"]["Tables"]["message"]["Update"]
+    Row: Tables<"message">
+    Insert: TablesInsert<"message">
+    Update: TablesUpdate<"message">
 }
 
 export type Report = {
-    Row: Database["public"]["Tables"]["report"]["Row"]
-    Insert: Database["public"]["Tables"]["report"]["Insert"]
-    Update: Database["public"]["Tables"]["report"]["Update"]
+    Row: Tables<"report">
+    Insert: TablesInsert<"report">
+    Update: TablesUpdate<"report">
 }
 
 export type AdoptionRequest = {
-    Row: Database["public"]["Tables"]["adoption_request"]["Row"]
-    Insert: Database["public"]["Tables"]["adoption_request"]["Insert"]
-    Update: Database["public"]["Tables"]["adoption_request"]["Update"]
+    Row: Tables<"adoption_request">
+    Insert: TablesInsert<"adoption_request">
+    Update: TablesUpdate<"adoption_request">
 }
 
 export type AdoptionHistory = {
-    Row: Database["public"]["Tables"]["adoption_history"]["Row"]
-    Insert: Database["public"]["Tables"]["adoption_history"]["Insert"]
-    Update: Database["public"]["Tables"]["adoption_history"]["Update"]
+    Row: Tables<"adoption_history">
+    Insert: TablesInsert<"adoption_history">
+    Update: TablesUpdate<"adoption_history">
 }
+
+export type SavedPost = {
+    Row: Tables<"saved_post">
+    Insert: TablesInsert<"saved_post">
+    Update: TablesUpdate<"saved_post">
+}
+
+export type Question = {
+    Row: Tables<"question">
+    Insert: TablesInsert<"question">
+    Update: TablesUpdate<"question">
+}
+
+export type PostForm = {
+    Row: Tables<"post_form">
+    Insert: TablesInsert<"post_form">
+    Update: TablesUpdate<"post_form">
+}
+
+export type FormResponse = {
+    Row: Tables<"form_response">
+    Insert: TablesInsert<"form_response">
+    Update: TablesUpdate<"form_response">
+}
+
+export type VerificationCode = {
+    Row: Tables<"verification_code">
+    Insert: TablesInsert<"verification_code">
+    Update: TablesUpdate<"verification_code">
+}
+
+export type News = {
+    Row: Tables<"new">
+    Insert: TablesInsert<"new">
+    Update: TablesUpdate<"new">
+}
+
+export type AdoptionStatus = Enums<"adoption_status_enum">
+export type PetGender = Enums<"pet_gender_enum">
+export type PetSize = Enums<"pet_size_enum">
+export type PetSpecies = Enums<"pet_species_enum">
+export type PostStatus = Enums<"post_status_enum">
+export type RoleType = Enums<"role_type_enum">
+export type VerificationType = Enums<"verification_type_enum">
