@@ -68,9 +68,16 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         ;(async () => {
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
-                if (storedUser) setUser(storedUser)
-                setStatus("unauthenticated")
+                if (storedToken && storedUser) {
+                    setUser(storedUser)
+                    setTokenState(storedToken)
+                    setAuthToken(storedToken)
+                    setStatus("authenticated")
+                } else {
+                    setStatus("unauthenticated")
+                }
             } catch (e) {
+                console.error("Error al restaurar sesión:", e)
                 await clearDown()
                 setStatus("unauthenticated")
             }
@@ -99,7 +106,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 data
             )
             if (response.status === 201) {
-                console.log("logeo exitoso")
+                console.log("Registro exitoso")
             }
         } catch (e) {
             console.error("Error al registrar usuario:", e)
@@ -110,8 +117,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     async function signOut() {
         await clearDown()
-        router.replace("/(auth)/login")
         setStatus("unauthenticated")
+        router.replace("/(auth)/welcome")
     }
 
     async function afterAuthSuccess(tk: string, usr: User) {
@@ -120,12 +127,19 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setTokenState(tk)
         setUser(usr)
         setStatus("authenticated")
+
+        if (usr.role === 20) {
+            router.replace("/(shelter)")
+        } else if (usr.role === 19 || usr.role === 21) {
+            router.replace("/(home)")
+        }
     }
 
     async function clearDown() {
         await clearToken()
         setAuthToken(null)
         setTokenState(null)
+        setUser(null)
     }
 
     const value = useMemo(
