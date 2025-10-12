@@ -5,7 +5,7 @@ import { Stack } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
-import { useColorScheme } from "react-native"
+import { useColorScheme, View, ActivityIndicator } from "react-native"
 
 import { AuthProvider, useAuthContext } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
@@ -13,28 +13,40 @@ import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
 import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/features/AuthRedirect"
 import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
-import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
-// function RoleRedirect() {
-//     const { user } = useAuthContext()
 
-//     useEffect(() => {
-//         if (!user) return
+function AppNavigator() {
+    const { status, user } = useAuthContext()
 
-//         if (user.role === 20) {
-//             router.replace("/(shelter)")
-//         } else if (user.role === 19 || user.role === 21) {
-//             router.replace("/(home)")
-//         }
-//     }, [user])
+    if (status === "loading") {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "#fff",
+                }}
+            >
+                <ActivityIndicator size="large" color="#9B6DD7" />
+            </View>
+        )
+    }
 
-//     return null
-// }
+    if (status === "authenticated" && user) {
+        if (user.role === 20) {
+            return <Stack initialRouteName="(shelter)" screenOptions={{ headerShown: false }} />
+        } else if (user.role === 19 || user.role === 21) {
+            return <Stack initialRouteName="(home)" screenOptions={{ headerShown: false }} />
+        }
+    }
+
+    return <Stack initialRouteName="(auth)" screenOptions={{ headerShown: false }} />
+}
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -47,7 +59,7 @@ export default function RootLayout() {
     }, [loaded])
 
     if (!loaded) return null
-  
+
     return (
         <AuthProvider>
             <MessageProvider>
@@ -59,22 +71,11 @@ export default function RootLayout() {
                                     <ThemeProvider
                                         value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
                                     >
-                                        <Stack
-                                            initialRouteName="splash"
-                                            screenOptions={{ headerShown: false }}
-                                        >
-                                            <Stack.Screen name="splash" />
-                                            <Stack.Screen name="(auth)" />
-                                            <Stack.Screen name="(home)" />
-                                            <Stack.Screen name="(shelter)" />
-                                            <Stack.Screen name="+not-found" />
-                                        </Stack>
+                                        <AppNavigator />
 
                                         <ModalHost />
                                         <Alert />
-                                        <AuthRedirect />
-                                        {/* <RoleRedirect /> */}
-                                        <StatusBar style="inverted" backgroundColor="#000" />
+                                        <StatusBar style="light" />
                                     </ThemeProvider>
                                 </LoadingProvider>
                             </AlertProvider>

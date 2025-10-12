@@ -36,11 +36,15 @@ export default function SplashScreen() {
                 return
             }
 
-            router.replace("/(auth)")
+            router.replace("/")
         } catch {
             Alert.alert("Error", "Ha ocurrido un problema al iniciar la app.", [
                 { text: "Reintentar", onPress: checkAppState },
-                { text: "Cerrar app", style: "destructive", onPress: () => BackHandler.exitApp() },
+                {
+                    text: "Cerrar app",
+                    style: "destructive",
+                    onPress: () => BackHandler.exitApp(),
+                },
             ])
         }
     }
@@ -51,8 +55,8 @@ export default function SplashScreen() {
 
     return (
         <View style={styles.container}>
-            <ActivityIndicator size="large" color="#000" />
-            <Text style={styles.text}>Cargando...</Text>
+            <ActivityIndicator size="large" color="#9B6DD7" />
+            <Text style={styles.text}>Verificando conexión...</Text>
         </View>
     )
 }
@@ -67,5 +71,6 @@ const styles = StyleSheet.create({
     text: {
         marginTop: 10,
         fontSize: 16,
+        color: "#333",
     },
 })
