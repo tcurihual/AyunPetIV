@@ -5,7 +5,7 @@ import { listGiverRequests, validateGiverAccount } from "../controllers/giverReq
 
 const router = Router()
 
-router.get("/giverRequests", requireRole(19), listGiverRequests)
-router.patch("/giverRequests/:userId/validate", requireRole(19), validateGiverAccount)
+router.get("/giver-requests", requireRole(19), listGiverRequests)
+router.patch("/giver-requests/:userId/validate", requireRole(19), validateGiverAccount)
 
 export default router

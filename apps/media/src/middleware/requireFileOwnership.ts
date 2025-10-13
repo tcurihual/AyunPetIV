@@ -31,7 +31,7 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
             case "post": {
                 const { data: post, error } = await supabase
                     .from("post")
-                    .select("creatorid")
+                    .select("creator_id")
                     .eq("id", numericId)
                     .single()
 
@@ -39,7 +39,7 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
                     throw new AppError(404, "Publicación no encontrada")
                 }
 
-                if (post.creatorid !== user.id) {
+                if (post.creator_id !== user.id) {
                     throw new AppError(
                         403,
                         "No tienes permiso para modificar los archivos de esta publicación"
@@ -51,7 +51,7 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
             case "pet": {
                 const { data: pet, error } = await supabase
                     .from("pet")
-                    .select("ownerid")
+                    .select("owner_id")
                     .eq("id", numericId)
                     .single()
 
@@ -59,7 +59,7 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
                     throw new AppError(404, "Mascota no encontrada")
                 }
 
-                if (pet.ownerid !== user.id) {
+                if (pet.owner_id !== user.id) {
                     throw new AppError(
                         403,
                         "No tienes permiso para modificar los archivos de esta mascota"

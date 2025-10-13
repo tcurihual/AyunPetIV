@@ -1,10 +1,8 @@
 import type { Response } from "express"
-import type { AuthenticatedRequest } from "@repo/utils"
-import { createSupabaseClient, AppResponse, AppError } from "@repo/utils"
-import type { Report } from "@repo/utils"
+import { createSupabaseClient, AppResponse, AppError, AuthenticatedRequest } from "@repo/utils"
+import { supabase } from ".."
 
 export const getReports = async (req: AuthenticatedRequest, res: Response) => {
-    const supabase = createSupabaseClient()
     const { id } = req.params
 
     if (id) {
@@ -44,7 +42,6 @@ export const createReport = async (req: AuthenticatedRequest, res: Response) => 
 }
 
 export const updateReport = async (req: AuthenticatedRequest, res: Response) => {
-    const supabase = createSupabaseClient()
     const { id } = req.params
     const { description, resolved } = req.body
 
@@ -66,7 +63,6 @@ export const updateReport = async (req: AuthenticatedRequest, res: Response) => 
 }
 
 export const deleteReport = async (req: AuthenticatedRequest, res: Response) => {
-    const supabase = createSupabaseClient()
     const { id } = req.params
 
     const { error } = await supabase.from("report").delete().eq("id", Number(id))
