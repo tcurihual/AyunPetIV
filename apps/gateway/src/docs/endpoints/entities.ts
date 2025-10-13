@@ -3,6 +3,13 @@ import {
     GiverRequestResponseSchema,
     ErrorValuesSchema,
     AdoptionHistoryResponseSchema,
+    ValidateGiverAccountResponseSchema,
+    AdoptionHistoryByIdResponseSchema,
+    CreateAdoptionHistoryRequestSchema,
+    CreateAdoptionHistoryResponseSchema,
+    UpdateAdoptionHistoryRequestSchema,
+    UpdateAdoptionHistoryResponseSchema,
+    DeleteAdoptionHistoryResponseSchema,
 } from "@repo/utils"
 
 export function giverRequestDocs(registry: OpenAPIRegistry) {
@@ -47,6 +54,295 @@ export function adoptionHistory(registry: OpenAPIRegistry) {
             },
             "400": {
                 description: "Error al obtener el historial de adopciones",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+export function validateGiverAccountDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "patch",
+        path: "/v1/entities/giver-requests/{userId}/validate",
+        tags: ["Entities"],
+        summary: "Validar cuenta de dador de mascotas",
+        description:
+            "Valida la cuenta de un dador, cambia el estado `validated` a `true` y envía un correo electrónico de confirmación al usuario. Requiere permisos de administrador.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Cuenta validada exitosamente",
+                content: {
+                    "application/json": {
+                        schema: ValidateGiverAccountResponseSchema,
+                    },
+                },
+            },
+            400: {
+                description: "ID de usuario inválido o cuenta ya validada",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de administrador (rol 19)",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Usuario no encontrado",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+
+export function getAdoptionHistoryByIdDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-history/{id}",
+        tags: ["Entities - Adoption History"],
+        summary: "Obtener historial de adopción por ID",
+        description: "Retorna el historial de adopción de una mascota específica usando su ID.",
+        responses: {
+            200: {
+                description: "Historial de adopción obtenido exitosamente",
+                content: {
+                    "application/json": {
+                        schema: AdoptionHistoryByIdResponseSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Historial de adopción no encontrado",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+
+export function createAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "post",
+        path: "/v1/entities/adoption-history",
+        tags: ["Entities - Adoption History"],
+        summary: "Crear nuevo historial de adopción",
+        description:
+            "Crea un nuevo registro de historial de adopción. Solo los administradores pueden crear registros de historial. Requiere autenticación y rol de administrador (rol 19).",
+        security: [{ bearerAuth: [] }],
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: CreateAdoptionHistoryRequestSchema,
+                    },
+                },
+            },
+        },
+        responses: {
+            201: {
+                description: "Historial de adopción creado exitosamente",
+                content: {
+                    "application/json": {
+                        schema: CreateAdoptionHistoryResponseSchema,
+                    },
+                },
+            },
+            400: {
+                description: "Datos inválidos en el request",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de administrador (rol 19)",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+
+export function updateAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "put",
+        path: "/v1/entities/adoption-history/{id}",
+        tags: ["Entities - Adoption History"],
+        summary: "Actualizar historial de adopción",
+        description:
+            "Actualiza un registro de historial de adopción existente. Solo el propietario original (fromownerid) o un administrador pueden actualizar el registro. Requiere autenticación.",
+        security: [{ bearerAuth: [] }],
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: UpdateAdoptionHistoryRequestSchema,
+                    },
+                },
+            },
+        },
+        responses: {
+            200: {
+                description: "Historial de adopción actualizado exitosamente",
+                content: {
+                    "application/json": {
+                        schema: UpdateAdoptionHistoryResponseSchema,
+                    },
+                },
+            },
+            400: {
+                description: "Datos inválidos en el request",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            403: {
+                description: "No autorizado - Solo el propietario o admin pueden actualizar",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Historial de adopción no encontrado",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+
+export function deleteAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "delete",
+        path: "/v1/entities/adoption-history/{id}",
+        tags: ["Entities - Adoption History"],
+        summary: "Eliminar historial de adopción",
+        description:
+            "Elimina un registro de historial de adopción. Solo el propietario original (fromownerid) o un administrador pueden eliminar el registro. Requiere autenticación.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Historial de adopción eliminado exitosamente",
+                content: {
+                    "application/json": {
+                        schema: DeleteAdoptionHistoryResponseSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            403: {
+                description: "No autorizado - Solo el propietario o admin pueden eliminar",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Historial de adopción no encontrado",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
                 content: {
                     "application/json": {
                         schema: ErrorValuesSchema,
