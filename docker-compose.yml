@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+    gateway:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: gateway
+        env_file: .env
+        ports:
+            - "${API_GATEWAY_PORT}:3000"
+        depends_on:
+            - auth
+
+    auth:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: auth
+        env_file: .env
+        expose:
+            - "${AUTH_PORT}"

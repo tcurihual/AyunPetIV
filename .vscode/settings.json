@@ -15,7 +15,8 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "package.json": ".prettierrc, .gitignore, .npmrc, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json, turbo.json, tsup.config.ts",
-        ".env": ".env.example, nginx.conf, nginx.old.conf",
+        "Dockerfile": ".dockerignore, docker-compose.yml",
+        ".env": ".env.example, nginx.conf, nginx.old.conf, ",
         "README.md": "LICENSE.md",
         "app.json": "app.json, babel.config.js, eas.json, expo-env.d.ts, metro.config.js"
     },
