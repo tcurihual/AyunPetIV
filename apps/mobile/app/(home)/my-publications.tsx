@@ -11,6 +11,7 @@ import {
     Platform,
 } from "react-native"
 import { useRouter } from "expo-router"
+import { useLoading } from "@/context/LoadingContext"
 import MyPublicationCard from "@/components/common/MyPublicationCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { getPetsByOwner, getPetImage } from "@/services/petAsyncStorage"
@@ -39,6 +40,7 @@ const toAbsoluteMediaUrl = (u?: string): string | undefined => {
 
 export default function MyPublications() {
     const { user } = useAuthContext()
+    const { withLoading } = useLoading()
     const router = useRouter()
     const [selectedFilter, setSelectedFilter] = useState<FilterType>("all")
     const [items, setItems] = useState<PubItem[]>([])
@@ -76,8 +78,8 @@ export default function MyPublications() {
     }, [user?.id])
 
     useEffect(() => {
-        load()
-    }, [load])
+        withLoading(load)
+    }, [load, withLoading])
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true)

@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, Modal } from "react-native"
+import { View, StyleSheet, Modal, StatusBar, Platform, Dimensions } from "react-native"
 import LottieView from "lottie-react-native"
 
 type Props = {
@@ -10,24 +10,36 @@ export default function Loading({ visible }: Props) {
     if (!visible) return null
 
     return (
-        <Modal visible={visible} transparent animationType="fade">
-            <View style={styles.container}>
-                <LottieView
-                    source={require("@animations/Dog-walking.json")}
-                    autoPlay
-                    loop
-                    style={{ width: 150, height: 150 }}
-                />
+        <View style={styles.overlay}>
+            <View style={styles.backdrop}>
+                <View style={styles.container}>
+                    <LottieView
+                        source={require("@animations/Dog-walking.json")}
+                        autoPlay
+                        loop
+                        style={{ width: 150, height: 150 }}
+                    />
+                </View>
             </View>
-        </Modal>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 9999,
+        elevation: 9999,
+    },
+    backdrop: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: "rgba(255,255,255,0.95)",
         justifyContent: "center",
         alignItems: "center",
+    },
+    container: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
     },
 })

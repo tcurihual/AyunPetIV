@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
+import { useLoading } from "@/context/LoadingContext"
 import { Pet, getPetById, updatePet, getPetImage } from "@/services/petAsyncStorage"
 
 type PetFormData = {
@@ -30,6 +31,7 @@ type PetFormData = {
 export default function EditPublication() {
     const { id } = useLocalSearchParams<{ id: string }>()
     const { user } = useAuthContext()
+    const { withLoading } = useLoading()
     const router = useRouter()
 
     const [formData, setFormData] = useState<PetFormData>({
@@ -46,7 +48,6 @@ export default function EditPublication() {
     const [petImage, setPetImage] = useState<number | string>(
         "https://placehold.co/200x200?text=Mascota"
     )
-    const [loading, setLoading] = useState(false)
     const [showStatusModal, setShowStatusModal] = useState(false)
     const [showSpeciesModal, setShowSpeciesModal] = useState(false)
     const [showGenderModal, setShowGenderModal] = useState(false)
@@ -94,30 +95,29 @@ export default function EditPublication() {
 
         if (!id) return
 
-        setLoading(true)
         try {
-            const success = await updatePet(id, {
-                name: formData.name,
-                species: formData.species,
-                gender: formData.gender,
-                age: formData.age,
-                size: formData.size,
-                description: formData.description,
-                sterilized: formData.sterilized,
-                status: formData.status,
-            })
+            await withLoading(async () => {
+                const success = await updatePet(id, {
+                    name: formData.name,
+                    species: formData.species,
+                    gender: formData.gender,
+                    age: formData.age,
+                    size: formData.size,
+                    description: formData.description,
+                    sterilized: formData.sterilized,
+                    status: formData.status,
+                })
 
-            if (success) {
-                Alert.alert("Éxito", "Publicación actualizada correctamente", [
-                    { text: "OK", onPress: () => router.back() },
-                ])
-            } else {
-                Alert.alert("Error", "No se pudo actualizar la publicación")
-            }
+                if (success) {
+                    Alert.alert("Éxito", "Publicación actualizada correctamente", [
+                        { text: "OK", onPress: () => router.back() },
+                    ])
+                } else {
+                    Alert.alert("Error", "No se pudo actualizar la publicación")
+                }
+            })
         } catch (error) {
             Alert.alert("Error", "Error al guardar los cambios")
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -367,14 +367,8 @@ export default function EditPublication() {
                 </View>
             </Modal>
 
-            <TouchableOpacity
-                style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-                onPress={handleSave}
-                disabled={loading}
-            >
-                <Text style={styles.saveButtonText}>
-                    {loading ? "Guardando..." : "Guardar Cambios"}
-                </Text>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>Guardar Cambios</Text>
             </TouchableOpacity>
         </SafeAreaView>
     )

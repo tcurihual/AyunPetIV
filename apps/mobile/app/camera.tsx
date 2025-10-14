@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from "react"
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert } from "react-native"
+import { View, Text, TouchableOpacity, Image, Alert } from "react-native"
 import { useRouter } from "expo-router"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from "expo-file-system"
+import { useLoading } from "@/context/LoadingContext"
 
 type Captured = { uri: string; saved?: boolean }
 
 export default function CameraScreen() {
     const router = useRouter()
+    const { withLoading } = useLoading()
 
     // Permisos
     const [camPerm, requestCamPerm] = useCameraPermissions()
@@ -34,7 +36,7 @@ export default function CameraScreen() {
     if (!camPerm) {
         return (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator />
+                <Text>Verificando permisos...</Text>
             </View>
         )
     }
@@ -63,18 +65,17 @@ export default function CameraScreen() {
     const takePhoto = async () => {
         try {
             if (!camRef.current) return
-            setTaking(true)
-            const photo = await camRef.current.takePictureAsync({
-                quality: 0.85,
-                skipProcessing: true,
+            await withLoading(async () => {
+                const photo = await camRef.current!.takePictureAsync({
+                    quality: 0.85,
+                    skipProcessing: true,
+                })
+                setPhotos((p) => [...p, { uri: photo.uri }])
+                setPreviewIdx((idx) => (idx === null ? 0 : idx + 1))
             })
-            setPhotos((p) => [...p, { uri: photo.uri }])
-            setPreviewIdx((idx) => (idx === null ? 0 : idx + 1))
         } catch (e) {
             console.error(e)
             Alert.alert("Error", "No se pudo capturar la foto.")
-        } finally {
-            setTaking(false)
         }
     }
 
@@ -100,22 +101,31 @@ export default function CameraScreen() {
                 return
             }
         }
+
         try {
-            for (let i = 0; i < photos.length; i++) {
-                const p = photos[i]
-                if (!p.saved) {
-                    await MediaLibrary.saveToLibraryAsync(p.uri)
-                    const filename = p.uri.split("/").pop() || `photo_${Date.now()}.jpg`
-                    const dest = FileSystem.documentDirectory + "photos/" + filename
-                    await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + "photos", {
-                        intermediates: true,
-                    }).catch(() => {})
-                    await FileSystem.copyAsync({ from: p.uri, to: dest })
-                    photos[i] = { ...p, saved: true }
+            await withLoading(async () => {
+                for (let i = 0; i < photos.length; i++) {
+                    const p = photos[i]
+                    if (!p.saved) {
+                        await MediaLibrary.saveToLibraryAsync(p.uri)
+                        const filename = p.uri.split("/").pop() || `photo_${Date.now()}.jpg`
+                        const dest = FileSystem.documentDirectory + "photos/" + filename
+                        await FileSystem.makeDirectoryAsync(
+                            FileSystem.documentDirectory + "photos",
+                            {
+                                intermediates: true,
+                            }
+                        ).catch(() => {})
+                        await FileSystem.copyAsync({ from: p.uri, to: dest })
+                        photos[i] = { ...p, saved: true }
+                    }
                 }
-            }
-            setPhotos([...photos])
-            Alert.alert("Listo", "Fotos guardadas en la galería y en el almacenamiento de la app.")
+                setPhotos([...photos])
+                Alert.alert(
+                    "Listo",
+                    "Fotos guardadas en la galería y en el almacenamiento de la app."
+                )
+            })
         } catch (e) {
             console.error(e)
             Alert.alert("Error", "No se pudieron guardar algunas fotos.")

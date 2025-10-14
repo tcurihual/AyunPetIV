@@ -17,10 +17,12 @@ import { UserProfileSchema } from "@/utils/schemas"
 import type { UserProfileData } from "@/utils/schemas"
 import Input from "@/components/ui/Input"
 import { useAuthContext } from "@/context/AuthContext"
+import { useLoading } from "@/context/LoadingContext"
 import { useRouter } from "expo-router"
 
 export default function MyProfileScreen() {
     const { user, signOut } = useAuthContext()
+    const { withLoading } = useLoading()
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
 
@@ -52,11 +54,13 @@ export default function MyProfileScreen() {
 
     const onSubmit = async (data: UserProfileData) => {
         try {
-            console.log("Datos a actualizar:", data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            await withLoading(async () => {
+                console.log("Datos a actualizar:", data)
+                await new Promise((resolve) => setTimeout(resolve, 1000))
 
-            Alert.alert("Éxito", "Perfil actualizado correctamente")
-            setIsEditing(false)
+                Alert.alert("Éxito", "Perfil actualizado correctamente")
+                setIsEditing(false)
+            })
         } catch (error) {
             Alert.alert("Error", "No se pudo actualizar el perfil")
         }
@@ -75,8 +79,10 @@ export default function MyProfileScreen() {
                 style: "destructive",
                 onPress: async () => {
                     try {
-                        await signOut()
-                        router.replace("/(auth)/login")
+                        await withLoading(async () => {
+                            await signOut()
+                            router.replace("/(auth)/login")
+                        })
                     } catch (error) {
                         console.error("Error al cerrar sesión:", error)
                         Alert.alert("Error", "No se pudo cerrar la sesión")

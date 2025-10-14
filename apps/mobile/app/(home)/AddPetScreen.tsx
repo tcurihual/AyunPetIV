@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 import { Picker } from "@react-native-picker/picker"
 import { Ionicons } from "@expo/vector-icons"
+import { useLoading } from "@/context/LoadingContext"
 import ayunData from "@/data/mockData"
 import { uploadMedia } from "@/services/media"
 import { addLocalPet, LocalPet } from "@/services/petStorage"
@@ -38,6 +39,7 @@ type PetFormOutput = z.output<typeof PetFormSchema>
 
 const AddPetScreen = () => {
     const router = useRouter()
+    const { withLoading } = useLoading()
     const [photo, setPhoto] = useState<string | null>(null)
     const { width, height } = Dimensions.get("window")
     const styles = getResponsiveStyles(width, height)
@@ -77,45 +79,47 @@ const AddPetScreen = () => {
 
     const onSubmit: SubmitHandler<PetFormInput> = async (raw) => {
         try {
-            // Valida y coercea según tu schema
-            const data: PetFormOutput = PetFormSchema.parse(raw)
+            await withLoading(async () => {
+                // Valida y coercea según tu schema
+                const data: PetFormOutput = PetFormSchema.parse(raw)
 
-            if (!photo) {
-                Alert.alert("Error", "Por favor, selecciona una foto para la mascota.")
-                return
-            }
+                if (!photo) {
+                    Alert.alert("Error", "Por favor, selecciona una foto para la mascota.")
+                    return
+                }
 
-            // 1) ID local para la publicación (mock)
-            const tempPetId = `${Date.now()}`
+                // 1) ID local para la publicación (mock)
+                const tempPetId = `${Date.now()}`
 
-            // 2) Subir imagen a Media (armamos un "asset" mínimo)
-            const fakeAsset = {
-                uri: photo,
-                fileName: `pet-${tempPetId}.jpg`,
-                mimeType: "image/jpeg",
-            } as any
-            const uploaded = await uploadMedia("pet", tempPetId, [fakeAsset])
+                // 2) Subir imagen a Media (armamos un "asset" mínimo)
+                const fakeAsset = {
+                    uri: photo,
+                    fileName: `pet-${tempPetId}.jpg`,
+                    mimeType: "image/jpeg",
+                } as any
+                const uploaded = await uploadMedia("pet", tempPetId, [fakeAsset])
 
-            // 3) Resolver nombre del publicador desde los mocks
-            const owner = (ayunData.users ?? []).find((u) => u.id === data.ownerId)
-            const ownerName = owner?.name ?? owner?.email ?? "Fundación Demo"
+                // 3) Resolver nombre del publicador desde los mocks
+                const owner = (ayunData.users ?? []).find((u) => u.id === data.ownerId)
+                const ownerName = owner?.name ?? owner?.email ?? "Fundación Demo"
 
-            // 4) Guardar publicación local (AsyncStorage)
-            const petLocal: LocalPet = {
-                id: tempPetId,
-                ownerName,
-                name: data.name,
-                gender: translateGenderToSpanish(data.gender), // "Macho"/"Hembra"
-                ageYears: data.age, // ya viene como number gracias a z.coerce
-                species: translateSpeciesToSpanish(data.species) ?? "Otro",
-                description: "", // tu schema no tiene descripción; dejamos vacío
-                imageUrls: uploaded.map((u) => u.url), // ej: "/uploads/pet/:id/archivo.jpg"
-                createdAt: new Date().toISOString(),
-            }
-            await addLocalPet(petLocal)
+                // 4) Guardar publicación local (AsyncStorage)
+                const petLocal: LocalPet = {
+                    id: tempPetId,
+                    ownerName,
+                    name: data.name,
+                    gender: translateGenderToSpanish(data.gender), // "Macho"/"Hembra"
+                    ageYears: data.age, // ya viene como number gracias a z.coerce
+                    species: translateSpeciesToSpanish(data.species) ?? "Otro",
+                    description: "", // tu schema no tiene descripción; dejamos vacío
+                    imageUrls: uploaded.map((u) => u.url), // ej: "/uploads/pet/:id/archivo.jpg"
+                    createdAt: new Date().toISOString(),
+                }
+                await addLocalPet(petLocal)
 
-            Alert.alert("OK", "Mascota publicada correctamente")
-            router.push("/")
+                Alert.alert("OK", "Mascota publicada correctamente")
+                router.push("/")
+            })
         } catch (e: any) {
             console.error(e)
             Alert.alert("Error", e?.message ?? "No se pudo publicar la mascota")
