@@ -10,6 +10,7 @@ import {
     updateAdoptionHistoryDocs,
     deleteAdoptionHistoryDocs,
 } from "./endpoints/entities"
+import { savedPostsDocs } from "./endpoints/savedPosts"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -34,6 +35,8 @@ export function buildOpenApi() {
     createAdoptionHistoryDocs(registry)
     updateAdoptionHistoryDocs(registry)
     deleteAdoptionHistoryDocs(registry)
+
+    savedPostsDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
