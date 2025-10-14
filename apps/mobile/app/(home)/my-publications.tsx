@@ -78,8 +78,8 @@ export default function MyPublications() {
     }, [user?.id])
 
     useEffect(() => {
-        withLoading(load)
-    }, [load, withLoading])
+        load()
+    }, [load])
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true)

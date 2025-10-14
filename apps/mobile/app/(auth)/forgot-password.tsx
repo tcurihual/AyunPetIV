@@ -7,16 +7,38 @@ import {
     StyleSheet,
     Dimensions,
     Image,
+    Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useLoading } from "@/context/LoadingContext"
 
 const { width, height } = Dimensions.get("window")
 
 export default function ForgotPasswordScreen() {
     const router = useRouter()
+    const { withLoading } = useLoading()
     const [email, setEmail] = useState("")
     const styles = useThemeStyles(width, height)
+
+    const handleSendRecovery = async () => {
+        if (!email.trim()) {
+            Alert.alert("Error", "Por favor ingresa tu email")
+            return
+        }
+
+        try {
+            await withLoading(async () => {
+                // Simular envío de email de recuperación
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                Alert.alert("Email enviado", "Se ha enviado un link de recuperación a tu email", [
+                    { text: "OK", onPress: () => router.back() },
+                ])
+            })
+        } catch (error) {
+            Alert.alert("Error", "No se pudo enviar el email de recuperación")
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -54,10 +76,7 @@ export default function ForgotPasswordScreen() {
                     autoCapitalize="none"
                 />
 
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => router.push("/(auth)/recovery-pin")}
-                >
+                <TouchableOpacity style={styles.button} onPress={handleSendRecovery}>
                     <Text style={styles.buttonText}>Enviar</Text>
                 </TouchableOpacity>
 

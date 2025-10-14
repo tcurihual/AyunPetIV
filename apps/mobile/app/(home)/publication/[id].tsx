@@ -143,14 +143,19 @@ export default function PublicationDetail() {
 
     const onSubmitComment = async (data: MessageFormData) => {
         try {
-            const newComment: Comment = {
-                id: String(comments.length + 1),
-                ownerName: "Usuario Actual",
-                createdAt: new Date().toISOString(),
-                text: data.description,
-            }
-            setComments((prev) => [...prev, newComment])
-            reset()
+            await withLoading(async () => {
+                // Simular delay de red para enviar comentario
+                await new Promise((resolve) => setTimeout(resolve, 800))
+
+                const newComment: Comment = {
+                    id: String(comments.length + 1),
+                    ownerName: "Usuario Actual",
+                    createdAt: new Date().toISOString(),
+                    text: data.description,
+                }
+                setComments((prev) => [...prev, newComment])
+                reset()
+            })
         } catch (error) {
             console.error("Error adding comment:", error)
         }
@@ -169,16 +174,21 @@ export default function PublicationDetail() {
 
     const handleSubmitReport = async (description: string) => {
         try {
-            if (reportType === "comment") {
-                console.log("Reporting comment:", reportingCommentId, "Reason:", description)
-            } else {
-                console.log("Reporting publication:", id, "Reason:", description)
-            }
-            alert(
-                `Reporte de ${
-                    reportType === "comment" ? "comentario" : "publicación"
-                } enviado correctamente`
-            )
+            await withLoading(async () => {
+                // Simular envío de reporte
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+
+                if (reportType === "comment") {
+                    console.log("Reporting comment:", reportingCommentId, "Reason:", description)
+                } else {
+                    console.log("Reporting publication:", id, "Reason:", description)
+                }
+                alert(
+                    `Reporte de ${
+                        reportType === "comment" ? "comentario" : "publicación"
+                    } enviado correctamente`
+                )
+            })
         } catch (error) {
             console.error("Error sending report:", error)
             alert("Error al enviar el reporte")

@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
+import { useLoading } from "@/context/LoadingContext"
 import { LineChart, PieChart, BarChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
@@ -51,9 +52,19 @@ const recientes = [
 export default function ShelterDashboard() {
     const router = useRouter()
     const { user } = useAuthContext()
+    const { withLoading } = useLoading()
     const [menuVisible, setMenuVisible] = useState(false)
     const [selectedBarValue, setSelectedBarValue] = useState<string | null>(null)
+    const [dashboardData, setDashboardData] = useState<string | null>(null)
     const series = useMemo(() => makeSeries(24, 10), [])
+
+    // Simular carga de dashboard
+    useEffect(() => {
+        withLoading(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1500))
+            setDashboardData("loaded")
+        })
+    }, [])
 
     const handleTabPress = (tab: string) => {
         if (tab === "home") return router.replace("/(shelter)/dashboard")
