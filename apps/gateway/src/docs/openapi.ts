@@ -10,6 +10,11 @@ import {
     updateAdoptionHistoryDocs,
     deleteAdoptionHistoryDocs,
 } from "./endpoints/entities"
+import {
+    createVerificationCodeDocs,
+    validateVerificationCodeDocs,
+    getUserVerificationCodesDocs,
+} from "./endpoints/verificationCodes"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -34,6 +39,11 @@ export function buildOpenApi() {
     createAdoptionHistoryDocs(registry)
     updateAdoptionHistoryDocs(registry)
     deleteAdoptionHistoryDocs(registry)
+
+    // Verification Codes endpoints
+    createVerificationCodeDocs(registry)
+    validateVerificationCodeDocs(registry)
+    getUserVerificationCodesDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 

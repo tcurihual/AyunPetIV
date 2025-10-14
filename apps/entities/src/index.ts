@@ -9,6 +9,7 @@ import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
 import adoptionRequestRouter from "./routes/adoptionRequest"
+import verificationCodeRouter from "./routes/verificationCode"
 
 export const supabase = createSupabaseClient()
 
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
 app.use("/adoption-requests", adoptionRequestRouter)
+app.use("/verification-codes", verificationCodeRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
