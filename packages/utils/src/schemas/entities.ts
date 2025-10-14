@@ -133,31 +133,83 @@ export const RegisterSchema = UserSchema.omit({
 })
 
 export const GiverRequestResponseSchema = z.object({
-  type: z.literal("success"),
-  message: z.string(),
-  data: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      email: z.string().email(),
-      role: z.number(),
-      rut: z.string(),
-      files: z.array(z.string()),
-    })
-  ),
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.array(
+        z.object({
+            id: z.number(),
+            name: z.string(),
+            email: z.string().email(),
+            role: z.number(),
+            rut: z.string(),
+            files: z.array(z.string()),
+        })
+    ),
 })
 
 export const AdoptionHistoryResponseSchema = z.object({
-  type: z.literal("success"),
-  message: z.string(),
-  data: z.array(
-    z.object({
-      id: z.number(),
-      petid: z.number(),
-      fromownerid: z.number(),
-      toownerid: z.number(),
-      postid: z.number(),
-      createdat: z.string(),
-    })
-  ),
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.array(
+        z.object({
+            id: z.number(),
+            petid: z.number(),
+            fromownerid: z.number(),
+            toownerid: z.number(),
+            postid: z.number(),
+            createdat: z.string(),
+        })
+    ),
+})
+
+export const ValidateGiverAccountParamsSchema = z.object({
+    userId: z.string(),
+})
+
+export const ValidateGiverAccountDataSchema = UserSchema.pick({
+    id: true,
+    email: true,
+    validated: true,
+})
+
+export const ValidateGiverAccountResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: ValidateGiverAccountDataSchema,
+})
+
+export const AdoptionHistoryByIdResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: AdoptionHistorySchema,
+})
+
+export const CreateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
+    id: true,
+    createdat: true,
+})
+
+export const CreateAdoptionHistoryResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: AdoptionHistorySchema,
+})
+
+export const UpdateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
+    id: true,
+    createdat: true,
+}).partial()
+
+export const UpdateAdoptionHistoryResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: AdoptionHistorySchema,
+})
+
+export const DeleteAdoptionHistoryResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        id: z.number(),
+    }),
 })

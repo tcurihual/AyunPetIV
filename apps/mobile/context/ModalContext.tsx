@@ -26,7 +26,9 @@ export type AdoptionPayload = { type: "ADOPTION_REQUEST"; props: AdoptionRequest
 export type ReportPayload = { type: "REPORT"; props: ReportProps }
 export type ConfirmPayload = { type: "CONFIRM"; props: ConfirmProps }
 
-export type ModalPayload = AdoptionPayload | ReportPayload | ConfirmPayload
+import { SessionExpiredPayload } from "./SessionExpiredModal.types"
+
+export type ModalPayload = AdoptionPayload | ReportPayload | ConfirmPayload | SessionExpiredPayload
 
 /** ===== Estado y contexto ===== */
 type ModalState = {

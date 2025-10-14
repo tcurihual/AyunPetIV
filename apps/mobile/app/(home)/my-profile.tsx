@@ -45,7 +45,6 @@ export default function MyProfileScreen() {
             id: userData.id,
             name: userData.name,
             email: userData.email,
-            rut: userData.rut,
             address: userData.address || "",
             description: userData.description || "",
         },
@@ -156,13 +155,6 @@ export default function MyProfileScreen() {
                                 label="Correo electrónico"
                                 placeholder="correo@ejemplo.com"
                                 type="email"
-                            />
-
-                            <Input
-                                name="rut"
-                                control={control}
-                                label="RUT"
-                                placeholder="12345678-9"
                             />
 
                             <Input
