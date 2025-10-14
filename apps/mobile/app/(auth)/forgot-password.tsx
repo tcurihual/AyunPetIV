@@ -7,16 +7,57 @@ import {
     StyleSheet,
     Dimensions,
     Image,
+    Alert,
+    ActivityIndicator,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { passwordResetService } from "@/services/passwordReset"
 
 const { width, height } = Dimensions.get("window")
 
 export default function ForgotPasswordScreen() {
     const router = useRouter()
     const [email, setEmail] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
     const styles = useThemeStyles(width, height)
+
+    const handleSendCode = async () => {
+        if (!email.trim()) {
+            Alert.alert("Error", "Por favor ingresa tu correo electrónico")
+            return
+        }
+
+        if (!passwordResetService.isValidEmail(email.trim())) {
+            Alert.alert("Error", "Por favor ingresa un correo válido")
+            return
+        }
+
+        setIsLoading(true)
+
+        try {
+            const response = await passwordResetService.requestPasswordReset(email.trim())
+
+            if (response.type === "success") {
+                Alert.alert("¡Código enviado!", response.message, [
+                    {
+                        text: "Continuar",
+                        onPress: () =>
+                            router.push({
+                                pathname: "/(auth)/recovery-pin",
+                                params: { email: email.trim() },
+                            }),
+                    },
+                ])
+            } else {
+                Alert.alert("Error", response.message)
+            }
+        } catch (error) {
+            Alert.alert("Error", "Ocurrió un error inesperado. Intenta nuevamente.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -55,10 +96,15 @@ export default function ForgotPasswordScreen() {
                 />
 
                 <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => router.push("/(auth)/recovery-pin")}
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
+                    onPress={handleSendCode}
+                    disabled={isLoading}
                 >
-                    <Text style={styles.buttonText}>Enviar</Text>
+                    {isLoading ? (
+                        <ActivityIndicator color="#222" size="small" />
+                    ) : (
+                        <Text style={styles.buttonText}>Enviar código</Text>
+                    )}
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.secondaryButton} onPress={() => router.back()}>
@@ -192,6 +238,9 @@ const useThemeStyles = (width: number, height: number) => {
             color: "#FFD24C",
             fontWeight: "600",
             fontSize: 16,
+        },
+        buttonDisabled: {
+            opacity: 0.6,
         },
     })
 }
