@@ -162,7 +162,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
         // En desarrollo: solo log, no enviar email
         console.log(`🔑 Link de recuperación para ${email}: ${resetLink}`)
 
-        return AppResponse(res, 200, "Link de recuperación generado. Revisa la consola del servidor.", {})
+        return AppResponse(
+            res,
+            200,
+            "Link de recuperación generado. Revisa la consola del servidor.",
+            {}
+        )
     } catch (error) {
         console.error("❌ ERROR EN forgotPassword:", error)
         throw new AppError(500, "Error al enviar el correo de recuperación")
@@ -221,6 +226,10 @@ export const resetPassword = async (req: Request, res: Response) => {
  */
 export const requestMobilePasswordReset = async (req: Request, res: Response) => {
     try {
+        console.log("📱 [MOBILE RESET] Endpoint alcanzado - método:", req.method, "ruta:", req.path)
+        console.log("📱 [MOBILE RESET] Headers:", JSON.stringify(req.headers, null, 2))
+        console.log("📱 [MOBILE RESET] Body:", JSON.stringify(req.body, null, 2))
+
         const { email } = req.body
         console.log("🔍 Iniciando requestMobilePasswordReset para:", email)
 
@@ -244,7 +253,7 @@ export const requestMobilePasswordReset = async (req: Request, res: Response) =>
         // Generar código de 6 dígitos
         const resetCode = Math.floor(100000 + Math.random() * 900000).toString()
         console.log("🔍 Código generado:", resetCode)
-        
+
         // Calcular tiempo de expiración (15 minutos)
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
         console.log("🔍 Tiempo de expiración:", expiresAt)
@@ -263,23 +272,26 @@ export const requestMobilePasswordReset = async (req: Request, res: Response) =>
 
         console.log("🔍 Insertando nuevo código en base de datos...")
         // Guardar código en la base de datos (SIN HASH para testing)
-        const { error: insertError } = await supabase
-            .from("verification_code")
-            .insert([{
+        const { error: insertError } = await supabase.from("verification_code").insert([
+            {
                 user_id: user.id,
                 code: resetCode, // Guardando código sin hash para testing
                 type: "reset" as const,
                 expires_at: expiresAt,
-                used: false
-            }])
+                used: false,
+            },
+        ])
 
         if (insertError) {
             console.error("❌ Error al guardar código:", insertError)
-            throw new AppError(500, "Error al generar código de recuperación: " + insertError.message)
+            throw new AppError(
+                500,
+                "Error al generar código de recuperación: " + insertError.message
+            )
         }
 
         console.log("✅ Código guardado exitosamente")
-        
+
         // Crear template para el email de código móvil
         const mobileCodeEmailTemplate = `
         <!DOCTYPE html>
@@ -350,7 +362,7 @@ export const requestMobilePasswordReset = async (req: Request, res: Response) =>
             })
 
             console.log(`📧 Email enviado exitosamente a ${email}`)
-            
+
             return AppResponse(res, 200, "Código de recuperación enviado a tu correo", {})
         } catch (emailError) {
             console.error("❌ Error al enviar email:", emailError)
@@ -407,13 +419,13 @@ export const verifyMobileResetCode = async (req: Request, res: Response) => {
                 .delete()
                 .eq("user_id", user.id)
                 .eq("type", "reset")
-            
+
             throw new AppError(401, "El código ha expirado. Solicita uno nuevo")
         }
 
         // Verificar el código (SIN HASH para testing)
-        const isCodeValid = (code === resetData.code)
-        
+        const isCodeValid = code === resetData.code
+
         if (!isCodeValid) {
             throw new AppError(400, "Código incorrecto")
         }

@@ -17,7 +17,18 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/", authRouter)
 
+// Ruta de health check para debugging
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        service: "auth",
+        timestamp: new Date().toISOString(),
+        port: AUTH_PORT,
+    })
+})
+
 app.use((req, res) => {
+    console.log(`❌ [AUTH] Route not found: ${req.method} ${req.originalUrl}`)
     return res.status(404).json({
         error: "Route not found",
         message: `La ruta '${req.originalUrl}' no existe`,
