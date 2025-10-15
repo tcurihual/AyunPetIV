@@ -34,6 +34,8 @@ import {
     deleteFormResponseDocs,
     listByPublicationFormResponsesDocs,
 } from "./endpoints/formResponses"
+import { registerReportsDocs } from "./endpoints/reports"
+import { registerMessagesDocs } from "./endpoints/messages"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -72,6 +74,11 @@ export function buildOpenApi() {
     getAdoptionRequestsDocs(registry)
     getAdoptionRequestByIdDocs(registry)
 
+    // Reports endpoints
+    registerReportsDocs(registry)
+
+    // Messages endpoints
+    registerMessagesDocs(registry)
     // Verification Codes endpoints
     createVerificationCodeDocs(registry)
     validateVerificationCodeDocs(registry)
