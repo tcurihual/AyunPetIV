@@ -27,6 +27,13 @@ import {
     getUserVerificationCodesDocs,
 } from "./endpoints/verificationCodes"
 
+import {
+    listFormResponsesDocs,
+    createFormResponseDocs,
+    updateFormResponseDocs,
+    deleteFormResponseDocs,
+    listByPublicationFormResponsesDocs,
+} from "./endpoints/formResponses"
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
 
@@ -76,6 +83,13 @@ export function buildOpenApi() {
     createVerificationCodeDocs(registry)
     validateVerificationCodeDocs(registry)
     getUserVerificationCodesDocs(registry)
+
+    // Form Responses endpoints
+    listFormResponsesDocs(registry)
+    createFormResponseDocs(registry)
+    updateFormResponseDocs(registry)
+    deleteFormResponseDocs(registry)
+    listByPublicationFormResponsesDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
