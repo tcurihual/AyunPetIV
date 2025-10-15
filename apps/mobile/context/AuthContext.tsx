@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { http, setAuthToken } from "@/services/http"
+import { setAuthToken } from "@/services/http"
+import { authService } from "@/services/auth"
 import {
     clearAuth,
     clearToken,
@@ -11,7 +12,7 @@ import {
 } from "@/utils/storage"
 import { useRouter } from "expo-router"
 
-type Role = 19 | 20 | 21
+type Role = 19 | 20 | 21 | 22
 
 export interface User {
     id: string
@@ -38,11 +39,11 @@ interface RegisterPayload {
     name: string
     email: string
     password: string
-    role?: Role
-}
-
-interface AuthResponse {
-    data: { token: string; user: User }
+    rut: string
+    phone?: string
+    address?: string
+    description?: string
+    variation?: "user" | "giver" | "shelter"
 }
 
 type Status = "loading" | "authenticated" | "unauthenticated"
@@ -52,7 +53,7 @@ interface AuthContextType {
     user: User | null
     token: string | null
     signIn: (data: LoginPayload) => Promise<void>
-    signUp: (data: RegisterPayload) => Promise<void>
+    signUp: (data: RegisterPayload, variation?: "user" | "giver" | "shelter") => Promise<void>
     signOut: () => Promise<void>
 }
 
@@ -80,9 +81,20 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signIn(data: LoginPayload) {
         setStatus("loading")
         try {
-            const response = await http.post<AuthResponse>("/v1/auth/login", data)
-            const { token, user } = response.data.data
-            await afterAuthSuccess(token, user)
+            const response = await authService.login(data)
+            const { token, user } = response.data
+            
+            const userFormatted: User = {
+                id: user.id.toString(),
+                name: user.name,
+                email: user.email,
+                role: user.role as Role,
+                rut: user.rut,
+                address: user.address,
+                description: user.description,
+            }
+            
+            await afterAuthSuccess(token, userFormatted)
             await savePlainPassword(data.password)
         } catch (e) {
             console.error("Error al iniciar sesión:", e)
@@ -91,19 +103,22 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
     }
 
-    async function signUp(data: RegisterPayload) {
+    async function signUp(data: RegisterPayload, variation: "user" | "giver" | "shelter" = "user") {
         setStatus("loading")
         try {
-            const response = await http.post<AuthResponse>(
-                `/v1/auth/register/${data.role || "adoptante"}`,
-                data
-            )
-            if (response.status === 201) {
-                console.log("logeo exitoso")
+            const response = await authService.register(data, variation)
+            
+            if (response.message) {
+                console.log("Registro exitoso:", response.message)
+                setStatus("unauthenticated")
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Error al registrar usuario:", e)
             setStatus("unauthenticated")
+            
+            if (e.response?.data?.error) {
+                throw new Error(e.response.data.error)
+            }
             throw e
         }
     }

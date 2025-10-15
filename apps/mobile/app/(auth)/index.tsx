@@ -21,7 +21,8 @@ export default function Index() {
             }
 
             if (status === "authenticated" && user) {
-                router.replace(user.role === 21 ? "/(shelter)" : "/(home)")
+                const isGiverOrShelter = user.role === 21 || user.role === 22
+                router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
                 return
             }
 
