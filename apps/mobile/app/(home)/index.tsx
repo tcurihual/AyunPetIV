@@ -8,28 +8,33 @@ import {
     Dimensions,
     Image,
     ActivityIndicator,
-    Platform,
+    RefreshControl,
 } from "react-native"
 import { useRouter } from "expo-router"
 import PublicationCard from "@/components/common/PublicationCard"
 import FilterModal, { FilterOptions } from "@/components/common/modals/FilterModal"
-import { Pet } from "@/interfaces/pet"
-import ayunData from "@/data/mockData"
 import { hasPrefsDone } from "@/utils/storage"
-import { getLocalPets } from "@/services/petStorage"
 import { useAuthContext } from "@/context/AuthContext"
-import { toMediaUrl } from "@/utils/mediaUrl"
+import { usePublications } from "@/context/PublicationContext"
+import { useAlert } from "@/context/AlertContext"
 
 const { width } = Dimensions.get("window")
 
+const toAbsoluteMediaUrl = (u?: string): string | undefined => {
+    if (!u) return undefined
+    if (/^https?:\/\//i.test(u)) return u
+    const base = process.env.EXPO_PUBLIC_MEDIA_BASE?.trim()
+    if (!base) return u
+    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
+}
+
 export default function Home() {
     const router = useRouter()
+    const { user } = useAuthContext()
+    const { petsForHome, loading, error, refreshPublications, clearError } = usePublications()
+    const { showAlert } = useAlert()
 
     const [checking, setChecking] = useState(true)
-
-    const [localPets, setLocalPets] = useState<Pet[]>([])
-    const [speciesMap, setSpeciesMap] = useState<Map<string, string>>(new Map())
-
     const [selectedCategory, setSelectedCategory] = useState<string>("all")
     const [showFilterModal, setShowFilterModal] = useState<boolean>(false)
     const [activeFilters, setActiveFilters] = useState<FilterOptions>({
@@ -37,8 +42,8 @@ export default function Home() {
         gender: "all",
         age: "all",
     })
+    const [refreshing, setRefreshing] = useState(false)
 
-    const { user } = useAuthContext()
     useEffect(() => {
         ;(async () => {
             const done = await hasPrefsDone()
@@ -50,99 +55,23 @@ export default function Home() {
         })()
     }, [router])
 
+    // Mostrar errores al usuario
+    useEffect(() => {
+        if (error) {
+            showAlert(error, "error")
+            clearError()
+        }
+    }, [error, showAlert, clearError])
+
     const toType = (species?: string) => {
         const s = (species ?? "").toLowerCase()
-        if (s === "perro") return "dog"
-        if (s === "gato") return "cat"
+        if (s === "perro" || s === "dog") return "dog"
+        if (s === "gato" || s === "cat") return "cat"
         return "other"
     }
 
-    const userNameById = useMemo(() => {
-        const map = new Map<number, string>()
-        for (const u of ayunData.users ?? []) {
-            if (u?.id != null) map.set(u.id, u.name ?? u.email ?? "Usuario")
-        }
-        return map
-    }, [])
-
-    useEffect(() => {
-        const base = new Map<string, string>()
-        for (const p of ayunData.pet ?? []) base.set(String(p.id), p.species ?? "")
-        setSpeciesMap(base)
-    }, [])
-
-    const assetByName: Record<string, any> = {
-        firulais: require("@/assets/images/perro1.jpg"),
-        michi: require("@/assets/images/Gato1-1.jpg"),
-        rocky: require("@/assets/images/perro2.jpg"),
-        luna: require("@/assets/images/Gato1-2.jpg"),
-    }
-    const resolveMockImage = (name?: string) => {
-        const key = (name ?? "").toLowerCase().trim()
-        return assetByName[key]
-    }
-
-    const dataPets: Pet[] = useMemo(() => {
-        return (ayunData.pet ?? []).map((p) => ({
-            id: String(p.id),
-            name: p.name,
-            gender: p.gender,
-            age: `${p.age} años`,
-            publisher: userNameById.get(p.ownerid) ?? "Fundación Demo",
-            description: p.description,
-            image: resolveMockImage(p.name),
-        }))
-    }, [userNameById])
-
-    useEffect(() => {
-        ;(async () => {
-            try {
-                const locals = await getLocalPets()
-                const mapped: Pet[] = locals.map((p) => {
-                    const abs =
-                        toMediaUrl(p.imageUrls?.[0]) ||
-                        "https://placehold.co/400x400?text=Mascota"
-                    return {
-                        id: `local-${p.id}`,
-                        name: p.name,
-                        gender: p.gender,
-                        age: `${p.ageYears} años`,
-                        publisher: p.ownerName || "Yo",
-                        description: p.description ?? "",
-                        image: { uri: abs },
-                    }
-                })
-                setLocalPets(mapped)
-
-                setSpeciesMap((prev) => {
-                    const next = new Map(prev)
-                    for (const p of locals) next.set(`local-${p.id}`, p.species ?? "")
-                    return next
-                })
-            } catch {}
-        })()
-    }, [])
-
-    const mergedPets: Pet[] = useMemo(() => {
-        const seen = new Set<string>()
-        const out: Pet[] = []
-        for (const p of localPets) {
-            if (!seen.has(p.id)) {
-                out.push(p)
-                seen.add(p.id)
-            }
-        }
-        for (const p of dataPets) {
-            if (!seen.has(p.id)) {
-                out.push(p)
-                seen.add(p.id)
-            }
-        }
-        return out
-    }, [localPets, dataPets])
-
     const matchAge = (ageStr: string, bucket: string) => {
-        const num = parseInt(ageStr) || 0
+        const num = parseInt(ageStr as string) || 0
         if (bucket === "young") return num <= 2
         if (bucket === "adult") return num >= 3 && num <= 6
         if (bucket === "senior") return num > 6
@@ -150,32 +79,56 @@ export default function Home() {
     }
 
     const filteredPets = useMemo(() => {
-        return mergedPets.filter((pet) => {
-            const species = speciesMap.get(pet.id)
-            const petType = toType(species)
+        return petsForHome.filter((pet) => {
+            const petType = toType(pet.species as unknown as string)
 
+            // Filtro por categoría seleccionada
             if (selectedCategory === "dog" && petType !== "dog") return false
             if (selectedCategory === "cat" && petType !== "cat") return false
 
+            // Filtros avanzados
             if (activeFilters.type !== "all" && petType !== activeFilters.type) return false
 
             if (activeFilters.gender !== "all") {
-                if (activeFilters.gender === "male" && pet.gender !== "Macho") return false
-                if (activeFilters.gender === "female" && pet.gender !== "Hembra") return false
+                const petGender = String(pet.gender ?? "").toLowerCase()
+                if (
+                    activeFilters.gender === "male" &&
+                    !petGender.includes("macho") &&
+                    !petGender.includes("male")
+                )
+                    return false
+                if (
+                    activeFilters.gender === "female" &&
+                    !petGender.includes("hembra") &&
+                    !petGender.includes("female")
+                )
+                    return false
             }
 
-            if (activeFilters.age !== "all" && !matchAge(pet.age, activeFilters.age)) return false
+            if (activeFilters.age !== "all" && !matchAge(String(pet.age), activeFilters.age))
+                return false
 
             return true
         })
-    }, [mergedPets, selectedCategory, activeFilters, speciesMap])
+    }, [petsForHome, selectedCategory, activeFilters])
 
     const handleApplyFilters = (filters: FilterOptions) => {
         setActiveFilters(filters)
         if (filters.type !== "all") setSelectedCategory("all")
     }
 
-    const renderPetItem = ({ item }: { item: Pet }) => (
+    const handleRefresh = async () => {
+        setRefreshing(true)
+        try {
+            await refreshPublications()
+        } catch (err) {
+            showAlert("Error al actualizar las publicaciones", "error")
+        } finally {
+            setRefreshing(false)
+        }
+    }
+
+    const renderPetItem = ({ item }: { item: any }) => (
         <View style={styles.cardContainer}>
             <PublicationCard pet={item} />
         </View>
@@ -251,6 +204,34 @@ export default function Home() {
                 contentContainerStyle={styles.petsGrid}
                 columnWrapperStyle={styles.row}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={["#FFD700"]}
+                        tintColor="#FFD700"
+                    />
+                }
+                ListEmptyComponent={() => (
+                    <View style={styles.emptyContainer}>
+                        {loading ? (
+                            <>
+                                <ActivityIndicator size="large" color="#FFD700" />
+                                <Text style={styles.emptyText}>Cargando publicaciones...</Text>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={styles.emptyEmoji}>🐾</Text>
+                                <Text style={styles.emptyText}>
+                                    No hay publicaciones disponibles
+                                </Text>
+                                <Text style={styles.emptySubtext}>
+                                    Desliza hacia abajo para actualizar
+                                </Text>
+                            </>
+                        )}
+                    </View>
+                )}
             />
 
             <FilterModal
@@ -295,4 +276,20 @@ const styles = StyleSheet.create({
     },
     loader: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
     loaderText: { marginTop: 8, color: "#000" },
+    emptyContainer: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 60,
+        paddingHorizontal: 20,
+    },
+    emptyEmoji: { fontSize: 48, marginBottom: 16 },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#666",
+        textAlign: "center",
+        marginBottom: 8,
+    },
+    emptySubtext: { fontSize: 14, color: "#999", textAlign: "center" },
 })

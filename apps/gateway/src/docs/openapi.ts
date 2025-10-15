@@ -21,6 +21,11 @@ import {
     getAdoptionRequestsDocs,
     getAdoptionRequestByIdDocs,
 } from "./endpoints/entities"
+import {
+    createVerificationCodeDocs,
+    validateVerificationCodeDocs,
+    getUserVerificationCodesDocs,
+} from "./endpoints/verificationCodes"
 
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
@@ -67,6 +72,10 @@ export function buildOpenApi() {
 
     // Messages endpoints
     registerMessagesDocs(registry)
+    // Verification Codes endpoints
+    createVerificationCodeDocs(registry)
+    validateVerificationCodeDocs(registry)
+    getUserVerificationCodesDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
