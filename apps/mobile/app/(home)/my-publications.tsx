@@ -14,6 +14,7 @@ import { useRouter } from "expo-router"
 import MyPublicationCard from "@/components/common/MyPublicationCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { getPetsByOwner, getPetImage } from "@/services/petAsyncStorage"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 const { width } = Dimensions.get("window")
 
@@ -26,15 +27,6 @@ type PubItem = {
     publishedDate: string
     status: "activo" | "inactivo" | "cerrado"
     requestsCount: number
-}
-
-const toAbsoluteMediaUrl = (u?: string): string | undefined => {
-    if (!u) return undefined
-    if (/^https?:\/\//i.test(u)) return u
-    const base =
-        (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_MEDIA_BASE?.trim()) ||
-        (Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080")
-    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
 }
 
 export default function MyPublications() {

@@ -18,17 +18,9 @@ import ayunData from "@/data/mockData"
 import { hasPrefsDone } from "@/utils/storage"
 import { getLocalPets } from "@/services/petStorage"
 import { useAuthContext } from "@/context/AuthContext"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 const { width } = Dimensions.get("window")
-
-const toAbsoluteMediaUrl = (u?: string): string | undefined => {
-    if (!u) return undefined
-    if (/^https?:\/\//i.test(u)) return u
-    const base =
-        (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_MEDIA_BASE?.trim()) ||
-        (Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080")
-    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
-}
 
 export default function Home() {
     const router = useRouter()
@@ -108,7 +100,7 @@ export default function Home() {
                 const locals = await getLocalPets()
                 const mapped: Pet[] = locals.map((p) => {
                     const abs =
-                        toAbsoluteMediaUrl(p.imageUrls?.[0]) ??
+                        toMediaUrl(p.imageUrls?.[0]) ||
                         "https://placehold.co/400x400?text=Mascota"
                     return {
                         id: `local-${p.id}`,
