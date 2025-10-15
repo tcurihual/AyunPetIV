@@ -214,6 +214,65 @@ export const DeleteAdoptionHistoryResponseSchema = z.object({
     }),
 })
 
+// ===== VERIFICATION CODE SCHEMAS =====
+
+export const VerificationCodeSchema = z.object({
+    id: z.number(),
+    code: z.string(),
+    type: z.enum(["verify", "reset", "adoption"]),
+    user_id: z.number(),
+    used: z.boolean(),
+    created_at: z.string(),
+    expires_at: z.string(),
+})
+
+export const CreateVerificationCodeRequestSchema = z.object({
+    type: z.enum(["verify", "reset", "adoption"]),
+    userId: z.number().optional(),
+    duration: z.number().min(1).max(1440).optional(), // Entre 1 minuto y 24 horas
+})
+
+export const CreateVerificationCodeResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        id: z.number(),
+        code: z.string(),
+        type: z.enum(["verify", "reset", "adoption"]),
+        expires_at: z.string(),
+        user_id: z.number(),
+    }),
+})
+
+export const ValidateVerificationCodeRequestSchema = z.object({
+    code: z.string().length(6, "El código debe tener 6 dígitos"),
+    type: z.enum(["verify", "reset", "adoption"], "Tipo debe ser: verify, reset o adoption"),
+    userId: z.number(),
+})
+
+export const ValidateVerificationCodeResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        id: z.number(),
+        type: z.enum(["verify", "reset", "adoption"]),
+        user_id: z.number(),
+        validated_at: z.string(),
+    }),
+})
+
+export const GetUserVerificationCodesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.array(
+        z.object({
+            id: z.number(),
+            type: z.enum(["verify", "reset", "adoption"]),
+            used: z.boolean(),
+            created_at: z.string(),
+            expires_at: z.string(),
+        })
+    ),
 // ============================================
 // Esquemas extendidos con imágenes para comunicación entre microservicios
 // ============================================
