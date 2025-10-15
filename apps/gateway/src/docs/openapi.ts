@@ -1,8 +1,8 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi"
 import { registerAuthPaths } from "./endpoints/auth"
-import { 
-    mineRequestDocs, 
-    ConfirmAcceptDocs, 
+import {
+    mineRequestDocs,
+    ConfirmAcceptDocs,
     validateCodeDocs,
     listPublicationsDocs,
     getPublicationByIdDocs,
@@ -27,6 +27,14 @@ import {
     getUserVerificationCodesDocs,
 } from "./endpoints/verificationCodes"
 
+import {
+    listFormResponsesDocs,
+    createFormResponseDocs,
+    updateFormResponseDocs,
+    deleteFormResponseDocs,
+    listByPublicationFormResponsesDocs,
+} from "./endpoints/formResponses"
+
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
 
@@ -43,7 +51,7 @@ export function buildOpenApi() {
     mineRequestDocs(registry)
     ConfirmAcceptDocs(registry)
     validateCodeDocs(registry)
-    
+
     // Adoptions endpoints con imágenes (comunicación entre microservicios)
     listPublicationsDocs(registry)
     getPublicationByIdDocs(registry)
@@ -57,7 +65,7 @@ export function buildOpenApi() {
     createAdoptionHistoryDocs(registry)
     updateAdoptionHistoryDocs(registry)
     deleteAdoptionHistoryDocs(registry)
-    
+
     // Entities endpoints con imágenes (comunicación entre microservicios)
     getUsersDocs(registry)
     getUserByIdDocs(registry)
@@ -68,6 +76,13 @@ export function buildOpenApi() {
     createVerificationCodeDocs(registry)
     validateVerificationCodeDocs(registry)
     getUserVerificationCodesDocs(registry)
+
+    // Form Responses endpoints
+    listFormResponsesDocs(registry)
+    createFormResponseDocs(registry)
+    updateFormResponseDocs(registry)
+    deleteFormResponseDocs(registry)
+    listByPublicationFormResponsesDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
