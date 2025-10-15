@@ -125,11 +125,11 @@ export const AdoptionHistoryFormSchema = AdoptionHistorySchema.omit({
 export const UserReponseDTO = UserSchema.omit({ password: true })
 
 export const LoginSchema = UserSchema.pick({ email: true, password: true })
-export const RegisterSchema = UserSchema.omit({
-    id: true,
-    validated: true,
-    createdat: true,
-    updatedat: true,
+export const RegisterSchema = UserSchema.pick({
+    name: true,
+    email: true,
+    password: true,
+    rut: true,
 })
 
 export const GiverRequestResponseSchema = z.object({

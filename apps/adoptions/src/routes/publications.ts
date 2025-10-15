@@ -6,7 +6,7 @@ import {
     createPublication,
     updatePublication,
     deletePublication,
-} from "../controllers/publicactions"
+} from "../controllers/publications"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 
