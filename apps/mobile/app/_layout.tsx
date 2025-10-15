@@ -17,6 +17,7 @@ import AuthRedirect from "@/features/AuthRedirect"
 import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
+import { PublicationProvider } from "@/context/PublicationContext"
 import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
@@ -53,9 +54,10 @@ export default function RootLayout() {
             <MessageProvider>
                 <ReportProvider>
                     <AdoptionRequestProvider>
-                        <ModalProvider>
-                            <AlertProvider>
-                                <LoadingProvider>
+                        <PublicationProvider>
+                            <ModalProvider>
+                                <AlertProvider>
+                                    <LoadingProvider>
                                     <ThemeProvider
                                         value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
                                     >
@@ -79,9 +81,10 @@ export default function RootLayout() {
                                 </LoadingProvider>
                             </AlertProvider>
                         </ModalProvider>
-                    </AdoptionRequestProvider>
-                </ReportProvider>
-            </MessageProvider>
-        </AuthProvider>
+                    </PublicationProvider>
+                </AdoptionRequestProvider>
+            </ReportProvider>
+        </MessageProvider>
+    </AuthProvider>
     )
 }

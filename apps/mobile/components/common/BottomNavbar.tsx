@@ -94,13 +94,14 @@ export default function BottomNavbar() {
                     </>
                 )
 
-            // rol de Organización
+            // rol de Organización/Shelter y Giver
             case 21:
+            case 22:
                 return (
                     <>
                         <Pressable
                             style={getTabStyle("home")}
-                            onPress={() => router.push("/(homeOrg)")}
+                            onPress={() => router.push("/(shelter)")}
                         >
                             <Ionicons
                                 name={getIconName("home", "home")}
@@ -111,10 +112,10 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("publications")}
-                            onPress={() => router.push("/(homeOrg)/my-publications")}
+                            onPress={() => router.push("/(shelter)/dashboard")}
                         >
                             <Ionicons
-                                name={getIconName("albums", "publications")}
+                                name={getIconName("stats-chart", "publications")}
                                 size={26}
                                 color={getIconColor("publications")}
                             />
@@ -122,14 +123,14 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={styles.addBtn}
-                            onPress={() => router.push("/(homeOrg)/AddPetScreen")}
+                            onPress={() => router.push("/(shelter)/dashboard")}
                         >
                             <Ionicons name="add" size={28} color="#fff" />
                         </Pressable>
 
                         <Pressable
                             style={getTabStyle("requests")}
-                            onPress={() => router.push("/(homeOrg)/(requests)/requestList")}
+                            onPress={() => router.push("/(shelter)/dashboard")}
                         >
                             <Ionicons
                                 name={getIconName("mail", "requests")}
@@ -140,10 +141,10 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("profile")}
-                            onPress={() => router.push("/(homeOrg)/my-profile")}
+                            onPress={() => router.push("/(shelter)/dashboard")}
                         >
                             <Ionicons
-                                name={getIconName("business", "profile")}
+                                name={getIconName("person", "profile")}
                                 size={26}
                                 color={getIconColor("profile")}
                             />

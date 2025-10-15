@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { supabase } from "../"
 import { AppError, AppResponse, AdoptionRequest, AuthenticatedRequest } from "@repo/utils"
+import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
 export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
@@ -20,25 +21,45 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
 
             if (error) throw new AppError(404, "Solicitud de adopción no encontrada")
 
+            // Obtener imágenes del post si existe
+            let postImages: string[] = []
+            if (adoptionRequest?.post_id) {
+                postImages = await getEntityImages("post", adoptionRequest.post_id)
+            }
+
             return AppResponse(
                 res,
                 200,
                 "Solicitud de adopción obtenida exitosamente",
-                adoptionRequest
+                {
+                    ...adoptionRequest,
+                    postImages,
+                }
             )
         } else {
             const { data: adoptionRequests, error } = await supabase
                 .from("adoption_request")
                 .select("*")
-                .order("createdat", { ascending: false })
+                .order("created_at", { ascending: false })
 
             if (error) throw new AppError(500, "Error al obtener las solicitudes de adopción")
+
+            // Obtener imágenes de los posts
+            const postIds = (adoptionRequests ?? [])
+                .map((req: any) => req.post_id)
+                .filter(Boolean)
+            const postImages = await getMultipleEntityImages("post", postIds)
+
+            const requestsWithImages = (adoptionRequests ?? []).map((req: any) => ({
+                ...req,
+                postImages: postImages[String(req.post_id)] || [],
+            }))
 
             return AppResponse(
                 res,
                 200,
                 "Solicitudes de adopción obtenidas exitosamente",
-                adoptionRequests
+                requestsWithImages
             )
         }
     } catch (error) {

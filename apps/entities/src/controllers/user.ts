@@ -1,6 +1,7 @@
 import type { Response } from "express"
 import { AppResponse, AppError, AuthenticatedRequest, User, UpdateUserSchema } from "@repo/utils"
 import { supabase } from "../index"
+import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 type RoleType = keyof typeof ROLES
@@ -42,8 +43,17 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
 
         if (error) throw new AppError(500, error.message)
 
+        // Obtener imágenes de los usuarios (tipo giver)
+        const userIds = (data ?? []).map((u) => u.id).filter(Boolean)
+        const userImages = await getMultipleEntityImages("giver", userIds)
+
+        const itemsWithImages = (data ?? []).map((user) => ({
+            ...user,
+            images: userImages[String(user.id)] || [],
+        }))
+
         return AppResponse(res, 200, "Listado de usuarios", {
-            items: data ?? [],
+            items: itemsWithImages,
             total: count ?? 0,
             page,
             pageSize,
@@ -64,7 +74,13 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
         const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
         if (error || !data) throw new AppError(404, "Usuario no encontrado")
 
-        return AppResponse(res, 200, "Usuario", data as User["Row"])
+        // Obtener imágenes del usuario
+        const images = await getEntityImages("giver", id)
+
+        return AppResponse(res, 200, "Usuario", {
+            ...data,
+            images,
+        } as User["Row"] & { images: string[] })
     } catch (e) {
         if (e instanceof AppError) throw e
         throw new AppError(500, "Error al obtener usuario")

@@ -15,7 +15,19 @@ msRouter.use(
         pathRewrite: {
             "^/v1/auth": "",
         },
-        proxyTimeout: 5000,
+        proxyTimeout: 10000, // Aumentar timeout
+        on: {
+            proxyReq: (proxyReq, req) => {
+                console.log(`🌐 [GATEWAY] Proxying ${req.method} ${req.url} to ${AUTH_URL}`)
+                console.log(`🌐 [GATEWAY] Target URL: ${proxyReq.path}`)
+            },
+            proxyRes: (proxyRes, req) => {
+                console.log(`🌐 [GATEWAY] Response from auth service: ${proxyRes.statusCode}`)
+            },
+            error: (err, req, res) => {
+                console.error(`❌ [GATEWAY] Proxy error for ${req.method} ${req.url}:`, err.message)
+            },
+        },
     })
 )
 

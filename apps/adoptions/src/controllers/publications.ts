@@ -10,6 +10,7 @@ import type {
     PetSize,
 } from "@repo/utils"
 import { supabase } from "../index"
+import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 const isAdmin = (req: AuthenticatedRequest) => req.user?.role === ROLES.ADMIN
@@ -42,18 +43,30 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         const { data, error, count } = await query.range(from, to)
         if (error) throw new AppError(500, error.message)
 
-        const items = (Array.isArray(data) ? data : [data]).map((row) => ({
+        const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
+        const petIds = (data ?? []).map((row: any) => row.pet_id).filter(Boolean)
+
+        const [postImages, petImages] = await Promise.all([
+            getMultipleEntityImages("post", postIds),
+            getMultipleEntityImages("pet", petIds),
+        ])
+
+        const items = (data ?? []).map((row: any) => ({
             post: {
                 id: row.id,
-                creatorid: row.creator_id,
-                petid: row.pet_id,
+                creator_id: row.creator_id,
+                pet_id: row.pet_id,
                 title: row.title,
                 description: row.description,
                 status: row.status,
                 created_at: row.created_at,
                 updated_at: row.updated_at,
-            },
-            pet: row.pet,
+                images: postImages[String(row.id)] || [],
+            } as Post["Row"] & { images: string[] },
+            pet: {
+                ...(row.pet as Pet["Row"]),
+                images: petImages[String(row.pet_id)] || [],
+            } as Pet["Row"] & { images: string[] },
         }))
 
         return AppResponse(res, 200, "Listado de publicaciones", {
@@ -80,6 +93,11 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
 
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 
+        const [postImages, petImages] = await Promise.all([
+            getEntityImages("post", data.id),
+            data.pet_id ? getEntityImages("pet", data.pet_id) : Promise.resolve([]),
+        ])
+
         const payload = {
             post: {
                 id: data.id,
@@ -90,8 +108,12 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
                 status: data.status,
                 created_at: data.created_at,
                 updated_at: data.updated_at,
-            } as Post["Row"],
-            pet: data.pet,
+                images: postImages,
+            } as Post["Row"] & { images: string[] },
+            pet: {
+                ...(data.pet as Pet["Row"]),
+                images: petImages,
+            } as Pet["Row"] & { images: string[] },
         }
 
         return AppResponse(res, 200, "Publicación", payload)
@@ -143,9 +165,9 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
         ) {
             throw new AppError(400, "Payload inválido")
         }
-        if (!isAdmin(req) && !isSelf(req, ownerId)) {
+
+        if (!isAdmin(req) && !isSelf(req, ownerId))
             throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
-        }
 
         const petInsert: Pet["Insert"] = {
             owner_id: ownerId,
@@ -201,9 +223,8 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
             .single()
 
         if (findErr || !postBefore) throw new AppError(404, "Publicación no encontrada")
-        if (!isAdmin(req) && req.user?.id !== postBefore.creator_id) {
+        if (!isAdmin(req) && req.user?.id !== postBefore.creator_id)
             throw new AppError(403, "No autorizado para actualizar esta publicación")
-        }
 
         const {
             title,
@@ -259,7 +280,6 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
             .maybeSingle()
 
         if (petErr || !petAfter) {
-            // rollback: restaurar post previo
             const restorePost: Post["Update"] = {
                 title: postBefore.title,
                 description: postBefore.description,
@@ -294,9 +314,8 @@ export const deletePublication = async (req: AuthenticatedRequest, res: Response
             .single()
 
         if (postFindErr || !postRow) throw new AppError(404, "Publicación no encontrada")
-        if (!isAdmin(req) && req.user?.id !== postRow.creator_id) {
+        if (!isAdmin(req) && req.user?.id !== postRow.creator_id)
             throw new AppError(403, "No autorizado para eliminar esta publicación")
-        }
 
         const petId = postRow.pet_id
         let petRow: Pet["Row"] | null = null
@@ -311,66 +330,30 @@ export const deletePublication = async (req: AuthenticatedRequest, res: Response
             petRow = pr as Pet["Row"]
         }
 
-        const { error: unlinkErr } = await supabase
-            .from("post")
-            .update({ pet_id: null, updated_at: new Date().toISOString() })
-            .eq("id", id)
-        if (unlinkErr) throw new AppError(500, unlinkErr.message)
-
-        if (petId != null) {
-            const { error: petDelErr } = await supabase.from("pet").delete().eq("id", petId)
-            if (petDelErr) {
-                await supabase.from("post").update({ pet_id: petId }).eq("id", id)
-                throw new AppError(500, petDelErr.message)
-            }
-        }
-
-        const tables = ["adoption_request", "message", "report", "adoption_history"] as const
+        const tables = ["adoption_request", "message", "report"] as const
         for (const t of tables) {
             const { error } = await supabase.from(t).delete().eq("post_id", id)
-            if (error) {
-                if (petRow && petId != null) {
-                    await supabase.from("pet").insert([
-                        {
-                            id: petRow.id,
-                            ownerid: petRow.owner_id,
-                            name: petRow.name,
-                            age_months: petRow.age_months,
-                            age_years: petRow.age_years,
-                            gender: petRow.gender,
-                            size: petRow.size,
-                            species: petRow.species,
-                            sterilized: petRow.sterilized,
-                            adopted: petRow.adopted,
-                        } as Pet["Insert"],
-                    ])
-                    await supabase.from("post").update({ pet_id: petId }).eq("id", id)
-                }
+            if (error)
                 throw new AppError(500, `Error al eliminar dependencias (${t}): ${error.message}`)
-            }
+        }
+
+        if (petId != null) {
+            const { error: histErr } = await supabase
+                .from("adoption_history")
+                .delete()
+                .eq("pet_id", petId)
+            if (histErr)
+                throw new AppError(
+                    500,
+                    `Error al eliminar historial de adopciones: ${histErr.message}`
+                )
+
+            const { error: petDelErr } = await supabase.from("pet").delete().eq("id", petId)
+            if (petDelErr) throw new AppError(500, petDelErr.message)
         }
 
         const { error: postDelErr } = await supabase.from("post").delete().eq("id", id)
-        if (postDelErr) {
-            if (petRow && petId != null) {
-                await supabase.from("pet").insert([
-                    {
-                        id: petRow.id,
-                        ownerid: petRow.owner_id,
-                        name: petRow.name,
-                        age_months: petRow.age_months,
-                        age_years: petRow.age_years,
-                        gender: petRow.gender,
-                        size: petRow.size,
-                        species: petRow.species,
-                        sterilized: petRow.sterilized,
-                        adopted: petRow.adopted,
-                    } as Pet["Insert"],
-                ])
-                await supabase.from("post").update({ pet_id: petId }).eq("id", id)
-            }
-            throw new AppError(500, postDelErr.message)
-        }
+        if (postDelErr) throw new AppError(500, postDelErr.message)
 
         return AppResponse(res, 200, "Publicación eliminada", {
             post: postRow as Post["Row"],
