@@ -9,6 +9,7 @@ import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
 import adoptionRequestRouter from "./routes/adoptionRequest"
+import newsRouter from "./routes/news.routes"
 import userRouter from "./routes/user.routes"
 
 export const supabase = createSupabaseClient()
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
 app.use("/adoption-requests", adoptionRequestRouter)
+app.use("/news", newsRouter)
 app.use("/users", userRouter)
 
 // Ruta pública
