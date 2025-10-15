@@ -27,15 +27,10 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 postImages = await getEntityImages("post", adoptionRequest.post_id)
             }
 
-            return AppResponse(
-                res,
-                200,
-                "Solicitud de adopción obtenida exitosamente",
-                {
-                    ...adoptionRequest,
-                    postImages,
-                }
-            )
+            return AppResponse(res, 200, "Solicitud de adopción obtenida exitosamente", {
+                ...adoptionRequest,
+                postImages,
+            })
         } else {
             const { data: adoptionRequests, error } = await supabase
                 .from("adoption_request")
@@ -45,9 +40,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
             if (error) throw new AppError(500, "Error al obtener las solicitudes de adopción")
 
             // Obtener imágenes de los posts
-            const postIds = (adoptionRequests ?? [])
-                .map((req: any) => req.post_id)
-                .filter(Boolean)
+            const postIds = (adoptionRequests ?? []).map((req: any) => req.post_id).filter(Boolean)
             const postImages = await getMultipleEntityImages("post", postIds)
 
             const requestsWithImages = (adoptionRequests ?? []).map((req: any) => ({
@@ -72,14 +65,18 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
     const adoptionRequestData: AdoptionRequest["Insert"] = req.body
 
     try {
-        if (!adoptionRequestData.userid || !adoptionRequestData.postid) {
+        if (
+            !adoptionRequestData.requester_id ||
+            !adoptionRequestData.post_id ||
+            !adoptionRequestData.post_owner_id
+        ) {
             throw new AppError(400, "userid y postid son campos requeridos")
         }
 
         const { data: userExists, error: userError } = await supabase
             .from("users")
             .select("id")
-            .eq("id", adoptionRequestData.userid)
+            .eq("id", adoptionRequestData.requester_id)
             .single()
 
         if (userError) throw new AppError(404, "Usuario no encontrado")
@@ -87,7 +84,7 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
         const { data: postExists, error: postError } = await supabase
             .from("post")
             .select("id")
-            .eq("id", adoptionRequestData.postid)
+            .eq("id", adoptionRequestData.post_id)
             .single()
 
         if (postError) throw new AppError(404, "Post no encontrado")
@@ -95,8 +92,9 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
         const { data: existingRequest, error: existingError } = await supabase
             .from("adoption_request")
             .select("id")
-            .eq("userid", adoptionRequestData.userid)
-            .eq("postid", adoptionRequestData.postid)
+            .eq("requester_id", adoptionRequestData.requester_id)
+            .eq("post_owner_id", adoptionRequestData.post_owner_id)
+            .eq("post_id", adoptionRequestData.post_id)
             .eq("status", "pending")
             .maybeSingle()
 
@@ -107,12 +105,10 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
         }
 
         const payload: AdoptionRequest["Insert"] = {
-            userid: adoptionRequestData.userid,
-            postid: adoptionRequestData.postid,
+            requester_id: adoptionRequestData.requester_id,
+            post_id: adoptionRequestData.post_id,
+            post_owner_id: adoptionRequestData.post_owner_id,
             status: adoptionRequestData.status || "pending",
-            message: adoptionRequestData.message || null,
-            createdat: adoptionRequestData.createdat || new Date().toISOString(),
-            updatedat: adoptionRequestData.updatedat || new Date().toISOString(),
         }
 
         const { data: newAdoptionRequest, error: insertError } = await supabase
@@ -155,24 +151,24 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
 
         const payload: AdoptionRequest["Update"] = {
             ...updateData,
-            updatedat: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         }
 
-        if (payload.userid) {
+        if (payload.requester_id) {
             const { data: userExists, error: userError } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", payload.userid)
+                .eq("id", payload.requester_id)
                 .single()
 
             if (userError) throw new AppError(404, "Usuario no encontrado")
         }
 
-        if (payload.postid) {
+        if (payload.post_id) {
             const { data: postExists, error: postError } = await supabase
                 .from("post")
                 .select("id")
-                .eq("id", payload.postid)
+                .eq("id", payload.post_id)
                 .single()
 
             if (postError) throw new AppError(404, "Post no encontrado")

@@ -202,7 +202,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
             description: patch.description ?? undefined,
             validated: patch.validated,
             role: (roleField as any).role,
-            updatedat: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         }
 
         const { data, error } = await supabase

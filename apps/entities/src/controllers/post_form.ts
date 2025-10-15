@@ -1,54 +1,51 @@
 import { Request, Response } from "express"
-import { PostFormCreateSchema, PostFormUpdateSchema } from "@repo/utils/src/schemas/entities"
+import { PostFormCreateSchema } from "@repo/utils"
 import { supabase } from "../index"
 
 const TABLE = "post_form"
 
 export async function list(req: Request, res: Response) {
-  const postId = Number(req.query.post_id)
+    const postId = Number(req.query.post_id)
 
-  if (!postId) {
-    return res.status(400).json({ type: "error", message: "El post_id es requerido" })
-  }
+    if (!postId) {
+        return res.status(400).json({ type: "error", message: "El post_id es requerido" })
+    }
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select("*")
-    .eq("post_id", postId)
+    const { data, error } = await supabase.from(TABLE).select("*").eq("post_id", postId)
 
-  if (error) return res.status(500).json({ type: "error", message: error.message })
+    if (error) return res.status(500).json({ type: "error", message: error.message })
 
-  return res.json({ type: "success", message: "OK", data })
+    return res.json({ type: "success", message: "OK", data })
 }
 
 export async function create(req: Request, res: Response) {
-  const parsed = PostFormCreateSchema.safeParse(req.body)
-  if (!parsed.success) {
-    return res.status(400).json({
-      type: "error",
-      message: "VALIDATION_ERROR",
-      details: parsed.error.flatten(),
-    })
-  }
+    const parsed = PostFormCreateSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({
+            type: "error",
+            message: "VALIDATION_ERROR",
+            details: parsed.error.flatten(),
+        })
+    }
 
-  const { post_id, question_id, answer, active } = parsed.data
+    const { post_id, question_id, answer, active } = parsed.data
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .insert({
-      post_id,
-      question_id,
-      answer,
-      active: active ?? true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .maybeSingle()
+    const { data, error } = await supabase
+        .from(TABLE)
+        .insert({
+            post_id,
+            question_id,
+            answer,
+            active: active ?? true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        })
+        .select()
+        .maybeSingle()
 
-  if (error) return res.status(500).json({ type: "error", message: error.message })
+    if (error) return res.status(500).json({ type: "error", message: error.message })
 
-  return res.status(201).json({ type: "success", message: "CREATED", data })
+    return res.status(201).json({ type: "success", message: "CREATED", data })
 }
 
 // export async function update(req: Request, res: Response) {

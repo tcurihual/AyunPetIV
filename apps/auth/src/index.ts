@@ -5,6 +5,7 @@ import morgan from "morgan"
 
 import { createSupabaseClient, AUTH_PORT, errorHandler, getHeaders } from "@repo/utils"
 import authRouter from "./routes/auth"
+import mobileRouter from "./routes/mobile"
 
 export const supabase = createSupabaseClient()
 const app = express()
@@ -16,8 +17,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", authRouter)
+app.use("/", mobileRouter)
 
-// Ruta de health check para debugging
 app.get("/health", (req, res) => {
     res.json({
         status: "ok",

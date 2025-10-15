@@ -7,8 +7,8 @@ import { errorHandler, ADOPTIONS_PORT, getHeaders, createSupabaseClient } from "
 import mineRequestRoutes from "./routes/requests"
 import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
+import publicationRoutes from "./routes/publications"
 import postsRoutes from "./routes/posts"
-import publicationRoutes from "./routes/publication.routes"
 
 export const supabase = createSupabaseClient()
 

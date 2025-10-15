@@ -1,7 +1,13 @@
 import type { Request, Response } from "express"
-import bcrypt from "bcrypt"
 import { z } from "zod"
-import { AppResponse, AppError, AuthenticatedRequest, VerificationType } from "@repo/utils"
+import {
+    AppResponse,
+    AppError,
+    AuthenticatedRequest,
+    VerificationType,
+    hashPassword,
+    comparePassword,
+} from "@repo/utils"
 import { supabase } from "../index"
 
 // Schemas de validación locales
@@ -91,7 +97,7 @@ export const createVerificationCode = async (req: AuthenticatedRequest, res: Res
         }
 
         const code = generateVerificationCode()
-        const hashedCode = await bcrypt.hash(code, 10)
+        const hashedCode = await hashPassword(code)
 
         let expiresAt: Date
         if (duration && typeof duration === "number" && duration > 0) {
@@ -185,7 +191,7 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
         let codeRecord = null
 
         for (const record of verificationCodes) {
-            const isMatch = await bcrypt.compare(code, record.code)
+            const isMatch = await comparePassword(code, record.code)
             if (isMatch) {
                 validCode = record.code
                 codeRecord = record

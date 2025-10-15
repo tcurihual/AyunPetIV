@@ -13,40 +13,40 @@ const asyncHandler =
     (req: Request, res: Response, next: NextFunction) =>
         Promise.resolve(fn(req, res)).catch(next)
 
-const userRouter = Router()
+const usersRouter = Router()
 
-userRouter.get(
+usersRouter.get(
     "/",
     requireRole(ROLES.ADMIN),
     asyncHandler(async (req, res) => getUsers(req as any, res))
 )
 
 // Obtener por ID
-userRouter.get(
+usersRouter.get(
     "/:id",
     requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
     asyncHandler(async (req, res) => getUserById(req as any, res))
 )
 
 // Crear usuario
-userRouter.post(
+usersRouter.post(
     "/",
     requireRole(ROLES.ADMIN),
     asyncHandler(async (req, res) => createUser(req as any, res))
 )
 
 // Actualizar usuario
-userRouter.patch(
+usersRouter.patch(
     "/:id",
     requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
     asyncHandler(async (req, res) => updateUser(req as any, res))
 )
 
 // Eliminar usuario
-userRouter.delete(
+usersRouter.delete(
     "/:id",
     requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
     asyncHandler(async (req, res) => deleteUser(req as any, res))
 )
 
-export default userRouter
+export default usersRouter

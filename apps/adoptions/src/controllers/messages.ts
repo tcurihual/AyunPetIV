@@ -28,7 +28,7 @@ export const createMessage = async (req: AuthenticatedRequest, res: Response) =>
     const { creatorId, postId, description, status } = req.body
 
     const insertData = {
-        creatorid: creatorId,
+        creator_id: creatorId,
         postid: postId ?? null,
         description,
         status: status ?? "active",
