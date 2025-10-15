@@ -24,9 +24,8 @@ const { width } = Dimensions.get("window")
 const toAbsoluteMediaUrl = (u?: string): string | undefined => {
     if (!u) return undefined
     if (/^https?:\/\//i.test(u)) return u
-    const base =
-        (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_MEDIA_BASE?.trim()) ||
-        (Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080")
+    const base = process.env.EXPO_PUBLIC_MEDIA_BASE?.trim()
+    if (!base) return u
     return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
 }
 

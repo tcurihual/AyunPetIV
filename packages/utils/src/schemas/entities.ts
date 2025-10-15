@@ -162,6 +162,40 @@ export const AdoptionHistoryResponseSchema = z.object({
     ),
 })
 
+export const QuestionSchema = z.object({
+    id: z.number(),
+    content: z.string(),
+    type: z.enum(["text", "number", "boolean", "select", "multiselect"]),
+    created_at: z.string(),
+    updated_at: z.string(),
+    active: z.boolean(),
+})
+
+export const QuestionCreateSchema = QuestionSchema.omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+}).extend({
+    active: z.boolean().default(true),
+})
+
+export const QuestionUpdateSchema = QuestionSchema.omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+}).partial()
+
+export const PostFormCreateSchema = z.object({
+    post_id: z.number(),
+    question_id: z.number(),
+    answer: z.string(),
+    active: z.boolean().default(true),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+})
+
+export const PostFormUpdateSchema = PostFormCreateSchema.omit({ post_id: true }).partial()
+
 export const ValidateGiverAccountParamsSchema = z.object({
     userId: z.string(),
 })
