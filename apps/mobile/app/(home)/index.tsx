@@ -20,6 +20,14 @@ import { useAlert } from "@/context/AlertContext"
 
 const { width } = Dimensions.get("window")
 
+const toAbsoluteMediaUrl = (u?: string): string | undefined => {
+    if (!u) return undefined
+    if (/^https?:\/\//i.test(u)) return u
+    const base = process.env.EXPO_PUBLIC_MEDIA_BASE?.trim()
+    if (!base) return u
+    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
+}
+
 export default function Home() {
     const router = useRouter()
     const { user } = useAuthContext()
