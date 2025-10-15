@@ -93,89 +93,65 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
         
         try {
-            // Intentar usar el endpoint real primero
-            let response;
-            try {
-                response = await http.get<{
-                    status: number
-                    message: string
-                    data: any[]
-                }>("/v1/adoptions/posts")
-            } catch (apiError) {
-                console.warn("API no disponible, usando datos de prueba:", apiError)
-                
-                // Fallback: usar datos de prueba si la API no está disponible
-                const mockPublications: PublicationItem[] = [
-                    {
-                        id: "1",
-                        name: "Firulais",
-                        gender: "Macho",
-                        age: "3 años",
-                        publisher: "Fundación Patitas Felices",
-                        description: "Perro muy juguetón y cariñoso que busca una familia amorosa",
-                        image: { uri: "https://placehold.co/400x400?text=Firulais" },
-                        species: "Perro",
-                        size: "Mediano",
-                        sterilized: false,
-                        status: "active",
-                        postId: 1,
-                        petId: 101,
-                        creatorId: 1
-                    },
-                    {
-                        id: "2",
-                        name: "Michi",
-                        gender: "Hembra",
-                        age: "2 años",
-                        publisher: "Refugio Esperanza",
-                        description: "Gata tranquila perfecta para departamentos",
-                        image: { uri: "https://placehold.co/400x400?text=Michi" },
-                        species: "Gato",
-                        size: "Pequeño",
-                        sterilized: true,
-                        status: "active",
-                        postId: 2,
-                        petId: 102,
-                        creatorId: 2
-                    },
-                    {
-                        id: "3",
-                        name: "Rocky",
-                        gender: "Macho",
-                        age: "1 año",
-                        publisher: "Protectora Animal",
-                        description: "Perro joven muy energético, ideal para familias activas",
-                        image: { uri: "https://placehold.co/400x400?text=Rocky" },
-                        species: "Perro",
-                        size: "Grande",
-                        sterilized: false,
-                        status: "active",
-                        postId: 3,
-                        petId: 103,
-                        creatorId: 3
-                    }
-                ]
-                
-                setPublications(mockPublications)
-                return
-            }
+            // Llamar al endpoint de publicaciones
+            const response = await http.get<{
+                status: number
+                message: string
+                data: {
+                    items: Array<{
+                        post: {
+                            id: number
+                            creator_id: number
+                            pet_id: number
+                            title: string
+                            description: string
+                            status: string
+                            created_at: string
+                            updated_at: string
+                            images?: string[]
+                        }
+                        pet: {
+                            id: number
+                            ownerid: number
+                            name: string | null
+                            species: string
+                            gender: string
+                            age: number
+                            size: string
+                            sterilized: boolean
+                            adopted: boolean
+                            created_at: string
+                            updated_at: string
+                            images?: string[]
+                        }
+                    }>
+                    total: number
+                    page: number
+                    pageSize: number
+                    totalPages: number
+                }
+            }>("/v1/adoptions/publications")
             
             // Transformar los datos de la API para el frontend
-            const transformedPublications: PublicationItem[] = response.data.data.map((item: any) => ({
-                id: String(item.post?.id || item.id),
-                name: item.pet?.name || "Sin nombre",
-                gender: item.pet?.gender || "No especificado",
-                age: item.pet?.age ? `${item.pet.age} años` : "No especificado",
-                publisher: item.creator?.name || item.user?.name || "Usuario desconocido",
-                description: item.post?.description || item.description || "",
-                image: { uri: "https://placehold.co/400x400?text=Mascota" },
-                species: item.pet?.species,
-                size: item.pet?.size,
-                sterilized: item.pet?.sterilized,
-                status: item.post?.status || item.status,
-                postId: item.post?.id || item.id,
-                petId: item.pet?.id,
-                creatorId: item.creator?.id || item.creatorid
+            const transformedPublications: PublicationItem[] = response.data.data.items.map((item) => ({
+                id: String(item.post.id),
+                name: item.pet.name || "Sin nombre",
+                gender: item.pet.gender,
+                age: `${item.pet.age} años`,
+                publisher: "Usuario", // Por ahora no viene info del creador en la respuesta
+                description: item.post.description,
+                image: item.post.images && item.post.images.length > 0
+                    ? { uri: item.post.images[0] }
+                    : item.pet.images && item.pet.images.length > 0
+                    ? { uri: item.pet.images[0] }
+                    : { uri: "https://placehold.co/400x400?text=Mascota" },
+                species: item.pet.species,
+                size: item.pet.size,
+                sterilized: item.pet.sterilized,
+                status: item.post.status,
+                postId: item.post.id,
+                petId: item.pet.id,
+                creatorId: item.post.creator_id
             }))
             
             setPublications(transformedPublications)
@@ -206,30 +182,50 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
 
         try {
+            // Preparar el payload según la API
+            const payload = {
+                ownerId: Number(user.id),
+                title: data.post.title,
+                description: data.post.description,
+                species: data.pet.species,
+                gender: data.pet.gender,
+                age: data.pet.age,
+                size: data.pet.size,
+                sterilized: data.pet.sterilized,
+                name: data.pet.name
+            }
+
             const response = await http.post<{
                 status: number
                 message: string
-                values: {
-                    post: Post
-                    pet: Pet
+                data: {
+                    post: any
+                    pet: any
                 }
-            }>("/v1/adoptions/posts", data)
+            }>("/v1/adoptions/publications", payload)
 
             // Refrescar la lista de publicaciones
             await getPublications()
 
-            return response.data.values.post
-        } catch (e: any) {
-            console.error("Error al crear publicación:", e)
-            
-            // Para demostración, simular creación exitosa si la API no está disponible
-            if (e?.code === "ECONNREFUSED" || e?.message?.includes("Network Error")) {
-                console.warn("API no disponible, simulando creación de publicación")
-                
-                // Crear una publicación simulada
-                const mockPost: Post = {
-                    id: Date.now(),
-                    creator: {
+            // Retornar en el formato Post esperado
+            const post: Post = {
+                id: response.data.data.post.id,
+                creator: {
+                    id: Number(user.id),
+                    role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
+                    rut: user.rut || "",
+                    email: user.email || "",
+                    name: user.name || "",
+                    password: "",
+                    validated: true,
+                    address: null,
+                    description: null,
+                    createdAt: new Date(response.data.data.post.createdat),
+                    updatedAt: new Date(response.data.data.post.updatedat || response.data.data.post.createdat)
+                },
+                pet: {
+                    id: response.data.data.pet.id,
+                    owner: {
                         id: Number(user.id),
                         role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
                         rut: user.rut || "",
@@ -242,60 +238,26 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                         createdAt: new Date(),
                         updatedAt: new Date()
                     },
-                    pet: {
-                        id: Date.now() + 1,
-                        owner: {
-                            id: Number(user.id),
-                            role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
-                            rut: user.rut || "",
-                            email: user.email || "",
-                            name: user.name || "",
-                            password: "",
-                            validated: true,
-                            address: null,
-                            description: null,
-                            createdAt: new Date(),
-                            updatedAt: new Date()
-                        },
-                        species: data.pet.species,
-                        name: data.pet.name,
-                        gender: data.pet.gender,
-                        age: data.pet.age,
-                        size: data.pet.size,
-                        sterilized: data.pet.sterilized,
-                        adopted: false,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    },
-                    title: data.post.title,
-                    description: data.post.description,
-                    status: "active",
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                }
-                
-                // Agregar a la lista local
-                const newPublication: PublicationItem = {
-                    id: String(mockPost.id),
-                    name: data.pet.name,
-                    gender: data.pet.gender,
-                    age: `${data.pet.age} años`,
-                    publisher: user.name || "Usuario",
-                    description: data.post.description,
-                    image: { uri: "https://placehold.co/400x400?text=Nueva+Mascota" },
-                    species: data.pet.species,
-                    size: data.pet.size,
-                    sterilized: data.pet.sterilized,
-                    status: "active",
-                    postId: mockPost.id,
-                    petId: mockPost.pet.id,
-                    creatorId: Number(user.id)
-                }
-                
-                setPublications(prev => [newPublication, ...prev])
-                return mockPost
+                    species: response.data.data.pet.species,
+                    name: response.data.data.pet.name,
+                    gender: response.data.data.pet.gender,
+                    age: response.data.data.pet.age,
+                    size: response.data.data.pet.size,
+                    sterilized: response.data.data.pet.sterilized,
+                    adopted: response.data.data.pet.adopted,
+                    createdAt: new Date(response.data.data.pet.createdat),
+                    updatedAt: new Date(response.data.data.pet.updatedat || response.data.data.pet.createdat)
+                },
+                title: response.data.data.post.title,
+                description: response.data.data.post.description,
+                status: response.data.data.post.status,
+                createdAt: new Date(response.data.data.post.createdat),
+                updatedAt: new Date(response.data.data.post.updatedat || response.data.data.post.createdat)
             }
-            
+
+            return post
+        } catch (e: any) {
+            console.error("Error al crear publicación:", e)
             const errorMessage = e?.response?.data?.message || "Error al crear la publicación"
             setError(errorMessage)
             throw new Error(errorMessage)
@@ -305,7 +267,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     }
 
     /**
-     * PUT: Actualizar una publicación existente
+     * PATCH: Actualizar una publicación existente
      * Solo los dueños de la publicación pueden actualizarla
      */
     async function updatePublication(id: number, data: UpdatePublicationPayload): Promise<Post> {
@@ -317,44 +279,49 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
 
         try {
-            const response = await http.put<{
+            // Preparar el payload según la API (campos opcionales)
+            const payload: any = {}
+            
+            if (data.post?.title) payload.title = data.post.title
+            if (data.post?.description) payload.description = data.post.description
+            if (data.pet?.species) payload.species = data.pet.species
+            if (data.pet?.gender) payload.gender = data.pet.gender
+            if (data.pet?.age !== undefined) payload.age = data.pet.age
+            if (data.pet?.size) payload.size = data.pet.size
+            if (data.pet?.sterilized !== undefined) payload.sterilized = data.pet.sterilized
+            if (data.pet?.name !== undefined) payload.name = data.pet.name
+
+            const response = await http.patch<{
                 status: number
                 message: string
-                data: Post
-            }>(`/v1/adoptions/posts/${id}`, data)
+                data: {
+                    post: any
+                    pet: any
+                }
+            }>(`/v1/adoptions/publications/${id}`, payload)
 
             // Refrescar la lista de publicaciones
             await getPublications()
 
-            return response.data.data
-        } catch (e: any) {
-            console.error("Error al actualizar publicación:", e)
-            
-            // Para demostración, simular actualización exitosa si la API no está disponible
-            if (e?.code === "ECONNREFUSED" || e?.message?.includes("Network Error")) {
-                console.warn("API no disponible, simulando actualización de publicación")
-                
-                // Actualizar en la lista local
-                setPublications(prev => prev.map(pub => {
-                    if (pub.postId === id) {
-                        return {
-                            ...pub,
-                            name: data.pet?.name || pub.name,
-                            description: data.post?.description || pub.description,
-                            gender: data.pet?.gender || pub.gender,
-                            species: data.pet?.species || pub.species,
-                            size: data.pet?.size || pub.size,
-                            sterilized: data.pet?.sterilized ?? pub.sterilized,
-                            status: data.post?.status || pub.status
-                        }
-                    }
-                    return pub
-                }))
-                
-                // Crear mock del post actualizado
-                const mockPost: Post = {
-                    id: id,
-                    creator: {
+            // Retornar en el formato Post esperado
+            const post: Post = {
+                id: response.data.data.post.id,
+                creator: {
+                    id: Number(user.id),
+                    role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
+                    rut: user.rut || "",
+                    email: user.email || "",
+                    name: user.name || "",
+                    password: "",
+                    validated: true,
+                    address: null,
+                    description: null,
+                    createdAt: new Date(response.data.data.post.createdat),
+                    updatedAt: new Date(response.data.data.post.updatedat || response.data.data.post.createdat)
+                },
+                pet: {
+                    id: response.data.data.pet.id,
+                    owner: {
                         id: Number(user.id),
                         role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
                         rut: user.rut || "",
@@ -367,40 +334,26 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                         createdAt: new Date(),
                         updatedAt: new Date()
                     },
-                    pet: {
-                        id: id + 1000,
-                        owner: {
-                            id: Number(user.id),
-                            role: { id: user.role, roletype: user.role === 20 ? "dador" : "shelter" },
-                            rut: user.rut || "",
-                            email: user.email || "",
-                            name: user.name || "",
-                            password: "",
-                            validated: true,
-                            address: null,
-                            description: null,
-                            createdAt: new Date(),
-                            updatedAt: new Date()
-                        },
-                        species: data.pet?.species || "dog",
-                        name: data.pet?.name || "Mascota actualizada",
-                        gender: data.pet?.gender || "male",
-                        age: data.pet?.age || 1,
-                        size: data.pet?.size || "medium",
-                        sterilized: data.pet?.sterilized || false,
-                        adopted: false,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    },
-                    title: data.post?.title || "Título actualizado",
-                    description: data.post?.description || "Descripción actualizada",
-                    status: data.post?.status || "active",
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                }
-                
-                return mockPost
+                    species: response.data.data.pet.species,
+                    name: response.data.data.pet.name,
+                    gender: response.data.data.pet.gender,
+                    age: response.data.data.pet.age,
+                    size: response.data.data.pet.size,
+                    sterilized: response.data.data.pet.sterilized,
+                    adopted: response.data.data.pet.adopted,
+                    createdAt: new Date(response.data.data.pet.createdat),
+                    updatedAt: new Date(response.data.data.pet.updatedat || response.data.data.pet.createdat)
+                },
+                title: response.data.data.post.title,
+                description: response.data.data.post.description,
+                status: response.data.data.post.status,
+                createdAt: new Date(response.data.data.post.createdat),
+                updatedAt: new Date(response.data.data.post.updatedat || response.data.data.post.createdat)
             }
+
+            return post
+        } catch (e: any) {
+            console.error("Error al actualizar publicación:", e)
             
             const errorMessage = e?.response?.data?.message || "Error al actualizar la publicación"
             
@@ -432,21 +385,12 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
 
         try {
-            await http.delete(`/v1/adoptions/posts/${id}`)
+            await http.delete(`/v1/adoptions/publications/${id}`)
 
             // Refrescar la lista de publicaciones
             await getPublications()
         } catch (e: any) {
             console.error("Error al eliminar publicación:", e)
-            
-            // Para demostración, simular eliminación exitosa si la API no está disponible
-            if (e?.code === "ECONNREFUSED" || e?.message?.includes("Network Error")) {
-                console.warn("API no disponible, simulando eliminación de publicación")
-                
-                // Eliminar de la lista local
-                setPublications(prev => prev.filter(pub => pub.postId !== id))
-                return
-            }
             
             const errorMessage = e?.response?.data?.message || "Error al eliminar la publicación"
             
@@ -482,6 +426,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     // Lista de mascotas filtrada para el home (solo activas y disponibles)
     const petsForHome = useMemo(() => {
         return publications.filter(pub => 
+            pub.status === "ACTIVE" || 
             pub.status === "active" || 
             pub.status === "activo" || 
             !pub.status // Si no tiene status, asumimos que está activo
