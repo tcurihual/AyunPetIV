@@ -4,6 +4,9 @@ import { validarRUT } from "../rut"
 export * from "./entities"
 export * from "./responses"
 export * from "./adoption"
+export * from "./report"
+export * from "./message"
+export * from "./auth"
 
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
