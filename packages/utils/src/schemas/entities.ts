@@ -307,6 +307,7 @@ export const GetUserVerificationCodesResponseSchema = z.object({
             expires_at: z.string(),
         })
     ),
+})
 // ============================================
 // Esquemas extendidos con imágenes para comunicación entre microservicios
 // ============================================
@@ -315,21 +316,29 @@ export const GetUserVerificationCodesResponseSchema = z.object({
  * Esquema de Post extendido con imágenes obtenidas desde el microservicio de Media
  */
 export const PostWithImagesSchema = PostSchema.extend({
-    images: z.array(z.string()).describe("URLs de imágenes del post obtenidas desde el microservicio de Media"),
+    images: z
+        .array(z.string())
+        .describe("URLs de imágenes del post obtenidas desde el microservicio de Media"),
 })
 
 /**
  * Esquema de Pet extendido con imágenes obtenidas desde el microservicio de Media
  */
 export const PetWithImagesSchema = PetSchema.extend({
-    images: z.array(z.string()).describe("URLs de imágenes de la mascota obtenidas desde el microservicio de Media"),
+    images: z
+        .array(z.string())
+        .describe("URLs de imágenes de la mascota obtenidas desde el microservicio de Media"),
 })
 
 /**
  * Esquema de User extendido con imágenes obtenidas desde el microservicio de Media
  */
 export const UserWithImagesSchema = UserSchema.omit({ password: true }).extend({
-    images: z.array(z.string()).describe("URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"),
+    images: z
+        .array(z.string())
+        .describe(
+            "URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"
+        ),
 })
 
 /**
@@ -393,7 +402,9 @@ export const UserByIdWithImagesResponseSchema = z.object({
  * Esquema de solicitud de adopción extendido con imágenes del post
  */
 export const AdoptionRequestWithImagesSchema = AdoptionRequestSchema.extend({
-    postImages: z.array(z.string()).describe("URLs de imágenes del post asociado obtenidas desde el microservicio de Media"),
+    postImages: z
+        .array(z.string())
+        .describe("URLs de imágenes del post asociado obtenidas desde el microservicio de Media"),
 })
 
 /**

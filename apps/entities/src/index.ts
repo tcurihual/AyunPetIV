@@ -20,6 +20,7 @@ import postFormRouter from "./routes/post_form.routes"
 import verificationCodeRouter from "./routes/verificationCode"
 import newsRouter from "./routes/news.routes"
 import userRouter from "./routes/user.routes"
+import formResponsesRoutes from "./routes/formResponses"
 
 export const supabase = createSupabaseClient()
 
@@ -40,6 +41,7 @@ app.use("/post-form", postFormRouter)
 app.use("/verification-codes", verificationCodeRouter)
 app.use("/news", newsRouter)
 app.use("/users", userRouter)
+app.use("/form-responses", formResponsesRoutes)
 
 // Ruta pública
 app.get("/", (_, res) => {
