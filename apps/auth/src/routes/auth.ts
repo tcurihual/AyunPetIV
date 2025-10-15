@@ -1,8 +1,14 @@
 import { Router } from "express"
-import { login, register, verifyEmail, forgotPassword, resetPassword } from "../controllers/auth"
-// import { sendEmail } from "@repo/utils"
-// import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
-// import jwt from "jsonwebtoken"
+import {
+    login,
+    register,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
+    requestMobilePasswordReset,
+    verifyMobileResetCode,
+} from "../controllers/auth"
+import mobileRouter from "./mobile"
 
 const router = Router()
 
@@ -14,6 +20,12 @@ router.post("/register/:variation", register)
 router.post("/verify-email", verifyEmail)
 router.post("/forgot-password", forgotPassword)
 router.post("/reset-password", resetPassword)
+
+// ------------------------
+//  Rutas para móvil
+// ------------------------
+console.log("🔍 Registering mobile routes at /mobile")
+router.use("/mobile", mobileRouter)
 // ------------------------
 //  Ruta temporal para pruebas locales (comentar antes de subir)
 // ------------------------

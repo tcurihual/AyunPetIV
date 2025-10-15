@@ -17,13 +17,16 @@ export default function AuthRedirect() {
         const inPrivateGroup = segments[0] === "(home)" || segments[0] === "(shelter)"
 
         if (status === "authenticated" && user) {
+            // Role 21 y 22 son givers/shelter, van a (shelter)
+            // Role 19 y 20 son admin/user, van a (home)
+            const isGiverOrShelter = user.role === 21 || user.role === 22
             const isInCorrectGroup =
-                (user.role === 21 && segments[0] === "(shelter)") ||
-                (user.role !== 21 && segments[0] === "(home)")
+                (isGiverOrShelter && segments[0] === "(shelter)") ||
+                (!isGiverOrShelter && segments[0] === "(home)")
 
             if (!isInCorrectGroup && !redirected.current) {
                 redirected.current = true
-                router.replace(user.role === 21 ? "/(shelter)" : "/(home)")
+                router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
             }
 
             return

@@ -10,6 +10,10 @@ import {
     UpdateAdoptionHistoryRequestSchema,
     UpdateAdoptionHistoryResponseSchema,
     DeleteAdoptionHistoryResponseSchema,
+    UsersWithImagesResponseSchema,
+    UserByIdWithImagesResponseSchema,
+    AdoptionRequestsWithImagesResponseSchema,
+    AdoptionRequestByIdWithImagesResponseSchema,
 } from "@repo/utils"
 
 export function giverRequestDocs(registry: OpenAPIRegistry) {
@@ -343,6 +347,187 @@ export function deleteAdoptionHistoryDocs(registry: OpenAPIRegistry) {
             },
             500: {
                 description: "Error interno del servidor",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+/**
+ * Documentación para el endpoint de listado de usuarios con imágenes
+ * Incluye imágenes de perfil obtenidas del microservicio de Media
+ */
+export function getUsersDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users",
+        tags: ["Entities - Users"],
+        summary: "Listar usuarios",
+        description:
+            "Obtiene un listado paginado de usuarios del sistema. " +
+            "Solo accesible para administradores. " +
+            "Las imágenes de perfil se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Usuarios obtenidos exitosamente con imágenes de perfil",
+                content: {
+                    "application/json": {
+                        schema: UsersWithImagesResponseSchema,
+                    },
+                },
+            },
+            400: {
+                description: "Error en los parámetros de consulta",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de administrador",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+/**
+ * Documentación para el endpoint de obtener usuario por ID con imágenes
+ * Incluye imágenes de perfil obtenidas del microservicio de Media
+ */
+export function getUserByIdDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users/{id}",
+        tags: ["Entities - Users"],
+        summary: "Obtener usuario por ID",
+        description:
+            "Obtiene información detallada de un usuario específico por su ID. " +
+            "Las imágenes de perfil se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Usuario obtenido exitosamente con imágenes de perfil",
+                content: {
+                    "application/json": {
+                        schema: UserByIdWithImagesResponseSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Usuario no encontrado",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+/**
+ * Documentación para el endpoint de listado de solicitudes de adopción con imágenes
+ * Incluye imágenes de posts obtenidas del microservicio de Media
+ */
+export function getAdoptionRequestsDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-requests",
+        tags: ["Entities - Adoption Requests"],
+        summary: "Listar solicitudes de adopción",
+        description:
+            "Obtiene un listado de todas las solicitudes de adopción. " +
+            "Las imágenes de los posts asociados se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Solicitudes de adopción obtenidas exitosamente con imágenes de posts",
+                content: {
+                    "application/json": {
+                        schema: AdoptionRequestsWithImagesResponseSchema,
+                    },
+                },
+            },
+            400: {
+                description: "Error en los parámetros de consulta",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+        },
+    })
+}
+
+/**
+ * Documentación para el endpoint de obtener solicitud de adopción por ID con imágenes
+ * Incluye imágenes del post obtenidas del microservicio de Media
+ */
+export function getAdoptionRequestByIdDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-requests/{id}",
+        tags: ["Entities - Adoption Requests"],
+        summary: "Obtener solicitud de adopción por ID",
+        description:
+            "Obtiene información detallada de una solicitud de adopción específica por su ID. " +
+            "Las imágenes del post asociado se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Solicitud de adopción obtenida exitosamente con imágenes del post",
+                content: {
+                    "application/json": {
+                        schema: AdoptionRequestByIdWithImagesResponseSchema,
+                    },
+                },
+            },
+            404: {
+                description: "Solicitud de adopción no encontrada",
+                content: {
+                    "application/json": {
+                        schema: ErrorValuesSchema,
+                    },
+                },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
                 content: {
                     "application/json": {
                         schema: ErrorValuesSchema,
