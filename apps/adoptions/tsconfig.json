@@ -8,5 +8,5 @@
         "esModuleInterop": true
     },
     "exclude": ["node_modules", "dist", "tsup.config.ts", "*.config.ts", "**/*.config.ts"],
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "../auth/src/utils/passwordRecoveryTemplate.ts"]
 }

@@ -3,11 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { LineChart, PieChart, BarChart } from "react-native-gifted-charts"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
-import Header from "@common/Header"
-import BottomNavbar from "@common/BottomNavbar"
-import DropdownMenu from "@common/DropdownMenu"
 
 const makeSeries = (n = 28, base = 10) => {
     let v = base
@@ -51,7 +46,6 @@ const recientes = [
 export default function ShelterDashboard() {
     const router = useRouter()
     const { user } = useAuthContext()
-    const [menuVisible, setMenuVisible] = useState(false)
     const [selectedBarValue, setSelectedBarValue] = useState<string | null>(null)
     const series = useMemo(() => makeSeries(24, 10), [])
 
@@ -60,12 +54,7 @@ export default function ShelterDashboard() {
     }
 
     return (
-        <SafeAreaView style={styles.screen}>
-            <StatusBar style="auto" />
-
-            <Header onMenuPress={() => setMenuVisible(true)} />
-
-            <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Gráfico Principal</Text>
                     <LineChart
@@ -203,19 +192,10 @@ export default function ShelterDashboard() {
 
                 <View style={{ height: 24 }} />
             </ScrollView>
-
-            <BottomNavbar />
-
-            {menuVisible && <DropdownMenu onClose={() => setMenuVisible(false)} />}
-        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
-    screen: {
-        flex: 1,
-        backgroundColor: "#F9C80E",
-    },
     container: {
         padding: 16,
         backgroundColor: "#f6f7fb",

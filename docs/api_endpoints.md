@@ -559,3 +559,144 @@ Response Body:
 -   `403`: Permisos insuficientes (solo admin puede eliminar)
 -   `404`: Historial de adopción no encontrado
 -   `500`: Error interno del servidor
+
+---
+
+### Códigos de Verificación
+
+Prefijo: `api/entities`
+
+#### Crear Código de Verificación
+
+Método: <span style="color:yellow">POST</span>\
+Endpoint: `/verification-codes`\
+Headers: `Authorization: Bearer <token>`\
+Request Body:
+
+```json
+{
+    "type": "verify" | "reset" | "adoption",
+    "userId": 123,
+    "duration": 30
+}
+```
+
+**Campos:**
+
+-   `type` (requerido): Tipo de código (`verify`, `reset`, `adoption`)
+-   `userId` (opcional): ID del usuario (usa el del token si no se proporciona)
+-   `duration` (opcional): Duración en minutos (1-1440)
+
+**Duraciones por defecto:**
+
+-   `verify`: 30 minutos
+-   `reset`: 15 minutos
+-   `adoption`: 24 horas
+
+Código de respuesta: `201`\
+Response Body:
+
+```json
+{
+    "type": "success",
+    "message": "Código de verificación creado exitosamente",
+    "data": {
+        "id": 123,
+        "code": "123456",
+        "type": "verify",
+        "expires_at": "2025-10-14T15:30:00Z",
+        "user_id": 1
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: Datos inválidos (tipo incorrecto, duración fuera de rango)
+-   `401`: Token inválido o ausente
+-   `404`: Usuario no encontrado
+-   `500`: Error interno del servidor
+
+#### Validar Código de Verificación
+
+Método: <span style="color:yellow">POST</span>\
+Endpoint: `/verification-codes/validate`\
+Request Body:
+
+```json
+{
+    "code": "123456",
+    "type": "verify",
+    "userId": 1
+}
+```
+
+**Campos:**
+
+-   `code` (requerido): Código de 6 dígitos
+-   `type` (requerido): Tipo de código
+-   `userId` (requerido): ID del usuario
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "type": "success",
+    "message": "Código de verificación validado correctamente",
+    "data": {
+        "id": 123,
+        "type": "verify",
+        "user_id": 1,
+        "validated_at": "2025-10-14T14:45:00Z"
+    }
+}
+```
+
+**Códigos de error:**
+
+-   `400`: Código inválido, expirado o ya usado
+-   `404`: Código no encontrado
+-   `500`: Error interno del servidor
+
+#### Obtener Códigos de Usuario
+
+Método: <span style="color:green">GET</span>\
+Endpoint: `/verification-codes/user/:userId`\
+Headers: `Authorization: Bearer <token>`\
+Roles permitidos: `admin` o el mismo usuario\
+Parámetros: `userId` (número) - ID del usuario
+
+Código de respuesta: `200`\
+Response Body:
+
+```json
+{
+    "type": "success",
+    "message": "Códigos de verificación obtenidos correctamente",
+    "data": [
+        {
+            "id": 123,
+            "type": "verify",
+            "used": false,
+            "created_at": "2025-10-14T14:00:00Z",
+            "expires_at": "2025-10-14T14:30:00Z"
+        }
+    ]
+}
+```
+
+**Códigos de error:**
+
+-   `400`: Parámetros inválidos
+-   `401`: Token inválido o ausente
+-   `403`: Sin permisos para ver códigos de otro usuario
+-   `500`: Error interno del servidor
+
+**Nota de seguridad:** Los códigos se almacenan hasheados con bcrypt en la base de datos. El campo `code` solo se devuelve al crear el código (para desarrollo). En producción, este código debe enviarse por email/SMS.
+
+**Ver documentación completa:** [Códigos de Verificación](/docs/verification-codes.md)
+
+```
+
+```

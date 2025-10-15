@@ -213,3 +213,169 @@ export const DeleteAdoptionHistoryResponseSchema = z.object({
         id: z.number(),
     }),
 })
+
+// ===== VERIFICATION CODE SCHEMAS =====
+
+export const VerificationCodeSchema = z.object({
+    id: z.number(),
+    code: z.string(),
+    type: z.enum(["verify", "reset", "adoption"]),
+    user_id: z.number(),
+    used: z.boolean(),
+    created_at: z.string(),
+    expires_at: z.string(),
+})
+
+export const CreateVerificationCodeRequestSchema = z.object({
+    type: z.enum(["verify", "reset", "adoption"]),
+    userId: z.number().optional(),
+    duration: z.number().min(1).max(1440).optional(), // Entre 1 minuto y 24 horas
+})
+
+export const CreateVerificationCodeResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        id: z.number(),
+        code: z.string(),
+        type: z.enum(["verify", "reset", "adoption"]),
+        expires_at: z.string(),
+        user_id: z.number(),
+    }),
+})
+
+export const ValidateVerificationCodeRequestSchema = z.object({
+    code: z.string().length(6, "El código debe tener 6 dígitos"),
+    type: z.enum(["verify", "reset", "adoption"], "Tipo debe ser: verify, reset o adoption"),
+    userId: z.number(),
+})
+
+export const ValidateVerificationCodeResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        id: z.number(),
+        type: z.enum(["verify", "reset", "adoption"]),
+        user_id: z.number(),
+        validated_at: z.string(),
+    }),
+})
+
+export const GetUserVerificationCodesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.array(
+        z.object({
+            id: z.number(),
+            type: z.enum(["verify", "reset", "adoption"]),
+            used: z.boolean(),
+            created_at: z.string(),
+            expires_at: z.string(),
+        })
+    ),
+// ============================================
+// Esquemas extendidos con imágenes para comunicación entre microservicios
+// ============================================
+
+/**
+ * Esquema de Post extendido con imágenes obtenidas desde el microservicio de Media
+ */
+export const PostWithImagesSchema = PostSchema.extend({
+    images: z.array(z.string()).describe("URLs de imágenes del post obtenidas desde el microservicio de Media"),
+})
+
+/**
+ * Esquema de Pet extendido con imágenes obtenidas desde el microservicio de Media
+ */
+export const PetWithImagesSchema = PetSchema.extend({
+    images: z.array(z.string()).describe("URLs de imágenes de la mascota obtenidas desde el microservicio de Media"),
+})
+
+/**
+ * Esquema de User extendido con imágenes obtenidas desde el microservicio de Media
+ */
+export const UserWithImagesSchema = UserSchema.omit({ password: true }).extend({
+    images: z.array(z.string()).describe("URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"),
+})
+
+/**
+ * Respuesta de listado de publicaciones con imágenes
+ * Incluye imágenes tanto del post como de la mascota asociada
+ */
+export const PublicationsWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        items: z.array(
+            z.object({
+                post: PostWithImagesSchema,
+                pet: PetWithImagesSchema,
+            })
+        ),
+        total: z.number(),
+        page: z.number(),
+        pageSize: z.number(),
+        totalPages: z.number(),
+    }),
+})
+
+/**
+ * Respuesta de una publicación individual con imágenes
+ */
+export const PublicationByIdWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        post: PostWithImagesSchema,
+        pet: PetWithImagesSchema,
+    }),
+})
+
+/**
+ * Respuesta de listado de usuarios con imágenes de perfil
+ */
+export const UsersWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        items: z.array(UserWithImagesSchema),
+        total: z.number(),
+        page: z.number(),
+        pageSize: z.number(),
+        totalPages: z.number(),
+    }),
+})
+
+/**
+ * Respuesta de un usuario individual con imágenes
+ */
+export const UserByIdWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: UserWithImagesSchema,
+})
+
+/**
+ * Esquema de solicitud de adopción extendido con imágenes del post
+ */
+export const AdoptionRequestWithImagesSchema = AdoptionRequestSchema.extend({
+    postImages: z.array(z.string()).describe("URLs de imágenes del post asociado obtenidas desde el microservicio de Media"),
+})
+
+/**
+ * Respuesta de listado de solicitudes de adopción con imágenes
+ */
+export const AdoptionRequestsWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.array(AdoptionRequestWithImagesSchema),
+})
+
+/**
+ * Respuesta de una solicitud de adopción individual con imágenes
+ */
+export const AdoptionRequestByIdWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: AdoptionRequestWithImagesSchema,
+})

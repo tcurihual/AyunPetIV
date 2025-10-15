@@ -72,20 +72,36 @@ export default function RegisterScreen() {
     const onSubmit = async (data: RegisterFormType) => {
         try {
             await withLoading(async () => {
-                const phoneWithPrefix = `9${data.phone}`
-                //console.log("Teléfono completo:", phoneWithPrefix)
+                const phoneWithPrefix = `+569${data.phone}`
 
-                await signUp({
-                    name: data.name,
-                    email: data.email,
-                    password: data.password,
-                })
-                showAlert("Registro exitoso. Redirigiendo…", "success")
-                router.replace("/(home)/IntermediateView")
+                await signUp(
+                    {
+                        name: data.name,
+                        email: data.email,
+                        password: data.password,
+                        rut: data.rut,
+                        phone: phoneWithPrefix,
+                        address: "", 
+                        description: "",
+                    },
+                    "user"
+                )
+
+                showAlert(
+                    "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta.",
+                    "success"
+                )
+
+                setTimeout(() => {
+                    router.replace("/(auth)/login")
+                }, 2000)
             })
         } catch (e: any) {
+            console.error("Error en registro:", e)
             const msg =
-                typeof e?.message === "string" ? e.message : "No se pudo registrar la cuenta"
+                e?.response?.data?.error ||
+                e?.message ||
+                "No se pudo registrar la cuenta. Por favor intenta de nuevo."
             showAlert(msg, "error")
         }
     }

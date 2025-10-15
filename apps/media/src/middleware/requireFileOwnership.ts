@@ -68,6 +68,26 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
                 break
             }
 
+            case "news": {
+                const { data: news, error } = await supabase
+                    .from("new")
+                    .select("creator_id")
+                    .eq("id", numericId)
+                    .single()
+
+                if (error || !news) {
+                    throw new AppError(404, "Noticia no encontrada")
+                }
+
+                if (news.creator_id !== user.id) {
+                    throw new AppError(
+                        403,
+                        "No tienes permiso para modificar los archivos de esta noticia"
+                    )
+                }
+                break
+            }
+
             case "giver":
             case "account-request": {
                 throw new AppError(403, "Solo administradores pueden modificar estos archivos")

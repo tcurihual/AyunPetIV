@@ -53,7 +53,7 @@ export default function Home() {
             showAlert(error, "error")
             clearError()
         }
-    }, [error])
+    }, [error, showAlert, clearError])
 
     const toType = (species?: string) => {
         const s = (species ?? "").toLowerCase()
@@ -63,7 +63,7 @@ export default function Home() {
     }
 
     const matchAge = (ageStr: string, bucket: string) => {
-        const num = parseInt(ageStr) || 0
+        const num = parseInt(ageStr as string) || 0
         if (bucket === "young") return num <= 2
         if (bucket === "adult") return num >= 3 && num <= 6
         if (bucket === "senior") return num > 6
@@ -72,7 +72,7 @@ export default function Home() {
 
     const filteredPets = useMemo(() => {
         return petsForHome.filter((pet) => {
-            const petType = toType(pet.species)
+            const petType = toType(pet.species as unknown as string)
 
             // Filtro por categoría seleccionada
             if (selectedCategory === "dog" && petType !== "dog") return false
@@ -82,12 +82,23 @@ export default function Home() {
             if (activeFilters.type !== "all" && petType !== activeFilters.type) return false
 
             if (activeFilters.gender !== "all") {
-                const petGender = pet.gender.toLowerCase()
-                if (activeFilters.gender === "male" && !petGender.includes("macho") && !petGender.includes("male")) return false
-                if (activeFilters.gender === "female" && !petGender.includes("hembra") && !petGender.includes("female")) return false
+                const petGender = String(pet.gender ?? "").toLowerCase()
+                if (
+                    activeFilters.gender === "male" &&
+                    !petGender.includes("macho") &&
+                    !petGender.includes("male")
+                )
+                    return false
+                if (
+                    activeFilters.gender === "female" &&
+                    !petGender.includes("hembra") &&
+                    !petGender.includes("female")
+                )
+                    return false
             }
 
-            if (activeFilters.age !== "all" && !matchAge(pet.age, activeFilters.age)) return false
+            if (activeFilters.age !== "all" && !matchAge(String(pet.age), activeFilters.age))
+                return false
 
             return true
         })
@@ -102,7 +113,7 @@ export default function Home() {
         setRefreshing(true)
         try {
             await refreshPublications()
-        } catch (error) {
+        } catch (err) {
             showAlert("Error al actualizar las publicaciones", "error")
         } finally {
             setRefreshing(false)
@@ -203,7 +214,9 @@ export default function Home() {
                         ) : (
                             <>
                                 <Text style={styles.emptyEmoji}>🐾</Text>
-                                <Text style={styles.emptyText}>No hay publicaciones disponibles</Text>
+                                <Text style={styles.emptyText}>
+                                    No hay publicaciones disponibles
+                                </Text>
                                 <Text style={styles.emptySubtext}>
                                     Desliza hacia abajo para actualizar
                                 </Text>
@@ -262,10 +275,7 @@ const styles = StyleSheet.create({
         paddingVertical: 60,
         paddingHorizontal: 20,
     },
-    emptyEmoji: {
-        fontSize: 48,
-        marginBottom: 16,
-    },
+    emptyEmoji: { fontSize: 48, marginBottom: 16 },
     emptyText: {
         fontSize: 18,
         fontWeight: "600",
@@ -273,9 +283,5 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 8,
     },
-    emptySubtext: {
-        fontSize: 14,
-        color: "#999",
-        textAlign: "center",
-    },
+    emptySubtext: { fontSize: 14, color: "#999", textAlign: "center" },
 })
