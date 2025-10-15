@@ -8,6 +8,7 @@ export * from "./report"
 export * from "./message"
 export * from "./auth"
 
+
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
     roletype: z.enum(["admin", "user", "shelter"], "Se debe ingresar un rol válido"),
