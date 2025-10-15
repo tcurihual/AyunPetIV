@@ -2,9 +2,7 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import { MessageInsertSchema, MessageUpdateSchema, ErrorValuesSchema } from "@repo/utils"
 
 export function registerMessagesDocs(registry: OpenAPIRegistry) {
-    // ============================================
-    // GET /v1/messages
-    // ============================================
+
     registry.registerPath({
         method: "get",
         path: "/v1/messages",
@@ -38,9 +36,6 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // GET /v1/messages/{id}
-    // ============================================
     registry.registerPath({
         method: "get",
         path: "/v1/messages/{id}",
@@ -79,9 +74,6 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/messages
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/messages",
@@ -125,9 +117,6 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // PUT /v1/messages/{id}
-    // ============================================
     registry.registerPath({
         method: "put",
         path: "/v1/messages/{id}",
@@ -178,9 +167,7 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // DELETE /v1/messages/{id}
-    // ============================================
+
     registry.registerPath({
         method: "delete",
         path: "/v1/messages/{id}",

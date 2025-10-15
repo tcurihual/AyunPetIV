@@ -82,9 +82,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/auth/verify-email
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/auth/verify-email",
@@ -129,9 +126,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/auth/forgot-password
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/auth/forgot-password",
@@ -175,9 +169,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/auth/reset-password
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/auth/reset-password",
@@ -226,9 +217,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // GET /v1/auth/test-email (solo entorno de prueba)
-    // ============================================
     registry.registerPath({
         method: "get",
         path: "/v1/auth/test-email",

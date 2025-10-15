@@ -7,9 +7,7 @@ import {
 } from "@repo/utils"
 
 export function registerReportsDocs(registry: OpenAPIRegistry) {
-    // ============================================
-    // GET /v1/reports
-    // ============================================
+
     registry.registerPath({
         method: "get",
         path: "/v1/reports",
@@ -39,9 +37,6 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // GET /v1/reports/{id}
-    // ============================================
     registry.registerPath({
         method: "get",
         path: "/v1/reports/{id}",
@@ -79,9 +74,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/reports
-    // ============================================
+
     registry.registerPath({
         method: "post",
         path: "/v1/reports",
@@ -120,9 +113,6 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // PUT /v1/reports/{id}
-    // ============================================
     registry.registerPath({
         method: "put",
         path: "/v1/reports/{id}",
@@ -165,9 +155,6 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // DELETE /v1/reports/{id}
-    // ============================================
     registry.registerPath({
         method: "delete",
         path: "/v1/reports/{id}",
