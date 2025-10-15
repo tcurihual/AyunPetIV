@@ -69,8 +69,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         ;(async () => {
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
-                if (storedUser) setUser(storedUser)
-                setStatus("unauthenticated")
+
+                if (storedToken && storedUser) {
+                    setAuthToken(storedToken)
+                    setTokenState(storedToken)
+                    setUser(storedUser)
+                    setStatus("authenticated")
+                } else {
+                    setStatus("unauthenticated")
+                }
             } catch (e) {
                 await clearDown()
                 setStatus("unauthenticated")
@@ -83,7 +90,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         try {
             const response = await authService.login(data)
             const { token, user } = response.data
-            
+
             const userFormatted: User = {
                 id: user.id.toString(),
                 name: user.name,
@@ -93,7 +100,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 address: user.address,
                 description: user.description,
             }
-            
+
             await afterAuthSuccess(token, userFormatted)
             await savePlainPassword(data.password)
         } catch (e) {
@@ -107,7 +114,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setStatus("loading")
         try {
             const response = await authService.register(data, variation)
-            
+
             if (response.message) {
                 console.log("Registro exitoso:", response.message)
                 setStatus("unauthenticated")
@@ -115,7 +122,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         } catch (e: any) {
             console.error("Error al registrar usuario:", e)
             setStatus("unauthenticated")
-            
+
             if (e.response?.data?.error) {
                 throw new Error(e.response.data.error)
             }

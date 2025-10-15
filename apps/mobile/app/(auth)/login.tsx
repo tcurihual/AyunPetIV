@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native"
 import { useRouter } from "expo-router"
 import { useForm } from "react-hook-form"
@@ -18,7 +18,8 @@ export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-    const { signIn, status } = useAuthContext()
+    const { signIn, status, user } = useAuthContext()
+
     const {
         control,
         handleSubmit,
@@ -29,13 +30,19 @@ export default function LoginScreen() {
         mode: "onTouched",
     })
 
+    useEffect(() => {
+        if (status === "authenticated" && user) {
+            router.replace("/check-role")
+        }
+    }, [status, user])
+
     const onSubmit = async (data: LoginFormType) => {
         try {
             await withLoading(async () => {
                 await signIn(data)
                 await new Promise((r) => setTimeout(r, 700))
-
                 showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
+                router.replace("/check-role")
             })
         } catch (e: any) {
             const msg =
