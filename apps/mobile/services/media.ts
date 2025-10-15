@@ -1,5 +1,6 @@
-import { mediaHttp } from "@/services/http"
+import { http } from "@/services/http"
 import * as ImagePicker from "expo-image-picker"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 export type UploadedFile = {
   url: string
@@ -12,19 +13,10 @@ type PostFilesResponse = { message: string; data: UploadedFile[] }
 type GetFilesResponse  = { message: string; data: string[] }
 
 export function getFileUrl(relativeOrAbsolute: string): string {
-  if (!relativeOrAbsolute) return ""
-  if (/^https?:\/\//i.test(relativeOrAbsolute)) return relativeOrAbsolute
-
-  const base =
-    (mediaHttp as any)?.defaults?.baseURL ||
-    process.env.EXPO_PUBLIC_MEDIA_BASE || // usa tu var ya existente
-    "http://localhost:8080"
-
-  // asegura que solo haya una /
-  return `${String(base).replace(/\/+$/,"")}/${String(relativeOrAbsolute).replace(/^\/+/,"")}`
+  return toMediaUrl(relativeOrAbsolute)
 }
 
-/** Sube múltiples imágenes (campo "files") al microservicio Media */
+/** Sube múltiples imágenes (campo "files") al microservicio Media a través del gateway */
 export async function uploadMedia(
   entityType: string,
   entityId: string | number,
@@ -39,8 +31,8 @@ export async function uploadMedia(
     } as any)
   }
 
-  const { data } = await mediaHttp.post<PostFilesResponse>(
-    `/uploads/${entityType}/${entityId}`,
+  const { data } = await http.post<PostFilesResponse>(
+    `/v1/media/uploads/${entityType}/${entityId}`,
     form,
     { headers: { "Content-Type": "multipart/form-data" } }
   )
@@ -48,6 +40,6 @@ export async function uploadMedia(
 }
 
 export async function listMedia(entityType: string): Promise<string[]> {
-  const { data } = await mediaHttp.get<GetFilesResponse>(`/uploads/${entityType}`)
+  const { data } = await http.get<GetFilesResponse>(`/v1/media/uploads/${entityType}`)
   return data.data
 }

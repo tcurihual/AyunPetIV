@@ -1,5 +1,6 @@
 import axios from "axios"
 import { Platform } from "react-native"
+// Eliminado manejo extra, solo usar función global
 
 let accessToken: string | null = null
 
@@ -25,6 +26,18 @@ http.interceptors.request.use((config) => {
     }
     return config
 })
+
+http.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            if (typeof window !== "undefined" && (window as any).showSessionExpiredModal) {
+                ;(window as any).showSessionExpiredModal()
+            }
+        }
+        return Promise.reject(error)
+    }
+)
 
 export interface UploadedFile {
     url: string

@@ -4,6 +4,10 @@ import { validarRUT } from "../rut"
 export * from "./entities"
 export * from "./responses"
 export * from "./adoption"
+export * from "./report"
+export * from "./message"
+export * from "./auth"
+
 
 export const roleSchema = z.object({
     id: z.number("Se debe ingresar un id valido"),
@@ -112,8 +116,8 @@ export const UpdateUserSchema = z.object({
     role: z.enum(["admin", "user", "shelter"], "Rol es requerido"),
     rut: z
         .string("RUT es obligatorio")
-        .min(11, "El RUT debe tener al menos 11 caracteres (ej: 12345678-9)")
-        .max(12, "El RUT no puede tener más de 12 caracteres")
+        .min(9, "El RUT debe tener al menos 9 caracteres (ej: 1234567-8)")
+        .max(10, "El RUT no puede tener más de 10 caracteres")
         .refine((rut) => validarRUT(rut), {
             message: "El RUT no es válido. Formato: 12345678-9",
         }),
@@ -150,13 +154,6 @@ export const UserProfileSchema = z.object({
     email: z
         .email("Debe ser un email válido")
         .max(100, "El email no puede tener más de 100 caracteres"),
-    rut: z
-        .string("RUT es obligatorio")
-        .min(11, "El RUT debe tener al menos 11 caracteres (ej: 12345678-9)")
-        .max(12, "El RUT no puede tener más de 12 caracteres")
-        .refine((rut) => validarRUT(rut), {
-            message: "El RUT no es válido. Formato: 12345678-9",
-        }),
     address: z.string().max(200, "La dirección no puede tener más de 200 caracteres").optional(),
     description: z
         .string()

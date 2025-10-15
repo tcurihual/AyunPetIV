@@ -1,17 +1,35 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
 import { Colors } from "@/constants/Colors"
+import { useAuthContext, User } from "@/context/AuthContext"
+import { getUser, getPlainPassword } from "@/utils/storage"
 
 const Welcome = () => {
     const { height } = useWindowDimensions()
     const router = useRouter()
+    const { signIn } = useAuthContext()
+    useEffect(() => {
+        const checkAutoLogin = async () => {
+            const storedUser = await getUser<User>()
+            const storedPassword = await getPlainPassword()
 
-    const handleAdoptPress = async () => {
+            if (storedUser && storedPassword && storedUser.email) {
+                try {
+                    await signIn({ email: storedUser.email, password: storedPassword })
+                    router.replace("/check-role")
+                } catch {}
+            }
+        }
+
+        checkAutoLogin()
+    }, [])
+
+    const handleAdoptPress = () => {
         router.push("/(auth)/login")
     }
 
-    const handleGivePress = async () => {
+    const handleGivePress = () => {
         router.push("/(auth)/giver_register")
     }
 
