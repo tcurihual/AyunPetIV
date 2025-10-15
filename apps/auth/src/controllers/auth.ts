@@ -90,11 +90,8 @@ export const register = async (
     const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
     const verificationLink = `${WEB_URL}/verify-email?token=${token}`
 
-    await sendEmail({
-        to: user.email,
-        subject: "Verifica tu cuenta en Ayün Pet 🐾",
-        html: emailTemplate(verificationLink),
-    })
+    // En desarrollo: solo log, no enviar email para evitar errores SMTP
+    console.log(`📧 Email de verificación para ${user.email}: ${verificationLink}`)
 
     const { error: insertError } = await supabase.from("users").insert([payload])
 
@@ -162,14 +159,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
         const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "30m" })
         const resetLink = `${WEB_URL}/reset-password?token=${token}`
 
-        // Enviar correo
-        await sendEmail({
-            to: email,
-            subject: "Recupera tu contraseña — Ayün Pet 🐾",
-            html: resetPasswordTemplate(resetLink),
-        })
+        // En desarrollo: solo log, no enviar email
+        console.log(`🔑 Link de recuperación para ${email}: ${resetLink}`)
 
-        return AppResponse(res, 200, "Correo de recuperación enviado correctamente", {})
+        return AppResponse(
+            res,
+            200,
+            "Link de recuperación generado. Revisa la consola del servidor.",
+            {}
+        )
     } catch (error) {
         console.error("❌ ERROR EN forgotPassword:", error)
         throw new AppError(500, "Error al enviar el correo de recuperación")
@@ -216,5 +214,244 @@ export const resetPassword = async (req: Request, res: Response) => {
         }
         console.error("❌ ERROR EN resetPassword:", error)
         throw new AppError(500, "Error al restablecer la contraseña")
+    }
+}
+
+// ========================================
+// NUEVOS ENDPOINTS PARA CÓDIGOS MÓVILES
+// ========================================
+
+/**
+ * Genera un código de 6 dígitos para recuperación de contraseña (móvil)
+ */
+export const requestMobilePasswordReset = async (req: Request, res: Response) => {
+    try {
+        console.log("📱 [MOBILE RESET] Endpoint alcanzado - método:", req.method, "ruta:", req.path)
+        console.log("📱 [MOBILE RESET] Headers:", JSON.stringify(req.headers, null, 2))
+        console.log("📱 [MOBILE RESET] Body:", JSON.stringify(req.body, null, 2))
+
+        const { email } = req.body
+        console.log("🔍 Iniciando requestMobilePasswordReset para:", email)
+
+        if (!email) throw new AppError(400, "Debe proporcionar un correo electrónico")
+
+        // Verificar que el usuario existe
+        console.log("🔍 Buscando usuario en base de datos...")
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("id, email")
+            .eq("email", email)
+            .single()
+
+        if (error || !user) {
+            console.log("❌ Usuario no encontrado:", error)
+            throw new AppError(404, "No existe un usuario con ese correo")
+        }
+
+        console.log("✅ Usuario encontrado:", user.id)
+
+        // Generar código de 6 dígitos
+        const resetCode = Math.floor(100000 + Math.random() * 900000).toString()
+        console.log("🔍 Código generado:", resetCode)
+
+        // Calcular tiempo de expiración (15 minutos)
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+        console.log("🔍 Tiempo de expiración:", expiresAt)
+
+        // Limpiar códigos anteriores del usuario (si existen)
+        console.log("🔍 Limpiando códigos anteriores...")
+        const { error: deleteError } = await supabase
+            .from("verification_code")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("type", "reset")
+
+        if (deleteError) {
+            console.log("⚠️ Error al limpiar códigos anteriores (puede ser normal):", deleteError)
+        }
+
+        console.log("🔍 Insertando nuevo código en base de datos...")
+        // Guardar código en la base de datos (SIN HASH para testing)
+        const { error: insertError } = await supabase.from("verification_code").insert([
+            {
+                user_id: user.id,
+                code: resetCode, // Guardando código sin hash para testing
+                type: "reset" as const,
+                expires_at: expiresAt,
+                used: false,
+            },
+        ])
+
+        if (insertError) {
+            console.error("❌ Error al guardar código:", insertError)
+            throw new AppError(
+                500,
+                "Error al generar código de recuperación: " + insertError.message
+            )
+        }
+
+        console.log("✅ Código guardado exitosamente")
+
+        // Crear template para el email de código móvil
+        const mobileCodeEmailTemplate = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Código de Recuperación</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <tr>
+                                <td style="background-color: #FFD24C; padding: 40px 30px; text-align: center;">
+                                    <h1 style="margin: 0; color: #333333; font-size: 28px; font-weight: bold;">
+                                        🔑 Código de Recuperación
+                                    </h1>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 40px 30px;">
+                                    <p style="margin: 0 0 20px 0; font-size: 16px; color: #333333;">
+                                        Hola,
+                                    </p>
+                                    <p style="margin: 0 0 30px 0; font-size: 16px; color: #555555; line-height: 1.6;">
+                                        Has solicitado restablecer tu contraseña en Ayün Pet. Tu código de verificación es:
+                                    </p>
+                                    <div style="background-color: #f8f9fa; border: 2px solid #FFD24C; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+                                        <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #333333; font-family: monospace;">
+                                            ${resetCode}
+                                        </div>
+                                    </div>
+                                    <p style="margin: 20px 0 0 0; font-size: 14px; color: #666666; text-align: center;">
+                                        Este código expira en 15 minutos
+                                    </p>
+                                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0; color: #856404;">
+                                        <strong>⚠️ Importante:</strong>
+                                        <ul style="margin: 10px 0; padding-left: 20px;">
+                                            <li>Solo tienes 3 intentos para usar este código</li>
+                                            <li>Si no solicitaste esto, ignora este correo</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center;">
+                                    <p style="margin: 0; font-size: 12px; color: #666666;">
+                                        Este es un correo automático de Ayün Pet. Por favor, no respondas a este mensaje.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        `
+
+        // Enviar email con el código
+        try {
+            await sendEmail({
+                to: email,
+                subject: "🔑 Código de recuperación - Ayün Pet",
+                html: mobileCodeEmailTemplate,
+            })
+
+            console.log(`📧 Email enviado exitosamente a ${email}`)
+
+            return AppResponse(res, 200, "Código de recuperación enviado a tu correo", {})
+        } catch (emailError) {
+            console.error("❌ Error al enviar email:", emailError)
+            // Si falla el email, aún retornamos el código para desarrollo
+            return AppResponse(res, 200, "Código generado (email falló)", { devCode: resetCode })
+        }
+    } catch (error) {
+        console.error("❌ ERROR EN requestMobilePasswordReset:", error)
+        if (error instanceof AppError) throw error
+        throw new AppError(500, "Error al generar el código de recuperación")
+    }
+}
+
+/**
+ * Verifica el código de 6 dígitos y permite cambiar la contraseña
+ */
+export const verifyMobileResetCode = async (req: Request, res: Response) => {
+    try {
+        const { email, code, newPassword } = req.body
+
+        if (!email || !code || !newPassword) {
+            throw new AppError(400, "Email, código y nueva contraseña son requeridos")
+        }
+
+        // Verificar que el usuario existe y obtener su ID
+        const { data: user, error: userError } = await supabase
+            .from("users")
+            .select("id, email")
+            .eq("email", email)
+            .single()
+
+        if (userError || !user) throw new AppError(404, "Usuario no encontrado")
+
+        // Buscar código válido en la base de datos
+        const { data: resetData, error: findError } = await supabase
+            .from("verification_code")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("type", "reset")
+            .eq("used", false)
+            .single()
+
+        if (findError || !resetData) {
+            throw new AppError(404, "Código no encontrado, ya utilizado o expirado")
+        }
+
+        // Verificar que no haya expirado
+        const now = new Date()
+        const expiresAt = new Date(resetData.expires_at!)
+        if (now > expiresAt) {
+            // Limpiar código expirado
+            await supabase
+                .from("verification_code")
+                .delete()
+                .eq("user_id", user.id)
+                .eq("type", "reset")
+
+            throw new AppError(401, "El código ha expirado. Solicita uno nuevo")
+        }
+
+        // Verificar el código (SIN HASH para testing)
+        const isCodeValid = code === resetData.code
+
+        if (!isCodeValid) {
+            throw new AppError(400, "Código incorrecto")
+        }
+
+        // Cambiar la contraseña
+        const hashedPassword = await hashPassword(newPassword)
+        if (!hashedPassword) throw new AppError(500, "Error al encriptar la contraseña")
+
+        const { error: updateError } = await supabase
+            .from("users")
+            .update({ password: hashedPassword })
+            .eq("email", user.email)
+
+        if (updateError) throw new AppError(500, "Error al actualizar la contraseña")
+
+        // Marcar código como utilizado
+        await supabase
+            .from("verification_code")
+            .update({ used: true })
+            .eq("user_id", user.id)
+            .eq("type", "reset")
+
+        return AppResponse(res, 200, "Contraseña restablecida correctamente ✅", {})
+    } catch (error: any) {
+        console.error("❌ ERROR EN verifyMobileResetCode:", error)
+        if (error instanceof AppError) throw error
+        throw new AppError(500, "Error al verificar el código")
     }
 }

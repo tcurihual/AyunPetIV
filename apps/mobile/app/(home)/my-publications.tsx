@@ -14,6 +14,7 @@ import { useRouter } from "expo-router"
 import MyPublicationCard from "@/components/common/MyPublicationCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { getPetsByOwner, getPetImage } from "@/services/petAsyncStorage"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 const { width } = Dimensions.get("window")
 

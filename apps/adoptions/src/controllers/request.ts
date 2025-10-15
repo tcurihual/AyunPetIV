@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { AdoptionHistory, AppResponse, AuthenticatedRequest } from "@repo/utils"
 import { nanoid } from "nanoid"
 import { supabase } from "../index"
+import { getMultipleEntityImages } from "../utils/mediaService"
 
 export const validateCode = async (req: Request, res: Response) => {
     const { code } = req.body
@@ -71,13 +72,13 @@ export const listMyRequests = async (req: AuthenticatedRequest, res: Response) =
     const { data: myCreatedPosts, error: e1 } = await supabase
         .from("post")
         .select("id")
-        .eq("creatorid", userId)
+        .eq("creator_id", userId)
     if (e1) return AppResponse(res, 500, e1.message, null)
 
     const { data: myPets, error: e2 } = await supabase
         .from("pet")
         .select("id")
-        .eq("ownerid", userId)
+        .eq("owner_id", userId)
     if (e2) return AppResponse(res, 500, e2.message, null)
 
     let petIds: number[] = (myPets ?? []).map((p) => p.id)
@@ -86,7 +87,7 @@ export const listMyRequests = async (req: AuthenticatedRequest, res: Response) =
         const { data: postsByPets, error: e3 } = await supabase
             .from("post")
             .select("id")
-            .in("petid", petIds)
+            .in("pet_id", petIds)
         // FIXME
         // se AppResponse se usa para respuestas validas
         // usar AppError
@@ -107,11 +108,23 @@ export const listMyRequests = async (req: AuthenticatedRequest, res: Response) =
     const { data: requests, error: e4 } = await supabase
         .from("adoption_request")
         .select("*")
-        .in("postid", allPostIds)
-        .order("createdat", { ascending: false })
+        .in("post_id", allPostIds)
+        .order("created_at", { ascending: false })
     // FIXME: AppError
     if (e4) return AppResponse(res, 500, e4.message, null)
-    return AppResponse(res, 200, "OK", { as: "giver", requests: requests ?? [] })
+
+    // Obtener imágenes de los posts y pets asociados
+    const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
+    const postImages = await getMultipleEntityImages("post", requestPostIds)
+    const petImages = await getMultipleEntityImages("pet", petIds)
+
+    const requestsWithImages = (requests ?? []).map((r: any) => ({
+        ...r,
+        postImages: postImages[String(r.post_id)] || [],
+        petImages: petImages[String(r.post_id)] || [], // usar post_id para obtener pet asociado
+    }))
+
+    return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
 }
 
 export const confirmAccept = async (req: Request, res: Response) => {

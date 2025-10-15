@@ -1,6 +1,13 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi"
 import { registerAuthPaths } from "./endpoints/auth"
-import { mineRequestDocs, ConfirmAcceptDocs, validateCodeDocs } from "./endpoints/adoptions"
+import { 
+    mineRequestDocs, 
+    ConfirmAcceptDocs, 
+    validateCodeDocs,
+    listPublicationsDocs,
+    getPublicationByIdDocs,
+    mineRequestWithImagesDocs,
+} from "./endpoints/adoptions"
 import {
     giverRequestDocs,
     adoptionHistory,
@@ -9,7 +16,16 @@ import {
     createAdoptionHistoryDocs,
     updateAdoptionHistoryDocs,
     deleteAdoptionHistoryDocs,
+    getUsersDocs,
+    getUserByIdDocs,
+    getAdoptionRequestsDocs,
+    getAdoptionRequestByIdDocs,
 } from "./endpoints/entities"
+import {
+    createVerificationCodeDocs,
+    validateVerificationCodeDocs,
+    getUserVerificationCodesDocs,
+} from "./endpoints/verificationCodes"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -23,10 +39,17 @@ export function buildOpenApi() {
 
     registerAuthPaths(registry)
 
+    // Adoptions endpoints
     mineRequestDocs(registry)
     ConfirmAcceptDocs(registry)
     validateCodeDocs(registry)
+    
+    // Adoptions endpoints con imágenes (comunicación entre microservicios)
+    listPublicationsDocs(registry)
+    getPublicationByIdDocs(registry)
+    mineRequestWithImagesDocs(registry)
 
+    // Entities endpoints
     giverRequestDocs(registry)
     validateGiverAccountDocs(registry)
     adoptionHistory(registry)
@@ -34,6 +57,17 @@ export function buildOpenApi() {
     createAdoptionHistoryDocs(registry)
     updateAdoptionHistoryDocs(registry)
     deleteAdoptionHistoryDocs(registry)
+    
+    // Entities endpoints con imágenes (comunicación entre microservicios)
+    getUsersDocs(registry)
+    getUserByIdDocs(registry)
+    getAdoptionRequestsDocs(registry)
+    getAdoptionRequestByIdDocs(registry)
+
+    // Verification Codes endpoints
+    createVerificationCodeDocs(registry)
+    validateVerificationCodeDocs(registry)
+    getUserVerificationCodesDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 

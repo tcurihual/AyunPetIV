@@ -22,6 +22,7 @@ import Input from "@ui/Input"
 import ReportModal from "@common/modals/ReportModal"
 import { getLocalPets } from "@/services/petStorage"
 import { Pet } from "@/interfaces/pet"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -84,42 +85,35 @@ export default function PublicationDetail() {
             try {
                 if (!id) return
 
-                if (isLocalId(id)) {
-                    const locals = await getLocalPets()
-                    const raw = locals.find((p) => `local-${p.id}` === id)
-                    if (raw) {
-                        const url =
-                            toAbsoluteMediaUrl(raw.imageUrls?.[0]) ??
-                            "https://placehold.co/800x600?text=Mascota"
-                        const petObj: Pet = {
-                            id,
-                            name: raw.name,
-                            gender: raw.gender,
-                            age: `${raw.ageYears} años`,
-                            publisher: raw.ownerName || "Yo",
-                            description: raw.description ?? "",
-                            image: { uri: url },
-                        }
-                        if (alive) setPet(petObj)
-                    } else {
-                        if (alive) setPet(null)
-                    }
-                } else {
-                    const raw = (ayunData.pet ?? []).find((p) => String(p.id) === String(id))
-                    if (raw) {
-                        const assetByName: Record<string, any> = {
-                            firulais: require("@/assets/images/perro1.jpg"),
-                            michi: require("@/assets/images/Gato1-1.jpg"),
-                            rocky: require("@/assets/images/perro2.jpg"),
-                            luna: require("@/assets/images/Gato1-2.jpg"),
-                        }
-                        const key = (raw.name ?? "").toLowerCase().trim()
-                        const image = assetByName[key] ?? {
-                            uri: "https://placehold.co/800x600?text=Mascota",
-                        }
-
-                        const u = (ayunData.users ?? []).find((x) => x.id === raw.ownerid)
-                        const publisher = u?.name ?? u?.email ?? "Fundación Demo"
+        if (isLocalId(id)) {
+          const locals = await getLocalPets()
+          const raw = locals.find((p) => `local-${p.id}` === id)
+          if (raw) {
+            const url = toMediaUrl(raw.imageUrls?.[0]) || "https://placehold.co/800x600?text=Mascota"
+            const petObj: Pet = {
+              id,
+              name: raw.name,
+              gender: raw.gender,
+              age: `${raw.ageYears} años`,
+              publisher: raw.ownerName || "Yo",
+              description: raw.description ?? "",
+              image: { uri: url },
+            }
+            if (alive) setPet(petObj)
+          } else {
+            if (alive) setPet(null)
+          }
+        } else {
+          const raw = (ayunData.pet ?? []).find((p) => String(p.id) === String(id))
+          if (raw) {
+            const assetByName: Record<string, any> = {
+              firulais: require("@/assets/images/perro1.jpg"),
+              michi: require("@/assets/images/Gato1-1.jpg"),
+              rocky: require("@/assets/images/perro2.jpg"),
+              luna: require("@/assets/images/Gato1-2.jpg"),
+            }
+            const key = (raw.name ?? "").toLowerCase().trim()
+            const image = assetByName[key] ?? { uri: "https://placehold.co/800x600?text=Mascota" }
 
                         const petObj: Pet = {
                             id: String(raw.id),

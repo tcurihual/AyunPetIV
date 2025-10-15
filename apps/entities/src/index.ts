@@ -17,6 +17,9 @@ import adoptionHistoryRouter from "./routes/adoptionHistory"
 import adoptionRequestRouter from "./routes/adoptionRequest"
 import questionsRoutes from "./routes/questions.routes"
 import postFormRouter from "./routes/post_form.routes"
+import verificationCodeRouter from "./routes/verificationCode"
+import newsRouter from "./routes/news.routes"
+import userRouter from "./routes/user.routes"
 
 export const supabase = createSupabaseClient()
 
@@ -34,6 +37,9 @@ app.use("/adoption-history", adoptionHistoryRouter)
 app.use("/adoption-requests", adoptionRequestRouter)
 app.use("/questions", questionsRoutes)
 app.use("/post-form", postFormRouter)
+app.use("/verification-codes", verificationCodeRouter)
+app.use("/news", newsRouter)
+app.use("/users", userRouter)
 
 // Ruta pública
 app.get("/", (_, res) => {
