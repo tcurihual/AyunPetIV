@@ -11,18 +11,10 @@ const router = Router()
 
 router.use(requireAuth)
 
-// Create
-router.post("/", createAdoptionRequest)
-
-// Read
-// GET /adoption-requests/:id - Obtener solicitud por ID
 router.get("/", getAdoptionRequests)
 router.get("/:id", getAdoptionRequests)
-
-// Update
+router.post("/", createAdoptionRequest)
 router.put("/:id", updateAdoptionRequest)
-
-// Delete
 router.delete("/:id", deleteAdoptionRequest)
 
 export default router

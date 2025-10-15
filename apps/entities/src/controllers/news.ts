@@ -109,8 +109,6 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
             start_time: newsData.start_time || null,
             end_time: newsData.end_time || null,
             status: newsData.status || "active",
-            created_at: newsData.created_at || new Date().toISOString(),
-            updated_at: newsData.updated_at || new Date().toISOString(),
         }
 
         const { data: newNews, error: insertError } = await supabase
@@ -127,7 +125,7 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
             try {
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
-                
+
                 files.forEach((file) => {
                     formData.append("files", file.buffer, {
                         filename: file.originalname,
@@ -213,7 +211,7 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
             try {
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
-                
+
                 files.forEach((file) => {
                     formData.append("files", file.buffer, {
                         filename: file.originalname,
@@ -370,7 +368,12 @@ export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response)
                 }
             )
 
-            return AppResponse(res, 200, "Imágenes eliminadas exitosamente", mediaResponse.data.data)
+            return AppResponse(
+                res,
+                200,
+                "Imágenes eliminadas exitosamente",
+                mediaResponse.data.data
+            )
         } catch (mediaError: any) {
             console.error("Error al eliminar imágenes:", mediaError.message)
             throw new AppError(500, "Error al eliminar las imágenes")

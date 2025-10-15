@@ -4,22 +4,16 @@ import helmet from "helmet"
 import morgan from "morgan"
 import "dotenv/config"
 
-import {
-    errorHandler,
-    ENTITIES_PORT,
-    createSupabaseClient,
-    requireRole,
-    requireAuth,
-} from "@repo/utils"
+import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
 
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
 import adoptionRequestRouter from "./routes/adoptionRequest"
-import questionsRoutes from "./routes/questions.routes"
-import postFormRouter from "./routes/post_form.routes"
+import questionsRoutes from "./routes/questions"
+import postFormRouter from "./routes/postForm"
 import verificationCodeRouter from "./routes/verificationCode"
-import newsRouter from "./routes/news.routes"
-import userRouter from "./routes/user.routes"
+import newsRouter from "./routes/news"
+import usersRouter from "./routes/users"
 
 export const supabase = createSupabaseClient()
 
@@ -32,72 +26,14 @@ app.use(express.json())
 
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/", giverRequestRouter)
+app.use("/giver-request", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
 app.use("/adoption-requests", adoptionRequestRouter)
 app.use("/questions", questionsRoutes)
 app.use("/post-form", postFormRouter)
 app.use("/verification-codes", verificationCodeRouter)
 app.use("/news", newsRouter)
-app.use("/users", userRouter)
-
-// Ruta pública
-app.get("/", (_, res) => {
-    return res.status(200).json({
-        message: "Microservicio Entities funcionando correctamente",
-    })
-})
-
-// Ruta protegida (requiere token válido)
-app.get("/protected", requireAuth, (req, res) => {
-    return res.status(200).json({
-        message: "Acceso a ruta protegida exitoso",
-        user: req.user,
-        data: {
-            timestamp: new Date().toISOString(),
-            endpoint: "/protected",
-        },
-    })
-})
-
-// Ruta que requiere rol admin (rol 19)
-app.get("/admin-only", requireAuth, requireRole(19), (req, res) => {
-    return res.status(200).json({
-        message: "Acceso de administrador exitoso",
-        user: req.user,
-        data: {
-            timestamp: new Date().toISOString(),
-            endpoint: "/admin-only",
-            adminData: "Datos sensibles solo para admins",
-        },
-    })
-})
-
-// Ruta que requiere rol shelter (rol 21)
-app.get("/shelter-only", requireAuth, requireRole(21), (req, res) => {
-    return res.status(200).json({
-        message: "Acceso de shelter exitoso",
-        user: req.user,
-        data: {
-            timestamp: new Date().toISOString(),
-            endpoint: "/shelter-only",
-            shelterData: "Datos específicos para refugios",
-        },
-    })
-})
-
-// Ruta que requiere rol user (rol 20)
-app.get("/user-only", requireAuth, requireRole(20), (req, res) => {
-    return res.status(200).json({
-        message: "Acceso de usuario regular exitoso",
-        user: req.user,
-        data: {
-            timestamp: new Date().toISOString(),
-            endpoint: "/user-only",
-            userData: "Datos para usuarios regulares",
-        },
-    })
-})
+app.use("/users", usersRouter)
 
 app.use(errorHandler)
 

@@ -3,7 +3,6 @@ import { supabase } from "../index"
 
 const router = express.Router()
 
-// GET /posts - Obtener todas las publicaciones
 router.get("/posts", async (req, res) => {
     try {
         const { data: posts, error } = await supabase
@@ -39,7 +38,6 @@ router.get("/posts", async (req, res) => {
     }
 })
 
-// POST /posts - Crear nueva publicación
 router.post("/posts", async (req, res) => {
     try {
         return res.status(201).json({
@@ -56,7 +54,6 @@ router.post("/posts", async (req, res) => {
     }
 })
 
-// PUT /posts/:id - Actualizar publicación
 router.put("/posts/:id", async (req, res) => {
     try {
         const { id } = req.params
@@ -74,7 +71,6 @@ router.put("/posts/:id", async (req, res) => {
     }
 })
 
-// DELETE /posts/:id - Eliminar publicación
 router.delete("/posts/:id", async (req, res) => {
     try {
         const { id } = req.params
