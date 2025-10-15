@@ -14,6 +14,7 @@ import postFormRouter from "./routes/postForm"
 import verificationCodeRouter from "./routes/verificationCode"
 import newsRouter from "./routes/news"
 import usersRouter from "./routes/users"
+import formResponsesRoutes from "./routes/formResponses"
 
 export const supabase = createSupabaseClient()
 
@@ -34,6 +35,7 @@ app.use("/post-form", postFormRouter)
 app.use("/verification-codes", verificationCodeRouter)
 app.use("/news", newsRouter)
 app.use("/users", usersRouter)
+app.use("/form-responses", formResponsesRoutes)
 
 app.use(errorHandler)
 
