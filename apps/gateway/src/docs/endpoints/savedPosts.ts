@@ -63,19 +63,11 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
         path: "/v1/adoptions/saved-posts",
-        description: "Obtener lista de publicaciones guardadas por el usuario autenticado",
+        description:
+            "Obtener lista de publicaciones guardadas por el usuario autenticado. Soporta paginación mediante query params: page (defecto: 1) y pageSize (defecto: 10, máximo: 50)",
         summary: "Listar publicaciones guardadas",
         tags: ["Publicaciones Guardadas"],
         security: [{ bearerAuth: [] }],
-        request: {
-            query: z.object({
-                page: z.string().optional().describe("Número de página (por defecto: 1)"),
-                pageSize: z
-                    .string()
-                    .optional()
-                    .describe("Tamaño de página (por defecto: 10, máximo: 50)"),
-            }),
-        },
         responses: {
             200: {
                 description: "Lista de publicaciones guardadas obtenida exitosamente",
