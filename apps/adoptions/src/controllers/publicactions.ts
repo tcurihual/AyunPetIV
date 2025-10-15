@@ -2,6 +2,7 @@ import type { Response } from "express"
 import { AppError, AppResponse } from "@repo/utils"
 import type { AuthenticatedRequest, Post, Pet } from "@repo/utils"
 import { supabase } from "../index"
+import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 const isAdmin = (req: AuthenticatedRequest) => req.user?.role === ROLES.ADMIN
@@ -20,7 +21,7 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
 
         let query = supabase
             .from("post")
-            .select("*, pet:petid(*)", { count: "exact" })
+            .select("*, pet:pet_id(*)", { count: "exact" })
             .order("id", { ascending: true })
 
         if (ownerId !== undefined) query = query.eq("creatorid", ownerId)
@@ -34,18 +35,32 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         const { data, error, count } = await query.range(from, to)
         if (error) throw new AppError(500, error.message)
 
+        // Obtener IDs de posts y pets para solicitar imágenes
+        const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
+        const petIds = (data ?? []).map((row: any) => row.pet_id).filter(Boolean)
+
+        // Solicitar imágenes en paralelo
+        const [postImages, petImages] = await Promise.all([
+            getMultipleEntityImages("post", postIds),
+            getMultipleEntityImages("pet", petIds),
+        ])
+
         const items = (data ?? []).map((row: any) => ({
             post: {
                 id: row.id,
-                creatorid: row.creatorid,
-                petid: row.petid,
+                creator_id: row.creator_id,
+                pet_id: row.pet_id,
                 title: row.title,
                 description: row.description,
                 status: row.status,
-                createdat: row.createdat,
-                updatedat: row.updatedat,
-            } as Post["Row"],
-            pet: row.pet as Pet["Row"],
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                images: postImages[String(row.id)] || [],
+            } as Post["Row"] & { images: string[] },
+            pet: {
+                ...(row.pet as Pet["Row"]),
+                images: petImages[String(row.pet_id)] || [],
+            } as Pet["Row"] & { images: string[] },
         }))
 
         return AppResponse(res, 200, "Listado de publicaciones", {
@@ -66,24 +81,34 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
         const id = parseId(req.params.id)
         const { data, error } = await supabase
             .from("post")
-            .select("*, pet:petid(*)")
+            .select("*, pet:pet_id(*)")
             .eq("id", id)
             .single()
 
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 
+        // Obtener imágenes del post y del pet
+        const [postImages, petImages] = await Promise.all([
+            getEntityImages("post", data.id),
+            data.pet_id ? getEntityImages("pet", data.pet_id) : Promise.resolve([]),
+        ])
+
         const payload = {
             post: {
                 id: data.id,
-                creatorid: data.creatorid,
-                petid: data.petid,
+                creator_id: data.creator_id,
+                pet_id: data.pet_id,
                 title: data.title,
                 description: data.description,
                 status: data.status,
-                createdat: data.createdat,
-                updatedat: data.updatedat,
-            } as Post["Row"],
-            pet: data.pet as Pet["Row"],
+                created_at: data.created_at,
+                updated_at: data.updated_at,
+                images: postImages,
+            } as Post["Row"] & { images: string[] },
+            pet: {
+                ...(data.pet as Pet["Row"]),
+                images: petImages,
+            } as Pet["Row"] & { images: string[] },
         }
 
         return AppResponse(res, 200, "Publicación", payload)
