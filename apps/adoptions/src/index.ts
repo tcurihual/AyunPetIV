@@ -7,6 +7,7 @@ import { errorHandler, ADOPTIONS_PORT, getHeaders, createSupabaseClient } from "
 import mineRequestRoutes from "./routes/requests"
 import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
+import postsRoutes from "./routes/posts"
 import publicationRoutes from "./routes/publication.routes"
 
 export const supabase = createSupabaseClient()
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/", mineRequestRoutes)
 app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
+app.use("/", postsRoutes)
 app.use("/publications", publicationRoutes)
 
 app.get("/", (_, res) => {
