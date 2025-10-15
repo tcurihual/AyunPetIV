@@ -25,7 +25,7 @@ import { useLoading } from "@/context/LoadingContext"
 
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
-import { mediaService, mediaHttp, FileInfo } from "@/services/http"
+import { mediaService, FileInfo } from "@/services/http"
 import Input from "@ui/Input"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [

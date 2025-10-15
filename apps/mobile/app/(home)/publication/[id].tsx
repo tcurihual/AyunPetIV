@@ -22,21 +22,13 @@ import Input from "@ui/Input"
 import ReportModal from "@common/modals/ReportModal"
 import { getLocalPets } from "@/services/petStorage"
 import { Pet } from "@/interfaces/pet"
+import { toMediaUrl } from "@/utils/mediaUrl"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
 const { width, height } = Dimensions.get("window")
 
 const isLocalId = (id: string) => id.startsWith("local-")
-
-const toAbsoluteMediaUrl = (u?: string): string | undefined => {
-  if (!u) return undefined
-  if (/^https?:\/\//i.test(u)) return u
-  const base =
-    (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_MEDIA_BASE?.trim()) ||
-    (Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080")
-  return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
-}
 
 const mockComments: Comment[] = [
   {
@@ -89,7 +81,7 @@ export default function PublicationDetail() {
           const locals = await getLocalPets()
           const raw = locals.find((p) => `local-${p.id}` === id)
           if (raw) {
-            const url = toAbsoluteMediaUrl(raw.imageUrls?.[0]) ?? "https://placehold.co/800x600?text=Mascota"
+            const url = toMediaUrl(raw.imageUrls?.[0]) || "https://placehold.co/800x600?text=Mascota"
             const petObj: Pet = {
               id,
               name: raw.name,
