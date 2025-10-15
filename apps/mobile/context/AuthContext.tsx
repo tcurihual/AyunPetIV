@@ -91,6 +91,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             const response = await authService.login(data)
             const { token, user } = response.data
 
+            if (!user.validated) {
+                setStatus("unauthenticated")
+
+                router.replace("/(auth)/verify-email")
+                throw new Error(
+                    "Tu cuenta aún no ha sido validada. Por favor revisa tu correo para completarlo."
+                )
+            }
+
             const userFormatted: User = {
                 id: user.id.toString(),
                 name: user.name,
