@@ -18,6 +18,8 @@ import { useAuthContext } from "@/context/AuthContext"
 import { usePublications } from "@/context/PublicationContext"
 import { useAlert } from "@/context/AlertContext"
 
+// import petsData from "@/assets/data/pets.json"
+
 const { width } = Dimensions.get("window")
 
 const toAbsoluteMediaUrl = (u?: string): string | undefined => {
@@ -32,6 +34,13 @@ export default function Home() {
     const router = useRouter()
     const { user } = useAuthContext()
     const { petsForHome, loading, error, refreshPublications, clearError } = usePublications()
+
+//    const petsForHome = petsData
+//    const loading = false
+//    const error = null
+//    const refreshPublications = async () => {}
+//    const clearError = () => {}
+
     const { showAlert } = useAlert()
 
     const [checking, setChecking] = useState(true)
@@ -63,54 +72,57 @@ export default function Home() {
         }
     }, [error, showAlert, clearError])
 
-    const toType = (species?: string) => {
-        const s = (species ?? "").toLowerCase()
-        if (s === "perro" || s === "dog") return "dog"
-        if (s === "gato" || s === "cat") return "cat"
-        return "other"
-    }
+    const getFilteredPets = (pets: any[], category: string, filters: FilterOptions) => {
+        const toType = (species?: string) => {
+            const s = (species ?? "").toLowerCase()
+            if (s === "perro" || s === "dog") return "dog"
+            if (s === "gato" || s === "cat") return "cat"
+            return "other"
+        }
 
-    const matchAge = (ageStr: string, bucket: string) => {
-        const num = parseInt(ageStr as string) || 0
-        if (bucket === "young") return num <= 2
-        if (bucket === "adult") return num >= 3 && num <= 6
-        if (bucket === "senior") return num > 6
-        return true
-    }
+        const matchAge = (ageStr: string, bucket: string) => {
+            const num = parseInt(ageStr as string) || 0
+            if (bucket === "puppy") return num <= 1
+            if (bucket === "young") return num >= 1 && num <= 3
+            if (bucket === "adult") return num >= 3 && num <= 7
+            if (bucket === "senior") return num > 7
+            return true
+        }
 
-    const filteredPets = useMemo(() => {
-        return petsForHome.filter((pet) => {
+        return pets.filter((pet) => {
             const petType = toType(pet.species as unknown as string)
 
-            // Filtro por categoría seleccionada
-            if (selectedCategory === "dog" && petType !== "dog") return false
-            if (selectedCategory === "cat" && petType !== "cat") return false
+            if (category === "dog" && petType !== "dog") return false
+            if (category === "cat" && petType !== "cat") return false
 
-            // Filtros avanzados
-            if (activeFilters.type !== "all" && petType !== activeFilters.type) return false
+            if (filters.type !== "all" && petType !== filters.type) return false
 
-            if (activeFilters.gender !== "all") {
+            if (filters.gender !== "all") {
                 const petGender = String(pet.gender ?? "").toLowerCase()
                 if (
-                    activeFilters.gender === "male" &&
+                    filters.gender === "male" &&
                     !petGender.includes("macho") &&
                     !petGender.includes("male")
                 )
                     return false
                 if (
-                    activeFilters.gender === "female" &&
+                    filters.gender === "female" &&
                     !petGender.includes("hembra") &&
                     !petGender.includes("female")
                 )
                     return false
             }
 
-            if (activeFilters.age !== "all" && !matchAge(String(pet.age), activeFilters.age))
-                return false
+            if (filters.age !== "all" && !matchAge(String(pet.age), filters.age)) return false
 
             return true
         })
-    }, [petsForHome, selectedCategory, activeFilters])
+    }
+
+    const filteredPets = useMemo(
+        () => getFilteredPets(petsForHome, selectedCategory, activeFilters),
+        [petsForHome, selectedCategory, activeFilters]
+    )
 
     const handleApplyFilters = (filters: FilterOptions) => {
         setActiveFilters(filters)
