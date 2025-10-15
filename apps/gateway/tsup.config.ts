@@ -1,12 +1,9 @@
-import { defineConfig } from "tsup"
+import { defineConfig, type Options } from "tsup"
 
-export default defineConfig({
-    entry: ["src/**/*.ts"],
-    outDir: "dist",
-    format: ["cjs"],
+export default defineConfig((options: Options) => ({
+    entryPoints: ["src/index.ts"],
     clean: true,
-    bundle: false,
-    dts: false,
-    sourcemap: false,
-    target: "node20",
-})
+    format: ["cjs"],
+    onSuccess: "node dist/index.js",
+    ...options,
+}))
