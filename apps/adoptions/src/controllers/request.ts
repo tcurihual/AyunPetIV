@@ -1,148 +1,171 @@
 import { Request, Response } from "express"
-import { AdoptionHistory, AppResponse, AuthenticatedRequest } from "@repo/utils"
+import { AdoptionHistory, AppResponse, AuthenticatedRequest, AppError } from "@repo/utils"
 import { nanoid } from "nanoid"
 import { supabase } from "../index"
 import { getMultipleEntityImages } from "../utils/mediaService"
 
 export const validateCode = async (req: Request, res: Response) => {
-    const { code } = req.body
-    // TODO: implementación del uso del codigo correctamente buscandolo
-    // en su respectiva tabla
     try {
-        const { data: request, error: reqError } = await supabase
+        const { code, requestId } = req.body as { code: string; requestId: number }
+        if (!code || !requestId) throw new AppError(400, "code y requestId son requeridos")
+
+        const { data: vcode, error: vErr } = await supabase
+            .from("verification_code")
+            .select("user_id, code, type, expires_at, used")
+            .eq("code", code)
+            .eq("type", "adoption")
+            .eq("used", false)
+            .maybeSingle()
+
+        if (vErr) throw new AppError(500, vErr.message)
+        if (!vcode) throw new AppError(404, "Código no encontrado o ya utilizado")
+
+        if (vcode.expires_at && new Date() > new Date(vcode.expires_at)) {
+            await supabase
+                .from("verification_code")
+                .delete()
+                .eq("code", code)
+                .eq("type", "adoption")
+            throw new AppError(401, "El código ha expirado")
+        }
+
+        const { data: request, error: rErr } = await supabase
             .from("adoption_request")
             .select("id, post_id, requester_id, post_owner_id, status")
-            .eq("confirmation_code", code)
+            .eq("id", requestId)
             .single()
 
-        if (reqError || !request) throw new Error("Código inválido o no encontrado")
+        if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
+        if (request.requester_id !== vcode.user_id)
+            throw new AppError(403, "El código no corresponde a esta solicitud")
 
-        if (!request.id) throw new Error("Solicitud no asociada a una publicación válida")
-
-        const { error: updateError } = await supabase
+        const { error: updErr } = await supabase
             .from("adoption_request")
             .update({ status: "completed" })
             .eq("id", request.id)
+        if (updErr) throw new AppError(500, updErr.message)
 
-        if (updateError) throw new Error(updateError.message)
-        // FIXME: se esta guardando en la id del owner el id del post,
-        // se debe buscar el post con su id y usar post.creator_id,
-        // lo mismo con pet_id
+        await supabase
+            .from("verification_code")
+            .update({ used: true })
+            .eq("code", code)
+            .eq("type", "adoption")
+
         const payload: AdoptionHistory["Insert"] = {
             from_owner_id: request.post_owner_id,
             to_owner_id: request.requester_id,
             pet_id: request.post_id,
         }
+        const { error: histErr } = await supabase.from("adoption_history").insert([payload])
+        if (histErr) throw new AppError(500, histErr.message)
 
-        const { error: historyError } = await supabase.from("adoption_history").insert([payload])
-
-        if (historyError) throw new Error(historyError.message)
-
-        return AppResponse(res, 200, "Adopción validada y cerrada", {
-            status: "completed",
-        })
-    } catch (e) {
-        if (e instanceof Error) {
-            return AppResponse(res, 500, e.message, null)
-        }
-        return AppResponse(res, 500, "Error desconocido", null)
+        return AppResponse(res, 200, "Adopción validada y cerrada", { status: "completed" })
+    } catch (e: any) {
+        if (e instanceof AppError) return AppResponse(res, e.statusCode ?? 500, e.message, null)
+        return AppResponse(res, 500, e?.message ?? "Error desconocido", null)
     }
 }
 
 export const listMyRequests = async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user.id
-    const role = req.user.role
-    // TODO: ahora esta presente la id de la entidad a la que le hacen
-    // las request, usar eso
+    try {
+        const userId = req.user.id
 
-    // FIXME: porque role 1? no existe ningun role 1 en al bd,
-    //  nunca entrara a ese if
-    // ademas como tal no deberia de verificar roles si ya existe el middleware
-    if (role === 1) {
-        const { data, error } = await supabase
-            .from("adoption_request")
-            .select("*")
-            .eq("userid", userId)
-            .order("createdat", { ascending: false })
-        // FIXME: AppError
-        if (error) return AppResponse(res, 500, error.message, null)
-        return AppResponse(res, 200, "OK", { as: "adopter", requests: data ?? [] })
-    }
-
-    const { data: myCreatedPosts, error: e1 } = await supabase
-        .from("post")
-        .select("id")
-        .eq("creator_id", userId)
-    if (e1) return AppResponse(res, 500, e1.message, null)
-
-    const { data: myPets, error: e2 } = await supabase
-        .from("pet")
-        .select("id")
-        .eq("owner_id", userId)
-    if (e2) return AppResponse(res, 500, e2.message, null)
-
-    let petIds: number[] = (myPets ?? []).map((p) => p.id)
-    let postIdsByPets: number[] = []
-    if (petIds.length > 0) {
-        const { data: postsByPets, error: e3 } = await supabase
+        const { data: myCreatedPosts, error: e1 } = await supabase
             .from("post")
             .select("id")
-            .in("pet_id", petIds)
-        // FIXME
-        // se AppResponse se usa para respuestas validas
-        // usar AppError
-        if (e3) return AppResponse(res, 500, e3.message, null)
-        postIdsByPets = (postsByPets ?? []).map((p) => p.id)
+            .eq("creator_id", userId)
+        if (e1) throw new AppError(500, e1.message)
+
+        const { data: myPets, error: e2 } = await supabase
+            .from("pet")
+            .select("id")
+            .eq("owner_id", userId)
+        if (e2) throw new AppError(500, e2.message)
+
+        let petIds: number[] = (myPets ?? []).map((p) => p.id)
+        let postIdsByPets: number[] = []
+        if (petIds.length > 0) {
+            const { data: postsByPets, error: e3 } = await supabase
+                .from("post")
+                .select("id")
+                .in("pet_id", petIds)
+            if (e3) throw new AppError(500, e3.message)
+            postIdsByPets = (postsByPets ?? []).map((p) => p.id)
+        }
+
+        const postIdSet = new Set<number>([
+            ...(myCreatedPosts ?? []).map((p) => p.id),
+            ...postIdsByPets,
+        ])
+        const allPostIds = Array.from(postIdSet)
+
+        if (allPostIds.length === 0) {
+            return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
+        }
+
+        const { data: requests, error: e4 } = await supabase
+            .from("adoption_request")
+            .select("*")
+            .in("post_id", allPostIds)
+            .order("created_at", { ascending: false })
+        if (e4) throw new AppError(500, e4.message)
+
+        const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
+        const postImages = await getMultipleEntityImages("post", requestPostIds)
+        const petImages = await getMultipleEntityImages("pet", petIds)
+
+        const requestsWithImages = (requests ?? []).map((r: any) => ({
+            ...r,
+            postImages: postImages[String(r.post_id)] || [],
+            petImages: petImages[String(r.post_id)] || [],
+        }))
+
+        return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
+    } catch (e: any) {
+        if (e instanceof AppError) return AppResponse(res, e.statusCode ?? 500, e.message, null)
+        return AppResponse(res, 500, e?.message ?? "Error desconocido", null)
     }
-
-    const postIdSet = new Set<number>([
-        ...(myCreatedPosts ?? []).map((p) => p.id),
-        ...postIdsByPets,
-    ])
-    const allPostIds = Array.from(postIdSet)
-
-    if (allPostIds.length === 0) {
-        return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
-    }
-
-    const { data: requests, error: e4 } = await supabase
-        .from("adoption_request")
-        .select("*")
-        .in("post_id", allPostIds)
-        .order("created_at", { ascending: false })
-    // FIXME: AppError
-    if (e4) return AppResponse(res, 500, e4.message, null)
-
-    // Obtener imágenes de los posts y pets asociados
-    const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
-    const postImages = await getMultipleEntityImages("post", requestPostIds)
-    const petImages = await getMultipleEntityImages("pet", petIds)
-
-    const requestsWithImages = (requests ?? []).map((r: any) => ({
-        ...r,
-        postImages: postImages[String(r.post_id)] || [],
-        petImages: petImages[String(r.post_id)] || [], // usar post_id para obtener pet asociado
-    }))
-
-    return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
 }
 
 export const confirmAccept = async (req: Request, res: Response) => {
     try {
-        const confirmationCode = nanoid(8)
-        const { data, error } = await supabase
+        const id = Number(req.params.id)
+        if (Number.isNaN(id)) throw new AppError(400, "ID inválido")
+
+        const { data: request, error: rErr } = await supabase
             .from("adoption_request")
-            .update({ status: "approved", confirmation_code: confirmationCode })
+            .select("id, requester_id, status")
+            .eq("id", id)
             .single()
+        if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
 
-        if (error) throw new Error(error.message)
+        const { error: updErr } = await supabase
+            .from("adoption_request")
+            .update({ status: "approved" })
+            .eq("id", id)
+        if (updErr) throw new AppError(500, updErr.message)
 
-        return AppResponse(res, 200, "Solicitud aceptada", {})
-    } catch (e) {
-        if (e instanceof Error) {
-            // FIXME: AppError
-            return AppResponse(res, 500, e.message, null)
-        }
-        return AppResponse(res, 500, "Error desconocido", null)
+        const code = nanoid(8)
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+
+        const { error: vErr } = await supabase.from("verification_code").insert([
+            {
+                user_id: request.requester_id,
+                code,
+                type: "adoption",
+                expires_at: expiresAt,
+                used: false,
+            },
+        ])
+        if (vErr) throw new AppError(500, vErr.message)
+
+        return AppResponse(res, 200, "Solicitud aceptada", {
+            id: request.id,
+            confirmationCode: code,
+            expiresAt,
+        })
+    } catch (e: any) {
+        if (e instanceof AppError) return AppResponse(res, e.statusCode ?? 500, e.message, null)
+        return AppResponse(res, 500, e?.message ?? "Error desconocido", null)
     }
 }

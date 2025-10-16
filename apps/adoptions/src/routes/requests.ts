@@ -3,8 +3,8 @@ import { listMyRequests, confirmAccept, validateCode } from "../controllers/requ
 
 const router = Router()
 
-router.get("/mine-requests", listMyRequests)
-router.post("/requests/:id/confirm-accept", confirmAccept)
-router.post("/requests/validate-code", validateCode)
+router.get("/mine", listMyRequests)
+router.post("/:id/confirm-accept", confirmAccept)
+router.post("/validate-code", validateCode)
 
 export default router

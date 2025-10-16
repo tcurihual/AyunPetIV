@@ -17,10 +17,10 @@ const asyncHandler =
 
 const router = Router()
 
-router.get("/", asyncHandler((req, res) => listPublications(req as any, res)))  // Obtener publicaciones
-router.get("/:id", asyncHandler((req, res) => getPublicationById(req as any, res)))  // Obtener publicación por ID
-router.post("/", asyncHandler((req, res) => createPublication(req as any, res)))  // Crear publicación
-router.patch("/:id", asyncHandler((req, res) => updatePublication(req as any, res)))  // Actualizar publicación
-router.delete("/:id", asyncHandler((req, res) => deletePublication(req as any, res)))  // Eliminar publicación
+router.get("/", asyncHandler((req, res) => listPublications(req as any, res)))
+router.get("/:id", asyncHandler((req, res) => getPublicationById(req as any, res)))
+router.post("/", asyncHandler((req, res) => createPublication(req as any, res)))
+router.patch("/:id", asyncHandler((req, res) => updatePublication(req as any, res)))
+router.delete("/:id", asyncHandler((req, res) => deletePublication(req as any, res)))
 
 export default router
