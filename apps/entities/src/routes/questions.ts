@@ -18,6 +18,7 @@ route.patch(
     ctrl.updateQuestion
 )
 
-route.delete("/:id", requireAuth, requireRole(20), ctrl.deleteQuestion)
+// Delete - Solo admin (rol 19) puede hacer soft delete de preguntas
+route.delete("/:id", requireAuth, requireRole(19), ctrl.deleteQuestion)
 
 export default route

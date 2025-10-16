@@ -4,7 +4,7 @@ import fs from "fs/promises"
 
 import { getAllFiles, UPLOADS_BASE } from "../utils"
 import { HttpError } from "../middleware/upload"
-import { AppResponse } from "@repo/utils"
+import { AppResponse, MEDIA_URL } from "@repo/utils"
 
 export const giverPost = (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -17,7 +17,7 @@ export const giverPost = (req: Request, res: Response, next: NextFunction) => {
         if (!files.length) throw new HttpError(400, "No files were provided")
 
         const uploaded = files.map((file) => ({
-            url: `/uploads/account-request/${rut}/${file.filename}`,
+            url: `${MEDIA_URL}/uploads/account-request/${rut}/${file.filename}`,
             fileName: file.filename,
             size: file.size,
             mime: file.mimetype,
@@ -41,7 +41,7 @@ export const getGiverFiles = async (req: Request, res: Response, next: NextFunct
 
         for (const abs of allFiles) {
             const rel = path.relative(path.join(__dirname, ".."), abs)
-            const url = `/${rel.replace(/\\/g, "/")}`
+            const url = `${MEDIA_URL}/${rel.replace(/\\/g, "/")}`
 
             const parts = url.split("/")
             const entityId = parts[3]

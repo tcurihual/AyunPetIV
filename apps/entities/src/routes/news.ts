@@ -1,13 +1,7 @@
 import { Router } from "express"
 import multer from "multer"
-import {
-    getNews,
-    createNews,
-    updateNews,
-    deleteNews,
-    deleteNewsImages,
-} from "../controllers/news"
-import { requireAuth, requireRole } from "@repo/utils"
+import { getNews, createNews, updateNews, deleteNews, deleteNewsImages } from "../controllers/news"
+import { requireAuth, requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
 
@@ -35,13 +29,22 @@ router.get("/:id", getNews)
 // Create - Solo admin (rol 19) y shelter (rol 21) pueden crear noticias
 router.post("/", requireRole(19, 21), upload.array("files", 10), createNews)
 
-// Update - Solo admin (rol 19) y shelter (rol 21) pueden actualizar
-router.put("/:id", requireRole(19, 21), upload.array("files", 10), updateNews)
+// Update - Solo admin (rol 19) y el creador pueden actualizar
+router.put(
+    "/:id",
+    requireOwnership({ tableName: "new", ownerField: "creator_id" }),
+    upload.array("files", 10),
+    updateNews
+)
 
-// Delete - Solo admin (rol 19) y shelter (rol 21) pueden eliminar
-router.delete("/:id", requireRole(19, 21), deleteNews)
+// Delete - Solo admin (rol 19) y el creador pueden eliminar
+router.delete("/:id", requireOwnership({ tableName: "new", ownerField: "creator_id" }), deleteNews)
 
 // Delete images - Eliminar imágenes específicas de una noticia
-router.delete("/:id/images", requireRole(19, 21), deleteNewsImages)
+router.delete(
+    "/:id/images",
+    requireOwnership({ tableName: "new", ownerField: "creator_id" }),
+    deleteNewsImages
+)
 
 export default router
