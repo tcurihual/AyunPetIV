@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { supabase } from "../"
+import { supabase } from "../index"
 import { AppError, AppResponse, AdoptionHistory } from "@repo/utils"
 
 export const getAdoptionHistory = async (req: Request, res: Response) => {
@@ -7,40 +7,28 @@ export const getAdoptionHistory = async (req: Request, res: Response) => {
 
     try {
         if (id) {
-            const numericId = parseInt(id)
-            if (isNaN(numericId)) {
-                throw new AppError(400, "ID debe ser un número válido")
-            }
+            const numericId = Number(id)
+            if (!Number.isFinite(numericId)) throw new AppError(400, "ID debe ser un número válido")
 
-            const { data: adoptionHistory, error } = await supabase
+            const { data, error } = await supabase
                 .from("adoption_history")
                 .select("*")
                 .eq("id", numericId)
                 .single()
 
-            if (error) throw new AppError(404, "Historial de adopción no encontrado")
+            if (error || !data) throw new AppError(404, "Historial de adopción no encontrado")
 
-            return AppResponse(
-                res,
-                200,
-                "Historial de adopción obtenido exitosamente",
-                adoptionHistory
-            )
-        } else {
-            const { data: adoptionHistories, error } = await supabase
-                .from("adoption_history")
-                .select("*")
-                .order("createdat", { ascending: false })
-
-            if (error) throw new AppError(500, "Error al obtener el historial de adopciones")
-
-            return AppResponse(
-                res,
-                200,
-                "Historial de adopciones obtenido exitosamente",
-                adoptionHistories
-            )
+            return AppResponse(res, 200, "Historial de adopción obtenido exitosamente", data)
         }
+
+        const { data, error } = await supabase
+            .from("adoption_history")
+            .select("*")
+            .order("created_at", { ascending: false })
+
+        if (error) throw new AppError(500, "Error al obtener el historial de adopciones")
+
+        return AppResponse(res, 200, "Historial de adopciones obtenido exitosamente", data ?? [])
     } catch (error) {
         if (error instanceof AppError) throw error
         throw new AppError(500, "Error interno del servidor")
@@ -51,76 +39,48 @@ export const createAdoptionHistory = async (
     req: Request<{}, any, AdoptionHistory["Insert"]>,
     res: Response
 ) => {
-    const adoptionHistoryData = req.body
+    const body = req.body
 
     try {
-        if (!adoptionHistoryData.pet_id) {
-            throw new AppError(400, "petid es un campo requerido")
-        }
+        if (!body.pet_id) throw new AppError(400, "pet_id es un campo requerido")
 
-        if (adoptionHistoryData.from_owner_id) {
-            const { data: fromOwner, error: fromOwnerError } = await supabase
+        if (body.from_owner_id != null) {
+            const { data, error } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", adoptionHistoryData.from_owner_id)
+                .eq("id", body.from_owner_id)
                 .single()
-
-            if (fromOwnerError || !fromOwner) {
+            if (error || !data)
                 throw new AppError(404, "Usuario propietario anterior no encontrado")
-            }
         }
 
-        if (adoptionHistoryData.to_owner_id) {
-            const { data: toOwner, error: toOwnerError } = await supabase
+        if (body.to_owner_id != null) {
+            const { data, error } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", adoptionHistoryData.to_owner_id)
+                .eq("id", body.to_owner_id)
                 .single()
-
-            if (toOwnerError || !toOwner) {
-                throw new AppError(404, "Usuario nuevo propietario no encontrado")
-            }
+            if (error || !data) throw new AppError(404, "Usuario nuevo propietario no encontrado")
         }
 
-        const { data: pet, error: petError } = await supabase
-            .from("pet")
-            .select("id")
-            .eq("id", adoptionHistoryData.pet_id)
-            .single()
-
-        if (petError || !pet) {
-            throw new AppError(404, "Mascota no encontrada")
+        {
+            const { data, error } = await supabase
+                .from("pet")
+                .select("id")
+                .eq("id", body.pet_id)
+                .single()
+            if (error || !data) throw new AppError(404, "Mascota no encontrada")
         }
 
-        // TODO: es necesario este bloque?
-        // if (adoptionHistoryData.) {
-        //     const { data: post, error: postError } = await supabase
-        //         .from("post")
-        //         .select("id")
-        //         .eq("id", adoptionHistoryData.post_id)
-        //         .single()
-
-        //     if (postError || !post) {
-        //         throw new AppError(404, "Post no encontrado")
-        //     }
-        // }
-
-        const { data: newAdoptionHistory, error: insertError } = await supabase
+        const { data, error } = await supabase
             .from("adoption_history")
-            .insert([adoptionHistoryData])
-            .select()
+            .insert([body])
+            .select("*")
             .single()
 
-        if (insertError) {
-            throw new AppError(500, "Error al crear el historial de adopción")
-        }
+        if (error || !data) throw new AppError(500, "Error al crear el historial de adopción")
 
-        return AppResponse(
-            res,
-            201,
-            "Historial de adopción creado exitosamente",
-            newAdoptionHistory
-        )
+        return AppResponse(res, 201, "Historial de adopción creado exitosamente", data)
     } catch (error) {
         if (error instanceof AppError) throw error
         throw new AppError(500, "Error interno del servidor")
@@ -132,94 +92,56 @@ export const updateAdoptionHistory = async (
     res: Response
 ) => {
     const { id } = req.params
-    const updateData = req.body
+    const patch = req.body
 
     try {
-        if (!id) {
-            throw new AppError(400, "ID es requerido")
-        }
+        const numericId = Number(id)
+        if (!Number.isFinite(numericId)) throw new AppError(400, "ID debe ser un número válido")
 
-        const numericId = parseInt(id)
-        if (isNaN(numericId)) {
-            throw new AppError(400, "ID debe ser un número válido")
-        }
-
-        const { data: existingRecord, error: findError } = await supabase
+        const { data: exists, error: findErr } = await supabase
             .from("adoption_history")
             .select("id")
             .eq("id", numericId)
             .single()
+        if (findErr || !exists) throw new AppError(404, "Historial de adopción no encontrado")
 
-        if (findError || !existingRecord) {
-            throw new AppError(404, "Historial de adopción no encontrado")
-        }
-
-        if (updateData.from_owner_id) {
-            const { data: fromOwner, error: fromOwnerError } = await supabase
+        // Validar llaves (si se envían)
+        if (patch.from_owner_id != null) {
+            const { data, error } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", updateData.from_owner_id)
+                .eq("id", patch.from_owner_id)
                 .single()
-
-            if (fromOwnerError || !fromOwner) {
+            if (error || !data)
                 throw new AppError(404, "Usuario propietario anterior no encontrado")
-            }
         }
-
-        if (updateData.to_owner_id) {
-            const { data: toOwner, error: toOwnerError } = await supabase
+        if (patch.to_owner_id != null) {
+            const { data, error } = await supabase
                 .from("users")
                 .select("id")
-                .eq("id", updateData.to_owner_id)
+                .eq("id", patch.to_owner_id)
                 .single()
-
-            if (toOwnerError || !toOwner) {
-                throw new AppError(404, "Usuario nuevo propietario no encontrado")
-            }
+            if (error || !data) throw new AppError(404, "Usuario nuevo propietario no encontrado")
         }
-
-        if (updateData.pet_id) {
-            const { data: pet, error: petError } = await supabase
+        if (patch.pet_id != null) {
+            const { data, error } = await supabase
                 .from("pet")
                 .select("id")
-                .eq("id", updateData.pet_id)
+                .eq("id", patch.pet_id)
                 .single()
-
-            if (petError || !pet) {
-                throw new AppError(404, "Mascota no encontrada")
-            }
+            if (error || !data) throw new AppError(404, "Mascota no encontrada")
         }
 
-        // TODO: es necesario este bloque?
-        // if (updateData.post_id) {
-        //     const { data: post, error: postError } = await supabase
-        //         .from("post")
-        //         .select("id")
-        //         .eq("id", updateData.post_id)
-        //         .single()
-
-        //     if (postError || !post) {
-        //         throw new AppError(404, "Post no encontrado")
-        //     }
-        // }
-
-        const { data: updatedAdoptionHistory, error: updateError } = await supabase
+        const { data, error } = await supabase
             .from("adoption_history")
-            .update(updateData)
+            .update(patch)
             .eq("id", numericId)
-            .select()
+            .select("*")
             .single()
 
-        if (updateError) {
-            throw new AppError(500, "Error al actualizar el historial de adopción")
-        }
+        if (error || !data) throw new AppError(500, "Error al actualizar el historial de adopción")
 
-        return AppResponse(
-            res,
-            200,
-            "Historial de adopción actualizado exitosamente",
-            updatedAdoptionHistory
-        )
+        return AppResponse(res, 200, "Historial de adopción actualizado exitosamente", data)
     } catch (error) {
         if (error instanceof AppError) throw error
         throw new AppError(500, "Error interno del servidor")
@@ -230,36 +152,27 @@ export const deleteAdoptionHistory = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {
-        if (!id) {
-            throw new AppError(400, "ID es requerido")
-        }
+        const numericId = Number(id)
+        if (!Number.isFinite(numericId)) throw new AppError(400, "ID debe ser un número válido")
 
-        const numericId = parseInt(id)
-        if (isNaN(numericId)) {
-            throw new AppError(400, "ID debe ser un número válido")
-        }
-
-        const { data: existingRecord, error: findError } = await supabase
+        const { data: exists, error: findErr } = await supabase
             .from("adoption_history")
             .select("id")
             .eq("id", numericId)
             .single()
+        if (findErr || !exists) throw new AppError(404, "Historial de adopción no encontrado")
 
-        if (findError || !existingRecord) {
-            throw new AppError(404, "Historial de adopción no encontrado")
-        }
-
-        const { error: deleteError } = await supabase
+        const { data, error } = await supabase
             .from("adoption_history")
             .delete()
             .eq("id", numericId)
+            .select("*")
+            .single()
 
-        if (deleteError) {
-            throw new AppError(500, "Error al eliminar el historial de adopción")
-        }
+        if (error || !data) throw new AppError(500, "Error al eliminar el historial de adopción")
 
         return AppResponse(res, 200, "Historial de adopción eliminado exitosamente", {
-            id: numericId,
+            id: data.id,
         })
     } catch (error) {
         if (error instanceof AppError) throw error
