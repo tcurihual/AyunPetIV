@@ -1,9 +1,7 @@
-import { Request, Response } from "express"
+import { Response } from "express"
 import axios from "axios"
 import { supabase } from "../"
-import { AppError, AppResponse, News, AuthenticatedRequest } from "@repo/utils"
-
-const MEDIA_SERVICE_URL = process.env.MEDIA_SERVICE_URL || "http://localhost:7000"
+import { AppError, AppResponse, News, AuthenticatedRequest, MEDIA_URL } from "@repo/utils"
 
 /**
  * Obtener todas las noticias o una noticia específica por ID
@@ -29,9 +27,12 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
             // Obtener las imágenes asociadas desde el servicio de media
             let images: string[] = []
             try {
-                const mediaResponse = await axios.get(
-                    `${MEDIA_SERVICE_URL}/uploads/news/${numericId}`
-                )
+                const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/news/${numericId}`, {
+                    headers: {
+                        "x-user-id": String(req.user?.id || 0),
+                        "x-user-role": String(req.user?.role || ""),
+                    },
+                })
                 images = mediaResponse.data.data || []
             } catch (err) {
                 // Si no hay imágenes, continuamos con array vacío
@@ -56,7 +57,13 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
                     let images: string[] = []
                     try {
                         const mediaResponse = await axios.get(
-                            `${MEDIA_SERVICE_URL}/uploads/news/${news.id}`
+                            `${MEDIA_URL}/uploads/news/${news.id}`,
+                            {
+                                headers: {
+                                    "x-user-id": String(req.user?.id || 0),
+                                    "x-user-role": String(req.user?.role || ""),
+                                },
+                            }
                         )
                         images = mediaResponse.data.data || []
                     } catch (err) {
@@ -87,24 +94,14 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
             throw new AppError(400, "title y description son campos requeridos")
         }
 
-        if (!newsData.creator_id) {
-            throw new AppError(400, "creator_id es requerido")
-        }
-
-        // Verificar que el creador existe
-        const { data: userExists, error: userError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("id", newsData.creator_id)
-            .single()
-
-        if (userError) throw new AppError(404, "Usuario creador no encontrado")
+        // Usar el ID del usuario autenticado como creator_id
+        const creator_id = req.user.id
 
         // Crear la noticia en la base de datos
         const payload: News["Insert"] = {
             title: newsData.title,
             description: newsData.description,
-            creator_id: newsData.creator_id,
+            creator_id: creator_id,
             date: newsData.date || null,
             start_time: newsData.start_time || null,
             end_time: newsData.end_time || null,
@@ -134,7 +131,7 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
                 })
 
                 const mediaResponse = await axios.post(
-                    `${MEDIA_SERVICE_URL}/uploads/news/${newNews.id}`,
+                    `${MEDIA_URL}/uploads/news/${newNews.id}`,
                     formData,
                     {
                         headers: {
@@ -147,7 +144,12 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
 
                 uploadedImages = mediaResponse.data.data || []
             } catch (mediaError: any) {
-                console.error("Error al subir imágenes:", mediaError.message)
+                console.error("❌ Error al subir imágenes:", {
+                    message: mediaError.message,
+                    response: mediaError.response?.data,
+                    status: mediaError.response?.status,
+                    url: `${MEDIA_URL}/uploads/news/${newNews.id}`,
+                })
                 // Si falla la subida de imágenes, eliminamos la noticia creada
                 await supabase.from("new").delete().eq("id", newNews.id)
                 throw new AppError(500, "Error al subir las imágenes de la noticia")
@@ -202,7 +204,10 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
             .select()
             .single()
 
-        if (updateError) throw new AppError(500, "Error al actualizar la noticia")
+        if (updateError) {
+            console.error("❌ Error al actualizar noticia en BD:", updateError)
+            throw new AppError(500, "Error al actualizar la noticia")
+        }
 
         // Si hay nuevas imágenes para subir
         let uploadedImages: any[] = []
@@ -219,25 +224,32 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
                 })
 
                 const mediaResponse = await axios.post(
-                    `${MEDIA_SERVICE_URL}/uploads/news/${numericId}`,
+                    `${MEDIA_URL}/uploads/news/${numericId}`,
                     formData,
                     {
                         headers: {
                             ...formData.getHeaders(),
+                            "x-user-id": String(req.user.id),
+                            "x-user-role": String(req.user.role || ""),
                         },
                     }
                 )
 
                 uploadedImages = mediaResponse.data.data || []
             } catch (mediaError: any) {
-                console.error("Error al subir nuevas imágenes:", mediaError.message)
+                console.error("❌ Error al subir nuevas imágenes:", {
+                    message: mediaError.message,
+                    response: mediaError.response?.data,
+                    status: mediaError.response?.status,
+                })
+                // No lanzamos error, solo registramos
             }
         }
 
         // Obtener todas las imágenes actuales
         let allImages: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/news/${numericId}`, {
                 headers: {
                     "x-user-id": req.user.id,
                     "x-user-role": req.user.role,
@@ -285,7 +297,7 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
         // Obtener las imágenes actuales para eliminarlas
         let imagesToDelete: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/news/${numericId}`, {
                 headers: {
                     "x-user-id": req.user.id,
                     "x-user-role": req.user.role,
@@ -304,7 +316,7 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
         // Eliminar las imágenes del servicio de media
         if (imagesToDelete.length > 0) {
             try {
-                await axios.delete(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+                await axios.delete(`${MEDIA_URL}/uploads/news/${numericId}`, {
                     data: { fileNamesArray: imagesToDelete },
                     headers: {
                         "Content-Type": "application/json",
@@ -359,19 +371,16 @@ export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response)
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // La verificación de propiedad se maneja con requireOwnership middleware
-
         // Eliminar las imágenes del servicio de media
         try {
-            const mediaResponse = await axios.delete(
-                `${MEDIA_SERVICE_URL}/uploads/news/${numericId}`,
-                {
-                    data: { fileNamesArray },
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                }
-            )
+            const mediaResponse = await axios.delete(`${MEDIA_URL}/uploads/news/${numericId}`, {
+                data: { fileNamesArray },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": req.user.id,
+                    "x-user-role": req.user.role,
+                },
+            })
 
             return AppResponse(
                 res,

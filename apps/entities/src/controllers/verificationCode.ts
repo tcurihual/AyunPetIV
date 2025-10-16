@@ -1,5 +1,4 @@
 import type { Request, Response } from "express"
-import { z } from "zod"
 import {
     AppResponse,
     AppError,
@@ -9,23 +8,6 @@ import {
     comparePassword,
 } from "@repo/utils"
 import { supabase } from "../index"
-
-// Schemas de validación locales
-const CreateVerificationCodeSchema = z.object({
-    type: z.enum(["verify", "reset", "adoption"]),
-    userId: z.number().optional(),
-    duration: z.number().min(1).max(1440).optional(),
-})
-
-const ValidateVerificationCodeSchema = z.object({
-    code: z.string().length(6, "El código debe tener 6 dígitos"),
-    type: z.enum(["verify", "reset", "adoption"]),
-    userId: z.number(),
-})
-
-const UserIdParamSchema = z.object({
-    userId: z.string().transform((val) => parseInt(val, 10)),
-})
 
 const generateVerificationCode = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString()
@@ -51,27 +33,7 @@ const getExpirationTime = (type: VerificationType): Date => {
 
 export const createVerificationCode = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const validatedBody = CreateVerificationCodeSchema.parse(req.body)
-        const { type, userId, duration } = validatedBody
-
-        if (!type) {
-            throw new AppError(400, "El campo 'type' es requerido")
-        }
-
-        const validTypes: VerificationType[] = ["verify", "reset", "adoption"]
-        if (!validTypes.includes(type)) {
-            throw new AppError(
-                400,
-                "Tipo de verificación inválido. Debe ser: verify, reset o adoption"
-            )
-        }
-
-        if (
-            duration !== undefined &&
-            (typeof duration !== "number" || duration < 1 || duration > 1440)
-        ) {
-            throw new AppError(400, "La duración debe ser un número entre 1 y 1440 minutos")
-        }
+        const { type, userId, duration } = req.body
 
         const targetUserId = userId || req.user.id
 
@@ -135,12 +97,6 @@ export const createVerificationCode = async (req: AuthenticatedRequest, res: Res
         if (error instanceof AppError) {
             throw error
         }
-        if (error instanceof z.ZodError) {
-            const messages = error.issues
-                .map((err: any) => `${err.path.join(".")}: ${err.message}`)
-                .join(", ")
-            throw new AppError(400, `Datos inválidos: ${messages}`)
-        }
         console.error("Error en createVerificationCode:", error)
         throw new AppError(500, "Error interno del servidor")
     }
@@ -148,28 +104,7 @@ export const createVerificationCode = async (req: AuthenticatedRequest, res: Res
 
 export const validateVerificationCode = async (req: Request, res: Response) => {
     try {
-        const validatedBody = ValidateVerificationCodeSchema.parse(req.body)
-        const { code, type, userId } = validatedBody
-
-        if (!code || !type || !userId) {
-            throw new AppError(400, "Código, tipo y userId son requeridos")
-        }
-
-        if (typeof code !== "string" || code.length !== 6 || !/^\d{6}$/.test(code)) {
-            throw new AppError(400, "El código debe tener exactamente 6 dígitos numéricos")
-        }
-
-        const validTypes: VerificationType[] = ["verify", "reset", "adoption"]
-        if (!validTypes.includes(type)) {
-            throw new AppError(
-                400,
-                "Tipo de verificación inválido. Debe ser: verify, reset o adoption"
-            )
-        }
-
-        if (typeof userId !== "number" || !Number.isInteger(userId) || userId <= 0) {
-            throw new AppError(400, "El userId debe ser un número entero positivo")
-        }
+        const { code, type, userId } = req.body
 
         const { data: verificationCodes, error: fetchError } = await supabase
             .from("verification_code")
@@ -222,21 +157,29 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
             throw new AppError(500, "Error al marcar el código como usado", { updateError })
         }
 
+        // Si el tipo es "verify", actualizar el usuario como verificado
+        if (type === "verify") {
+            const { error: userUpdateError } = await supabase
+                .from("users")
+                .update({ validated: true })
+                .eq("id", userId)
+
+            if (userUpdateError) {
+                console.error("Error al actualizar usuario como verificado:", userUpdateError)
+                throw new AppError(500, "Error al verificar el usuario", { userUpdateError })
+            }
+        }
+
         return AppResponse(res, 200, "Código de verificación validado correctamente", {
             id: codeRecord.id,
             type: codeRecord.type,
             user_id: codeRecord.user_id,
             validated_at: new Date().toISOString(),
+            email_verified: type === "verify" ? true : undefined,
         })
     } catch (error) {
         if (error instanceof AppError) {
             throw error
-        }
-        if (error instanceof z.ZodError) {
-            const messages = error.issues
-                .map((err: any) => `${err.path.join(".")}: ${err.message}`)
-                .join(", ")
-            throw new AppError(400, `Datos inválidos: ${messages}`)
         }
         console.error("Error en validateVerificationCode:", error)
         throw new AppError(500, "Error interno del servidor")
@@ -245,8 +188,7 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
 
 export const getUserVerificationCodes = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const validatedParams = UserIdParamSchema.parse(req.params)
-        const { userId } = validatedParams
+        const userId = Number(req.params.userId)
 
         if (req.user.role !== 19 && req.user.id !== userId) {
             throw new AppError(403, "No tienes permisos para ver estos códigos")
@@ -266,12 +208,6 @@ export const getUserVerificationCodes = async (req: AuthenticatedRequest, res: R
     } catch (error) {
         if (error instanceof AppError) {
             throw error
-        }
-        if (error instanceof z.ZodError) {
-            const messages = error.issues
-                .map((err: any) => `${err.path.join(".")}: ${err.message}`)
-                .join(", ")
-            throw new AppError(400, `Parámetros inválidos: ${messages}`)
         }
         console.error("Error en getUserVerificationCodes:", error)
         throw new AppError(500, "Error interno del servidor")

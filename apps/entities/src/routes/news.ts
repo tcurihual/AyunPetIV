@@ -1,12 +1,6 @@
 import { Router } from "express"
 import multer from "multer"
-import {
-    getNews,
-    createNews,
-    updateNews,
-    deleteNews,
-    deleteNewsImages,
-} from "../controllers/news"
+import { getNews, createNews, updateNews, deleteNews, deleteNewsImages } from "../controllers/news"
 import { requireAuth, requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
@@ -27,12 +21,10 @@ const upload = multer({
     },
 })
 
-// Rutas públicas (sin autenticación) - para obtener noticias
+// Rutas protegidas - requieren autenticación incluso para obtener noticias
+router.use(requireAuth)
 router.get("/", getNews)
 router.get("/:id", getNews)
-
-// Rutas protegidas - requieren autenticación
-router.use(requireAuth)
 
 // Create - Solo admin (rol 19) y shelter (rol 21) pueden crear noticias
 router.post("/", requireRole(19, 21), upload.array("files", 10), createNews)

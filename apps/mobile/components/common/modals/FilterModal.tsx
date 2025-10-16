@@ -5,10 +5,14 @@ import {
     Text,
     Modal,
     TouchableOpacity,
+    Pressable,
     StyleSheet,
     ScrollView,
     Dimensions,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native"
+import Animated, { FadeInUp, FadeOutDown } from "react-native-reanimated"
 
 interface FilterModalProps {
     visible: boolean
@@ -81,73 +85,77 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
         </TouchableOpacity>
     )
 
+    if (!visible) return null
+
     return (
-        <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Filtrar Mascotas</Text>
-                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Text style={styles.closeText}>✕</Text>
-                        </TouchableOpacity>
-                    </View>
+        <View style={styles.overlayAbsolute}>
+            {/* Fondo táctil para cerrar */}
+            <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-                    <ScrollView style={styles.content}>
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Tipo de Mascota</Text>
-                            <View style={styles.optionsContainer}>
-                                {typeOptions.map((option) =>
-                                    renderOptionButton(
-                                        option.value,
-                                        option.label,
-                                        selectedType,
-                                        setSelectedType,
-                                        option.icon
-                                    )
-                                )}
-                            </View>
-                        </View>
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Sexo</Text>
-                            <View style={styles.optionsContainer}>
-                                {genderOptions.map((option) =>
-                                    renderOptionButton(
-                                        option.value,
-                                        option.label,
-                                        selectedGender,
-                                        setSelectedGender
-                                    )
-                                )}
-                            </View>
-                        </View>
-
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Edad</Text>
-                            <View style={styles.optionsContainer}>
-                                {ageOptions.map((option) =>
-                                    renderOptionButton(
-                                        option.value,
-                                        option.label,
-                                        selectedAge,
-                                        setSelectedAge
-                                    )
-                                )}
-                            </View>
-                        </View>
-                    </ScrollView>
-
-                    <View style={styles.footer}>
-                        <TouchableOpacity style={styles.clearButton} onPress={handleClearFilters}>
-                            <Text style={styles.clearButtonText}>Limpiar</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilters}>
-                            <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
-                        </TouchableOpacity>
-                    </View>
+            <Animated.View entering={FadeInUp} exiting={FadeOutDown} style={styles.modalContainer}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Filtrar Mascotas</Text>
+                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                        <Text style={styles.closeText}>✕</Text>
+                    </TouchableOpacity>
                 </View>
-            </View>
-        </Modal>
+
+                <ScrollView style={styles.content}>
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Tipo de Mascota</Text>
+                        <View style={styles.optionsContainer}>
+                            {typeOptions.map((option) =>
+                                renderOptionButton(
+                                    option.value,
+                                    option.label,
+                                    selectedType,
+                                    setSelectedType,
+                                    option.icon
+                                )
+                            )}
+                        </View>
+                    </View>
+
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Sexo</Text>
+                        <View style={styles.optionsContainer}>
+                            {genderOptions.map((option) =>
+                                renderOptionButton(
+                                    option.value,
+                                    option.label,
+                                    selectedGender,
+                                    setSelectedGender
+                                )
+                            )}
+                        </View>
+                    </View>
+
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Edad</Text>
+                        <View style={styles.optionsContainer}>
+                            {ageOptions.map((option) =>
+                                renderOptionButton(
+                                    option.value,
+                                    option.label,
+                                    selectedAge,
+                                    setSelectedAge
+                                )
+                            )}
+                        </View>
+                    </View>
+                </ScrollView>
+
+                <View style={styles.footer}>
+                    <TouchableOpacity style={styles.clearButton} onPress={handleClearFilters}>
+                        <Text style={styles.clearButtonText}>Limpiar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilters}>
+                        <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
+                    </TouchableOpacity>
+                </View>
+            </Animated.View>
+        </View>
     )
 }
 
@@ -156,7 +164,7 @@ const { height } = Dimensions.get("window")
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(0,0,0,0.5)",
         justifyContent: "flex-end",
     },
     modalContainer: {
@@ -220,7 +228,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     optionButtonActive: {
-        backgroundColor: `${Colors.yellow}`,
+        backgroundColor: Colors.yellow,
     },
     optionIcon: {
         fontSize: 16,
@@ -264,6 +272,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
         color: "#000",
+    },
+    overlayAbsolute: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "flex-end",
+        zIndex: 9999,
     },
 })
 
