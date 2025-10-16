@@ -99,10 +99,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             if (!user.validated) {
                 setStatus("unauthenticated")
 
-                router.replace("/(auth)/verify-email")
-                throw new Error(
-                    "Tu cuenta aún no ha sido validada. Por favor revisa tu correo para completarlo."
-                )
+                const error = new Error("Tu cuenta aún no ha sido validada.")
+                ;(error as any).code = "UNVERIFIED_ACCOUNT"
+                throw error
             }
 
             const userFormatted: User = {
