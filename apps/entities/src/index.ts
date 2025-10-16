@@ -46,10 +46,7 @@ app.listen(ENTITIES_PORT, () => {
 declare global {
     namespace Express {
         interface Request {
-            user: {
-                id: number
-                role: number | null
-            }
+            user?: { id: number; role: number | null }
         }
     }
 }

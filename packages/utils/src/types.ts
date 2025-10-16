@@ -4,7 +4,7 @@ import { LoginResponseSchema } from "./schemas"
 import { Database, Tables, TablesInsert, TablesUpdate, Enums } from "database.types"
 
 export interface AuthenticatedRequest extends Request {
-    user: {
+    user?: {
         id: number
         role: number | null
     }

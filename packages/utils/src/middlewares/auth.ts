@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express"
-import { AppError, verifyAuthToken } from "@repo/utils"
+import { AppError } from "error"
+import { verifyAuthToken } from "../auth/jwt"
 
-export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
+// Middleware: verificar JWT y añadir usuario al request
+export const verifyAuth = (req: Request, _res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization
 
     if (!authHeader) {
@@ -14,14 +16,17 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
         throw new AppError(401, "Formato de token inválido. Debe ser: Bearer <token>")
     }
 
-    const payload = verifyAuthToken(token)
-    req.user = payload
-
-    next()
+    try {
+        const payload = verifyAuthToken(token)
+        req.user = payload
+        next()
+    } catch {
+        throw new AppError(403, "Token inválido o expirado")
+    }
 }
 
-// Middleware para verificar roles permitidos
-export const checkRole = (roles: Array<number>) => {
+// Middleware: verificar si el usuario tiene alguno de los roles requeridos
+export const checkRole = (roles: number[]) => {
     return (req: Request, _res: Response, next: NextFunction) => {
         if (!req.user) {
             throw new AppError(401, "Usuario no autenticado")
@@ -35,10 +40,11 @@ export const checkRole = (roles: Array<number>) => {
     }
 }
 
+// Tipado global del usuario inyectado en req
 declare global {
     namespace Express {
         interface Request {
-            user: {
+            user?: {
                 id: number
                 role: number | null
             }
