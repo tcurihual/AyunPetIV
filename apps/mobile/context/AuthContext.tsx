@@ -48,12 +48,17 @@ interface RegisterPayload {
 
 type Status = "loading" | "authenticated" | "unauthenticated"
 
+interface SignUpResult {
+    requiresEmailVerification: boolean
+    variation: "user" | "giver" | "shelter"
+}
+
 interface AuthContextType {
     status: Status
     user: User | null
     token: string | null
     signIn: (data: LoginPayload) => Promise<void>
-    signUp: (data: RegisterPayload, variation?: "user" | "giver" | "shelter") => Promise<void>
+    signUp: (data: RegisterPayload, variation?: "user" | "giver" | "shelter") => Promise<SignUpResult>
     signOut: () => Promise<void>
 }
 
@@ -119,7 +124,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
     }
 
-    async function signUp(data: RegisterPayload, variation: "user" | "giver" | "shelter" = "user") {
+    async function signUp(
+        data: RegisterPayload,
+        variation: "user" | "giver" | "shelter" = "user"
+    ): Promise<SignUpResult> {
         setStatus("loading")
         try {
             const response = await authService.register(data, variation)
@@ -127,6 +135,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             if (response.message) {
                 console.log("Registro exitoso:", response.message)
                 setStatus("unauthenticated")
+            }
+
+            // Los roles giver (22) y shelter (21) no requieren verificación por email
+            // Los roles user (20) sí requieren verificación
+            const requiresEmailVerification = variation === "user"
+
+            return {
+                requiresEmailVerification,
+                variation,
             }
         } catch (e: any) {
             console.error("Error al registrar usuario:", e)
