@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Toby", "species": "Perro", "gender": "Macho", "age": 2 },
+  { "id": 2, "name": "Luna", "species": "Gato", "gender": "Hembra", "age": 1 },
+  { "id": 3, "name": "Rocky", "species": "Perro", "gender": "Macho", "age": 6 },
+  { "id": 4, "name": "Mia", "species": "Gato", "gender": "Hembra", "age": 8 },
+  { "id": 5, "name": "Bruno", "species": "Perro", "gender": "Macho", "age": 0 },
+  { "id": 6, "name": "Nala", "species": "Gato", "gender": "Hembra", "age": 3 }
+]
