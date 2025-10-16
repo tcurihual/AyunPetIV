@@ -21,7 +21,7 @@ app.use(express.json())
 app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/", mineRequestRoutes)
+app.use("/requests", mineRequestRoutes)
 app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
 app.use("/", postsRoutes)
