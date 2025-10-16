@@ -4,7 +4,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import "dotenv/config"
 
-import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
+import { errorHandler, ENTITIES_PORT, createSupabaseClient, getHeaders } from "@repo/utils"
 
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
@@ -24,18 +24,19 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
+app.use(getHeaders) 
 
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/giver-request", giverRequestRouter)
-app.use("/adoption-history", adoptionHistoryRouter)
-app.use("/adoption-requests", adoptionRequestRouter)
-app.use("/questions", questionsRoutes)
-app.use("/post-form", postFormRouter)
-app.use("/verification-codes", verificationCodeRouter)
-app.use("/news", newsRouter)
-app.use("/users", usersRouter)
-app.use("/form-responses", formResponsesRoutes)
+app.use("/v1/entities/giver-request", giverRequestRouter)
+app.use("/v1/entities/adoption-history", adoptionHistoryRouter)
+app.use("/v1/entities/adoption-requests", adoptionRequestRouter)
+app.use("/v1/entities/questions", questionsRoutes)
+app.use("/v1/entities/post-form", postFormRouter)
+app.use("/v1/entities/verification-codes", verificationCodeRouter)
+app.use("/v1/entities/news", newsRouter)
+app.use("/v1/entities/users", usersRouter)
+app.use("/v1/entities/form-responses", formResponsesRoutes)
 
 app.use(errorHandler)
 
