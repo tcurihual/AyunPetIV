@@ -29,7 +29,9 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/giver-request", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
-app.use("/adoption-requests", adoptionRequestRouter)
+// Deshabilitado: migración a microservicio `adoptions`.
+// El router de `adoption-requests` ahora se expone desde el servicio `adoptions`.
+// app.use("/adoption-requests", adoptionRequestRouter)
 app.use("/questions", questionsRoutes)
 app.use("/post-form", postFormRouter)
 app.use("/verification-codes", verificationCodeRouter)

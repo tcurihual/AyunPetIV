@@ -30,7 +30,13 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
             let images: string[] = []
             try {
                 const mediaResponse = await axios.get(
-                    `${MEDIA_SERVICE_URL}/uploads/news/${numericId}`
+                    `${MEDIA_SERVICE_URL}/uploads/news/${numericId}`,
+                    {
+                        headers: {
+                            "x-user-id": String(req.user?.id || 0),
+                            "x-user-role": String(req.user?.role || ""),
+                        },
+                    }
                 )
                 images = mediaResponse.data.data || []
             } catch (err) {
@@ -56,7 +62,13 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
                     let images: string[] = []
                     try {
                         const mediaResponse = await axios.get(
-                            `${MEDIA_SERVICE_URL}/uploads/news/${news.id}`
+                            `${MEDIA_SERVICE_URL}/uploads/news/${news.id}`,
+                            {
+                                headers: {
+                                    "x-user-id": String(req.user?.id || 0),
+                                    "x-user-role": String(req.user?.role || ""),
+                            },
+                            }
                         )
                         images = mediaResponse.data.data || []
                     } catch (err) {
@@ -87,24 +99,14 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
             throw new AppError(400, "title y description son campos requeridos")
         }
 
-        if (!newsData.creator_id) {
-            throw new AppError(400, "creator_id es requerido")
-        }
-
-        // Verificar que el creador existe
-        const { data: userExists, error: userError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("id", newsData.creator_id)
-            .single()
-
-        if (userError) throw new AppError(404, "Usuario creador no encontrado")
+        // Usar el ID del usuario autenticado como creator_id
+        const creator_id = req.user.id
 
         // Crear la noticia en la base de datos
         const payload: News["Insert"] = {
             title: newsData.title,
             description: newsData.description,
-            creator_id: newsData.creator_id,
+            creator_id: creator_id,
             date: newsData.date || null,
             start_time: newsData.start_time || null,
             end_time: newsData.end_time || null,
@@ -139,13 +141,20 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
                     {
                         headers: {
                             ...formData.getHeaders(),
+                            "x-user-id": String(req.user.id),
+                            "x-user-role": String(req.user.role || ""),
                         },
                     }
                 )
 
                 uploadedImages = mediaResponse.data.data || []
             } catch (mediaError: any) {
-                console.error("Error al subir imágenes:", mediaError.message)
+                console.error("❌ Error al subir imágenes:", {
+                    message: mediaError.message,
+                    response: mediaError.response?.data,
+                    status: mediaError.response?.status,
+                    url: `${MEDIA_SERVICE_URL}/uploads/news/${newNews.id}`,
+                })
                 // Si falla la subida de imágenes, eliminamos la noticia creada
                 await supabase.from("new").delete().eq("id", newNews.id)
                 throw new AppError(500, "Error al subir las imágenes de la noticia")
@@ -185,8 +194,8 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad (solo el creador o admin pueden actualizar)
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
+        // Verificar propiedad (solo el creador puede actualizar)
+        if (existingNews.creator_id !== req.user.id) {
             throw new AppError(403, "No tienes permiso para actualizar esta noticia")
         }
 
@@ -203,7 +212,10 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
             .select()
             .single()
 
-        if (updateError) throw new AppError(500, "Error al actualizar la noticia")
+        if (updateError) {
+            console.error("❌ Error al actualizar noticia en BD:", updateError)
+            throw new AppError(500, "Error al actualizar la noticia")
+        }
 
         // Si hay nuevas imágenes para subir
         let uploadedImages: any[] = []
@@ -225,20 +237,32 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
                     {
                         headers: {
                             ...formData.getHeaders(),
+                            "x-user-id": String(req.user.id),
+                            "x-user-role": String(req.user.role || ""),
                         },
                     }
                 )
 
                 uploadedImages = mediaResponse.data.data || []
             } catch (mediaError: any) {
-                console.error("Error al subir nuevas imágenes:", mediaError.message)
+                console.error("❌ Error al subir nuevas imágenes:", {
+                    message: mediaError.message,
+                    response: mediaError.response?.data,
+                    status: mediaError.response?.status,
+                })
+                // No lanzamos error, solo registramos
             }
         }
 
         // Obtener todas las imágenes actuales
         let allImages: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`)
+            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+                headers: {
+                    "x-user-id": String(req.user.id),
+                    "x-user-role": String(req.user.role || ""),
+                },
+            })
             allImages = mediaResponse.data.data || []
         } catch (err) {
             // Si no hay imágenes, continuamos
@@ -276,15 +300,20 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad (solo el creador o admin pueden eliminar)
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
+        // Verificar propiedad (solo el creador puede eliminar)
+        if (existingNews.creator_id !== req.user.id) {
             throw new AppError(403, "No tienes permiso para eliminar esta noticia")
         }
 
         // Obtener las imágenes actuales para eliminarlas
         let imagesToDelete: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`)
+            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+                headers: {
+                    "x-user-id": String(req.user.id),
+                    "x-user-role": String(req.user.role || ""),
+                },
+            })
             const imageUrls = mediaResponse.data.data || []
             // Extraer solo los nombres de archivo de las URLs
             imagesToDelete = imageUrls.map((url: string) => {
@@ -302,6 +331,8 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
                     data: { fileNamesArray: imagesToDelete },
                     headers: {
                         "Content-Type": "application/json",
+                        "x-user-id": String(req.user.id),
+                        "x-user-role": String(req.user.role || ""),
                     },
                 })
             } catch (mediaError: any) {
@@ -351,8 +382,8 @@ export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response)
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
+        // Verificar propiedad (solo el creador puede eliminar imágenes)
+        if (existingNews.creator_id !== req.user.id) {
             throw new AppError(403, "No tienes permiso para eliminar imágenes de esta noticia")
         }
 
@@ -364,6 +395,8 @@ export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response)
                     data: { fileNamesArray },
                     headers: {
                         "Content-Type": "application/json",
+                        "x-user-id": String(req.user.id),
+                        "x-user-role": String(req.user.role || ""),
                     },
                 }
             )

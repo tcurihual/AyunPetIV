@@ -17,9 +17,9 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 .from("adoption_request")
                 .select("*")
                 .eq("id", numericId)
-                .single()
+                .maybeSingle()
 
-            if (error) throw new AppError(404, "Solicitud de adopción no encontrada")
+            if (error || !adoptionRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
 
             // Obtener imágenes del post si existe
             let postImages: string[] = []
@@ -62,62 +62,67 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
 }
 
 export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
-    const adoptionRequestData: AdoptionRequest["Insert"] = req.body
+    const { post_id, status } = req.body
 
     try {
-        if (
-            !adoptionRequestData.requester_id ||
-            !adoptionRequestData.post_id ||
-            !adoptionRequestData.post_owner_id
-        ) {
-            throw new AppError(400, "userid y postid son campos requeridos")
+        if (!post_id) {
+            throw new AppError(400, "post_id es un campo requerido")
         }
 
-        const { data: userExists, error: userError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("id", adoptionRequestData.requester_id)
-            .single()
-
-        if (userError) throw new AppError(404, "Usuario no encontrado")
-
-        const { data: postExists, error: postError } = await supabase
+        // Obtener el post y su owner desde la BD (no confiar en el cliente)
+        const { data: post, error: postError } = await supabase
             .from("post")
-            .select("id")
-            .eq("id", adoptionRequestData.post_id)
-            .single()
+            .select("id, creator_id")
+            .eq("id", post_id)
+            .maybeSingle()
 
-        if (postError) throw new AppError(404, "Post no encontrado")
+        if (postError || !post) {
+            throw new AppError(404, "Post no encontrado")
+        }
 
-        const { data: existingRequest, error: existingError } = await supabase
+        // Usar el ID del usuario autenticado (no confiar en el cliente)
+        const requester_id = req.user.id
+        // El dueño del post viene del campo creator_id
+        const post_owner_id = post.creator_id
+
+        if (!post_owner_id) {
+            throw new AppError(500, "No se pudo determinar el dueño del post")
+        }
+
+        // Verificar que el usuario no esté solicitando su propio post
+        if (requester_id === post_owner_id) {
+            throw new AppError(400, "No puedes solicitar adopción de tu propio post")
+        }
+
+        // Verificar si ya existe una solicitud pendiente
+        const { data: existingRequests, error: existingError } = await supabase
             .from("adoption_request")
             .select("id")
-            .eq("requester_id", adoptionRequestData.requester_id)
-            .eq("post_owner_id", adoptionRequestData.post_owner_id)
-            .eq("post_id", adoptionRequestData.post_id)
+            .eq("requester_id", requester_id)
+            .eq("post_owner_id", post_owner_id)
+            .eq("post_id", post_id)
             .eq("status", "pending")
-            .maybeSingle()
 
         if (existingError) throw new AppError(500, "Error al verificar solicitudes existentes")
 
-        if (existingRequest) {
+        if ((existingRequests ?? []).length > 0) {
             throw new AppError(409, "Ya existe una solicitud pendiente para este post")
         }
 
         const payload: AdoptionRequest["Insert"] = {
-            requester_id: adoptionRequestData.requester_id,
-            post_id: adoptionRequestData.post_id,
-            post_owner_id: adoptionRequestData.post_owner_id,
-            status: adoptionRequestData.status || "pending",
+            requester_id,
+            post_id,
+            post_owner_id,
+            status: status || "pending",
         }
 
         const { data: newAdoptionRequest, error: insertError } = await supabase
             .from("adoption_request")
             .insert([payload])
             .select()
-            .single()
+            .maybeSingle()
 
-        if (insertError) throw new AppError(500, "Error al crear la solicitud de adopción")
+        if (insertError || !newAdoptionRequest) throw new AppError(500, "Error al crear la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -133,7 +138,7 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
 
 export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
-    const updateData: AdoptionRequest["Update"] = req.body
+    const { status } = req.body
 
     try {
         const numericId = parseInt(id)
@@ -145,33 +150,24 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .from("adoption_request")
             .select("*")
             .eq("id", numericId)
-            .single()
+            .maybeSingle()
 
-        if (findError) throw new AppError(404, "Solicitud de adopción no encontrada")
+        if (findError || !existingRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
+
+        // Verificar propiedad: solo el solicitante o el dueño del post pueden modificar
+        if (
+            existingRequest.requester_id !== req.user.id &&
+            existingRequest.post_owner_id !== req.user.id
+        ) {
+            throw new AppError(
+                403,
+                "No tienes permiso para actualizar esta solicitud de adopción"
+            )
+        }
 
         const payload: AdoptionRequest["Update"] = {
-            ...updateData,
+            status: status || existingRequest.status,
             updated_at: new Date().toISOString(),
-        }
-
-        if (payload.requester_id) {
-            const { data: userExists, error: userError } = await supabase
-                .from("users")
-                .select("id")
-                .eq("id", payload.requester_id)
-                .single()
-
-            if (userError) throw new AppError(404, "Usuario no encontrado")
-        }
-
-        if (payload.post_id) {
-            const { data: postExists, error: postError } = await supabase
-                .from("post")
-                .select("id")
-                .eq("id", payload.post_id)
-                .single()
-
-            if (postError) throw new AppError(404, "Post no encontrado")
         }
 
         const { data: updatedRequest, error: updateError } = await supabase
@@ -179,9 +175,9 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .update(payload)
             .eq("id", numericId)
             .select()
-            .single()
+            .maybeSingle()
 
-        if (updateError) throw new AppError(500, "Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest) throw new AppError(500, "Error al actualizar la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -206,11 +202,19 @@ export const deleteAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
 
         const { data: existingRequest, error: findError } = await supabase
             .from("adoption_request")
-            .select("id")
+            .select("*")
             .eq("id", numericId)
-            .single()
+            .maybeSingle()
 
-        if (findError) throw new AppError(404, "Solicitud de adopción no encontrada")
+        if (findError || !existingRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
+
+        // Verificar propiedad: solo el solicitante puede eliminar su solicitud
+        if (existingRequest.requester_id !== req.user.id) {
+            throw new AppError(
+                403,
+                "No tienes permiso para eliminar esta solicitud de adopción"
+            )
+        }
 
         const { error: deleteError } = await supabase
             .from("adoption_request")
