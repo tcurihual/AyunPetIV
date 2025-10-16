@@ -173,7 +173,8 @@ export default function Home() {
                     <TouchableOpacity
                         style={[
                             styles.categoryButton,
-                            (activeFilters.type !== "all" ||
+                            (showFilterModal ||
+                                activeFilters.type !== "all" ||
                                 activeFilters.gender !== "all" ||
                                 activeFilters.age !== "all") &&
                                 styles.categoryButtonActive,
