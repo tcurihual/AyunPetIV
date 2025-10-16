@@ -30,7 +30,7 @@ export const getAdoptionHistory = async (req: Request, res: Response) => {
             const { data: adoptionHistories, error } = await supabase
                 .from("adoption_history")
                 .select("*")
-                .order("createdat", { ascending: false })
+                .order("created_at", { ascending: false })
 
             if (error) throw new AppError(500, "Error al obtener el historial de adopciones")
 

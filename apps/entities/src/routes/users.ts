@@ -1,5 +1,5 @@
 import { Router, type Request, type Response, type NextFunction } from "express"
-import { requireRole } from "@repo/utils"
+import { requireRole, requireAuth } from "@repo/utils"
 import { getUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers/user"
 
 export const ROLES = {
@@ -14,6 +14,9 @@ const asyncHandler =
         Promise.resolve(fn(req, res)).catch(next)
 
 const usersRouter = Router()
+
+// Rutas protegidas - requieren autenticación
+usersRouter.use(requireAuth)
 
 usersRouter.get(
     "/",

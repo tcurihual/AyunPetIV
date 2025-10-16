@@ -139,6 +139,8 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
                     {
                         headers: {
                             ...formData.getHeaders(),
+                            "x-user-id": req.user.id,
+                            "x-user-role": req.user.role,
                         },
                     }
                 )
@@ -185,10 +187,7 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad (solo el creador o admin pueden actualizar)
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
-            throw new AppError(403, "No tienes permiso para actualizar esta noticia")
-        }
+        // La verificación de propiedad se maneja con requireOwnership middleware
 
         // Actualizar la noticia
         const payload: News["Update"] = {
@@ -238,7 +237,12 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
         // Obtener todas las imágenes actuales
         let allImages: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`)
+            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+                headers: {
+                    "x-user-id": req.user.id,
+                    "x-user-role": req.user.role,
+                },
+            })
             allImages = mediaResponse.data.data || []
         } catch (err) {
             // Si no hay imágenes, continuamos
@@ -276,15 +280,17 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad (solo el creador o admin pueden eliminar)
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
-            throw new AppError(403, "No tienes permiso para eliminar esta noticia")
-        }
+        // La verificación de propiedad se maneja con requireOwnership middleware
 
         // Obtener las imágenes actuales para eliminarlas
         let imagesToDelete: string[] = []
         try {
-            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`)
+            const mediaResponse = await axios.get(`${MEDIA_SERVICE_URL}/uploads/news/${numericId}`, {
+                headers: {
+                    "x-user-id": req.user.id,
+                    "x-user-role": req.user.role,
+                },
+            })
             const imageUrls = mediaResponse.data.data || []
             // Extraer solo los nombres de archivo de las URLs
             imagesToDelete = imageUrls.map((url: string) => {
@@ -302,6 +308,8 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
                     data: { fileNamesArray: imagesToDelete },
                     headers: {
                         "Content-Type": "application/json",
+                        "x-user-id": req.user.id,
+                        "x-user-role": req.user.role,
                     },
                 })
             } catch (mediaError: any) {
@@ -351,10 +359,7 @@ export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response)
 
         if (findError) throw new AppError(404, "Noticia no encontrada")
 
-        // Verificar propiedad
-        if (req.user.role !== 19 && existingNews.creator_id !== req.user.id) {
-            throw new AppError(403, "No tienes permiso para eliminar imágenes de esta noticia")
-        }
+        // La verificación de propiedad se maneja con requireOwnership middleware
 
         // Eliminar las imágenes del servicio de media
         try {

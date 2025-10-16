@@ -33,7 +33,7 @@ export const listGiverRequests = async (_req: Request, res: Response) => {
             let files: string[] = []
             try {
                 const { data } = await axios.get<string[] | { data?: string[] }>(
-                    `${MEDIA_URL}/files/account-request/${safeRut}`
+                    `${MEDIA_URL}/uploads/account-request/${safeRut}`
                 )
                 files = Array.isArray(data)
                     ? data
