@@ -27,23 +27,21 @@ const upload = multer({
     },
 })
 
-// Rutas públicas (sin autenticación) - para obtener noticias
+// Rutas protegidas - requieren autenticación incluso para obtener noticias
+router.use(requireAuth)
 router.get("/", getNews)
 router.get("/:id", getNews)
-
-// Rutas protegidas - requieren autenticación
-router.use(requireAuth)
 
 // Create - Solo admin (rol 19) y shelter (rol 21) pueden crear noticias
 router.post("/", requireRole(19, 21), upload.array("files", 10), createNews)
 
-// Update - Solo admin (rol 19) y el creador pueden actualizar
-router.put("/:id", upload.array("files", 10), updateNews)
+// Update - Solo admin (rol 19) y shelter (rol 21) pueden actualizar
+router.put("/:id", requireRole(19, 21), upload.array("files", 10), updateNews)
 
-// Delete - Solo admin (rol 19) y el creador pueden eliminar
-router.delete("/:id", deleteNews)
+// Delete - Solo admin (rol 19) y shelter (rol 21) pueden eliminar
+router.delete("/:id", requireRole(19, 21), deleteNews)
 
 // Delete images - Eliminar imágenes específicas de una noticia
-router.delete("/:id/images", deleteNewsImages)
+router.delete("/:id/images", requireRole(19, 21), deleteNewsImages)
 
 export default router
