@@ -21,11 +21,11 @@ app.use(express.json())
 app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/", mineRequestRoutes)
-app.use("/reports", reportRoutes)
-app.use("/messages", messagesRoutes)
-app.use("/", postsRoutes)
-app.use("/publications", publicationRoutes)
+app.use("/v1/adoptions/requests", mineRequestRoutes)
+app.use("/v1/adoptions/reports", reportRoutes)
+app.use("/v1/adoptions/messages", messagesRoutes)
+app.use("/v1/adoptions/publications", publicationRoutes)
+app.use("/v1/adoptions/posts", postsRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({
@@ -41,7 +41,9 @@ app.use((req, res) => {
     })
 })
 
+// Error handler
 app.use(errorHandler)
+
 app.listen(ADOPTIONS_PORT, () => {
     console.log(`🚀 Adoptions service running on ${ADOPTIONS_PORT}`)
 })
