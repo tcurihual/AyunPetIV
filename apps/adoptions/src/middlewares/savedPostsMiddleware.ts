@@ -46,7 +46,8 @@ export const requireSavedPostOwnership = async (
             throw new AppError(500, "Error al verificar la propiedad de la publicación guardada")
         }
 
-        if (savedPost?.user_id !== userId) {
+        const savedPostUserId = savedPost?.user_id
+        if (Number(savedPostUserId) !== Number(userId)) {
             throw new AppError(403, "No autorizado para acceder a esta publicación guardada")
         }
 

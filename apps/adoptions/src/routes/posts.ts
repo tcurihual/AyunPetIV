@@ -1,5 +1,19 @@
+
 import express from "express"
 import { supabase } from "../index"
+import { requireAuth } from "@repo/utils"
+import {
+    listSavedPosts,
+    getSavedPostById,
+    savePost,
+    checkIfPostIsSaved,
+    removeSavedPost,
+    removeSavedPostByPostId,
+} from "../controllers/savedPosts"
+import {
+    requireSavedPostOwnership,
+    requireValidSaveAction,
+} from "../middlewares/savedPostsMiddleware"
 
 const router = express.Router()
 
@@ -86,5 +100,18 @@ router.delete("/posts/:id", async (req, res) => {
         })
     }
 })
+
+router.get("/saved-posts", requireAuth, listSavedPosts)
+
+
+router.get("/saved-posts/:id", requireAuth, requireSavedPostOwnership, getSavedPostById)
+
+router.get("/saved-posts/check/:postId", requireAuth, checkIfPostIsSaved)
+
+router.post("/saved-posts", requireAuth, requireValidSaveAction, savePost)
+
+router.delete("/saved-posts/:id", requireAuth, requireSavedPostOwnership, removeSavedPost)
+
+router.delete("/saved-posts/post/:postId", requireAuth, removeSavedPostByPostId)
 
 export default router

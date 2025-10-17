@@ -69,7 +69,10 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
             "Obtener lista de publicaciones guardadas por el usuario autenticado. Soporta paginación mediante query params: page (defecto: 1) y pageSize (defecto: 10, máximo: 50)",
         summary: "Listar publicaciones guardadas",
         tags: ["Publicaciones Guardadas"],
-        security: [{ bearerAuth: [] }],
+    security: [{ bearerAuth: [] }],
+    // Nota: El servicio acepta Authorization: Bearer <token> en producción. Para pruebas locales
+    // existe un bypass de desarrollo que acepta las cabeceras `x-user-id` y `x-user-role`.
+    // Estas cabeceras deben usarse solo en entornos de testing y nunca en producción.
         responses: {
             200: {
                 description: "Lista de publicaciones guardadas obtenida exitosamente",
@@ -409,6 +412,128 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
+        },
+    })
+}
+
+// Adicional: documentar endpoints públicos de posts que no estaban incluidos
+export function postsDocs(registry: OpenAPIRegistry) {
+    const PostSchema = z.object({
+        id: z.number().describe("ID de la publicación"),
+        title: z.string().describe("Título"),
+        description: z.string().nullable().describe("Descripción"),
+        status: z.string().describe("Estado"),
+        creator_id: z.number().nullable().describe("ID del creador"),
+        pet_id: z.number().nullable().describe("ID de la mascota asociada"),
+    })
+
+    registry.register("Post", PostSchema)
+
+    // GET /v1/adoptions/posts - Listar publicaciones públicas (status=active)
+    registry.registerPath({
+        method: "get",
+        path: "/v1/adoptions/posts",
+        description: "Obtener lista de publicaciones públicas (status=active). Soporta paginación y filtros básicos.",
+        summary: "Listar publicaciones",
+        tags: ["Publicaciones"],
+        responses: {
+            200: {
+                description: "Lista de publicaciones obtenida exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            success: z.boolean(),
+                            message: z.string(),
+                            data: z.object({ items: z.array(PostSchema), total: z.number() }),
+                        }),
+                    },
+                },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: {
+                    "application/json": { schema: z.object({ success: z.boolean(), message: z.string() }) },
+                },
+            },
+        },
+    })
+
+    // GET /v1/adoptions/posts/{id} - Obtener publicación por ID
+    registry.registerPath({
+        method: "get",
+        path: "/v1/adoptions/posts/{id}",
+        description: "Obtener una publicación específica por su ID. Retorna detalle de la publicación y la mascota asociada si existe.",
+        summary: "Obtener publicación por ID",
+        tags: ["Publicaciones"],
+        request: {
+            params: z.object({ id: z.string().describe("ID de la publicación") }),
+        },
+        responses: {
+            200: {
+                description: "Publicación obtenida exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({ success: z.boolean(), message: z.string(), data: PostSchema }),
+                    },
+                },
+            },
+            401: { description: "No autenticado" },
+            404: { description: "No encontrada" },
+            500: { description: "Error interno" },
+        },
+    })
+
+    // POST /v1/adoptions/posts - Crear publicación (requiere autenticación)
+    registry.registerPath({
+        method: "post",
+        path: "/v1/adoptions/posts",
+        description: "Crear una nueva publicación. Requiere usuario autenticado.",
+        summary: "Crear publicación",
+        tags: ["Publicaciones"],
+        security: [{ bearerAuth: [] }],
+        request: {
+            body: { content: { "application/json": { schema: PostSchema.pick({ title: true, description: true, pet_id: true }) } } },
+        },
+        responses: {
+            201: { description: "Publicación creada", content: { "application/json": { schema: z.object({ success: z.boolean(), message: z.string(), data: PostSchema }) } } },
+            400: { description: "Datos inválidos", content: { "application/json": { schema: z.object({ success: z.boolean(), message: z.string() }) } } },
+            401: { description: "No autenticado", content: { "application/json": { schema: z.object({ success: z.boolean(), message: z.string() }) } } },
+            500: { description: "Error interno", content: { "application/json": { schema: z.object({ success: z.boolean(), message: z.string() }) } } },
+        },
+    })
+
+    // PUT /v1/adoptions/posts/{id} - Actualizar publicación (requiere autenticación y ownership)
+    registry.registerPath({
+        method: "put",
+        path: "/v1/adoptions/posts/{id}",
+        description: "Actualizar una publicación existente. Requiere ser propietario o admin.",
+        summary: "Actualizar publicación",
+        tags: ["Publicaciones"],
+        security: [{ bearerAuth: [] }],
+        request: { params: z.object({ id: z.string() }), body: { content: { "application/json": { schema: PostSchema.partial() } } } },
+        responses: {
+            200: { description: "Actualizada", content: { "application/json": { schema: z.object({ success: z.boolean(), message: z.string(), data: PostSchema }) } } },
+            400: { description: "Datos inválidos" },
+            401: { description: "No autenticado" },
+            403: { description: "No autorizado" },
+            404: { description: "No encontrada" },
+        },
+    })
+
+    // DELETE /v1/adoptions/posts/{id} - Eliminar publicación (requiere autenticación y ownership)
+    registry.registerPath({
+        method: "delete",
+        path: "/v1/adoptions/posts/{id}",
+        description: "Eliminar una publicación por su ID. Requiere ser propietario o admin.",
+        summary: "Eliminar publicación",
+        tags: ["Publicaciones"],
+        security: [{ bearerAuth: [] }],
+        request: { params: z.object({ id: z.string() }) },
+        responses: {
+            200: { description: "Eliminada exitosamente" },
+            401: { description: "No autenticado" },
+            403: { description: "No autorizado" },
+            404: { description: "No encontrada" },
         },
     })
 }
