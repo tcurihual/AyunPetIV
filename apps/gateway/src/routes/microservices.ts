@@ -58,7 +58,7 @@ msRouter.use(
         target: `${ENTITIES_URL}`,
         changeOrigin: true,
         pathRewrite: {
-            "^/v1/form-responses": "",
+            "^/v1/entities": "",
         },
         proxyTimeout: 5000,
         on: {
