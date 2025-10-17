@@ -25,7 +25,7 @@ router.get("/uploads/:entityType/:entityId/:filename", (req, res) => {
         if (err) {
             res.status(404).json({
                 error: "File not found",
-                message: `Archivo '${filename}' no encontrado en ${entityType}/${entityId}`
+                message: `Archivo '${filename}' no encontrado en ${entityType}/${entityId}`,
             })
         }
     })
@@ -33,14 +33,19 @@ router.get("/uploads/:entityType/:entityId/:filename", (req, res) => {
 
 // TODO: middleware por roles, solo para admin, para todas las rutas de abajo
 router.post("/uploads/account-request/:rut", uploadAccountRequest.array("files", 10), giverPost)
-router.get("/uploads/account-request", getGiverFiles)
+router.get("/uploads/account-request", requireRole(19), getGiverFiles)
 
-// rutas publicas - GET no requiere autenticación
-router.get("/uploads/:entityType", requireRole(19, 21), getFiles)
+// rutas publicas
+router.get("/uploads/:entityType", getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)
 
 // rutas protegidas - POST y DELETE requieren autenticación
-router.post("/uploads/:entityType/:entityId", getHeaders, publicUpload.array("files", 10), postFiles)
+router.post(
+    "/uploads/:entityType/:entityId",
+    getHeaders,
+    publicUpload.array("files", 10),
+    postFiles
+)
 
 // DELETE: Solo el propietario de la entidad (post/pet) o admin puede eliminar archivos
 router.delete("/uploads/:entityType/:entityId", getHeaders, requireFileOwnership, deleteFiles)
