@@ -6,7 +6,6 @@ import swaggerUi from "swagger-ui-express"
 import { msRouter } from "./routes/microservices"
 import { API_GATEWAY_PORT, errorHandler } from "@repo/utils"
 import { buildOpenApi } from "./docs/openapi"
-import entitiesRouter from "./routes/entities"
 
 const app = express()
 const spec = buildOpenApi()
@@ -21,7 +20,6 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/v1/docs", swaggerUi.serve, swaggerUi.setup(spec, { explorer: true }))
-app.use("/v1/entities", entitiesRouter)
 
 app.use((req, res) => {
     return res.status(404).json({
