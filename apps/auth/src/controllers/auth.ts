@@ -87,11 +87,24 @@ export const register = async (
         description: user.description ?? null,
     }
 
-    const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
-    const verificationLink = `${WEB_URL}/verify-email?token=${token}`
+    // Solo los usuarios (rol 20) reciben correo de verificación
+    // Los roles 21 (shelter) y 22 (giver) no reciben correo de verificación
+    // ya que deben ser validados por un administrador
+    const shouldSendVerificationEmail = variation === "user"
 
-    // En desarrollo: solo log, no enviar email para evitar errores SMTP
-    console.log(`📧 Email de verificación para ${user.email}: ${verificationLink}`)
+    if (shouldSendVerificationEmail) {
+        const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
+        const verificationLink = `${WEB_URL}/verify-email?token=${token}`
+
+        // En desarrollo: solo log, no enviar email para evitar errores SMTP
+        console.log(`📧 Email de verificación para ${user.email}: ${verificationLink}`)
+    } else {
+        // Para roles 21 (shelter) y 22 (giver), no se envía correo
+        // La validación debe realizarla el administrador
+        console.log(
+            `⏸️  Registro de ${variation} (rol ${roleSelect.id}): Sin correo de verificación. Requiere validación de administrador.`
+        )
+    }
 
     const { error: insertError } = await supabase.from("users").insert([payload])
 

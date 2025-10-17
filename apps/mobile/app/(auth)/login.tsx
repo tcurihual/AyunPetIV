@@ -45,6 +45,14 @@ export default function LoginScreen() {
                 router.replace("/check-role")
             })
         } catch (e: any) {
+            if (e?.code === "UNVERIFIED_ACCOUNT") {
+                showAlert(
+                    "Tu cuenta aún no ha sido validada. Por favor revisa tu correo para completarlo.",
+                    "error"
+                )
+                return
+            }
+
             const msg =
                 typeof e?.message === "string"
                     ? e.message
