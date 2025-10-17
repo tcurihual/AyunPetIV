@@ -4,7 +4,7 @@ import fs from "fs/promises"
 
 import { HttpError } from "../middleware/upload"
 import { PUBLIC_ENTITIES, UPLOADS_BASE, getAllFiles } from "../utils"
-import { AppResponse } from "@repo/utils"
+import { AppResponse, MEDIA_URL } from "@repo/utils"
 
 export const getFiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -25,7 +25,7 @@ export const getFiles = async (req: Request, res: Response, next: NextFunction) 
 
         for (const abs of allFiles) {
             const rel = path.relative(path.join(__dirname, ".."), abs)
-            const url = `/${rel.replace(/\\/g, "/")}`
+            const url = `${MEDIA_URL}/${rel.replace(/\\/g, "/")}`
 
             const parts = url.split("/")
             const entityId = parts[3]
@@ -57,7 +57,7 @@ export const getFilesById = async (req: Request, res: Response, next: NextFuncti
         const allFiles = await getAllFiles(entityPath)
         const fileUrls = allFiles.map((abs) => {
             const rel = path.relative(path.join(__dirname, ".."), abs)
-            return `/${rel.replace(/\\/g, "/")}`
+            return `${MEDIA_URL}/${rel.replace(/\\/g, "/")}`
         })
 
         return AppResponse(res, 200, "Files retrieved successfully", fileUrls)
@@ -76,7 +76,7 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
 
         const { entityType, entityId } = req.params
         const uploaded = files.map((file) => ({
-            url: `/uploads/${entityType}/${entityId}/${file.filename}`,
+            url: `${MEDIA_URL}/uploads/${entityType}/${entityId}/${file.filename}`,
             fileName: file.filename,
             size: file.size,
             mime: file.mimetype,

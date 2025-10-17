@@ -5,11 +5,8 @@ import {
     updateAdoptionRequest,
     deleteAdoptionRequest,
 } from "../controllers/adoptionRequest"
-import { requireAuth } from "@repo/utils"
 
 const router = Router()
-
-router.use(requireAuth)
 
 router.get("/", getAdoptionRequests)
 router.get("/:id", getAdoptionRequests)

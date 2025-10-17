@@ -15,12 +15,12 @@ import {
 const router = Router()
 
 // POST /verification-codes - Crear un nuevo código de verificación
-router.post("/", requireAuth, validateBody(createVerificationCodeR), createVerificationCode)
+router.post("/", validateBody(createVerificationCodeR), createVerificationCode)
 
 // POST /verification-codes/validate - Validar un código de verificación
 router.post("/validate", validateBody(validateVerificationCodeR), validateVerificationCode)
 
 // GET /verification-codes/user/:userId - Obtener códigos de un usuario (solo admin o propio usuario)
-router.get("/user/:userId", requireAuth, validateParams(userIdParamR), getUserVerificationCodes)
+router.get("/user/:userId",validateParams(userIdParamR), getUserVerificationCodes)
 
 export default router
