@@ -1,20 +1,13 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi"
 import { registerAuthPaths } from "./endpoints/auth"
 import {
-    mineRequestDocs,
     ConfirmAcceptDocs,
     validateCodeDocs,
     listPublicationsDocs,
     getPublicationByIdDocs,
     mineRequestWithImagesDocs,
 } from "./endpoints/adoptions"
-import {
-    registerGiverRequestsPaths,
-    registerAdoptionHistoryPaths,
-    registerUsersPaths,
-    registerAdoptionRequestsPaths,
-    registerAllEntitiesDocs,
-} from "./endpoints/entities"
+import { registerAllEntitiesDocs } from "./endpoints/entities"
 
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
@@ -33,7 +26,6 @@ export function buildOpenApi() {
     registerAuthPaths(registry)
 
     // Adoptions endpoints
-    mineRequestDocs(registry)
     ConfirmAcceptDocs(registry)
     validateCodeDocs(registry)
 

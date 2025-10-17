@@ -1,12 +1,19 @@
 import { Router } from "express"
 import {
+    listMyRequests,
+    confirmAccept,
+    validateCode,
     getAdoptionRequests,
     createAdoptionRequest,
     updateAdoptionRequest,
     deleteAdoptionRequest,
-} from "../controllers/adoptionRequest"
+} from "../controllers/adoptionRequests"
 
 const router = Router()
+
+router.get("/mine", listMyRequests)
+router.post("/:id/confirm-accept", confirmAccept)
+router.post("/validate-code", validateCode)
 
 router.get("/", getAdoptionRequests)
 router.get("/:id", getAdoptionRequests)

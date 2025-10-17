@@ -9,7 +9,7 @@ import {
 import { nanoid } from "nanoid"
 import { supabase } from "../index"
 import { getMultipleEntityImages, getEntityImages } from "../utils/mediaService"
-//holaaaaaaaaaaaaaaaaa
+
 export const validateCode = async (req: Request, res: Response) => {
     try {
         const { code, requestId } = req.body as { code: string; requestId: number }

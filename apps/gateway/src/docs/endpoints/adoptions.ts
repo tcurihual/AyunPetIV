@@ -10,37 +10,11 @@ import {
     PublicationByIdWithImagesResponseSchema,
 } from "@repo/utils"
 
-export function mineRequestDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/adoptions/mineRequests",
-        tags: ["Adoptions"],
-        responses: {
-            200: {
-                description: "Solicitudes obtenidas exitosamente",
-                content: {
-                    "application/json": {
-                        schema: MineRequestResponseSchema,
-                    },
-                },
-            },
-            400: {
-                description: "Error al obtener solicitudes",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-
 export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "post",
-        path: "/v1/adoptions/:id/confirm-accept", //esto esta sin probar por cuestiones de la base de datos
-        tags: ["Adoptions"],
+        path: "/v1/adoptions/adoption-requests/:id/confirm-accept", //esto esta sin probar por cuestiones de la base de datos
+        tags: ["AdoptionRequests"],
         request: {
             body: {
                 content: {
@@ -74,8 +48,8 @@ export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
 export function validateCodeDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "post",
-        path: "/v1/adoptions/validate-code", //esto esta sin probar por cuestiones de la base de datos
-        tags: ["Adoptions"],
+        path: "/v1/adoptions/adoption-requests/validate-code", //esto esta sin probar por cuestiones de la base de datos
+        tags: ["AdoptionRequests"],
         request: {
             body: {
                 content: {
@@ -114,9 +88,9 @@ export function listPublicationsDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
         path: "/v1/adoptions/publications",
-        tags: ["Adoptions - Publications"],
+        tags: ["Publications"],
         summary: "Listar publicaciones de adopción",
-        description: 
+        description:
             "Obtiene un listado paginado de publicaciones de adopción. " +
             "Cada publicación incluye información del post y la mascota asociada. " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
@@ -158,9 +132,9 @@ export function getPublicationByIdDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
         path: "/v1/adoptions/publications/{id}",
-        tags: ["Adoptions - Publications"],
+        tags: ["Publications"],
         summary: "Obtener publicación por ID",
-        description: 
+        description:
             "Obtiene una publicación específica por su ID. " +
             "Incluye información completa del post y la mascota asociada. " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
@@ -201,8 +175,8 @@ export function getPublicationByIdDocs(registry: OpenAPIRegistry) {
 export function mineRequestWithImagesDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
-        path: "/v1/adoptions/mineRequests",
-        tags: ["Adoptions"],
+        path: "/v1/adoptions/adoption-requests/mine",
+        tags: ["AdoptionRequests"],
         summary: "Obtener mis solicitudes de adopción",
         description:
             "Obtiene las solicitudes de adopción del usuario autenticado. " +
