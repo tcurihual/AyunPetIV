@@ -2,10 +2,9 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import { MessageInsertSchema, MessageUpdateSchema, ErrorValuesSchema } from "@repo/utils"
 
 export function registerMessagesDocs(registry: OpenAPIRegistry) {
-
     registry.registerPath({
         method: "get",
-        path: "/v1/messages",
+        path: "/v1/adoptions/messages",
         tags: ["Messages"],
         summary: "Listar todos los mensajes del sistema",
         description:
@@ -38,7 +37,7 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "get",
-        path: "/v1/messages/{id}",
+        path: "/v1/adoptions/messages/{id}",
         tags: ["Messages"],
         summary: "Obtener mensaje por ID",
         description:
@@ -76,7 +75,7 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "post",
-        path: "/v1/messages",
+        path: "/v1/adoptions/messages",
         tags: ["Messages"],
         summary: "Enviar un nuevo mensaje",
         description:
@@ -119,7 +118,7 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "put",
-        path: "/v1/messages/{id}",
+        path: "/v1/adoptions/messages/{id}",
         tags: ["Messages"],
         summary: "Editar el contenido de un mensaje existente",
         description:
@@ -167,10 +166,9 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
         },
     })
 
-
     registry.registerPath({
         method: "delete",
-        path: "/v1/messages/{id}",
+        path: "/v1/adoptions/messages/{id}",
         tags: ["Messages"],
         summary: "Eliminar un mensaje del sistema",
         description:

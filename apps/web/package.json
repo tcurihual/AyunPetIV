@@ -7,7 +7,9 @@
         "dev": "vite --port 8000",
         "build": "tsc -b && vite build",
         "lint": "eslint .",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "start": "node dist/index.js"
+
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.1.12",

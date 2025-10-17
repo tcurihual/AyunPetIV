@@ -9,33 +9,16 @@ import {
     mineRequestWithImagesDocs,
 } from "./endpoints/adoptions"
 import {
-    giverRequestDocs,
-    adoptionHistory,
-    validateGiverAccountDocs,
-    getAdoptionHistoryByIdDocs,
-    createAdoptionHistoryDocs,
-    updateAdoptionHistoryDocs,
-    deleteAdoptionHistoryDocs,
-    getUsersDocs,
-    getUserByIdDocs,
-    getAdoptionRequestsDocs,
-    getAdoptionRequestByIdDocs,
+    registerGiverRequestsPaths,
+    registerAdoptionHistoryPaths,
+    registerUsersPaths,
+    registerAdoptionRequestsPaths,
+    registerAllEntitiesDocs,
 } from "./endpoints/entities"
-import {
-    createVerificationCodeDocs,
-    validateVerificationCodeDocs,
-    getUserVerificationCodesDocs,
-} from "./endpoints/verificationCodes"
 
-import {
-    listFormResponsesDocs,
-    createFormResponseDocs,
-    updateFormResponseDocs,
-    deleteFormResponseDocs,
-    listByPublicationFormResponsesDocs,
-} from "./endpoints/formResponses"
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
+import { savedPostsDocs } from "./endpoints/savedPosts"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -59,37 +42,16 @@ export function buildOpenApi() {
     getPublicationByIdDocs(registry)
     mineRequestWithImagesDocs(registry)
 
-    // Entities endpoints
-    giverRequestDocs(registry)
-    validateGiverAccountDocs(registry)
-    adoptionHistory(registry)
-    getAdoptionHistoryByIdDocs(registry)
-    createAdoptionHistoryDocs(registry)
-    updateAdoptionHistoryDocs(registry)
-    deleteAdoptionHistoryDocs(registry)
-
-    // Entities endpoints con imágenes (comunicación entre microservicios)
-    getUsersDocs(registry)
-    getUserByIdDocs(registry)
-    getAdoptionRequestsDocs(registry)
-    getAdoptionRequestByIdDocs(registry)
+    // Entities
+    registerAllEntitiesDocs(registry)
 
     // Reports endpoints
     registerReportsDocs(registry)
 
     // Messages endpoints
     registerMessagesDocs(registry)
-    // Verification Codes endpoints
-    createVerificationCodeDocs(registry)
-    validateVerificationCodeDocs(registry)
-    getUserVerificationCodesDocs(registry)
 
-    // Form Responses endpoints
-    listFormResponsesDocs(registry)
-    createFormResponseDocs(registry)
-    updateFormResponseDocs(registry)
-    deleteFormResponseDocs(registry)
-    listByPublicationFormResponsesDocs(registry)
+    savedPostsDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 

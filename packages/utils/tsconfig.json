@@ -1,21 +1,23 @@
 {
     "compilerOptions": {
+        "target": "ES2022",
+        "module": "CommonJS",
         "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true,
-        "module": "ESNext",
-        "target": "ES2017",
-        "lib": ["ESNext"], 
-        "jsx": "react-jsx",
-        "declaration": true,
         "outDir": "dist",
+        "rootDir": "src",
+        "declaration": true,
+        "declarationMap": true,
         "strict": true,
-        "noImplicitAny": false,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
         "baseUrl": ".",
         "paths": {
             "*": ["./src/*"]
         }
     },
     "include": ["src"],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "dist", "**/*.config.ts"]
 }

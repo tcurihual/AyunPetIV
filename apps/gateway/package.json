@@ -4,9 +4,9 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": "tsx watch src/index.ts",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "clean": "turbo run clean"
+        "dev": "tsup src/index.ts --watch --silent --onSuccess \"echo '🔃 Reloading...' && node dist/index.js\"",
+        "build": "tsup src/index.ts --out-dir dist --format cjs",
+        "start": "node dist/index.js"
     },
     "keywords": [],
     "author": "",
@@ -21,7 +21,10 @@
         "http-proxy-middleware": "^3.0.5",
         "swagger-ui-express": "^5.0.1",
         "yamljs": "^0.3.0",
-        "zod": "^4.1.11"
+        "zod": "^4.1.11",
+        "cors": "^2.8.5",
+        "helmet": "^8.1.0",
+        "morgan": "^1.10.1"
     },
     "devDependencies": {
         "@types/express": "^5.0.3",

@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "tsup src/index.ts --watch --silent --onSuccess \"echo '🔃 Reloading...' && node dist/index.js\"",
         "build": "tsup src/index.ts",
-        "start": "cross-env PORT=7000 node dist/index.js"
+        "start": "node dist/index.js"
     },
     "dependencies": {
         "@repo/utils": "workspace:*",
