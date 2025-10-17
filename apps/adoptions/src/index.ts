@@ -9,6 +9,7 @@ import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
 import publicationRoutes from "./routes/publications"
 import postsRoutes from "./routes/posts"
+import savedPostsRoutes from "./routes/savedPosts.routes"
 
 export const supabase = createSupabaseClient()
 
@@ -26,6 +27,8 @@ app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
 app.use("/", postsRoutes)
 app.use("/publications", publicationRoutes)
+// Rutas para publicaciones guardadas
+app.use("/saved-posts", savedPostsRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({
