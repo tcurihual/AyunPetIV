@@ -4,7 +4,7 @@ import helmet from "helmet"
 import morgan from "morgan"
 import "dotenv/config"
 
-import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
+import { errorHandler, ENTITIES_PORT, createSupabaseClient, getHeaders } from "@repo/utils"
 
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
@@ -23,14 +23,12 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(express.json())
+app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/giver-request", giverRequestRouter)
 app.use("/adoption-history", adoptionHistoryRouter)
-// Deshabilitado: migración a microservicio `adoptions`.
-// El router de `adoption-requests` ahora se expone desde el servicio `adoptions`.
-// app.use("/adoption-requests", adoptionRequestRouter)
 app.use("/questions", questionsRoutes)
 app.use("/post-form", postFormRouter)
 app.use("/verification-codes", verificationCodeRouter)

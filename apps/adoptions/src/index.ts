@@ -4,12 +4,11 @@ import helmet from "helmet"
 import morgan from "morgan"
 
 import { errorHandler, ADOPTIONS_PORT, getHeaders, createSupabaseClient } from "@repo/utils"
-import mineRequestRoutes from "./routes/requests"
 import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
 import publicationRoutes from "./routes/publications"
 import savedPostsRoutes from "./routes/savedPosts"
-import adoptionRequestRouter from "./routes/adoptionRequest"
+import adoptionRequestRouter from "./routes/adoptionRequests"
 
 export const supabase = createSupabaseClient()
 
@@ -22,7 +21,6 @@ app.use(express.json())
 app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/requests", mineRequestRoutes)
 app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
 app.use("/saved-posts", savedPostsRoutes)
@@ -43,7 +41,9 @@ app.use((req, res) => {
     })
 })
 
+// Error handler
 app.use(errorHandler)
+
 app.listen(ADOPTIONS_PORT, () => {
     console.log(`🚀 Adoptions service running on ${ADOPTIONS_PORT}`)
 })

@@ -5,29 +5,28 @@ import {
     updateAdoptionHistory,
     deleteAdoptionHistory,
 } from "../controllers/adoptionHistory"
-
 import { requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
 
-// Rutas públicas - solo lectura
 router.get("/", getAdoptionHistory)
 router.get("/:id", getAdoptionHistory)
 
-// POST: Solo admins pueden crear historial de adopción
 router.post("/", requireRole(19), createAdoptionHistory)
 
-// PUT/DELETE: Solo el propietario o admin puede modificar
-// El historial de adopción tiene fromownerid y toownerid, verificamos fromownerid
 router.put(
     "/:id",
-    requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
+    requireOwnership({ tableName: "adoption_history", ownerField: "from_owner_id" }),
     updateAdoptionHistory
 )
-
+router.patch(
+    "/:id",
+    requireOwnership({ tableName: "adoption_history", ownerField: "from_owner_id" }),
+    updateAdoptionHistory
+)
 router.delete(
     "/:id",
-    requireOwnership({ tableName: "adoption_history", ownerField: "fromownerid" }),
+    requireOwnership({ tableName: "adoption_history", ownerField: "from_owner_id" }),
     deleteAdoptionHistory
 )
 

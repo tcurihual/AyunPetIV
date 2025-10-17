@@ -186,15 +186,9 @@ export const QuestionUpdateSchema = QuestionSchema.omit({
 }).partial()
 
 export const PostFormCreateSchema = z.object({
-    post_id: z.number(),
-    question_id: z.number(),
-    answer: z.string(),
-    active: z.boolean().default(true),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional(),
+    id_post: z.number().int().positive(),
+    id_question: z.number().int().positive(),
 })
-
-export const PostFormUpdateSchema = PostFormCreateSchema.omit({ post_id: true }).partial()
 
 export const ValidateGiverAccountParamsSchema = z.object({
     userId: z.string(),

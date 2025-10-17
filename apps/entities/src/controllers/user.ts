@@ -1,7 +1,6 @@
 import type { Response } from "express"
-import { AppResponse, AppError, AuthenticatedRequest, User, UpdateUserSchema } from "@repo/utils"
+import { AppResponse, AppError, AuthenticatedRequest, User, hashPassword } from "@repo/utils"
 import { supabase } from "../index"
-import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 type RoleType = keyof typeof ROLES
@@ -16,6 +15,55 @@ const parseId = (v: string) => {
     const n = Number(v)
     if (!Number.isFinite(n)) throw new AppError(400, "ID inválido")
     return n
+}
+
+export const getMe = async (req: AuthenticatedRequest, res: Response) => {
+    const id = req.user?.id
+    if (!id) throw new AppError(401, "No autenticado")
+
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
+    if (error || !data) throw new AppError(404, "Usuario no encontrado")
+
+    return AppResponse(res, 200, "OK", data as User["Row"])
+}
+
+export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
+    const id = req.user?.id
+    if (!id) throw new AppError(401, "No autenticado")
+
+    const patch = req.body as Partial<User["Update"]>
+    // Solo campos propios
+    const updatePayload: User["Update"] = {
+        email: patch.email,
+        name: patch.name,
+        password: undefined,
+        rut: undefined,
+        address: patch.address ?? undefined,
+        description: patch.description ?? undefined,
+        validated: undefined, // solo admin
+        role: undefined, // solo admin
+        updated_at: new Date().toISOString(),
+    }
+
+    if (patch.email) {
+        const { data: byEmail } = await supabase
+            .from("users")
+            .select("id")
+            .eq("email", patch.email)
+            .neq("id", id)
+            .maybeSingle()
+        if (byEmail) throw new AppError(409, "Email ya registrado")
+    }
+
+    const { data, error } = await supabase
+        .from("users")
+        .update(updatePayload)
+        .eq("id", id)
+        .select("*")
+        .single()
+
+    if (error) throw new AppError(500, error.message)
+    return AppResponse(res, 200, "Perfil actualizado", data as User["Row"])
 }
 
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -40,20 +88,10 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
         const to = from + pageSize - 1
 
         const { data, error, count } = await query.order("id", { ascending: true }).range(from, to)
-
         if (error) throw new AppError(500, error.message)
 
-        // Obtener imágenes de los usuarios (tipo giver)
-        const userIds = (data ?? []).map((u) => u.id).filter(Boolean)
-        const userImages = await getMultipleEntityImages("giver", userIds)
-
-        const itemsWithImages = (data ?? []).map((user) => ({
-            ...user,
-            images: userImages[String(user.id)] || [],
-        }))
-
         return AppResponse(res, 200, "Listado de usuarios", {
-            items: itemsWithImages,
+            items: data ?? [],
             total: count ?? 0,
             page,
             pageSize,
@@ -66,178 +104,140 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
 }
 
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-        const id = parseId(req.params.id)
-        if (!isAdmin(req) && !isSelf(req, id))
-            throw new AppError(403, "No autorizado para ver este perfil")
-
-        const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
-        if (error || !data) throw new AppError(404, "Usuario no encontrado")
-
-        // Obtener imágenes del usuario
-        const images = await getEntityImages("giver", id)
-
-        return AppResponse(res, 200, "Usuario", {
-            ...data,
-            images,
-        } as User["Row"] & { images: string[] })
-    } catch (e) {
-        if (e instanceof AppError) throw e
-        throw new AppError(500, "Error al obtener usuario")
-    }
+    const id = parseId(req.params.id)
+    if (!isAdmin(req) && !isSelf(req, id)) throw new AppError(403, "No autorizado")
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
+    if (error || !data) throw new AppError(404, "Usuario no encontrado")
+    return AppResponse(res, 200, "Usuario", data as User["Row"])
 }
 
 export const createUser = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-        if (!isAdmin(req)) throw new AppError(403, "Solo ADMIN puede crear usuarios")
+    if (!isAdmin(req)) throw new AppError(403, "Solo ADMIN puede crear usuarios")
 
-        const { email, name, rut, password, address, description, role, roleType, validated } =
-            req.body as Partial<User["Insert"]> & { roleType?: RoleType }
+    const { email, name, rut, password, address, description, role, roleType, validated } =
+        req.body as Partial<User["Insert"]> & { roleType?: RoleType }
 
-        if (!email || !name || !rut || !password) {
-            throw new AppError(400, "Faltan campos obligatorios (email, name, rut, password)")
-        }
-
-        {
-            const { data: byEmail } = await supabase
-                .from("users")
-                .select("id")
-                .eq("email", email)
-                .maybeSingle()
-            if (byEmail) throw new AppError(409, "Email ya registrado")
-            const { data: byRut } = await supabase
-                .from("users")
-                .select("id")
-                .eq("rut", rut)
-                .maybeSingle()
-            if (byRut) throw new AppError(409, "RUT ya registrado")
-        }
-
-        let roleId: number | null
-        if (typeof roleType !== "undefined") {
-            roleId = roleIdFromType(roleType)
-        } else if (typeof role !== "undefined") {
-            roleId = role
-            if (!isValidRoleId(roleId)) throw new AppError(400, "role (id) inválido")
-        } else {
-            roleId = ROLES.USER
-        }
-
-        const payload: User["Insert"] = {
-            email,
-            name,
-            rut,
-            password,
-            role: roleId,
-            address: address ?? null,
-            description: description ?? null,
-            validated: validated ?? false,
-        }
-
-        const { data, error } = await supabase.from("users").insert([payload]).select("*").single()
-        if (error) throw new AppError(500, error.message)
-
-        return AppResponse(res, 201, "Creado", data as User["Row"])
-    } catch (e) {
-        if (e instanceof AppError) throw e
-        throw new AppError(500, "Error al crear usuario")
+    if (!email || !name || !rut || !password) {
+        throw new AppError(400, "Faltan campos obligatorios (email, name, rut, password)")
     }
+
+    const { data: byEmail } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle()
+    if (byEmail) throw new AppError(409, "Email ya registrado")
+
+    const { data: byRut } = await supabase.from("users").select("id").eq("rut", rut).maybeSingle()
+    if (byRut) throw new AppError(409, "RUT ya registrado")
+
+    // role
+    let roleId: number | null
+    if (typeof roleType !== "undefined") {
+        roleId = roleIdFromType(roleType)
+    } else if (typeof role !== "undefined") {
+        roleId = role
+        if (!isValidRoleId(roleId)) throw new AppError(400, "role (id) inválido")
+    } else {
+        roleId = ROLES.USER
+    }
+
+    // HASH de password (clave!)
+    const hashed = await hashPassword(password)
+    if (!hashed) throw new AppError(500, "No se pudo encriptar la contraseña")
+
+    const payload: User["Insert"] = {
+        email,
+        name,
+        rut,
+        password: hashed,
+        role: roleId,
+        address: address ?? null,
+        description: description ?? null,
+        validated: validated ?? false,
+    }
+
+    const { data, error } = await supabase.from("users").insert([payload]).select("*").single()
+    if (error) throw new AppError(500, error.message)
+
+    return AppResponse(res, 201, "Creado", data as User["Row"])
 }
 
 export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-        const id = parseId(req.params.id)
+    const id = parseId(req.params.id)
 
-        const admin = isAdmin(req)
-        const owner = isSelf(req, id)
-        if (!admin && !owner) throw new AppError(403, "No autorizado para actualizar este usuario")
+    const admin = isAdmin(req)
+    const owner = isSelf(req, id)
+    if (!admin && !owner) throw new AppError(403, "No autorizado")
 
-        const patch = req.body as Partial<User["Update"]> & { roleType?: RoleType }
+    const patch = req.body as Partial<User["Update"]> & { roleType?: RoleType }
 
-        if (
-            !admin &&
-            (typeof patch.role !== "undefined" ||
-                typeof patch.validated !== "undefined" ||
-                typeof patch.roleType !== "undefined")
-        ) {
-            throw new AppError(403, "No autorizado para cambiar rol/validated")
-        }
-
-        if (patch.email) {
-            const { data: byEmail } = await supabase
-                .from("users")
-                .select("id")
-                .eq("email", patch.email)
-                .neq("id", id)
-                .maybeSingle()
-            if (byEmail) throw new AppError(409, "Email ya registrado")
-        }
-        if (patch.rut) {
-            const { data: byRut } = await supabase
-                .from("users")
-                .select("id")
-                .eq("rut", patch.rut)
-                .neq("id", id)
-                .maybeSingle()
-            if (byRut) throw new AppError(409, "RUT ya registrado")
-        }
-
-        let roleField: Pick<User["Update"], "role"> | {} = {}
-        if (admin) {
-            if (typeof patch.role !== "undefined") {
-                if (patch.role !== null && !isValidRoleId(patch.role))
-                    throw new AppError(400, "role (id) inválido")
-                roleField = { role: patch.role }
-            } else if (typeof patch.roleType !== "undefined") {
-                roleField = { role: roleIdFromType(patch.roleType) }
-            }
-        }
-
-        const updatePayload: User["Update"] = {
-            email: patch.email,
-            name: patch.name,
-            password: patch.password,
-            rut: patch.rut,
-            address: patch.address ?? undefined,
-            description: patch.description ?? undefined,
-            validated: patch.validated,
-            role: (roleField as any).role,
-            updated_at: new Date().toISOString(),
-        }
-
-        const { data, error } = await supabase
-            .from("users")
-            .update(updatePayload)
-            .eq("id", id)
-            .select("*")
-            .single()
-
-        if (error) throw new AppError(500, error.message)
-        return AppResponse(res, 200, "Actualizado", data as User["Row"])
-    } catch (e) {
-        if (e instanceof AppError) throw e
-        throw new AppError(500, "Error al actualizar usuario")
+    if (
+        !admin &&
+        (patch.role !== undefined || patch.validated !== undefined || patch.roleType !== undefined)
+    ) {
+        throw new AppError(403, "No autorizado para cambiar rol/validated")
     }
+
+    if (patch.email) {
+        const { data: byEmail } = await supabase
+            .from("users")
+            .select("id")
+            .eq("email", patch.email)
+            .neq("id", id)
+            .maybeSingle()
+        if (byEmail) throw new AppError(409, "Email ya registrado")
+    }
+    if (patch.rut) {
+        const { data: byRut } = await supabase
+            .from("users")
+            .select("id")
+            .eq("rut", patch.rut)
+            .neq("id", id)
+            .maybeSingle()
+        if (byRut) throw new AppError(409, "RUT ya registrado")
+    }
+
+    let roleField: Pick<User["Update"], "role"> | {} = {}
+    if (admin) {
+        if (patch.role !== undefined) {
+            if (patch.role !== null && !isValidRoleId(patch.role))
+                throw new AppError(400, "role (id) inválido")
+            roleField = { role: patch.role }
+        } else if (patch.roleType !== undefined) {
+            roleField = { role: roleIdFromType(patch.roleType) }
+        }
+    }
+
+    const updatePayload: User["Update"] = {
+        email: patch.email,
+        name: patch.name,
+        password: undefined,
+        rut: patch.rut,
+        address: patch.address ?? undefined,
+        description: patch.description ?? undefined,
+        validated: patch.validated,
+        role: (roleField as any).role,
+        updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase
+        .from("users")
+        .update(updatePayload)
+        .eq("id", id)
+        .select("*")
+        .single()
+
+    if (error) throw new AppError(500, error.message)
+    return AppResponse(res, 200, "Actualizado", data as User["Row"])
 }
 
 export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-        const id = parseId(req.params.id)
-        const admin = isAdmin(req)
-        const owner = isSelf(req, id)
-        if (!admin && !owner) throw new AppError(403, "No autorizado para eliminar este usuario")
+    const id = parseId(req.params.id)
+    if (!isAdmin(req)) throw new AppError(403, "Solo ADMIN puede eliminar por id") // si quieres self-delete, crea DELETE /me
 
-        const { data, error } = await supabase
-            .from("users")
-            .delete()
-            .eq("id", id)
-            .select("*")
-            .single()
-        if (error) throw new AppError(500, error.message)
+    const { data, error } = await supabase.from("users").delete().eq("id", id).select("*").single()
+    if (error) throw new AppError(500, error.message)
 
-        return AppResponse(res, 200, "Eliminado", data as User["Row"])
-    } catch (e) {
-        if (e instanceof AppError) throw e
-        throw new AppError(500, "Error al eliminar usuario")
-    }
+    return AppResponse(res, 200, "Eliminado", data as User["Row"])
 }
