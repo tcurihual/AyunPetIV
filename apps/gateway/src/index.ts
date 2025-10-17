@@ -1,4 +1,4 @@
-import express from "express"
+import express, { NextFunction, Request, Response } from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
@@ -10,6 +10,17 @@ import { buildOpenApi } from "./docs/openapi"
 const app = express()
 const spec = buildOpenApi()
 
+app.use(
+    "/v1/docs",
+    (_req: Request, res: Response, next: NextFunction) => {
+        res.removeHeader("Content-Security-Policy")
+        next()
+    },
+    helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }),
+    swaggerUi.serve,
+    swaggerUi.setup(spec, { explorer: true })
+)
+
 app.use(cors())
 app.use(helmet())
 app.use(morgan("dev"))
@@ -18,8 +29,6 @@ app.use("/v1", msRouter)
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-app.use("/v1/docs", swaggerUi.serve, swaggerUi.setup(spec, { explorer: true }))
 
 app.use((req, res) => {
     return res.status(404).json({

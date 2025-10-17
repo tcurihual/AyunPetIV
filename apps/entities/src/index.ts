@@ -8,7 +8,6 @@ import { errorHandler, ENTITIES_PORT, createSupabaseClient } from "@repo/utils"
 
 import giverRequestRouter from "./routes/giverRequest"
 import adoptionHistoryRouter from "./routes/adoptionHistory"
-import adoptionRequestRouter from "./routes/adoptionRequest"
 import questionsRoutes from "./routes/questions"
 import postFormRouter from "./routes/postForm"
 import verificationCodeRouter from "./routes/verificationCode"

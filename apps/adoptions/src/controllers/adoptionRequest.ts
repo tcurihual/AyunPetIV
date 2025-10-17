@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { supabase } from "../"
+import { supabase } from ".."
 import { AppError, AppResponse, AdoptionRequest } from "@repo/utils"
 import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 

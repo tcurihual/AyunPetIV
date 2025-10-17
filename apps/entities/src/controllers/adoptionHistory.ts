@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { supabase } from "../"
+import { supabase } from "../../../entities/src"
 import { AppError, AppResponse, AdoptionHistory } from "@repo/utils"
 
 export const getAdoptionHistory = async (req: Request, res: Response) => {

@@ -8,7 +8,8 @@ import mineRequestRoutes from "./routes/requests"
 import reportRoutes from "./routes/reports"
 import messagesRoutes from "./routes/messages"
 import publicationRoutes from "./routes/publications"
-import postsRoutes from "./routes/posts"
+import savedPostsRoutes from "./routes/savedPosts"
+import adoptionRequestRouter from "./routes/adoptionRequest"
 
 export const supabase = createSupabaseClient()
 
@@ -24,8 +25,9 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/requests", mineRequestRoutes)
 app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
-app.use("/", postsRoutes)
+app.use("/saved-posts", savedPostsRoutes)
 app.use("/publications", publicationRoutes)
+app.use("/adoption-requests", adoptionRequestRouter)
 
 app.get("/", (_, res) => {
     return res.status(200).json({
