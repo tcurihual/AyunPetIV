@@ -24,8 +24,8 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/requests", mineRequestRoutes)
 app.use("/reports", reportRoutes)
 app.use("/messages", messagesRoutes)
-app.use("/", postsRoutes)
 app.use("/publications", publicationRoutes)
+app.use("/posts", postsRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({

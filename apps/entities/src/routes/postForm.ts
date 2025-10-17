@@ -7,8 +7,8 @@ route.get("/", ctrl.list)
 
 route.post("/", ctrl.create)
 
-// route.patch("/:id", ctrl.update)
+route.patch("/:id", ctrl.update)
 
-// route.delete("/:id", ctrl.remove)
+route.delete("/:id", ctrl.remove)
 
 export default route
