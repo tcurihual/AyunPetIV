@@ -12,7 +12,7 @@
         "format": "turbo format",
         "test": "turbo test",
         "build": "turbo build",
-        "build:example": "turbo build --filter=\"...{./apps/example}\"",
+        "build:api": "turbo build --filter=\"!mobile\" --filter=\"!web\"",
         "clean": "turbo run clean"
     },
     "devDependencies": {

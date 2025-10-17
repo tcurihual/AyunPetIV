@@ -40,10 +40,9 @@ app.use(errorHandler)
 app.listen(MEDIA_PORT, () => console.log(`🚀 Entities service running on ${MEDIA_PORT}`))
 
 declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: number; role: number | null }
+    namespace Express {
+        interface Request {
+            user: { id: number; role: number | null }
+        }
     }
-  }
 }
-

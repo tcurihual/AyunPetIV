@@ -1,4 +1,4 @@
-import { Response } from "express"
+import { Request, Response } from "express"
 import axios from "axios"
 import { supabase } from "../"
 import { AppError, AppResponse, News, AuthenticatedRequest, MEDIA_URL } from "@repo/utils"
@@ -84,7 +84,7 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
 /**
  * Crear una nueva noticia con imágenes
  */
-export const createNews = async (req: AuthenticatedRequest, res: Response) => {
+export const createNews = async (req: Request, res: Response) => {
     const newsData: News["Insert"] = req.body
     const files = req.files as Express.Multer.File[] | undefined
 
@@ -169,7 +169,7 @@ export const createNews = async (req: AuthenticatedRequest, res: Response) => {
 /**
  * Actualizar una noticia existente
  */
-export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
+export const updateNews = async (req: Request, res: Response) => {
     const { id } = req.params
     const updateData: News["Update"] = req.body
     const files = req.files as Express.Multer.File[] | undefined
@@ -274,7 +274,7 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
 /**
  * Eliminar una noticia y sus imágenes asociadas
  */
-export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteNews = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {
@@ -348,7 +348,7 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
 /**
  * Eliminar imágenes específicas de una noticia
  */
-export const deleteNewsImages = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteNewsImages = async (req: Request, res: Response) => {
     const { id } = req.params
     const { fileNamesArray } = req.body
 

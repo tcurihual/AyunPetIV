@@ -1,5 +1,4 @@
 import { Router } from "express"
-import { requireAuth } from "@repo/utils"
 import {
     createVerificationCode,
     validateVerificationCode,
@@ -21,6 +20,6 @@ router.post("/", validateBody(createVerificationCodeR), createVerificationCode)
 router.post("/validate", validateBody(validateVerificationCodeR), validateVerificationCode)
 
 // GET /verification-codes/user/:userId - Obtener códigos de un usuario (solo admin o propio usuario)
-router.get("/user/:userId",validateParams(userIdParamR), getUserVerificationCodes)
+router.get("/user/:userId", validateParams(userIdParamR), getUserVerificationCodes)
 
 export default router
