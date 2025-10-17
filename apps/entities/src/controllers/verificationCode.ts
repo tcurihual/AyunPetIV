@@ -1,12 +1,5 @@
 import type { Request, Response } from "express"
-import {
-    AppResponse,
-    AppError,
-    AuthenticatedRequest,
-    VerificationType,
-    hashPassword,
-    comparePassword,
-} from "@repo/utils"
+import { AppResponse, AppError, VerificationType, hashPassword, comparePassword } from "@repo/utils"
 import { supabase } from "../index"
 
 const generateVerificationCode = (): string => {
@@ -31,7 +24,7 @@ const getExpirationTime = (type: VerificationType): Date => {
     }
 }
 
-export const createVerificationCode = async (req: AuthenticatedRequest, res: Response) => {
+export const createVerificationCode = async (req: Request, res: Response) => {
     try {
         const { type, userId, duration } = req.body
 
@@ -186,7 +179,7 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
     }
 }
 
-export const getUserVerificationCodes = async (req: AuthenticatedRequest, res: Response) => {
+export const getUserVerificationCodes = async (req: Request, res: Response) => {
     try {
         const userId = Number(req.params.userId)
 

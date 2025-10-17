@@ -1,9 +1,9 @@
 import { Request, Response } from "express"
 import { supabase } from "../"
-import { AppError, AppResponse, AdoptionRequest, AuthenticatedRequest } from "@repo/utils"
+import { AppError, AppResponse, AdoptionRequest } from "@repo/utils"
 import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
 
-export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Response) => {
+export const getAdoptionRequests = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {
@@ -19,7 +19,8 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 .eq("id", numericId)
                 .maybeSingle()
 
-            if (error || !adoptionRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
+            if (error || !adoptionRequest)
+                throw new AppError(404, "Solicitud de adopción no encontrada")
 
             // Obtener imágenes del post si existe
             let postImages: string[] = []
@@ -61,7 +62,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
     }
 }
 
-export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const createAdoptionRequest = async (req: Request, res: Response) => {
     const { post_id, status } = req.body
 
     try {
@@ -122,7 +123,8 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .select()
             .maybeSingle()
 
-        if (insertError || !newAdoptionRequest) throw new AppError(500, "Error al crear la solicitud de adopción")
+        if (insertError || !newAdoptionRequest)
+            throw new AppError(500, "Error al crear la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -136,7 +138,7 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
     }
 }
 
-export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const updateAdoptionRequest = async (req: Request, res: Response) => {
     const { id } = req.params
     const { status } = req.body
 
@@ -152,17 +154,15 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .eq("id", numericId)
             .maybeSingle()
 
-        if (findError || !existingRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
+        if (findError || !existingRequest)
+            throw new AppError(404, "Solicitud de adopción no encontrada")
 
         // Verificar propiedad: solo el solicitante o el dueño del post pueden modificar
         if (
             existingRequest.requester_id !== req.user.id &&
             existingRequest.post_owner_id !== req.user.id
         ) {
-            throw new AppError(
-                403,
-                "No tienes permiso para actualizar esta solicitud de adopción"
-            )
+            throw new AppError(403, "No tienes permiso para actualizar esta solicitud de adopción")
         }
 
         const payload: AdoptionRequest["Update"] = {
@@ -177,7 +177,8 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .select()
             .maybeSingle()
 
-        if (updateError || !updatedRequest) throw new AppError(500, "Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest)
+            throw new AppError(500, "Error al actualizar la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -191,7 +192,7 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
     }
 }
 
-export const deleteAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteAdoptionRequest = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {
@@ -206,14 +207,12 @@ export const deleteAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .eq("id", numericId)
             .maybeSingle()
 
-        if (findError || !existingRequest) throw new AppError(404, "Solicitud de adopción no encontrada")
+        if (findError || !existingRequest)
+            throw new AppError(404, "Solicitud de adopción no encontrada")
 
         // Verificar propiedad: solo el solicitante puede eliminar su solicitud
         if (existingRequest.requester_id !== req.user.id) {
-            throw new AppError(
-                403,
-                "No tienes permiso para eliminar esta solicitud de adopción"
-            )
+            throw new AppError(403, "No tienes permiso para eliminar esta solicitud de adopción")
         }
 
         const { error: deleteError } = await supabase

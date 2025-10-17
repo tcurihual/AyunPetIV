@@ -1,7 +1,7 @@
 import { Router } from "express"
 import multer from "multer"
 import { getNews, createNews, updateNews, deleteNews, deleteNewsImages } from "../controllers/news"
-import { requireAuth, requireRole, requireOwnership } from "@repo/utils"
+import { requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
 
@@ -21,8 +21,6 @@ const upload = multer({
     },
 })
 
-// Rutas protegidas - requieren autenticación incluso para obtener noticias
-router.use(requireAuth)
 router.get("/", getNews)
 router.get("/:id", getNews)
 

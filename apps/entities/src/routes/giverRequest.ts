@@ -1,12 +1,8 @@
 import { Router } from "express"
-import { requireRole, requireAuth } from "@repo/utils"
-
+import { requireRole } from "@repo/utils"
 import { listGiverRequests, validateGiverAccount } from "../controllers/giverRequests"
 
 const router = Router()
-
-// Rutas protegidas - requieren autenticación
-router.use(requireAuth)
 
 router.get("/", requireRole(19), listGiverRequests)
 router.patch("/:userId/validate", requireRole(19), validateGiverAccount)

@@ -42,10 +42,7 @@ app.listen(MEDIA_PORT, () => console.log(`🚀 Entities service running on ${MED
 declare global {
     namespace Express {
         interface Request {
-            user: {
-                id: number
-                role: number | null
-            }
+            user: { id: number; role: number | null }
         }
     }
 }

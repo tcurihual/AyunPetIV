@@ -6,16 +6,13 @@ import {
     deleteAdoptionHistory,
 } from "../controllers/adoptionHistory"
 
-import { requireRole, requireOwnership, requireAuth } from "@repo/utils"
+import { requireRole, requireOwnership } from "@repo/utils"
 
 const router = Router()
 
 // Rutas públicas - solo lectura
 router.get("/", getAdoptionHistory)
 router.get("/:id", getAdoptionHistory)
-
-// Rutas protegidas - requieren autenticación
-router.use(requireAuth)
 
 // POST: Solo admins pueden crear historial de adopción
 router.post("/", requireRole(19), createAdoptionHistory)

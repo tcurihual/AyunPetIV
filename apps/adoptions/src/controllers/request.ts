@@ -1,10 +1,5 @@
 import { Request, Response } from "express"
-import {
-    AdoptionHistory,
-    AppResponse,
-    AdoptionRequest,
-    AuthenticatedRequest,
-} from "@repo/utils"
+import { AdoptionHistory, AppResponse, AdoptionRequest, AuthenticatedRequest } from "@repo/utils"
 import { nanoid } from "nanoid"
 import { supabase } from "../index"
 import { getMultipleEntityImages, getEntityImages } from "../utils/mediaService"
@@ -54,7 +49,7 @@ export const validateCode = async (req: Request, res: Response) => {
     }
 }
 
-export const listMyRequests = async (req: AuthenticatedRequest, res: Response) => {
+export const listMyRequests = async (req: Request, res: Response) => {
     const userId = req.user.id
     const role = req.user.role
     // TODO: ahora esta presente la id de la entidad a la que le hacen
@@ -132,7 +127,7 @@ export const listMyRequests = async (req: AuthenticatedRequest, res: Response) =
     return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
 }
 
-export const confirmAccept = async (req: AuthenticatedRequest, res: Response) => {
+export const confirmAccept = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {
@@ -229,7 +224,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
     }
 }
 
-export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const createAdoptionRequest = async (req: Request, res: Response) => {
     const { post_id, status } = req.body
 
     try {
@@ -285,7 +280,8 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .select()
             .maybeSingle()
 
-        if (insertError || !newAdoptionRequest) throw new Error("Error al crear la solicitud de adopción")
+        if (insertError || !newAdoptionRequest)
+            throw new Error("Error al crear la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -299,7 +295,7 @@ export const createAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
     }
 }
 
-export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const updateAdoptionRequest = async (req: Request, res: Response) => {
     const { id } = req.params
     const { status } = req.body
 
@@ -317,7 +313,10 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
 
         if (findError || !existingRequest) throw new Error("Solicitud de adopción no encontrada")
 
-        if ((status === "approved" || status === "completed") && existingRequest.post_owner_id !== req.user.id) {
+        if (
+            (status === "approved" || status === "completed") &&
+            existingRequest.post_owner_id !== req.user.id
+        ) {
             return AppResponse(
                 res,
                 403,
@@ -332,7 +331,12 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             existingRequest.requester_id !== req.user.id &&
             existingRequest.post_owner_id !== req.user.id
         ) {
-            return AppResponse(res, 403, "No tienes permiso para actualizar esta solicitud de adopción", null)
+            return AppResponse(
+                res,
+                403,
+                "No tienes permiso para actualizar esta solicitud de adopción",
+                null
+            )
         }
 
         const payload: AdoptionRequest["Update"] = {
@@ -347,7 +351,8 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .select()
             .maybeSingle()
 
-        if (updateError || !updatedRequest) throw new Error("Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest)
+            throw new Error("Error al actualizar la solicitud de adopción")
 
         return AppResponse(
             res,
@@ -361,7 +366,7 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
     }
 }
 
-export const deleteAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteAdoptionRequest = async (req: Request, res: Response) => {
     const { id } = req.params
 
     try {

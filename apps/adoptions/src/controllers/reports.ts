@@ -23,14 +23,13 @@ export const getReports = async (req: AuthenticatedRequest, res: Response) => {
     if (error) throw new AppError(400, "Error al obtener reports", { error })
     return AppResponse(res, 200, "Reports obtenidos correctamente", data)
 }
-
 export const createReport = async (req: AuthenticatedRequest, res: Response) => {
     const supabase = createSupabaseClient()
     const { userId, postId, description, resolved } = req.body
 
     const insertData = {
-        userid: userId,
-        postid: postId,
+        user_id: userId,
+        post_id: postId,
         description,
         resolved: resolved ?? false,
     }

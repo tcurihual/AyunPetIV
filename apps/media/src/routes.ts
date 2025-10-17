@@ -40,14 +40,9 @@ router.get("/uploads/:entityType", getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)
 
 // rutas protegidas - POST y DELETE requieren autenticación
-router.post(
-    "/uploads/:entityType/:entityId",
-    getHeaders,
-    publicUpload.array("files", 10),
-    postFiles
-)
+router.post("/uploads/:entityType/:entityId", publicUpload.array("files", 10), postFiles)
 
 // DELETE: Solo el propietario de la entidad (post/pet) o admin puede eliminar archivos
-router.delete("/uploads/:entityType/:entityId", getHeaders, requireFileOwnership, deleteFiles)
+router.delete("/uploads/:entityType/:entityId", requireFileOwnership, deleteFiles)
 
 export default router
