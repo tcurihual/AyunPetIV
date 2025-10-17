@@ -74,7 +74,7 @@ export default function RegisterScreen() {
             await withLoading(async () => {
                 const phoneWithPrefix = `+569${data.phone}`
 
-                await signUp(
+                const result = await signUp(
                     {
                         name: data.name,
                         email: data.email,
@@ -87,10 +87,11 @@ export default function RegisterScreen() {
                     "user"
                 )
 
-                showAlert(
-                    "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta.",
-                    "success"
-                )
+                const message = result.requiresEmailVerification
+                    ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
+                    : "Registro exitoso. Tu cuenta será validada por un administrador."
+
+                showAlert(message, "success")
 
                 setTimeout(() => {
                     router.replace("/(auth)/login")

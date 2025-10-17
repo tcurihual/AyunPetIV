@@ -28,15 +28,14 @@ app.use(getHeaders)
 
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/v1/entities/giver-request", giverRequestRouter)
-app.use("/v1/entities/adoption-history", adoptionHistoryRouter)
-app.use("/v1/entities/adoption-requests", adoptionRequestRouter)
-app.use("/v1/entities/questions", questionsRoutes)
-app.use("/v1/entities/post-form", postFormRouter)
-app.use("/v1/entities/verification-codes", verificationCodeRouter)
-app.use("/v1/entities/news", newsRouter)
-app.use("/v1/entities/users", usersRouter)
-app.use("/v1/entities/form-responses", formResponsesRoutes)
+app.use("/giver-request", giverRequestRouter)
+app.use("/adoption-history", adoptionHistoryRouter)
+app.use("/questions", questionsRoutes)
+app.use("/post-form", postFormRouter)
+app.use("/verification-codes", verificationCodeRouter)
+app.use("/news", newsRouter)
+app.use("/users", usersRouter)
+app.use("/form-responses", formResponsesRoutes)
 
 app.use(errorHandler)
 

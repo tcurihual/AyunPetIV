@@ -31,7 +31,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 .from("adoption_request")
                 .select("*")
                 .eq("id", numericId)
-                .single()
+                .maybeSingle()
 
             if (error || !adoptionRequest)
                 throw new AppError(404, "Solicitud de adopción no encontrada")

@@ -21,11 +21,11 @@ app.use(express.json())
 app.use(getHeaders)
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/v1/adoptions/requests", mineRequestRoutes)
-app.use("/v1/adoptions/reports", reportRoutes)
-app.use("/v1/adoptions/messages", messagesRoutes)
-app.use("/v1/adoptions/publications", publicationRoutes)
-app.use("/v1/adoptions/posts", postsRoutes)
+app.use("/requests", mineRequestRoutes)
+app.use("/reports", reportRoutes)
+app.use("/messages", messagesRoutes)
+app.use("/", postsRoutes)
+app.use("/publications", publicationRoutes)
 
 app.get("/", (_, res) => {
     return res.status(200).json({

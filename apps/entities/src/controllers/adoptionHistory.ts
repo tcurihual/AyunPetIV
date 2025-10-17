@@ -3,12 +3,14 @@ import { supabase } from "../index"
 import { AppError, AppResponse, AdoptionHistory } from "@repo/utils"
 
 export const getAdoptionHistory = async (req: Request, res: Response) => {
-    const { id } = req.params
-
     try {
-        if (id) {
+        const { id } = req.params
+
+        if (typeof id !== "undefined") {
             const numericId = Number(id)
-            if (!Number.isFinite(numericId)) throw new AppError(400, "ID debe ser un número válido")
+            if (!Number.isFinite(numericId)) {
+                throw new AppError(400, "ID debe ser un número válido")
+            }
 
             const { data, error } = await supabase
                 .from("adoption_history")
@@ -16,7 +18,9 @@ export const getAdoptionHistory = async (req: Request, res: Response) => {
                 .eq("id", numericId)
                 .single()
 
-            if (error || !data) throw new AppError(404, "Historial de adopción no encontrado")
+            if (error || !data) {
+                throw new AppError(404, "Historial de adopción no encontrado")
+            }
 
             return AppResponse(res, 200, "Historial de adopción obtenido exitosamente", data)
         }
@@ -26,7 +30,9 @@ export const getAdoptionHistory = async (req: Request, res: Response) => {
             .select("*")
             .order("created_at", { ascending: false })
 
-        if (error) throw new AppError(500, "Error al obtener el historial de adopciones")
+        if (error) {
+            throw new AppError(500, "Error al obtener el historial de adopciones")
+        }
 
         return AppResponse(res, 200, "Historial de adopciones obtenido exitosamente", data ?? [])
     } catch (error) {
