@@ -1,4 +1,6 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
+import { z } from "zod"
+
 import {
     GiverRequestResponseSchema,
     ErrorValuesSchema,
@@ -16,524 +18,613 @@ import {
     AdoptionRequestByIdWithImagesResponseSchema,
 } from "@repo/utils"
 
-export function giverRequestDocs(registry: OpenAPIRegistry) {
+const FormResponseSchema = z.object({
+    id: z.number(),
+    id_user: z.number(),
+    id_post_form: z.number(),
+    answer: z.string(),
+    created_at: z.string(),
+    updated_at: z.string().optional(),
+})
+
+/* -------------------------------------------------------------------------- */
+/* 🐶 Giver Requests                                                          */
+/* -------------------------------------------------------------------------- */
+export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
         path: "/v1/entities/giverRequests",
-        tags: ["Entities"],
+        tags: ["GiverRequests"],
         responses: {
             200: {
                 description: "Organizaciones no validadas obtenidas correctamente",
-                content: {
-                    "application/json": {
-                        schema: GiverRequestResponseSchema,
-                    },
-                },
+                content: { "application/json": { schema: GiverRequestResponseSchema } },
             },
             400: {
                 description: "Error al obtener organizaciones",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
-}
 
-export function adoptionHistory(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/entities/adoption-history", //esto esta sin probar por cuestiones de la base de datos
-        tags: ["Entities"],
-        responses: {
-            "200": {
-                description: "Historial de adopciones obtenido exitosamente",
-                content: {
-                    "application/json": {
-                        schema: AdoptionHistoryResponseSchema,
-                    },
-                },
-            },
-            "400": {
-                description: "Error al obtener el historial de adopciones",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-export function validateGiverAccountDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "patch",
         path: "/v1/entities/giver-requests/{userId}/validate",
-        tags: ["Entities"],
+        tags: ["GiverRequests"],
         summary: "Validar cuenta de dador de mascotas",
         description:
-            "Valida la cuenta de un dador, cambia el estado `validated` a `true` y envía un correo electrónico de confirmación al usuario. Requiere permisos de administrador.",
+            "Valida la cuenta de un dador, cambia el estado `validated` a `true` y envía un correo electrónico de confirmación. Requiere permisos de administrador.",
         security: [{ bearerAuth: [] }],
         responses: {
             200: {
                 description: "Cuenta validada exitosamente",
-                content: {
-                    "application/json": {
-                        schema: ValidateGiverAccountResponseSchema,
-                    },
-                },
+                content: { "application/json": { schema: ValidateGiverAccountResponseSchema } },
             },
             400: {
-                description: "ID de usuario inválido o cuenta ya validada",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "ID inválido o cuenta ya validada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             403: {
-                description: "No autorizado - Requiere rol de administrador (rol 19)",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "No autorizado - Requiere rol de administrador",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             404: {
                 description: "Usuario no encontrado",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             500: {
                 description: "Error interno del servidor",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
 }
 
+/* -------------------------------------------------------------------------- */
+/* 🐾 Adoption History                                                        */
+/* -------------------------------------------------------------------------- */
+export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-history",
+        tags: ["AdoptionHistory"],
+        responses: {
+            200: {
+                description: "Historial de adopciones obtenido exitosamente",
+                content: { "application/json": { schema: AdoptionHistoryResponseSchema } },
+            },
+            400: {
+                description: "Error al obtener el historial de adopciones",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
 
-export function getAdoptionHistoryByIdDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "get",
         path: "/v1/entities/adoption-history/{id}",
-        tags: ["Entities - Adoption History"],
+        tags: ["AdoptionHistory"],
         summary: "Obtener historial de adopción por ID",
         description: "Retorna el historial de adopción de una mascota específica usando su ID.",
         responses: {
             200: {
                 description: "Historial de adopción obtenido exitosamente",
-                content: {
-                    "application/json": {
-                        schema: AdoptionHistoryByIdResponseSchema,
-                    },
-                },
+                content: { "application/json": { schema: AdoptionHistoryByIdResponseSchema } },
             },
             404: {
-                description: "Historial de adopción no encontrado",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Historial no encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             500: {
                 description: "Error interno del servidor",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "post",
+        path: "/v1/entities/adoption-history",
+        tags: ["AdoptionHistory"],
+        summary: "Crear nuevo historial de adopción",
+        security: [{ bearerAuth: [] }],
+        request: {
+            body: {
+                content: { "application/json": { schema: CreateAdoptionHistoryRequestSchema } },
+            },
+        },
+        responses: {
+            201: {
+                description: "Historial creado exitosamente",
+                content: { "application/json": { schema: CreateAdoptionHistoryResponseSchema } },
+            },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "put",
+        path: "/v1/entities/adoption-history/{id}",
+        tags: ["AdoptionHistory"],
+        summary: "Actualizar historial de adopción",
+        security: [{ bearerAuth: [] }],
+        request: {
+            body: {
+                content: { "application/json": { schema: UpdateAdoptionHistoryRequestSchema } },
+            },
+        },
+        responses: {
+            200: {
+                description: "Historial actualizado exitosamente",
+                content: { "application/json": { schema: UpdateAdoptionHistoryResponseSchema } },
+            },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "delete",
+        path: "/v1/entities/adoption-history/{id}",
+        tags: ["AdoptionHistory"],
+        summary: "Eliminar historial de adopción",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Historial eliminado exitosamente",
+                content: { "application/json": { schema: DeleteAdoptionHistoryResponseSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
 }
 
+/* -------------------------------------------------------------------------- */
+/* 👥 Users                                                                  */
+/* -------------------------------------------------------------------------- */
+export function registerUsersPaths(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users",
+        tags: ["Users"],
+        summary: "Listar usuarios",
+        description:
+            "Obtiene un listado paginado de usuarios. Solo accesible para administradores. " +
+            "Las imágenes de perfil se obtienen desde el microservicio de Media.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Usuarios obtenidos exitosamente",
+                content: { "application/json": { schema: UsersWithImagesResponseSchema } },
+            },
+            400: {
+                description: "Error en los parámetros",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
 
-export function createAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users/{id}",
+        tags: ["Users"],
+        summary: "Obtener usuario por ID",
+        description: "Obtiene la información de un usuario específico con sus imágenes de perfil.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Usuario obtenido exitosamente",
+                content: { "application/json": { schema: UserByIdWithImagesResponseSchema } },
+            },
+            404: {
+                description: "Usuario no encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+}
+
+/* -------------------------------------------------------------------------- */
+/* 🐕 Adoption Requests                                                      */
+/* -------------------------------------------------------------------------- */
+export function registerAdoptionRequestsPaths(registry: OpenAPIRegistry) {
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-requests",
+        tags: ["AdoptionRequests"],
+        summary: "Listar solicitudes de adopción",
+        description:
+            "Obtiene un listado de todas las solicitudes de adopción, incluyendo las imágenes de los posts asociados.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Solicitudes obtenidas exitosamente",
+                content: {
+                    "application/json": { schema: AdoptionRequestsWithImagesResponseSchema },
+                },
+            },
+            400: {
+                description: "Error en los parámetros",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/adoption-requests/{id}",
+        tags: ["AdoptionRequests"],
+        summary: "Obtener solicitud de adopción por ID",
+        description:
+            "Obtiene información detallada de una solicitud de adopción específica, incluyendo imágenes del post asociado.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+            200: {
+                description: "Solicitud obtenida exitosamente",
+                content: {
+                    "application/json": { schema: AdoptionRequestByIdWithImagesResponseSchema },
+                },
+            },
+            404: {
+                description: "Solicitud no encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+}
+
+export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
+    // Crear código
     registry.registerPath({
         method: "post",
-        path: "/v1/entities/adoption-history",
-        tags: ["Entities - Adoption History"],
-        summary: "Crear nuevo historial de adopción",
-        description:
-            "Crea un nuevo registro de historial de adopción. Solo los administradores pueden crear registros de historial. Requiere autenticación y rol de administrador (rol 19).",
+        path: "/v1/entities/verification-codes",
+        tags: ["VerificationCodes"],
         security: [{ bearerAuth: [] }],
         request: {
             body: {
                 content: {
                     "application/json": {
-                        schema: CreateAdoptionHistoryRequestSchema,
+                        schema: {
+                            type: "object",
+                            properties: {
+                                type: { type: "string", enum: ["verify", "reset", "adoption"] },
+                                userId: { type: "number" },
+                                duration: { type: "number", minimum: 1, maximum: 1440 },
+                            },
+                            required: ["type"],
+                        },
                     },
                 },
             },
         },
         responses: {
             201: {
-                description: "Historial de adopción creado exitosamente",
-                content: {
-                    "application/json": {
-                        schema: CreateAdoptionHistoryResponseSchema,
-                    },
-                },
+                description: "Código creado",
+                content: { "application/json": { schema: { type: "object" } } },
             },
             400: {
-                description: "Datos inválidos en el request",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            403: {
-                description: "No autorizado - Requiere rol de administrador (rol 19)",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             500: {
-                description: "Error interno del servidor",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
-}
 
-
-export function updateAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    // Validar código
     registry.registerPath({
-        method: "put",
-        path: "/v1/entities/adoption-history/{id}",
-        tags: ["Entities - Adoption History"],
-        summary: "Actualizar historial de adopción",
-        description:
-            "Actualiza un registro de historial de adopción existente. Solo el propietario original (fromownerid) o un administrador pueden actualizar el registro. Requiere autenticación.",
-        security: [{ bearerAuth: [] }],
+        method: "post",
+        path: "/v1/entities/verification-codes/validate",
+        tags: ["VerificationCodes"],
         request: {
             body: {
                 content: {
                     "application/json": {
-                        schema: UpdateAdoptionHistoryRequestSchema,
+                        schema: {
+                            type: "object",
+                            properties: {
+                                code: { type: "string", pattern: "^\\d{6}$" },
+                                type: { type: "string", enum: ["verify", "reset", "adoption"] },
+                                userId: { type: "number" },
+                            },
+                            required: ["code", "type", "userId"],
+                        },
                     },
                 },
             },
         },
         responses: {
             200: {
-                description: "Historial de adopción actualizado exitosamente",
-                content: {
-                    "application/json": {
-                        schema: UpdateAdoptionHistoryResponseSchema,
-                    },
-                },
+                description: "Código validado",
+                content: { "application/json": { schema: { type: "object" } } },
             },
             400: {
-                description: "Datos inválidos en el request",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            403: {
-                description: "No autorizado - Solo el propietario o admin pueden actualizar",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Código inválido o expirado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             404: {
-                description: "Historial de adopción no encontrado",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Código no encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
-            500: {
-                description: "Error interno del servidor",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+        },
+    })
+
+    // Obtener códigos por usuario
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/verification-codes/user/{userId}",
+        tags: ["VerificationCodes"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "userId",
+                in: "path",
+                required: true,
+                schema: { type: "string", pattern: "^\\d+$" },
+                description: "ID del usuario",
+            },
+        ],
+        responses: {
+            200: {
+                description: "Códigos obtenidos",
+                content: { "application/json": { schema: { type: "object" } } },
+            },
+            401: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "Sin permisos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
 }
 
+export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
+    // Listar respuestas
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/form-responses",
+        tags: ["FormResponses"],
+        summary: "Listar respuestas de formulario por id_post_form",
+        parameters: [
+            {
+                name: "id_post_form",
+                in: "query",
+                required: true,
+                schema: { type: "integer" },
+            },
+        ],
+        responses: {
+            200: {
+                description: "Listado de respuestas obtenido exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            type: z.literal("success"),
+                            message: z.string(),
+                            data: z.array(FormResponseSchema),
+                        }),
+                    },
+                },
+            },
+            400: {
+                description: "Error en parámetros",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
 
-export function deleteAdoptionHistoryDocs(registry: OpenAPIRegistry) {
+    // Crear respuesta
+    registry.registerPath({
+        method: "post",
+        path: "/v1/entities/form-responses",
+        tags: ["FormResponses"],
+        summary: "Crear una nueva respuesta de formulario",
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: FormResponseSchema.omit({ id: true, created_at: true }),
+                    },
+                },
+            },
+        },
+        responses: {
+            201: {
+                description: "Respuesta creada exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            type: z.literal("success"),
+                            message: z.string(),
+                            data: FormResponseSchema,
+                        }),
+                    },
+                },
+            },
+            400: {
+                description: "Error en el cuerpo",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    // Actualizar respuesta
+    registry.registerPath({
+        method: "put",
+        path: "/v1/entities/form-responses/{id}",
+        tags: ["FormResponses"],
+        summary: "Actualizar una respuesta de formulario",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ answer: z.string() }),
+                    },
+                },
+            },
+        },
+        responses: {
+            200: {
+                description: "Respuesta actualizada exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            type: z.literal("success"),
+                            message: z.string(),
+                            data: FormResponseSchema,
+                        }),
+                    },
+                },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    // Eliminar respuesta
     registry.registerPath({
         method: "delete",
-        path: "/v1/entities/adoption-history/{id}",
-        tags: ["Entities - Adoption History"],
-        summary: "Eliminar historial de adopción",
-        description:
-            "Elimina un registro de historial de adopción. Solo el propietario original (fromownerid) o un administrador pueden eliminar el registro. Requiere autenticación.",
-        security: [{ bearerAuth: [] }],
+        path: "/v1/entities/form-responses/{id}",
+        tags: ["FormResponses"],
+        summary: "Eliminar una respuesta de formulario",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
             200: {
-                description: "Historial de adopción eliminado exitosamente",
+                description: "Respuesta eliminada exitosamente",
                 content: {
                     "application/json": {
-                        schema: DeleteAdoptionHistoryResponseSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            403: {
-                description: "No autorizado - Solo el propietario o admin pueden eliminar",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
+                        schema: z.object({
+                            type: z.literal("success"),
+                            message: z.string(),
+                            data: z.object({ id: z.number() }),
+                        }),
                     },
                 },
             },
             404: {
-                description: "Historial de adopción no encontrado",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            500: {
-                description: "Error interno del servidor",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
-}
 
-/**
- * Documentación para el endpoint de listado de usuarios con imágenes
- * Incluye imágenes de perfil obtenidas del microservicio de Media
- */
-export function getUsersDocs(registry: OpenAPIRegistry) {
+    // Listar por publicación
     registry.registerPath({
         method: "get",
-        path: "/v1/entities/users",
-        tags: ["Entities - Users"],
-        summary: "Listar usuarios",
-        description:
-            "Obtiene un listado paginado de usuarios del sistema. " +
-            "Solo accesible para administradores. " +
-            "Las imágenes de perfil se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
-        security: [{ bearerAuth: [] }],
+        path: "/v1/entities/form-responses/publication/{postId}",
+        tags: ["FormResponses"],
+        summary: "Obtener respuestas asociadas a una publicación",
+        parameters: [{ name: "postId", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
             200: {
-                description: "Usuarios obtenidos exitosamente con imágenes de perfil",
+                description: "Respuestas obtenidas exitosamente",
                 content: {
                     "application/json": {
-                        schema: UsersWithImagesResponseSchema,
+                        schema: z.object({
+                            type: z.literal("success"),
+                            message: z.string(),
+                            data: z.array(FormResponseSchema),
+                        }),
                     },
                 },
             },
             400: {
-                description: "Error en los parámetros de consulta",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            403: {
-                description: "No autorizado - Requiere rol de administrador",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
+                description: "Error",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
     })
 }
 
-/**
- * Documentación para el endpoint de obtener usuario por ID con imágenes
- * Incluye imágenes de perfil obtenidas del microservicio de Media
- */
-export function getUserByIdDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/entities/users/{id}",
-        tags: ["Entities - Users"],
-        summary: "Obtener usuario por ID",
-        description:
-            "Obtiene información detallada de un usuario específico por su ID. " +
-            "Las imágenes de perfil se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
-        security: [{ bearerAuth: [] }],
-        responses: {
-            200: {
-                description: "Usuario obtenido exitosamente con imágenes de perfil",
-                content: {
-                    "application/json": {
-                        schema: UserByIdWithImagesResponseSchema,
-                    },
-                },
-            },
-            404: {
-                description: "Usuario no encontrado",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-
-/**
- * Documentación para el endpoint de listado de solicitudes de adopción con imágenes
- * Incluye imágenes de posts obtenidas del microservicio de Media
- */
-export function getAdoptionRequestsDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/entities/adoption-requests",
-        tags: ["Entities - Adoption Requests"],
-        summary: "Listar solicitudes de adopción",
-        description:
-            "Obtiene un listado de todas las solicitudes de adopción. " +
-            "Las imágenes de los posts asociados se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
-        security: [{ bearerAuth: [] }],
-        responses: {
-            200: {
-                description: "Solicitudes de adopción obtenidas exitosamente con imágenes de posts",
-                content: {
-                    "application/json": {
-                        schema: AdoptionRequestsWithImagesResponseSchema,
-                    },
-                },
-            },
-            400: {
-                description: "Error en los parámetros de consulta",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-
-/**
- * Documentación para el endpoint de obtener solicitud de adopción por ID con imágenes
- * Incluye imágenes del post obtenidas del microservicio de Media
- */
-export function getAdoptionRequestByIdDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/entities/adoption-requests/{id}",
-        tags: ["Entities - Adoption Requests"],
-        summary: "Obtener solicitud de adopción por ID",
-        description:
-            "Obtiene información detallada de una solicitud de adopción específica por su ID. " +
-            "Las imágenes del post asociado se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
-        security: [{ bearerAuth: [] }],
-        responses: {
-            200: {
-                description: "Solicitud de adopción obtenida exitosamente con imágenes del post",
-                content: {
-                    "application/json": {
-                        schema: AdoptionRequestByIdWithImagesResponseSchema,
-                    },
-                },
-            },
-            404: {
-                description: "Solicitud de adopción no encontrada",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
+export function registerAllEntitiesDocs(registry: OpenAPIRegistry) {
+    registerGiverRequestsPaths(registry)
+    registerAdoptionHistoryPaths(registry)
+    registerUsersPaths(registry)
+    registerAdoptionRequestsPaths(registry)
+    registerVerificationCodesPaths(registry)
+    registerFormResponsesPaths(registry)
 }

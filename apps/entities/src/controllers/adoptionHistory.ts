@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { supabase } from "../"
+import { supabase } from "../../../entities/src"
 import { AppError, AppResponse, AdoptionHistory } from "@repo/utils"
 
 export const getAdoptionHistory = async (req: Request, res: Response) => {
@@ -30,7 +30,7 @@ export const getAdoptionHistory = async (req: Request, res: Response) => {
             const { data: adoptionHistories, error } = await supabase
                 .from("adoption_history")
                 .select("*")
-                .order("createdat", { ascending: false })
+                .order("created_at", { ascending: false })
 
             if (error) throw new AppError(500, "Error al obtener el historial de adopciones")
 

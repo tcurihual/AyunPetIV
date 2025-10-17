@@ -8,9 +8,6 @@ import {
 } from "@repo/utils"
 
 export function registerAuthPaths(registry: OpenAPIRegistry) {
-    // ============================================
-    // POST /v1/auth/login
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/auth/login",
@@ -40,9 +37,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         },
     })
 
-    // ============================================
-    // POST /v1/auth/register/:variation
-    // ============================================
     registry.registerPath({
         method: "post",
         path: "/v1/auth/register/{variation}",
@@ -212,43 +206,6 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
             },
             500: {
                 description: "Error al actualizar la contraseña",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    registry.registerPath({
-        method: "get",
-        path: "/v1/auth/test-email",
-        tags: ["Auth - Debug"],
-        summary: "Probar envío de correo de verificación (entorno de desarrollo)",
-        description:
-            "Endpoint temporal para pruebas locales de envío de correos. " +
-            "Genera un token de ejemplo y envía un correo de verificación utilizando Nodemailer.",
-        responses: {
-            200: {
-                description: "Correo de prueba enviado correctamente",
-                content: {
-                    "application/json": {
-                        schema: {
-                            type: "object",
-                            properties: {
-                                ok: { type: "boolean", example: true },
-                                message: {
-                                    type: "string",
-                                    example: "Correo de prueba enviado correctamente",
-                                },
-                                link: {
-                                    type: "string",
-                                    example: "http://localhost:8081/verify-email?token=abc123",
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            500: {
-                description: "Error al enviar el correo de prueba",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },

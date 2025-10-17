@@ -7,10 +7,9 @@ import {
 } from "@repo/utils"
 
 export function registerReportsDocs(registry: OpenAPIRegistry) {
-
     registry.registerPath({
         method: "get",
-        path: "/v1/reports",
+        path: "/v1/adoptions/reports",
         tags: ["Reports"],
         summary: "Listar todos los reportes registrados",
         description:
@@ -39,7 +38,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "get",
-        path: "/v1/reports/{id}",
+        path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
         summary: "Obtener un reporte específico por ID",
         description:
@@ -74,10 +73,9 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         },
     })
 
-
     registry.registerPath({
         method: "post",
-        path: "/v1/reports",
+        path: "/v1/adoptions/reports",
         tags: ["Reports"],
         summary: "Crear un nuevo reporte",
         description:
@@ -115,7 +113,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "put",
-        path: "/v1/reports/{id}",
+        path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
         summary: "Actualizar la descripción de un reporte existente",
         description:
@@ -157,7 +155,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "delete",
-        path: "/v1/reports/{id}",
+        path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
         summary: "Eliminar un reporte existente",
         description:

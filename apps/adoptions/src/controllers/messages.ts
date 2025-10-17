@@ -29,7 +29,7 @@ export const createMessage = async (req: AuthenticatedRequest, res: Response) =>
 
     const insertData = {
         creator_id: creatorId,
-        postid: postId ?? null,
+        post_id: postId ?? null,
         description,
         status: status ?? "active",
     }
@@ -48,7 +48,7 @@ export const updateMessage = async (req: AuthenticatedRequest, res: Response) =>
     const updateData = {
         description,
         status,
-        updatedat: new Date().toISOString(),
+        updated_at: new Date().toISOString(), // ← nombre correcto de columna
     }
 
     const { data, error } = await supabase

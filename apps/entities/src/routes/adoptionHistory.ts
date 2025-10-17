@@ -14,7 +14,6 @@ const router = Router()
 router.get("/", getAdoptionHistory)
 router.get("/:id", getAdoptionHistory)
 
-// Rutas protegidas - requieren autenticación
 // POST: Solo admins pueden crear historial de adopción
 router.post("/", requireRole(19), createAdoptionHistory)
 
