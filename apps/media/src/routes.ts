@@ -32,7 +32,7 @@ router.get("/uploads/:entityType/:entityId/:filename", (req, res) => {
 })
 
 // TODO: middleware por roles, solo para admin, para todas las rutas de abajo
-router.post("/uploads/account-request/:rut", uploadAccountRequest.array("files", 10), giverPost)
+router.post("/uploads/account-request/:rut", uploadAccountRequest.array("documents", 10), giverPost)
 router.get("/uploads/account-request", requireRole(19), getGiverFiles)
 
 // rutas publicas
@@ -40,7 +40,12 @@ router.get("/uploads/:entityType", getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)
 
 // rutas protegidas - POST y DELETE requieren autenticación
-router.post("/uploads/:entityType/:entityId", publicUpload.array("files", 10), postFiles)
+router.post(
+    "/uploads/:entityType/:entityId",
+    requireRole(19, 20, 21),
+    publicUpload.array("files", 10),
+    postFiles
+)
 
 // DELETE: Solo el propietario de la entidad (post/pet) o admin puede eliminar archivos
 router.delete("/uploads/:entityType/:entityId", requireFileOwnership, deleteFiles)
