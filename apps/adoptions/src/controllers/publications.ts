@@ -9,8 +9,10 @@ import type {
     PetSpecies,
     PetSize,
 } from "@repo/utils"
+import axios from "axios"
 import { supabase } from "../index"
 import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
+import { MEDIA_URL } from "@repo/utils"
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 const isAdmin = (req: AuthenticatedRequest) => req.user?.role === ROLES.ADMIN
@@ -44,30 +46,30 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         if (error) throw new AppError(500, error.message)
 
         const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
-        const petIds = (data ?? []).map((row: any) => row.pet_id).filter(Boolean)
 
-        const [postImages, petImages] = await Promise.all([
-            getMultipleEntityImages("post", postIds),
-            getMultipleEntityImages("pet", petIds),
-        ])
+        // Usar únicamente el entityType "publications" para las imágenes
+        const postImages = await getMultipleEntityImages("publications", postIds)
 
-        const items = (data ?? []).map((row: any) => ({
-            post: {
-                id: row.id,
-                creator_id: row.creator_id,
-                pet_id: row.pet_id,
-                title: row.title,
-                description: row.description,
-                status: row.status,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-                images: postImages[String(row.id)] || [],
-            } as Post["Row"] & { images: string[] },
-            pet: {
-                ...(row.pet as Pet["Row"]),
-                images: petImages[String(row.pet_id)] || [],
-            } as Pet["Row"] & { images: string[] },
-        }))
+        const items = (data ?? []).map((row: any) => {
+            const pImages = postImages[String(row.id)] || []
+            return {
+                post: {
+                    id: row.id,
+                    creator_id: row.creator_id,
+                    pet_id: row.pet_id,
+                    title: row.title,
+                    description: row.description,
+                    status: row.status,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at,
+                    images: pImages,
+                } as Post["Row"] & { images: string[] },
+                pet: {
+                    ...(row.pet as Pet["Row"]),
+                    images: pImages, // también exponer las imágenes de la publicación en la mascota
+                } as Pet["Row"] & { images: string[] },
+            }
+        })
 
         return AppResponse(res, 200, "Listado de publicaciones", {
             items,
@@ -93,10 +95,8 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
 
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 
-        const [postImages, petImages] = await Promise.all([
-            getEntityImages("post", data.id),
-            data.pet_id ? getEntityImages("pet", data.pet_id) : Promise.resolve([]),
-        ])
+        // Obtener imágenes asociadas a la publicación (entityType = "publications")
+        const postImages = await getEntityImages("publications", data.id)
 
         const payload = {
             post: {
@@ -112,7 +112,7 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
             } as Post["Row"] & { images: string[] },
             pet: {
                 ...(data.pet as Pet["Row"]),
-                images: petImages,
+                images: postImages, // también exponer las imágenes de la publicación en la mascota
             } as Pet["Row"] & { images: string[] },
         }
 
@@ -228,7 +228,44 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(500, postErr?.message ?? "Error al crear la publicación")
         }
 
-        return AppResponse(res, 201, "Publicación creada", { post, pet })
+        // Si vienen archivos, subirlos al microservicio de media
+        let uploadedImages: any[] = []
+        try {
+            const files = req.files as Express.Multer.File[] | undefined
+            if (files && files.length > 0) {
+                const FormDataNode = (await import("form-data")).default
+                const formData = new FormDataNode()
+
+                files.forEach((file) => {
+                    formData.append("files", file.buffer, {
+                        filename: file.originalname,
+                        contentType: file.mimetype,
+                    })
+                })
+
+                const mediaResponse = await axios.post(
+                    `${MEDIA_URL}/uploads/publications/${post.id}`,
+                    formData,
+                    {
+                        headers: {
+                            ...formData.getHeaders(),
+                            "x-user-id": String(req.user?.id ?? 0),
+                            "x-user-role": String(req.user?.role ?? ""),
+                        },
+                    }
+                )
+
+                uploadedImages = mediaResponse.data.data || []
+            }
+        } catch (mediaError: any) {
+            console.error("Error al subir imágenes de la publicación:", mediaError?.message)
+            // Intentar limpiar DB: eliminar post y pet
+            await supabase.from("post").delete().eq("id", post.id)
+            await supabase.from("pet").delete().eq("id", pet.id)
+            throw new AppError(500, "Error al subir las imágenes de la publicación")
+        }
+
+        return AppResponse(res, 201, "Publicación creada", { post, pet, images: uploadedImages })
     } catch (e) {
         if (e instanceof AppError) throw e
         throw new AppError(500, "Error al crear la publicación")
@@ -249,31 +286,38 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
         if (!isAdmin(req) && req.user?.id !== postBefore.creator_id)
             throw new AppError(403, "No autorizado para actualizar esta publicación")
 
-        const {
-            title,
-            description,
-            species,
-            gender,
-            age_months,
-            age_years,
-            size,
-            sterilized,
-            name,
-        } = req.body as {
-            title?: string
-            description?: string
-            species?: PetSpecies
-            gender?: PetGender
-            age_months?: number
-            age_years?: number
-            size?: PetSize
-            sterilized?: boolean
-            name?: string | null
+        // Cuando el request viene como multipart/form-data (con files) los
+        // valores en req.body son strings. Normalizar y filtrar los campos
+        // para no enviar empty-strings o valores mal tipados a Supabase.
+        const rawBody = req.body as Record<string, any>
+
+        const parseNumber = (v: any) => {
+            if (v === undefined || v === null || v === "") return undefined
+            const n = Number(v)
+            return Number.isNaN(n) ? undefined : n
+        }
+        const parseBoolean = (v: any) => {
+            if (v === undefined || v === null || v === "") return undefined
+            if (typeof v === "boolean") return v
+            if (v === "1" || v === "true") return true
+            if (v === "0" || v === "false") return false
+            return undefined
         }
 
+        const title = rawBody.title as string | undefined
+        const description = rawBody.description as string | undefined
+        const species = (rawBody.species as PetSpecies | undefined) || undefined
+        const gender = (rawBody.gender as PetGender | undefined) || undefined
+        const age_months = parseNumber(rawBody.age_months)
+        const age_years = parseNumber(rawBody.age_years)
+        const size = (rawBody.size as PetSize | undefined) || undefined
+        const sterilized = parseBoolean(rawBody.sterilized)
+        const name = rawBody.name as string | undefined
+
         const postUpdate: Post["Update"] = {
-            title,
-            description,
+            // si title/description vienen como empty-string los convertimos a undefined
+            ...(title !== undefined && title !== "" ? { title } : {}),
+            ...(description !== undefined && description !== "" ? { description } : {}),
             updated_at: new Date().toISOString(),
         }
         const { data: postAfter, error: postErr } = await supabase
@@ -286,39 +330,127 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
         if (postErr || !postAfter)
             throw new AppError(500, postErr?.message ?? "Error al actualizar el post")
 
-        const petUpdate: Pet["Update"] = {
-            name,
-            age_months,
-            age_years,
-            gender,
-            size,
-            species,
-            sterilized,
-        }
-        const { data: petAfter, error: petErr } = await supabase
-            .from("pet")
-            .update(petUpdate)
-            .eq("id", postBefore.pet_id!)
-            .select("*")
-            .maybeSingle()
+        // Construir objeto de actualización sólo con campos presentes y válidos
+        const petUpdate: Pet["Update"] = {}
+        if (name !== undefined && name !== "") petUpdate.name = name
+        if (age_months !== undefined) petUpdate.age_months = age_months
+        if (age_years !== undefined) petUpdate.age_years = age_years
+        if (gender !== undefined) petUpdate.gender = gender
+        if (size !== undefined) petUpdate.size = size
+        if (species !== undefined) petUpdate.species = species
+        if (sterilized !== undefined) petUpdate.sterilized = sterilized
 
-        if (petErr || !petAfter) {
-            const restorePost: Post["Update"] = {
-                title: postBefore.title,
-                description: postBefore.description,
-                updated_at: postBefore.updated_at,
-                pet_id: postBefore.pet_id,
-                status: postBefore.status,
-                creator_id: postBefore.creator_id,
-                created_at: postBefore.created_at,
+        // Si no hay campos para actualizar en la mascota, no ejecutar update
+        // y obtener la fila actual para devolverla.
+        let petAfter: Pet["Row"] | null = null
+
+        try {
+            if (postBefore.pet_id == null) {
+                petAfter = null
+            } else if (Object.keys(petUpdate).length === 0) {
+                const { data: pr, error: petFindErr } = await supabase
+                    .from("pet")
+                    .select("*")
+                    .eq("id", postBefore.pet_id)
+                    .single()
+                if (petFindErr || !pr) {
+                    console.error(
+                        "Error al obtener la mascota después de actualización (no hubo cambios):",
+                        petFindErr
+                    )
+                    throw new AppError(500, petFindErr?.message ?? "Error al obtener la mascota")
+                }
+                petAfter = pr as Pet["Row"]
+            } else {
+                const { data: petData, error: petErr } = await supabase
+                    .from("pet")
+                    .update(petUpdate)
+                    .eq("id", postBefore.pet_id!)
+                    .select("*")
+                    .maybeSingle()
+
+                if (petErr || !petData) {
+                    // Loguear detalle para depuración antes de intentar restaurar
+                    console.error("Error al actualizar la mascota (supabase):", petErr)
+                    console.error("petUpdate:", petUpdate)
+                    const restorePost: Post["Update"] = {
+                        title: postBefore.title,
+                        description: postBefore.description,
+                        updated_at: postBefore.updated_at,
+                        pet_id: postBefore.pet_id,
+                        status: postBefore.status,
+                        creator_id: postBefore.creator_id,
+                        created_at: postBefore.created_at,
+                    }
+                    await supabase.from("post").update(restorePost).eq("id", id)
+                    throw new AppError(500, petErr?.message ?? "Error al actualizar la mascota")
+                }
+
+                petAfter = petData as Pet["Row"]
             }
-            await supabase.from("post").update(restorePost).eq("id", id)
-            throw new AppError(500, petErr?.message ?? "Error al actualizar la mascota")
+        } catch (err) {
+            // Re-throw AppError
+            if (err instanceof AppError) throw err
+            console.error("Error inesperado al manejar la mascota:", err)
+            throw new AppError(500, "Error al actualizar la mascota")
+        }
+
+        // Subir nuevas imágenes si existen
+        let uploadedImages: any[] = []
+        try {
+            const files = req.files as Express.Multer.File[] | undefined
+            if (files && files.length > 0) {
+                const FormDataNode = (await import("form-data")).default
+                const formData = new FormDataNode()
+
+                files.forEach((file) => {
+                    formData.append("files", file.buffer, {
+                        filename: file.originalname,
+                        contentType: file.mimetype,
+                    })
+                })
+
+                const mediaResponse = await axios.post(
+                    `${MEDIA_URL}/uploads/publications/${id}`,
+                    formData,
+                    {
+                        headers: {
+                            ...formData.getHeaders(),
+                            "x-user-id": String(req.user?.id ?? 0),
+                            "x-user-role": String(req.user?.role ?? ""),
+                        },
+                    }
+                )
+
+                uploadedImages = mediaResponse.data.data || []
+            }
+        } catch (mediaError: any) {
+            console.error(
+                "❌ Error al subir nuevas imágenes de la publicación:",
+                mediaError?.message
+            )
+            // No revertimos la actualización, solo registramos
+        }
+
+        // Obtener todas las imágenes actuales
+        let allImages: string[] = []
+        try {
+            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                headers: {
+                    "x-user-id": String(req.user?.id ?? 0),
+                    "x-user-role": String(req.user?.role ?? ""),
+                },
+            })
+            allImages = mediaResponse.data.data || []
+        } catch (err) {
+            // continuar si no hay imágenes
         }
 
         return AppResponse(res, 200, "Publicación actualizada", {
             post: postAfter,
             pet: petAfter,
+            images: allImages,
+            newImages: uploadedImages,
         })
     } catch (e) {
         if (e instanceof AppError) throw e
@@ -375,12 +507,44 @@ export const deletePublication = async (req: AuthenticatedRequest, res: Response
             if (petDelErr) throw new AppError(500, petDelErr.message)
         }
 
+        // Antes de eliminar la publicación, obtener imágenes asociadas y pedir al servicio media que las borre
+        let imagesToDelete: string[] = []
+        try {
+            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                headers: {
+                    "x-user-id": String(req.user?.id ?? 0),
+                    "x-user-role": String(req.user?.role ?? ""),
+                },
+            })
+            const imageUrls = mediaResponse.data.data || []
+            imagesToDelete = imageUrls.map((url: string) => url.split("/").pop() || "")
+        } catch (err) {
+            // continuar aunque no haya imágenes
+        }
+
+        if (imagesToDelete.length > 0) {
+            try {
+                await axios.delete(`${MEDIA_URL}/uploads/publications/${id}`, {
+                    data: { fileNamesArray: imagesToDelete },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-user-id": String(req.user?.id ?? 0),
+                        "x-user-role": String(req.user?.role ?? ""),
+                    },
+                })
+            } catch (mediaError: any) {
+                console.error("Error al eliminar imágenes en media:", mediaError?.message)
+                // continuamos con la eliminación en BD
+            }
+        }
+
         const { error: postDelErr } = await supabase.from("post").delete().eq("id", id)
         if (postDelErr) throw new AppError(500, postDelErr.message)
 
         return AppResponse(res, 200, "Publicación eliminada", {
             post: postRow as Post["Row"],
             pet: petRow,
+            deletedImages: imagesToDelete.length,
         })
     } catch (e) {
         if (e instanceof AppError) throw e

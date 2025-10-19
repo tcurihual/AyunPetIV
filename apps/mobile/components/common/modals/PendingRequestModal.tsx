@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react"
 import { Modal, View, Text, Button, StyleSheet, Animated, Image } from "react-native"
+import { useAuthContext } from "@/context/AuthContext"
 
 type PendingRequestModalProps = {
-    petDetails: { petName: string }
+    petName: string
+    visible: boolean
+    onClose: () => void
 }
 
-const PendingRequestModal = ({ petDetails }: PendingRequestModalProps) => {
-    const [visible, setVisible] = useState(false)
+const PendingRequestModal = ({ petName, visible, onClose }: PendingRequestModalProps) => {
     const fadeAnim = new Animated.Value(0)
-
-    const close = () => setVisible(false)
+    const { user } = useAuthContext()
+    const role = user?.role
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -19,39 +21,35 @@ const PendingRequestModal = ({ petDetails }: PendingRequestModalProps) => {
         }).start()
     }, [visible])
 
+    const showMessage = role === 20 || role === 21 || role === 22
+
     return (
-        <>
-            <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-                <Animated.View style={[styles.modalBackground, { opacity: fadeAnim }]}>
-                    <View style={styles.modalContainer}>
-                        <Image
-                            source={require("../../../assets/images/perro-gato.png")}
-                            style={styles.image}
-                        />
-                        <Text style={styles.title}>Solicitud Pendiente</Text>
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+            <Animated.View style={[styles.modalBackground, { opacity: fadeAnim }]}>
+                <View style={styles.modalContainer}>
+                    <Image
+                        source={require("../../../assets/images/perro-gato.png")}
+                        style={styles.image}
+                    />
+                    <Text style={styles.title}>Solicitud Pendiente</Text>
+
+                    {showMessage && (
                         <Text style={styles.message}>
                             Tu solicitud para adoptar a{" "}
-                            <Text style={styles.boldText}>{petDetails.petName}</Text> está siendo
-                            revisada.
+                            <Text style={styles.boldText}>{petName}</Text> está siendo revisada.
                         </Text>
-                        <View style={styles.buttonsContainer}>
-                            <Button title="Cerrar" onPress={close} color="#FFC107" />
-                        </View>
+                    )}
+
+                    <View style={styles.buttonsContainer}>
+                        <Button title="Cerrar" onPress={onClose} color="#FFC107" />
                     </View>
-                </Animated.View>
-            </Modal>
-        </>
+                </View>
+            </Animated.View>
+        </Modal>
     )
 }
 
 const styles = StyleSheet.create({
-    testButton: {
-        backgroundColor: "#FFC107",
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 20,
-        alignSelf: "center",
-    },
     modalBackground: {
         flex: 1,
         justifyContent: "center",

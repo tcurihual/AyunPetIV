@@ -67,11 +67,7 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         shadowOffset: { width: 0, height: 3 },
     },
-    photo: {
-        width: 86,
-        height: 86,
-        borderRadius: 12,
-    },
+    photo: { width: 86, height: 86, borderRadius: 12 },
     body: { flex: 1 },
     headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     petName: { fontSize: 16, fontWeight: "700", color: "#1C1C1C" },
