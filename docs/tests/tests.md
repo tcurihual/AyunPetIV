@@ -38,8 +38,9 @@
 
 # Resumen de Problemas Pendientes
 
-- el usuario puede editar su status a rejected y/o pending? pending se hace por default al hacer la solicitud pero si el usuario quiere cancelar la solicitud el rejected no se debe utilizar, ya que el propio usuario puede eliminarla con DELETE
-- El usuario giver que creo el post no deberia poder editar el mensaje de la solicitud
-- El mismo usuario no puede cambiar los IDs pero el mensaje de Respuesta dice que los datos se actualizaron aunque no lo hayan hecho, incluso muestra que el id no cambio.
-- Revisar lo de confirmed y como se debe hacer lo de la clave
-- EL usuario que creo la Request al hacer DELETE tira error 500 pero la peticion si es completada
+- el usuario que hace la solicitud puede editar su status a rejected y/o pending? pending se hace por default al hacer la solicitud pero si el usuario quiere cancelar la solicitud el rejected no se debe utilizar, ya que el propio usuario puede eliminarla con DELETE **[Arreglado]**
+- EL usuario que creo la Request al hacer DELETE tira error 500 pero la peticion si es completada **[Arreglado]**
+- El usuario giver que creo el post no deberia poder editar el mensaje de la solicitud **[Arreglado]**
+- El mismo usuario no puede cambiar los IDs pero el mensaje de Respuesta dice que los datos se actualizaron aunque no lo hayan hecho, incluso muestra que el id no cambio. **[Arreglado]**
+- Revisar lo de confirmed y como se debe hacer lo de la clave **[Se debe revisar mas adelante en la siguiente tarea de Actualizar el contexto de adoption Request]**
+

@@ -141,10 +141,13 @@ export const confirmAccept = async (req: Request, res: Response) => {
 
         const { data: request, error: rErr } = await supabase
             .from("adoption_request")
-            .select("id, requester_id, status")
+            .select("id, requester_id, status, post_owner_id")
             .eq("id", id)
             .single()
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
+
+        if (!req.user?.id) throw new AppError(401, "Usuario no autenticado")
+        if (request.post_owner_id !== req.user.id) throw new AppError(403, "No tienes permiso para aceptar esta solicitud")
 
         const { error: updErr } = await supabase
             .from("adoption_request")
@@ -244,7 +247,6 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 )
             }
 
-            // Admin or other roles: mantener comportamiento previo (todas las solicitudes)
             const { data: adoptionRequests, error } = await supabase
                 .from("adoption_request")
                 .select("*")
@@ -320,8 +322,7 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
             requester_id,
             post_id,
             post_owner_id,
-            status: status || "pending",
-            // Guardar el mensaje si viene del cliente (puede ser vacío)
+            status: "pending",
             message: message || null,
         }
 
@@ -346,17 +347,19 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
     }
 }
 
-export const updateAdoptionRequest = async (req: Request, res: Response) => {
+export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
     const { status } = req.body
-
-    // Allow optional message update from requester
     const { message } = req.body
 
     try {
         const numericId = parseInt(id)
         if (isNaN(numericId)) {
             throw new Error("ID debe ser un número válido")
+        }
+
+        if (!req.user?.id) {
+            return AppResponse(res, 401, "Usuario no autenticado", null)
         }
 
         const { data: existingRequest, error: findError } = await supabase
@@ -367,38 +370,55 @@ export const updateAdoptionRequest = async (req: Request, res: Response) => {
 
         if (findError || !existingRequest) throw new Error("Solicitud de adopción no encontrada")
 
-        if (
-            (status === "approved" || status === "completed") &&
-            existingRequest.post_owner_id !== req.user.id
-        ) {
-            return AppResponse(
-                res,
-                403,
-                status === "approved"
-                    ? "No tienes permiso para aprobar esta solicitud"
-                    : "No tienes permiso para marcar esta solicitud como completada",
-                null
-            )
+        if (typeof status !== "undefined") {
+            if (status === "approved" || status === "completed") {
+                if (existingRequest.requester_id === req.user.id) {
+                    return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+                }
+
+                return AppResponse(
+                    res,
+                    403,
+                    "Para aprobar/confirmar una adopción utiliza los endpoints de confirmación (confirmAccept/validate-code)",
+                    null
+                )
+            }
+
+            if (existingRequest.post_owner_id !== req.user.id) {
+                return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+            }
         }
 
-        if (
-            existingRequest.requester_id !== req.user.id &&
-            existingRequest.post_owner_id !== req.user.id
-        ) {
-            return AppResponse(
-                res,
-                403,
-                "No tienes permiso para actualizar esta solicitud de adopción",
-                null
-            )
+        if (typeof message !== "undefined" && existingRequest.requester_id !== req.user.id) {
+            return AppResponse(res, 403, "Solo el usuario que hizo la solicitud puede editar el mensaje", null)
         }
 
-        const payload: AdoptionRequest["Update"] = {
-            status: status || existingRequest.status,
-            // Only allow updating message if the requester is the one making the change
-            ...(typeof message !== "undefined" ? { message } : {}),
-            updated_at: new Date().toISOString(),
+        if (existingRequest.requester_id !== req.user.id && existingRequest.post_owner_id !== req.user.id) {
+            return AppResponse(res, 403, "No tienes permiso para actualizar esta solicitud de adopción", null)
         }
+
+        const forbiddenIdFields = ["id", "post_id", "requester_id", "post_owner_id"]
+        for (const f of forbiddenIdFields) {
+            if (typeof (req.body as any)[f] !== "undefined" && (req.body as any)[f] !== (existingRequest as any)[f]) {
+                return AppResponse(res, 403, `No tienes permiso para editar el campo ${f}`, null)
+            }
+        }
+
+        const payload: Partial<AdoptionRequest["Update"]> = {}
+
+        if (typeof status !== "undefined" && existingRequest.post_owner_id === req.user.id && status !== existingRequest.status) {
+            payload.status = status
+        }
+
+        if (typeof message !== "undefined" && existingRequest.requester_id === req.user.id && message !== existingRequest.message) {
+            payload.message = message
+        }
+
+        if (Object.keys(payload).length === 0) {
+            return AppResponse(res, 200, "No se realizaron cambios", existingRequest)
+        }
+
+        payload.updated_at = new Date().toISOString()
 
         const { data: updatedRequest, error: updateError } = await supabase
             .from("adoption_request")
@@ -407,15 +427,9 @@ export const updateAdoptionRequest = async (req: Request, res: Response) => {
             .select()
             .maybeSingle()
 
-        if (updateError || !updatedRequest)
-            throw new Error("Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest) throw new Error("Error al actualizar la solicitud de adopción")
 
-        return AppResponse(
-            res,
-            200,
-            "Solicitud de adopción actualizada exitosamente",
-            updatedRequest
-        )
+        return AppResponse(res, 200, "Solicitud de adopción actualizada exitosamente", updatedRequest)
     } catch (e) {
         const message = e instanceof Error ? e.message : "Error interno del servidor"
         return AppResponse(res, 500, message, null)
@@ -439,8 +453,10 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
 
         if (findError || !existingRequest) throw new Error("Solicitud de adopción no encontrada")
 
+        if (!req.user?.id) return AppResponse(res, 401, "Usuario no autenticado", null)
+
         if (existingRequest.requester_id !== req.user.id) {
-            throw new Error("No tienes permiso para eliminar esta solicitud de adopción")
+            return AppResponse(res, 403, "No tienes permiso para eliminar esta solicitud de adopción", null)
         }
 
         const { error: deleteError } = await supabase
@@ -450,9 +466,9 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
 
         if (deleteError) throw new Error("Error al eliminar la solicitud de adopción")
 
-        return AppResponse(null as any, 200, "Solicitud de adopción eliminada exitosamente", {})
+        return AppResponse(res, 200, "Solicitud de adopción eliminada exitosamente", {})
     } catch (e) {
         const message = e instanceof Error ? e.message : "Error interno del servidor"
-        return AppResponse(null as any, 500, message, null)
+        return AppResponse(res, 500, message, null)
     }
 }
