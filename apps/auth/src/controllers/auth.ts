@@ -15,6 +15,7 @@ import {
 
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
+import { sendAccountRequestDocuments } from "../middleware/mediaProxy"
 
 type Variation = "user" | "giver" | "shelter"
 
@@ -87,30 +88,68 @@ export const register = async (
         description: user.description ?? null,
     }
 
-    // Solo los usuarios (rol 20) reciben correo de verificación
-    // Los roles 21 (shelter) y 22 (giver) no reciben correo de verificación
-    // ya que deben ser validados por un administrador
+    // Solo "user" recibe correo de verificación
     const shouldSendVerificationEmail = variation === "user"
 
     if (shouldSendVerificationEmail) {
         const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
         const verificationLink = `${WEB_URL}/verify-email?token=${token}`
 
-        // En desarrollo: solo log, no enviar email para evitar errores SMTP
-        console.log(`📧 Email de verificación para ${user.email}: ${verificationLink}`)
+        await sendEmail({
+            to: user.email,
+            subject: "Verifica tu correo - Ayün Pet",
+            html: emailTemplate(verificationLink),
+        })
     } else {
-        // Para roles 21 (shelter) y 22 (giver), no se envía correo
-        // La validación debe realizarla el administrador
         console.log(
             `⏸️  Registro de ${variation} (rol ${roleSelect.id}): Sin correo de verificación. Requiere validación de administrador.`
         )
     }
 
-    const { error: insertError } = await supabase.from("users").insert([payload])
+    const { error: insertError, data: inserted } = await supabase
+        .from("users")
+        .insert([payload])
+        .select("id, email, rut, role")
+        .single()
 
     if (insertError) throw new AppError(500, insertError.message)
 
-    return AppResponse(res, 201, "Usuario creado exitosamente", {})
+    // --- SOLO PARA GIVER: exigir docs y reenviar a media
+    if (variation === "giver") {
+        const files = (req.files ?? []) as Express.Multer.File[]
+        if (!files?.length) {
+            throw new AppError(400, "El dador debe adjuntar documentos en 'documents'")
+        }
+
+        try {
+            await sendAccountRequestDocuments({
+                user: {
+                    id: inserted.id,
+                    email: inserted.email,
+                    rut: inserted.rut,
+                    roleId: inserted.role!,
+                },
+                files: files.map((f: Express.Multer.File) => ({
+                    buffer: f.buffer,
+                    originalname: f.originalname,
+                    mimetype: f.mimetype,
+                })),
+            })
+        } catch (e: any) {
+            console.error("❌ Error enviando account-request a MEDIA:", e?.message || e)
+            throw new AppError(502, "No fue posible registrar documentos en Media")
+        }
+    }
+
+    // ✅ respuesta final (sin token interno)
+    return AppResponse(
+        res,
+        201,
+        variation === "giver"
+            ? "Usuario creado. Documentos recibidos y enviados para revisión. Queda pendiente aprobación de un administrador."
+            : "Usuario creado exitosamente",
+        {}
+    )
 }
 
 export const verifyEmail = async (req: Request, res: Response) => {
