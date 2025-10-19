@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react"
 import { Modal, View, Text, Button, StyleSheet, Animated, Image } from "react-native"
+import { useAuthContext } from "@/context/AuthContext"
 
 type AdoptionRejectedModalProps = {
-    petDetails: { petName: string }
+    petName: string
+    visible: boolean
+    onClose: () => void
     reason?: string
 }
 
 const AdoptionRejectedModal = ({
-    petDetails,
-    reason = "La razón: bla bla bla.",
+    petName,
+    visible,
+    onClose,
+    reason = "La razón no fue especificada.",
 }: AdoptionRejectedModalProps) => {
-    const [visible, setVisible] = useState(false)
     const fadeAnim = new Animated.Value(0)
-
-    const close = () => setVisible(false)
+    const { user } = useAuthContext()
+    const role = user?.role
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -22,41 +26,39 @@ const AdoptionRejectedModal = ({
             useNativeDriver: true,
         }).start()
     }, [visible])
+    
+    const showMessage = role === 20 || role === 21 || role === 22
 
     return (
-        <>
-            <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-                <Animated.View style={[styles.modalBackground, { opacity: fadeAnim }]}>
-                    <View style={styles.modalContainer}>
-                        <Image
-                            source={require("../../../assets/images/perro-gato.png")}
-                            style={styles.image}
-                        />
-                        <Text style={styles.title}>Solicitud Rechazada</Text>
-                        <Text style={styles.message}>
-                            Tu solicitud para{" "}
-                            <Text style={styles.boldText}>{petDetails.petName}</Text> ha sido
-                            rechazada.
-                        </Text>
-                        <Text style={styles.reason}>{reason}</Text>
-                        <View style={styles.buttonsContainer}>
-                            <Button title="Cerrar" onPress={close} color="#FF5733" />
-                        </View>
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+            <Animated.View style={[styles.modalBackground, { opacity: fadeAnim }]}>
+                <View style={styles.modalContainer}>
+                    <Image
+                        source={require("../../../assets/images/perro-gato.png")}
+                        style={styles.image}
+                    />
+                    <Text style={styles.title}>Solicitud Rechazada</Text>
+
+                    {showMessage && (
+                        <>
+                            <Text style={styles.message}>
+                                Tu solicitud para <Text style={styles.boldText}>{petName}</Text> ha
+                                sido rechazada.
+                            </Text>
+                            <Text style={styles.reason}>{reason}</Text>
+                        </>
+                    )}
+
+                    <View style={styles.buttonsContainer}>
+                        <Button title="Cerrar" onPress={onClose} color="#FF5733" />
                     </View>
-                </Animated.View>
-            </Modal>
-        </>
+                </View>
+            </Animated.View>
+        </Modal>
     )
 }
 
 const styles = StyleSheet.create({
-    testButton: {
-        backgroundColor: "#F44336",
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 20,
-        alignSelf: "center",
-    },
     modalBackground: {
         flex: 1,
         justifyContent: "center",
