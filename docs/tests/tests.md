@@ -44,3 +44,8 @@
 - El mismo usuario no puede cambiar los IDs pero el mensaje de Respuesta dice que los datos se actualizaron aunque no lo hayan hecho, incluso muestra que el id no cambio. **[Arreglado]**
 - Revisar lo de confirmed y como se debe hacer lo de la clave **[Se debe revisar mas adelante en la siguiente tarea de Actualizar el contexto de adoption Request]**
 
+# Tests en conjunto con Mobile
+
+- El usuario puede borrar la solicitud creada por el mismo
+- El usuario puede listar sus solicitudes con datos correctos, excepto imagen(falta probar con pets que si tengan)
+- Por el momento el usuario no puede hacer solicitudes debido a las publicaciones

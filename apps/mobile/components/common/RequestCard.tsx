@@ -1,7 +1,7 @@
 import React from "react"
 import { View, Text, Image, Pressable, StyleSheet } from "react-native"
 
-export type RequestStatus = "Pendiente" | "Aceptada" | "Rechazada"
+export type RequestStatus = "Pendiente" | "Aprobada" | "Rechazada"
 
 export interface RequestCardProps {
     petPhoto: string
@@ -14,7 +14,7 @@ export interface RequestCardProps {
 
 const statusStyles: Record<RequestStatus, { bg: string; fg: string }> = {
     Pendiente: { bg: "#FFE8A3", fg: "#6A4B00" },
-    Aceptada: { bg: "#D1F3DA", fg: "#0E6B2B" },
+    Aprobada: { bg: "#D1F3DA", fg: "#0E6B2B" },
     Rechazada: { bg: "#FAD2D2", fg: "#8B1A1A" },
 }
 

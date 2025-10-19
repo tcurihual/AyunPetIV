@@ -1,85 +1,84 @@
 import React from "react"
-import { SafeAreaView, View, Text, StyleSheet, FlatList } from "react-native"
+import { SafeAreaView, View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from "react-native"
+import { useAuthContext } from "@/context/AuthContext"
 import { useRouter } from "expo-router"
 import RequestCard, { RequestStatus } from "@/components/common/RequestCard"
+import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { usePublicationContext } from "@/context/PublicationContext"
 
-const MOCK = [
-    {
-        id: "1",
-        petPhoto:
-            "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop",
-        petName: "Firulais",
-        requester: "Pepito Pérez",
-        date: "11 de Abril de 2025",
-        status: "Aceptada" as RequestStatus,
-    },
-    {
-        id: "2",
-        petPhoto:
-            "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop",
-        petName: "Luna",
-        requester: "María López",
-        date: "12 de Abril de 2025",
-        status: "Pendiente" as RequestStatus,
-    },
-    {
-        id: "3",
-        petPhoto:
-            "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
-        petName: "Max",
-        requester: "Juan Torres",
-        date: "14 de Abril de 2025",
-        status: "Rechazada" as RequestStatus,
-    },
-    {
-        id: "4",
-        petPhoto:
-            "https://images.unsplash.com/photo-1558788353-f76d92427f16?q=80&w=800&auto=format&fit=crop",
-        petName: "Nina",
-        requester: "Carla Muñoz",
-        date: "15 de Abril de 2025",
-        status: "Pendiente" as RequestStatus,
-    },
-    {
-        id: "5",
-        petPhoto:
-            "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop",
-        petName: "Rocky",
-        requester: "Diego Herrera",
-        date: "16 de Abril de 2025",
-        status: "Aceptada" as RequestStatus,
-    },
-    {
-        id: "6",
-        petPhoto:
-            "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop",
-        petName: "Maya",
-        requester: "Fernanda Soto",
-        date: "17 de Abril de 2025",
-        status: "Rechazada" as RequestStatus,
-    },
-    {
-        id: "7",
-        petPhoto:
-            "https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800&auto=format&fit=crop",
-        petName: "Toby",
-        requester: "Andrés Valdés",
-        date: "18 de Abril de 2025",
-        status: "Pendiente" as RequestStatus,
-    },
-    {
-        id: "8",
-        petPhoto:
-            "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=800&auto=format&fit=crop",
-        petName: "Simba",
-        requester: "Constanza Rivas",
-        date: "19 de Abril de 2025",
-        status: "Aceptada" as RequestStatus,
-    },
-]
+function mapStatus(serverStatus: string | undefined): RequestStatus {
+    switch (serverStatus) {
+        case "approved":
+            return "Aprobada"
+        case "accepted":
+            return "Aprobada"
+        case "rejected":
+            return "Rechazada"
+        default:
+            return "Pendiente"
+    }
+}
 
 export default function Requests() {
     const router = useRouter()
+    const { adoptionRequests, loading, error, refreshRequests, getAdoptionRequests } = useAdoptionRequestContext()
+    const { getPublicationByPostId } = usePublicationContext()
+    const { user } = useAuthContext()
+    const [lastLoaded, setLastLoaded] = React.useState<number | null>(null)
+
+    // cache local para publicaciones resueltas por postId => { name, imageUri }
+    const [resolved, setResolved] = React.useState<Record<number, { name?: string; imageUri?: string }>>({})
+
+    // Al cambiar las solicitudes, intentamos resolver los postId que faltan
+    React.useEffect(() => {
+        let mounted = true
+
+        async function resolveMissing() {
+            if (!adoptionRequests || adoptionRequests.length === 0) return
+
+            for (const raw of adoptionRequests) {
+                const it: any = raw
+                const postId = Number(it.post_id || it.post?.id || it.postid || it.postId)
+                if (!postId) continue
+
+                const hasName = !!(it.post?.pet?.name || it.post?.title || it.post_title || it.title || it.pet?.name)
+                const hasImage = !!((it.postImages && it.postImages[0]) || (it.petImages && it.petImages[0]))
+
+                if ((hasName && hasImage) || resolved[postId]) continue
+
+                try {
+                    const pub = await getPublicationByPostId(postId)
+                    console.debug(`[Requests] resolved publication for postId=${postId}:`, pub)
+                    if (!mounted) return
+                    if (pub) {
+                        setResolved((prev) => ({ ...prev, [postId]: { name: pub.name, imageUri: (pub.image as any)?.uri } }))
+                    }
+                } catch (e) {
+                    // ignore per-item errors
+                }
+            }
+        }
+
+        resolveMissing()
+
+        return () => {
+            mounted = false
+        }
+    }, [adoptionRequests])
+
+    const renderEmpty = () => (
+        <View style={{ padding: 16 }}>
+            <Text style={{ color: "#6B6B6B" }}>No tienes solicitudes de adopción aún.</Text>
+        </View>
+    )
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}> 
+                <ActivityIndicator size="large" />
+            </SafeAreaView>
+        )
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -89,27 +88,81 @@ export default function Requests() {
                     <View style={{ gap: 6, marginBottom: 8 }}>
                         <Text style={styles.h1}>Mis Solicitudes</Text>
                         <Text style={styles.sub}>Revisa tus solicitudes de adopción</Text>
+                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>Total: {adoptionRequests?.length ?? 0}</Text>
+                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
+                            Última carga: {lastLoaded ? new Date(lastLoaded).toLocaleTimeString() : "-"}
+                        </Text>
+                        <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
+                            <Pressable
+                                onPress={async () => {
+                                    await getAdoptionRequests()
+                                    setLastLoaded(Date.now())
+                                }}
+                                style={{ padding: 8, backgroundColor: "#E5E7EB", borderRadius: 8 }}
+                            >
+                                <Text>Refrescar</Text>
+                            </Pressable>
+                            <Pressable
+                                onPress={async () => {
+                                    await refreshRequests()
+                                    setLastLoaded(Date.now())
+                                }}
+                                style={{ padding: 8, backgroundColor: "#E5E7EB", borderRadius: 8 }}
+                            >
+                                <Text>Pull-refresh</Text>
+                            </Pressable>
+                        </View>
                     </View>
                 }
-                data={MOCK}
-                keyExtractor={(i) => i.id}
+                data={adoptionRequests}
+                keyExtractor={(i) => String(i.id)}
+                ListEmptyComponent={renderEmpty}
                 ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-                renderItem={({ item }) => (
-                    <RequestCard
-                        petPhoto={item.petPhoto}
-                        petName={item.petName}
-                        requester={item.requester}
-                        date={item.date}
-                        status={item.status}
-                        onPress={() =>
-                            router.push({
-                                pathname: "/[id]",
-                                params: { id: item.id },
-                            })
-                        }
-                    />
-                )}
+                renderItem={({ item }) => {
+                    const it = item as any
+
+                    const postId = Number(it.post_id || it.post?.id)
+
+                    const petNameFromItem = it.post?.pet?.name || it.post?.title || it.post_title || it.title || it.pet?.name
+                    const postImages = (it.postImages as string[]) || (it.post_images as string[]) || []
+                    const petImages = (it.petImages as string[]) || (it.pet_images as string[]) || []
+
+                    const resolvedPub = postId ? resolved[postId] : undefined
+
+                    const petName = petNameFromItem || resolvedPub?.name || "Mascota"
+                    const petPhoto = postImages[0] || petImages[0] || resolvedPub?.imageUri || "https://placehold.co/400x400?text=Mascota"
+
+                    const requester = it.requester_name || it.user?.name || (user && it.requester_id && Number(it.requester_id) === Number(user.id) ? user.name : "--")
+
+                    // Dates in the API may arrive as createdat / created_at or createdAt
+                    const rawDate = it.createdAt || it.createdat || it.created_at || it.createdAt
+                    const date = rawDate ? new Date(rawDate).toLocaleDateString() : "--"
+
+                    const status = mapStatus(it.status as string)
+
+                    return (
+                        <RequestCard
+                            petPhoto={petPhoto}
+                            petName={petName}
+                            requester={requester}
+                            date={date}
+                            status={status}
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/(home)/(requests)/[id]",
+                                    params: { id: String(it.id) },
+                                })
+                            }
+                        />
+                    )
+                }}
             />
+
+            {error && (
+                <View style={{ padding: 12 }}>
+                    <Text style={{ color: "#C0392B" }}>{error}</Text>
+                </View>
+            )}
         </SafeAreaView>
     )
 }

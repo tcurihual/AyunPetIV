@@ -19,7 +19,7 @@ interface AdoptionRequestContextType {
     getAdoptionRequests: () => Promise<void>
     createAdoptionRequest: (data: CreateAdoptionRequestPayload) => Promise<AdoptionRequest>
     updateAdoptionRequest: (id: number, data: UpdateAdoptionRequestPayload) => Promise<void>
-    deleteAdoptionRequest: (id: number) => Promise<void>
+    deleteAdoptionRequest: (id: number) => Promise<any>
     refreshRequests: () => Promise<void>
 }
 
@@ -53,19 +53,56 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
-            const response = await http.get<{
-                status: number
-                message: string
-                type: string
-                values: {
-                    as: "adopter" | "giver"
-                    requests: AdoptionRequest[]
-                }
-            }>("/v1/adoptions/adoption-requests/mine")
+            
+            const path = user.role === 21 ? "/v1/adoptions/adoption-requests/mine" : "/v1/adoptions/adoption-requests"
 
-            if (response.data.values) {
-                setAdoptionRequests(response.data.values.requests || [])
+            const response = await http.get<any>(path)
+
+            
+            console.debug("[AdoptionRequest] GET", path, "response.data:", response?.data)
+
+            
+            const payload = response?.data
+
+            function extractRequests(input: any): any[] {
+                if (!input) return []
+
+                if (Array.isArray(input) && input.length > 0 && typeof input[0] === "object") {
+                    return input
+                }
+                
+                if (input.values) {
+                    if (Array.isArray(input.values.requests)) return input.values.requests
+                    if (Array.isArray(input.values)) return input.values
+                }
+
+                if (Array.isArray(input.data)) return input.data
+
+                for (const k of Object.keys(input)) {
+                    const v = input[k]
+                    if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") return v
+                }
+
+                return []
             }
+
+            let found = extractRequests(payload)
+
+            if (found.length > 0 && found[0] && typeof found[0] === "object") {
+                const first = found[0]
+                if (first.adoption_request && typeof first.adoption_request === "object") {
+                    found = found.map((f: any) => f.adoption_request)
+                }
+            }
+
+            if (found.length === 0 && payload && typeof payload === "object" && (payload.id || payload.adoption_request)) {
+                const single = payload.adoption_request ? payload.adoption_request : payload
+                found = [single]
+            }
+
+            console.debug("[AdoptionRequest] extracted requests count:", found.length)
+
+            setAdoptionRequests(found)
         } catch (e: any) {
             const errorMessage =
                 e?.response?.data?.message || "Error al obtener solicitudes de adopción"
@@ -183,7 +220,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
      * DELETE: Eliminar una solicitud de adopción
      * Solo el dueño de la solicitud puede eliminarla
      */
-    async function deleteAdoptionRequest(id: number): Promise<void> {
+    async function deleteAdoptionRequest(id: number): Promise<any> {
         if (!user) {
             throw new Error("Usuario no autenticado")
         }
@@ -192,7 +229,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
-            await http.delete<{
+            const resp = await http.delete<{
                 status: number
                 message: string
                 type: string
@@ -200,6 +237,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
 
             // Remover del estado local
             setAdoptionRequests((prev) => prev.filter((req) => req.id !== id))
+
+            return resp
         } catch (e: any) {
             const errorMessage =
                 e?.response?.data?.message || "Error al eliminar solicitud de adopción"

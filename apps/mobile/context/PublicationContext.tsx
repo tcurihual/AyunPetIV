@@ -57,6 +57,7 @@ interface PublicationContextType {
     publications: PublicationItem[]
     loading: boolean
     error: string | null
+    getPublicationByPostId: (postId: number) => Promise<PublicationItem | null>
     // Operaciones CRUD
     getPublications: () => Promise<void>
     createPublication: (data: CreatePublicationPayload) => Promise<Post>
@@ -76,6 +77,33 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const { user, status } = useAuthContext()
+
+    const buildPublicationItem = React.useCallback((post: any, pet: any): PublicationItem => {
+        const postImages: string[] = Array.isArray(post?.images) ? post.images : []
+        const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
+
+        const imageUri =
+            postImages[0] ||
+            petImages[0] ||
+            "https://placehold.co/400x400?text=Mascota"
+
+        return {
+            id: String(post?.id ?? ""),
+            name: pet?.name || "Sin nombre",
+            gender: pet?.gender ?? "",
+            age: typeof pet?.age === "number" ? `${pet.age} años` : "",
+            publisher: "Usuario",
+            description: post?.description ?? "",
+            image: { uri: imageUri },
+            species: pet?.species,
+            size: pet?.size,
+            sterilized: pet?.sterilized,
+            status: post?.status,
+            postId: post?.id,
+            petId: pet?.id,
+            creatorId: post?.creator_id,
+        }
+    }, [])
 
     // Cargar publicaciones automáticamente cuando el usuario esté autenticado
     useEffect(() => {
@@ -133,26 +161,9 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             }>("/v1/adoptions/publications")
             
             // Transformar los datos de la API para el frontend
-            const transformedPublications: PublicationItem[] = response.data.data.items.map((item) => ({
-                id: String(item.post.id),
-                name: item.pet.name || "Sin nombre",
-                gender: item.pet.gender,
-                age: `${item.pet.age} años`,
-                publisher: "Usuario", // Por ahora no viene info del creador en la respuesta
-                description: item.post.description,
-                image: item.post.images && item.post.images.length > 0
-                    ? { uri: item.post.images[0] }
-                    : item.pet.images && item.pet.images.length > 0
-                    ? { uri: item.pet.images[0] }
-                    : { uri: "https://placehold.co/400x400?text=Mascota" },
-                species: item.pet.species,
-                size: item.pet.size,
-                sterilized: item.pet.sterilized,
-                status: item.post.status,
-                postId: item.post.id,
-                petId: item.pet.id,
-                creatorId: item.post.creator_id
-            }))
+            const transformedPublications: PublicationItem[] = response.data.data.items.map((item) =>
+                buildPublicationItem(item.post, item.pet)
+            )
             
             setPublications(transformedPublications)
         } catch (e: any) {
@@ -163,6 +174,49 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             setLoading(false)
         }
     }
+
+    const getPublicationByPostId = React.useCallback(
+        async (postId: number): Promise<PublicationItem | null> => {
+            if (!postId) return null
+
+            const numericId = Number(postId)
+            if (!Number.isFinite(numericId) || numericId <= 0) return null
+
+            const existing = publications.find(
+                (pub) => Number(pub.postId ?? pub.id) === numericId
+            )
+            if (existing) {
+                return existing
+            }
+
+            try {
+                const response = await http.get<{
+                    data: {
+                        post: any
+                        pet: any
+                    }
+                }>(`/v1/adoptions/publications/${numericId}`)
+
+                const { post, pet } = response.data.data || {}
+                if (!post || !pet) {
+                    return null
+                }
+
+                const mapped = buildPublicationItem(post, pet)
+                setPublications((prev) => {
+                    const hasPublication = prev.some(
+                        (pub) => Number(pub.postId ?? pub.id) === numericId
+                    )
+                    return hasPublication ? prev : [...prev, mapped]
+                })
+                return mapped
+            } catch (e: any) {
+                console.error("Error al obtener publicación por postId:", e)
+                return null
+            }
+        },
+        [buildPublicationItem, publications]
+    )
 
     /**
      * POST: Crear una nueva publicación
@@ -438,6 +492,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             publications,
             loading,
             error,
+            getPublicationByPostId,
             getPublications,
             createPublication,
             updatePublication,
@@ -446,7 +501,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             clearError,
             petsForHome,
         }),
-        [publications, loading, error, petsForHome]
+        [publications, loading, error, petsForHome, getPublicationByPostId]
     )
 
     return <PublicationContext.Provider value={value}>{children}</PublicationContext.Provider>
