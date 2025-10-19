@@ -75,6 +75,11 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
         if (!files.length) throw new HttpError(400, "No files were provided")
 
         const { entityType, entityId } = req.params
+        // Validar que el entityType esté permitido (misma lista que en GET)
+        if (!PUBLIC_ENTITIES.includes(entityType)) {
+            throw new HttpError(403, "Access denied to this entity type")
+        }
+
         const uploaded = files.map((file) => ({
             url: `${MEDIA_URL}/uploads/${entityType}/${entityId}/${file.filename}`,
             fileName: file.filename,

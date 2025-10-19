@@ -38,6 +38,11 @@ const publicStorage = diskStorage({
         const { entityType, entityId } = req.params
         if (!entityType || !entityId)
             return cb(new HttpError(400, "entityType y entityId son requeridos"), "")
+        // Validar entityType antes de crear carpetas/guardar archivos
+        const { PUBLIC_ENTITIES } = require("../utils") as typeof import("../utils")
+        if (!PUBLIC_ENTITIES.includes(entityType)) {
+            return cb(new HttpError(403, "Access denied to this entity type"), "")
+        }
         const uploadPath = path.join(__dirname, "..", "uploads", entityType, entityId)
         ensureDir(uploadPath)
         cb(null, uploadPath)

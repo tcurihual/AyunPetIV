@@ -28,7 +28,7 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
         }
 
         switch (entityType) {
-            case "post": {
+            case "publications": {
                 const { data: post, error } = await supabase
                     .from("post")
                     .select("creator_id")
@@ -48,25 +48,6 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
                 break
             }
 
-            case "pet": {
-                const { data: pet, error } = await supabase
-                    .from("pet")
-                    .select("owner_id")
-                    .eq("id", numericId)
-                    .single()
-
-                if (error || !pet) {
-                    throw new AppError(404, "Mascota no encontrada")
-                }
-
-                if (pet.owner_id !== user.id) {
-                    throw new AppError(
-                        403,
-                        "No tienes permiso para modificar los archivos de esta mascota"
-                    )
-                }
-                break
-            }
 
             case "news": {
                 const { data: news, error } = await supabase
