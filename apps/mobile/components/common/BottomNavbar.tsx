@@ -22,7 +22,9 @@ export default function BottomNavbar() {
                     !pathname.includes("/AddPetScreen"))
             )
         }
-        if (tabPath === "requests") return pathname.includes("/(requests)")
+        if (tabPath === "requests")
+            return pathname.includes("/(requests)") || pathname.includes("/requests")
+
         if (tabPath === "publications") return pathname.includes("/my-publications")
         if (tabPath === "profile") return pathname.includes("/my-profile")
         if (tabPath === "dashboard") return pathname.includes("/(dashboard)")
@@ -37,7 +39,6 @@ export default function BottomNavbar() {
 
     const renderTabsByRole = () => {
         switch (role) {
-            // Usuario adoptante
             case 20:
                 return (
                     <>
@@ -57,7 +58,7 @@ export default function BottomNavbar() {
                             onPress={() => router.push("/(home)/(requests)/requestList")}
                         >
                             <Ionicons
-                                name={getIconName("search", "requests")}
+                                name={getIconName("mail", "requests")}
                                 size={26}
                                 color={getIconColor("requests")}
                             />
@@ -94,7 +95,6 @@ export default function BottomNavbar() {
                     </>
                 )
 
-            // rol de Organización/Shelter y Giver
             case 21:
             case 22:
                 return (
@@ -111,13 +111,13 @@ export default function BottomNavbar() {
                         </Pressable>
 
                         <Pressable
-                            style={getTabStyle("publications")}
+                            style={getTabStyle("dashboard")}
                             onPress={() => router.push("/(shelter)/dashboard")}
                         >
                             <Ionicons
-                                name={getIconName("stats-chart", "publications")}
+                                name={getIconName("stats-chart", "dashboard")}
                                 size={26}
-                                color={getIconColor("publications")}
+                                color={getIconColor("dashboard")}
                             />
                         </Pressable>
 
@@ -130,7 +130,8 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("requests")}
-                            onPress={() => router.push("/(shelter)/dashboard")}
+                            // 👇 ruta correcta según tu estructura: app/(shelter)/requests/requestList.tsx
+                            onPress={() => router.push("/(shelter)/requests/requestList")}
                         >
                             <Ionicons
                                 name={getIconName("mail", "requests")}
@@ -141,7 +142,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("profile")}
-                            onPress={() => router.push("/(shelter)/dashboard")}
+                            onPress={() => router.push("/(shelter)/my-profile")}
                         >
                             <Ionicons
                                 name={getIconName("person", "profile")}
@@ -152,7 +153,6 @@ export default function BottomNavbar() {
                     </>
                 )
 
-            // rol de Administrador
             case 19:
                 return (
                     <>
