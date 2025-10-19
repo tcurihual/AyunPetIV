@@ -91,6 +91,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
+            // Normalizar nombre de campo para el microservicio (espera `post_id`)
             const response = await http.post<{
                 status: number
                 message: string
@@ -99,7 +100,10 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                     adoption_request: AdoptionRequest
                 }
             }>("/v1/adoptions/requests", {
-                postid: data.postid,
+                // El contexto y llamadas internas usan `postid` para compatibilidad,
+                // pero el microservicio espera `post_id` (snake_case). Enviar ambos
+                // podría ser confuso; normalizamos a `post_id` aquí.
+                post_id: data.postid,
                 message: data.message || "",
             })
 
