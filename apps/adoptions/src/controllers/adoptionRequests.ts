@@ -205,6 +205,46 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 postImages,
             })
         } else {
+            // Filtrar según rol del usuario
+            const userRole = req.user?.role
+            const userId = req.user?.id
+
+            // Giver: devolver solicitudes relacionadas con sus posts/pets
+            if (userRole === 21) {
+                // Reutilizar listMyRequests (ya realiza las consultas y responde)
+                return await listMyRequests(req as unknown as Request, res)
+            }
+
+            // Adopter (usuario normal): devolver solo sus propias solicitudes
+            if (userRole === 20) {
+                if (!userId) throw new Error("Usuario no autenticado")
+                const numericUserId = Number(userId)
+
+                const { data: adoptionRequests, error } = await supabase
+                    .from("adoption_request")
+                    .select("*")
+                    .eq("requester_id", numericUserId)
+                    .order("created_at", { ascending: false })
+
+                if (error) throw new Error("Error al obtener las solicitudes de adopción")
+
+                const postIds = (adoptionRequests ?? []).map((r: any) => r.post_id).filter(Boolean)
+                const postImages = await getMultipleEntityImages("post", postIds)
+
+                const requestsWithImages = (adoptionRequests ?? []).map((r: any) => ({
+                    ...r,
+                    postImages: postImages[String(r.post_id)] || [],
+                }))
+
+                return AppResponse(
+                    res,
+                    200,
+                    "Solicitudes de adopción obtenidas exitosamente",
+                    requestsWithImages
+                )
+            }
+
+            // Admin or other roles: mantener comportamiento previo (todas las solicitudes)
             const { data: adoptionRequests, error } = await supabase
                 .from("adoption_request")
                 .select("*")
@@ -234,7 +274,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
 }
 
 export const createAdoptionRequest = async (req: Request, res: Response) => {
-    const { post_id, status } = req.body
+    const { post_id, status, message } = req.body
 
     try {
         if (!post_id) {
@@ -281,6 +321,8 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
             post_id,
             post_owner_id,
             status: status || "pending",
+            // Guardar el mensaje si viene del cliente (puede ser vacío)
+            message: message || null,
         }
 
         const { data: newAdoptionRequest, error: insertError } = await supabase
@@ -307,6 +349,9 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
 export const updateAdoptionRequest = async (req: Request, res: Response) => {
     const { id } = req.params
     const { status } = req.body
+
+    // Allow optional message update from requester
+    const { message } = req.body
 
     try {
         const numericId = parseInt(id)
@@ -350,6 +395,8 @@ export const updateAdoptionRequest = async (req: Request, res: Response) => {
 
         const payload: AdoptionRequest["Update"] = {
             status: status || existingRequest.status,
+            // Only allow updating message if the requester is the one making the change
+            ...(typeof message !== "undefined" ? { message } : {}),
             updated_at: new Date().toISOString(),
         }
 

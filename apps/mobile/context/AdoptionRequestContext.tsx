@@ -61,7 +61,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                     as: "adopter" | "giver"
                     requests: AdoptionRequest[]
                 }
-            }>("/v1/adoptions/mineRequests")
+            }>("/v1/adoptions/adoption-requests/mine")
 
             if (response.data.values) {
                 setAdoptionRequests(response.data.values.requests || [])
@@ -99,7 +99,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 values: {
                     adoption_request: AdoptionRequest
                 }
-            }>("/v1/adoptions/requests", {
+            }>("/v1/adoptions/adoption-requests", {
                 // El contexto y llamadas internas usan `postid` para compatibilidad,
                 // pero el microservicio espera `post_id` (snake_case). Enviar ambos
                 // podría ser confuso; normalizamos a `post_id` aquí.
@@ -145,14 +145,14 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
-            await http.patch<{
+            await http.put<{
                 status: number
                 message: string
                 type: string
                 values: {
                     adoption_request: AdoptionRequest
                 }
-            }>(`/v1/adoptions/requests/${id}`, {
+            }>(`/v1/adoptions/adoption-requests/${id}`, {
                 status: data.status,
             })
 
@@ -196,7 +196,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 status: number
                 message: string
                 type: string
-            }>(`/v1/adoptions/requests/${id}`)
+            }>(`/v1/adoptions/adoption-requests/${id}`)
 
             // Remover del estado local
             setAdoptionRequests((prev) => prev.filter((req) => req.id !== id))
