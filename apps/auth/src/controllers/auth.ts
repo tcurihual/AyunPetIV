@@ -43,7 +43,6 @@ export const login = async (req: Request, res: Response) => {
 
     return AppResponse(res, 200, "Inicio de sesión exitoso", { user, token })
 }
-
 export const register = async (
     req: Request<{ variation: Variation }, any, User["Row"]>,
     res: Response
@@ -75,7 +74,7 @@ export const register = async (
     if (roleError) throw new AppError(500, roleError.message)
 
     const hashedPassword = await hashPassword(user.password)
-    if (!hashedPassword) throw new AppError(500, "Ocurrio un error inesperado")
+    if (!hashedPassword) throw new AppError(500, "Ocurrió un error inesperado")
 
     const payload: User["Insert"] = {
         name: user.name,
@@ -88,24 +87,7 @@ export const register = async (
         description: user.description ?? null,
     }
 
-    // Solo "user" recibe correo de verificación
-    const shouldSendVerificationEmail = variation === "user"
-
-    if (shouldSendVerificationEmail) {
-        const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
-        const verificationLink = `${WEB_URL}/verify-email?token=${token}`
-
-        await sendEmail({
-            to: user.email,
-            subject: "Verifica tu correo - Ayün Pet",
-            html: emailTemplate(verificationLink),
-        })
-    } else {
-        console.log(
-            `⏸️  Registro de ${variation} (rol ${roleSelect.id}): Sin correo de verificación. Requiere validación de administrador.`
-        )
-    }
-
+    // Insertar usuario primero (para obtener su ID)
     const { error: insertError, data: inserted } = await supabase
         .from("users")
         .insert([payload])
@@ -114,7 +96,7 @@ export const register = async (
 
     if (insertError) throw new AppError(500, insertError.message)
 
-    // --- SOLO PARA GIVER: exigir docs y reenviar a media
+    // --- SOLO PARA GIVER: exigir documentos y reenviar a MEDIA
     if (variation === "giver") {
         const files = (req.files ?? []) as Express.Multer.File[]
         if (!files?.length) {
@@ -141,12 +123,105 @@ export const register = async (
         }
     }
 
-    // ✅ respuesta final (sin token interno)
+    const shouldSendVerificationEmail = variation === "user"
+
+    if (shouldSendVerificationEmail && inserted) {
+        const isMobile = req.headers["x-platform"] === "mobile"
+
+        if (isMobile) {
+            console.log("📱 Registro desde mobile → Enviando correo con código de verificación...")
+
+            const code = Math.floor(100000 + Math.random() * 900000).toString()
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+
+            await supabase.from("verification_code").insert([
+                {
+                    user_id: inserted.id,
+                    code,
+                    type: "verify",
+                    expires_at: expiresAt,
+                    used: false,
+                },
+            ])
+
+            const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Verifica tu correo - Ayün Pet</title>
+        </head>
+        <body style="margin:0; padding:0; font-family:Arial, sans-serif; background-color:#f4f4f4;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0; background-color:#f4f4f4;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0"
+                  style="background-color:#ffffff; border-radius:10px; overflow:hidden;
+                  box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                  <tr>
+                    <td style="background-color:#FFD24C; padding:40px 30px; text-align:center;">
+                      <h1 style="margin:0; color:#333; font-size:28px; font-weight:bold;">
+                        ¡Bienvenido a Ayün Pet! 🐾
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:40px 30px; text-align:center;">
+                      <p style="font-size:16px; color:#333; line-height:1.6;">
+                        Gracias por registrarte en nuestra plataforma.<br/>
+                        Antes de comenzar, confirma tu correo electrónico con este código:
+                      </p>
+                      <div style="background-color:#f8f9fa; border:2px solid #FFD24C; border-radius:8px;
+                                  padding:25px; text-align:center; margin:25px 0;">
+                        <div style="font-size:36px; font-weight:bold; letter-spacing:6px;
+                                    color:#333; font-family:monospace;">
+                          ${code}
+                        </div>
+                      </div>
+                      <p style="font-size:14px; color:#666;">Este código expira en 15 minutos.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color:#f8f9fa; text-align:center; padding:15px;
+                      font-size:12px; color:#666;">
+                      © 2025 Ayün Pet — Todos los derechos reservados.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+
+            await sendEmail({
+                to: user.email,
+                subject: "Bienvenido a Ayün Pet 🐾 - Verifica tu correo",
+                html,
+            })
+
+            console.log(`✅ Correo con código enviado correctamente a ${user.email}`)
+        } else {
+            console.log("🖥️ Registro desde web → Enviando correo con link de verificación...")
+
+            const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
+            const verificationLink = `${WEB_URL}/verify-email?token=${token}`
+
+            await sendEmail({
+                to: user.email,
+                subject: "Verifica tu correo - Ayün Pet",
+                html: emailTemplate(verificationLink),
+            })
+        }
+    }
+
     return AppResponse(
         res,
         201,
         variation === "giver"
-            ? "Usuario creado. Documentos recibidos y enviados para revisión. Queda pendiente aprobación de un administrador."
+            ? "Usuario creado. Documentos enviados para revisión. Queda pendiente aprobación de un administrador."
             : "Usuario creado exitosamente",
         {}
     )
@@ -505,5 +580,126 @@ export const verifyMobileResetCode = async (req: Request, res: Response) => {
         console.error("❌ ERROR EN verifyMobileResetCode:", error)
         if (error instanceof AppError) throw error
         throw new AppError(500, "Error al verificar el código")
+    }
+}
+
+export const createVerificationCodeMobile = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body
+        if (!email) throw new AppError(400, "Debe proporcionar un correo electrónico")
+
+        const { data: user, error: userError } = await supabase
+            .from("users")
+            .select("id, email, validated")
+            .eq("email", email)
+            .single()
+
+        if (userError || !user) throw new AppError(404, "Usuario no encontrado")
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString()
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+
+        const { error: insertError } = await supabase.from("verification_code").insert([
+            {
+                user_id: user.id,
+                code,
+                type: "verify",
+                expires_at: expiresAt,
+                used: false,
+            },
+        ])
+
+        if (insertError) throw new AppError(500, "Error al guardar el código de verificación")
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Bienvenido a Ayün Pet</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; background-color: #f7f7f7; padding: 0; margin: 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7; padding: 40px 0;">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                            <tr>
+                                <td style="background-color: #FFD24C; padding: 40px; text-align: center;">
+                                    <h1 style="margin: 0; color: #333333;">🐾 ¡Bienvenido a Ayün Pet!</h1>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 40px;">
+                                    <p style="font-size: 16px; color: #333;">Gracias por registrarte en Ayün Pet.</p>
+                                    <p style="font-size: 16px; color: #555;">Tu código de verificación es:</p>
+                                    <div style="background-color: #f4f4f4; border: 2px solid #FFD24C; border-radius: 8px; padding: 25px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">
+                                        ${code}
+                                    </div>
+                                    <p style="font-size: 14px; color: #777; margin-top: 20px;">Este código expira en 15 minutos.</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #fafafa; padding: 20px; text-align: center;">
+                                    <p style="font-size: 12px; color: #777;">Este es un correo automático, por favor no respondas.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        `
+
+        await sendEmail({
+            to: email,
+            subject: "🐾 Bienvenido a Ayün Pet - Verifica tu correo",
+            html,
+        })
+
+        return AppResponse(res, 200, "Código de verificación enviado al correo", {})
+    } catch (error) {
+        throw new AppError(500, "Error al generar código de verificación")
+    }
+}
+
+export const validateVerificationCodeMobile = async (req: Request, res: Response) => {
+    try {
+        const { email, code } = req.body
+        if (!email || !code) throw new AppError(400, "Email y código son requeridos")
+
+        const { data: user, error: userError } = await supabase
+            .from("users")
+            .select("id, email, validated")
+            .eq("email", email)
+            .single()
+
+        if (userError || !user) throw new AppError(404, "Usuario no encontrado")
+
+        const { data: verifyData, error: findError } = await supabase
+            .from("verification_code")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("type", "verify")
+            .eq("used", false)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single()
+
+        if (findError || !verifyData) throw new AppError(404, "Código no encontrado o expirado")
+
+        const now = new Date()
+        const expiresAt = new Date(verifyData.expires_at!)
+        if (now > expiresAt) throw new AppError(401, "El código ha expirado")
+
+        if (code !== verifyData.code) throw new AppError(400, "Código incorrecto")
+
+        await supabase.from("users").update({ validated: true }).eq("id", user.id)
+        await supabase.from("verification_code").update({ used: true }).eq("id", verifyData.id)
+
+        return AppResponse(res, 200, "Correo verificado correctamente ✅", {})
+    } catch {
+        throw new AppError(500, "Error al validar el código de verificación")
     }
 }

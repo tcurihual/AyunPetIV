@@ -1,3 +1,4 @@
+import "dotenv/config"
 import nodemailer from "nodemailer"
 import { MAIL_USER, MAIL_PASS } from "../constants"
 

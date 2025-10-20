@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"
@@ -43,10 +44,9 @@ app.listen(AUTH_PORT, () => {
 })
 
 declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: number; role: number | null } 
+    namespace Express {
+        interface Request {
+            user?: { id: number; role: number | null }
+        }
     }
-  }
 }
-

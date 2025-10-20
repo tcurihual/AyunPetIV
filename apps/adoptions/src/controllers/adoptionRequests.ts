@@ -92,6 +92,12 @@ export const listMyRequests = async (req: Request, res: Response) => {
 
         const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
         const postImages = await getMultipleEntityImages("post", requestPostIds)
+        const headers = {
+            "x-user-id": String(req.user?.id ?? 0),
+            "x-user-role": String(req.user?.role ?? ""),
+        }
+        const postImages = await getMultipleEntityImages("post", requestPostIds, headers)
+        const petImages = await getMultipleEntityImages("pet", petIds, headers)
 
         let petImages: Record<string, string[]> = {}
         const postToPet: Record<number, number> = {}
@@ -224,7 +230,11 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
 
             let postImages: string[] = []
             if (adoptionRequest?.post_id) {
-                postImages = await getEntityImages("post", adoptionRequest.post_id)
+                const headers = {
+                    "x-user-id": String(req.user?.id ?? 0),
+                    "x-user-role": String(req.user?.role ?? ""),
+                }
+                postImages = await getEntityImages("post", adoptionRequest.post_id, headers)
             }
 
             const [requesterInfo, postInfo] = await Promise.all([
@@ -299,7 +309,11 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
             if (error) throw new Error("Error al obtener las solicitudes de adopción")
 
             const postIds = (adoptionRequests ?? []).map((r: any) => r.post_id).filter(Boolean)
-            const postImages = await getMultipleEntityImages("post", postIds)
+            const headers = {
+                "x-user-id": String(req.user?.id ?? 0),
+                "x-user-role": String(req.user?.role ?? ""),
+            }
+            const postImages = await getMultipleEntityImages("post", postIds, headers)
 
             const requestsWithImages = (adoptionRequests ?? []).map((r: any) => ({
                 ...r,

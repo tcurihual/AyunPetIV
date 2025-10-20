@@ -70,11 +70,16 @@ export const authService = {
             address: data.address || "",
             description: data.description || "",
         }
-
         const response = await http.post<RegisterResponse>(
             `/v1/auth/register/${variation}`,
-            payload
+            payload,
+            {
+                headers: {
+                    "x-platform": "mobile",
+                },
+            }
         )
+
         return response.data
     },
 }
