@@ -3,6 +3,12 @@ import { http } from "@/services/http"
 import { useAuthContext } from "./AuthContext"
 import { AdoptionRequest } from "@/utils/types"
 
+type AdoptionRequestRecord = AdoptionRequest & {
+    postImages?: string[]
+    petImages?: string[]
+    requester_name?: string | null
+}
+
 interface CreateAdoptionRequestPayload {
     postid: number
     message?: string
@@ -14,11 +20,11 @@ interface UpdateAdoptionRequestPayload {
 }
 
 interface AdoptionRequestContextType {
-    adoptionRequests: AdoptionRequest[]
+    adoptionRequests: AdoptionRequestRecord[]
     loading: boolean
     error: string | null
     getAdoptionRequests: () => Promise<void>
-    createAdoptionRequest: (data: CreateAdoptionRequestPayload) => Promise<AdoptionRequest>
+    createAdoptionRequest: (data: CreateAdoptionRequestPayload) => Promise<AdoptionRequestRecord>
     updateAdoptionRequest: (id: number, data: UpdateAdoptionRequestPayload) => Promise<void>
     deleteAdoptionRequest: (id: number) => Promise<any>
     refreshRequests: () => Promise<void>
@@ -27,7 +33,7 @@ interface AdoptionRequestContextType {
 const AdoptionRequestContext = createContext<AdoptionRequestContextType | null>(null)
 
 export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-    const [adoptionRequests, setAdoptionRequests] = useState<AdoptionRequest[]>([])
+    const [adoptionRequests, setAdoptionRequests] = useState<AdoptionRequestRecord[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const { user, status } = useAuthContext()
@@ -159,7 +165,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
      */
     async function createAdoptionRequest(
         data: CreateAdoptionRequestPayload
-    ): Promise<AdoptionRequest> {
+    ): Promise<AdoptionRequestRecord> {
         if (!user) {
             throw new Error("Usuario no autenticado")
         }
@@ -185,22 +191,22 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
 
             const payload = response.data
 
-            let newRequest: AdoptionRequest | null = null
+            let newRequest: AdoptionRequestRecord | null = null
 
             if (payload?.values?.adoption_request) {
-                newRequest = payload.values.adoption_request as AdoptionRequest
+                newRequest = payload.values.adoption_request as AdoptionRequestRecord
             } else if (payload?.data?.adoption_request) {
-                newRequest = payload.data.adoption_request as AdoptionRequest
+                newRequest = payload.data.adoption_request as AdoptionRequestRecord
             } else if (payload?.data && Array.isArray(payload.data) && payload.data[0]) {
-                newRequest = payload.data[0] as AdoptionRequest
+                newRequest = payload.data[0] as AdoptionRequestRecord
             } else if (
                 payload?.data &&
                 typeof payload.data === "object" &&
                 !Array.isArray(payload.data)
             ) {
-                newRequest = payload.data as AdoptionRequest
+                newRequest = payload.data as AdoptionRequestRecord
             } else if (payload?.adoption_request) {
-                newRequest = payload.adoption_request as AdoptionRequest
+                newRequest = payload.adoption_request as AdoptionRequestRecord
             }
 
             if (!newRequest) {
