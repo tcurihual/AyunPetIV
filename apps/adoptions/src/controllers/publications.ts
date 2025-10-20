@@ -48,7 +48,13 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
 
         // Usar únicamente el entityType "publications" para las imágenes
-        const postImages = await getMultipleEntityImages("publications", postIds)
+        const headers = req.user
+            ? {
+                  "x-user-id": String(req.user.id),
+                  "x-user-role": String(req.user.role ?? ""),
+              }
+            : undefined
+        const postImages = await getMultipleEntityImages("publications", postIds, headers)
 
         const items = (data ?? []).map((row: any) => {
             const pImages = postImages[String(row.id)] || []
@@ -96,7 +102,14 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 
         // Obtener imágenes asociadas a la publicación (entityType = "publications")
-        const postImages = await getEntityImages("publications", data.id)
+        const headers = req.user
+            ? {
+                  "x-user-id": String(req.user.id),
+                  "x-user-role": String(req.user.role ?? ""),
+              }
+            : undefined
+        // pasar headers para que el servicio media permita la consulta
+        const postImages = await getEntityImages("publications", data.id, headers)
 
         const payload = {
             post: {
@@ -139,41 +152,34 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             size,
             sterilized,
             name,
-        } = req.body as {
-            ownerId: number
-            title: string
-            description: string
-            species: PetSpecies
-            gender: PetGender
-            age_months: number
-            age_years: number
-            size: PetSize
-            sterilized: boolean
-            name?: string | null
-        }
+        } = req.body as any
+
+        const ownerIdNum = ownerId !== undefined ? Number(ownerId) : undefined
+        const ageMonthsNum = age_months !== undefined ? Number(age_months) : undefined
+        const ageYearsNum = age_years !== undefined ? Number(age_years) : undefined
 
         if (
-            !ownerId ||
+            !ownerIdNum ||
             !title ||
             !description ||
             !species ||
             !gender ||
             size == null ||
             sterilized == null ||
-            age_months == null ||
-            age_years == null
+            ageMonthsNum == null ||
+            ageYearsNum == null
         ) {
             throw new AppError(400, "Payload inválido")
         }
 
-        if (!isAdmin(req) && !isSelf(req, ownerId))
+        if (!isAdmin(req) && !isSelf(req, ownerIdNum))
             throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
 
         const petInsert: Pet["Insert"] = {
-            owner_id: ownerId,
+            owner_id: ownerIdNum,
             name: name ?? null,
-            age_months,
-            age_years,
+            age_months: ageMonthsNum,
+            age_years: ageYearsNum,
             gender,
             size,
             species,

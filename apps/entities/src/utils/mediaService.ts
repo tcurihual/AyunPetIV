@@ -9,12 +9,13 @@ import { MEDIA_URL } from "@repo/utils"
  */
 export const getEntityImages = async (
     entityType: string,
-    entityId: number | string
+    entityId: number | string,
+    headers?: Record<string, string | number>
 ): Promise<string[]> => {
     try {
         const { data } = await axios.get<{ message: string; data: string[] }>(
             `${MEDIA_URL}/uploads/${entityType}/${entityId}`,
-            { timeout: 5000 }
+            { timeout: 5000, headers }
         )
         return Array.isArray(data.data) ? data.data : []
     } catch (error) {
@@ -31,12 +32,13 @@ export const getEntityImages = async (
  */
 export const getMultipleEntityImages = async (
     entityType: string,
-    entityIds: (number | string)[]
+    entityIds: (number | string)[],
+    headers?: Record<string, string | number>
 ): Promise<Record<string, string[]>> => {
     const results = await Promise.all(
         entityIds.map(async (id) => ({
             id: String(id),
-            images: await getEntityImages(entityType, id),
+            images: await getEntityImages(entityType, id, headers),
         }))
     )
 
