@@ -6,15 +6,15 @@ import {
     ScrollView,
     Dimensions,
     TouchableOpacity,
-    Image,
     ActivityIndicator,
-    Platform,
+    Modal,
+    TextInput,
+    Alert,
 } from "react-native"
 import { useLocalSearchParams } from "expo-router"
 import Animated from "react-native-reanimated"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ayunData from "@/data/mockData"
 import { CommentCard, type Comment } from "@common/CommentCard"
 import { MessageFormSchema } from "@/utils/schemas"
 import { z } from "zod"
@@ -23,20 +23,15 @@ import ReportModal from "@common/modals/ReportModal"
 import { getLocalPets } from "@/services/petStorage"
 import { Pet } from "@/interfaces/pet"
 import { toMediaUrl } from "@/utils/mediaUrl"
+import { usePublicationContext } from "@/context/PublicationContext"
+import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import type { PublicationItem } from "@/context/PublicationContext"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
 const { width, height } = Dimensions.get("window")
 
 const isLocalId = (id: string) => id.startsWith("local-")
-
-const toAbsoluteMediaUrl = (u?: string): string | undefined => {
-    if (!u) return undefined
-    if (/^https?:\/\//i.test(u)) return u
-    const base = process.env.EXPO_PUBLIC_MEDIA_BASE?.trim()
-    if (!base) return u
-    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`
-}
 
 const mockComments: Comment[] = [
     {
@@ -61,9 +56,10 @@ export default function PublicationDetail() {
     const [showReportModal, setShowReportModal] = useState(false)
     const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
     const [reportType, setReportType] = useState<"comment" | "publication">("comment")
-
     const [loading, setLoading] = useState(true)
     const [pet, setPet] = useState<Pet | null>(null)
+    const { publications, getPublicationByPostId } = usePublicationContext()
+    const { createAdoptionRequest } = useAdoptionRequestContext()
 
     const {
         control,
@@ -79,56 +75,89 @@ export default function PublicationDetail() {
         },
     })
 
+    const [showRequestModal, setShowRequestModal] = useState(false)
+    const [requestMessage, setRequestMessage] = useState("")
+    const [submittingRequest, setSubmittingRequest] = useState(false)
+    const [requestError, setRequestError] = useState<string | null>(null)
+
+    const publicationFromContext = useMemo(() => {
+        if (!id || isLocalId(id)) return null
+        const numericId = Number(id)
+        if (!Number.isFinite(numericId)) return null
+        return (
+            publications.find(
+                (pub) => Number(pub.postId ?? pub.id) === numericId || String(pub.id) === String(id)
+            ) ?? null
+        )
+    }, [id, publications])
+
+    const mapPublicationToPet = React.useCallback((pub: PublicationItem): Pet => {
+        const imageSource =
+            typeof pub.image === "string"
+                ? { uri: pub.image }
+                : pub.image && (pub.image as any).uri
+                ? { uri: (pub.image as any).uri }
+                : pub.image || { uri: "https://placehold.co/800x600?text=Mascota" }
+
+        return {
+            id: String(pub.postId ?? pub.id),
+            name: pub.name ?? "Sin nombre",
+            gender: pub.gender ?? "",
+            age: pub.age ?? "",
+            publisher: pub.publisher ?? "Usuario",
+            description: pub.description ?? "",
+            image: imageSource,
+        }
+    }, [])
+
     useEffect(() => {
         let alive = true
         ;(async () => {
             try {
+                setLoading(true)
+
                 if (!id) return
 
-        if (isLocalId(id)) {
-          const locals = await getLocalPets()
-          const raw = locals.find((p) => `local-${p.id}` === id)
-          if (raw) {
-            const url = toMediaUrl(raw.imageUrls?.[0]) || "https://placehold.co/800x600?text=Mascota"
-            const petObj: Pet = {
-              id,
-              name: raw.name,
-              gender: raw.gender,
-              age: `${raw.ageYears} años`,
-              publisher: raw.ownerName || "Yo",
-              description: raw.description ?? "",
-              image: { uri: url },
-            }
-            if (alive) setPet(petObj)
-          } else {
-            if (alive) setPet(null)
-          }
-        } else {
-          const raw = (ayunData.pet ?? []).find((p) => String(p.id) === String(id))
-          if (raw) {
-            const assetByName: Record<string, any> = {
-              firulais: require("@/assets/images/perro1.jpg"),
-              michi: require("@/assets/images/Gato1-1.jpg"),
-              rocky: require("@/assets/images/perro2.jpg"),
-              luna: require("@/assets/images/Gato1-2.jpg"),
-            }
-            const key = (raw.name ?? "").toLowerCase().trim()
-            const image = assetByName[key] ?? { uri: "https://placehold.co/800x600?text=Mascota" }
-
+                if (isLocalId(id)) {
+                    const locals = await getLocalPets()
+                    const raw = locals.find((p) => `local-${p.id}` === id)
+                    if (raw) {
+                        const url =
+                            toMediaUrl(raw.imageUrls?.[0]) ||
+                            "https://placehold.co/800x600?text=Mascota"
                         const petObj: Pet = {
-                            id: String(raw.id),
+                            id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: `${raw.age} años`,
-                            publisher,
-                            description: raw.description,
-                            image,
+                            age: `${raw.ageYears} años`,
+                            publisher: raw.ownerName || "Yo",
+                            description: raw.description ?? "",
+                            image: { uri: url },
                         }
                         if (alive) setPet(petObj)
-                    } else {
+                    } else if (alive) {
+                        setPet(null)
+                    }
+                } else {
+                    const numericId = Number(id)
+                    if (!Number.isFinite(numericId)) {
                         if (alive) setPet(null)
+                        return
+                    }
+
+                    const source =
+                        publicationFromContext || (await getPublicationByPostId(numericId))
+                    if (!alive) return
+
+                    if (source) {
+                        setPet(mapPublicationToPet(source))
+                    } else {
+                        setPet(null)
                     }
                 }
+            } catch (e) {
+                console.error("Error loading publication detail:", e)
+                if (alive) setPet(null)
             } finally {
                 if (alive) setLoading(false)
             }
@@ -136,7 +165,7 @@ export default function PublicationDetail() {
         return () => {
             alive = false
         }
-    }, [id])
+    }, [id, getPublicationByPostId, mapPublicationToPet, publicationFromContext])
 
     const onSubmitComment = async (data: MessageFormData) => {
         try {
@@ -182,6 +211,44 @@ export default function PublicationDetail() {
         } finally {
             setShowReportModal(false)
             setReportingCommentId(null)
+        }
+    }
+
+    const canSendRequest = pet ? Number.isFinite(Number(pet.id)) : false
+
+    const handleOpenRequestModal = () => {
+        if (!canSendRequest) {
+            Alert.alert(
+                "No disponible",
+                "Esta publicación es local, no se puede enviar solicitud de adopción."
+            )
+            return
+        }
+        setRequestError(null)
+        setShowRequestModal(true)
+    }
+
+    const handleSubmitAdoptionRequest = async () => {
+        if (!pet) return
+        const postId = Number(pet.id)
+        if (!Number.isFinite(postId)) return
+
+        setSubmittingRequest(true)
+        setRequestError(null)
+        try {
+            await createAdoptionRequest({
+                postid: postId,
+                message: requestMessage.trim() ? requestMessage.trim() : undefined,
+            })
+            Alert.alert("Solicitud enviada", "Tu solicitud de adopción fue enviada correctamente.")
+            setShowRequestModal(false)
+            setRequestMessage("")
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message || e?.message || "No se pudo enviar la solicitud"
+            setRequestError(msg)
+        } finally {
+            setSubmittingRequest(false)
         }
     }
 
@@ -295,7 +362,14 @@ export default function PublicationDetail() {
                             </View>
 
                             <View style={styles.buttonContainer}>
-                                <TouchableOpacity style={styles.sendRequestButton}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.sendRequestButton,
+                                        !canSendRequest && styles.sendRequestButtonDisabled,
+                                    ]}
+                                    onPress={handleOpenRequestModal}
+                                    disabled={!canSendRequest}
+                                >
                                     <Text style={styles.sendRequestButtonText}>
                                         Enviar Solicitud
                                     </Text>
@@ -324,6 +398,65 @@ export default function PublicationDetail() {
                 onSubmit={handleSubmitReport}
                 title={reportType === "comment" ? "Reportar Comentario" : "Reportar Publicación"}
             />
+
+            <Modal
+                visible={showRequestModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {
+                    if (!submittingRequest) {
+                        setShowRequestModal(false)
+                        setRequestError(null)
+                    }
+                }}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Enviar Solicitud de Adopción</Text>
+                        <Text style={styles.modalSubtitle}>
+                            Agrega un mensaje para el cuidador si lo deseas.
+                        </Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Escribe tu mensaje..."
+                            multiline
+                            numberOfLines={4}
+                            value={requestMessage}
+                            onChangeText={setRequestMessage}
+                            editable={!submittingRequest}
+                        />
+                        {requestError ? (
+                            <Text style={styles.modalError}>{requestError}</Text>
+                        ) : null}
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={() => {
+                                    if (!submittingRequest) {
+                                        setShowRequestModal(false)
+                                        setRequestError(null)
+                                    }
+                                }}
+                                disabled={submittingRequest}
+                            >
+                                <Text style={styles.modalCancelText}>Cancelar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalConfirmButton,
+                                    submittingRequest && styles.modalConfirmButtonDisabled,
+                                ]}
+                                onPress={handleSubmitAdoptionRequest}
+                                disabled={submittingRequest}
+                            >
+                                <Text style={styles.modalConfirmText}>
+                                    {submittingRequest ? "Enviando..." : "Enviar"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -399,6 +532,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
+    sendRequestButtonDisabled: { opacity: 0.6 },
     sendRequestButtonText: { fontSize: 16, fontWeight: "600", color: "#000" },
     reportButton: {
         backgroundColor: "transparent",
@@ -415,4 +549,51 @@ const styles = StyleSheet.create({
     center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
     empty: { color: "#333" },
     gray: { color: "#6b7280", marginTop: 8 },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 24,
+    },
+    modalContent: {
+        width: "100%",
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        padding: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    modalTitle: { fontSize: 18, fontWeight: "700", color: "#222" },
+    modalSubtitle: { fontSize: 14, color: "#555", marginTop: 8, marginBottom: 12 },
+    modalInput: {
+        backgroundColor: "#F8F8F8",
+        borderRadius: 8,
+        padding: 12,
+        textAlignVertical: "top",
+        minHeight: 100,
+        fontSize: 14,
+        color: "#333",
+    },
+    modalError: { color: "#C0392B", marginTop: 8 },
+    modalActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
+    modalCancelButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: "#E5E7EB",
+        marginRight: 12,
+    },
+    modalCancelText: { color: "#333", fontWeight: "600" },
+    modalConfirmButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 18,
+        borderRadius: 8,
+        backgroundColor: "#7c3aed",
+    },
+    modalConfirmButtonDisabled: { opacity: 0.7 },
+    modalConfirmText: { color: "#fff", fontWeight: "700" },
 })

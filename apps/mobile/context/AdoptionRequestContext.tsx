@@ -9,7 +9,8 @@ interface CreateAdoptionRequestPayload {
 }
 
 interface UpdateAdoptionRequestPayload {
-    status: "accepted" | "rejected"
+    status?: "accepted" | "rejected"
+    message?: string
 }
 
 interface AdoptionRequestContextType {
@@ -54,12 +55,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
 
         try {
             
-            const path = user.role === 21 ? "/v1/adoptions/adoption-requests/mine" : "/v1/adoptions/adoption-requests"
-
-            const response = await http.get<any>(path)
-
-            
-            console.debug("[AdoptionRequest] GET", path, "response.data:", response?.data)
+            const response = await http.get<any>("/v1/adoptions/adoption-requests")
 
             
             const payload = response?.data
@@ -73,10 +69,26 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 
                 if (input.values) {
                     if (Array.isArray(input.values.requests)) return input.values.requests
+                    if (Array.isArray(input.values.items)) return input.values.items
                     if (Array.isArray(input.values)) return input.values
                 }
 
+                if (Array.isArray(input.requests)) return input.requests
+
                 if (Array.isArray(input.data)) return input.data
+
+                if (input.data && Array.isArray(input.data.requests)) return input.data.requests
+                if (input.data && Array.isArray(input.data.items)) return input.data.items
+
+                if (input.data && typeof input.data === "object") {
+                    const nested = extractRequests(input.data)
+                    if (nested.length > 0) return nested
+                }
+
+                if (input.result && typeof input.result === "object") {
+                    const nested = extractRequests(input.result)
+                    if (nested.length > 0) return nested
+                }
 
                 for (const k of Object.keys(input)) {
                     const v = input[k]
@@ -95,12 +107,40 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 }
             }
 
+            if (user.role === 21 && user.id) {
+                const numericUserId = Number(user.id)
+                if (Number.isFinite(numericUserId)) {
+                    found = found.filter((req: any) => {
+                        const owner =
+                            req.post_owner_id ??
+                            req.postOwnerId ??
+                            req.post_ownerid ??
+                            req.post?.creator_id ??
+                            req.post?.owner_id
+                        return Number(owner) === numericUserId
+                    })
+                }
+            }
+
+            if (user.role === 20 && user.id) {
+                const numericUserId = Number(user.id)
+                if (Number.isFinite(numericUserId)) {
+                    found = found.filter((req: any) => {
+                        const requester =
+                            req.requester_id ??
+                            req.requesterId ??
+                            req.requesterid ??
+                            req.user_id ??
+                            req.user?.id
+                        return Number(requester) === numericUserId
+                    })
+                }
+            }
+
             if (found.length === 0 && payload && typeof payload === "object" && (payload.id || payload.adoption_request)) {
                 const single = payload.adoption_request ? payload.adoption_request : payload
                 found = [single]
             }
-
-            console.debug("[AdoptionRequest] extracted requests count:", found.length)
 
             setAdoptionRequests(found)
         } catch (e: any) {
@@ -128,14 +168,13 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
-            // Normalizar nombre de campo para el microservicio (espera `post_id`)
             const response = await http.post<{
-                status: number
-                message: string
-                type: string
-                values: {
-                    adoption_request: AdoptionRequest
-                }
+                status?: number
+                message?: string
+                type?: string
+                data?: any
+                values?: any
+                adoption_request?: AdoptionRequest
             }>("/v1/adoptions/adoption-requests", {
                 // El contexto y llamadas internas usan `postid` para compatibilidad,
                 // pero el microservicio espera `post_id` (snake_case). Enviar ambos
@@ -144,7 +183,29 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 message: data.message || "",
             })
 
-            const newRequest = response.data.values.adoption_request
+            const payload = response.data
+
+            let newRequest: AdoptionRequest | null = null
+
+            if (payload?.values?.adoption_request) {
+                newRequest = payload.values.adoption_request as AdoptionRequest
+            } else if (payload?.data?.adoption_request) {
+                newRequest = payload.data.adoption_request as AdoptionRequest
+            } else if (payload?.data && Array.isArray(payload.data) && payload.data[0]) {
+                newRequest = payload.data[0] as AdoptionRequest
+            } else if (
+                payload?.data &&
+                typeof payload.data === "object" &&
+                !Array.isArray(payload.data)
+            ) {
+                newRequest = payload.data as AdoptionRequest
+            } else if (payload?.adoption_request) {
+                newRequest = payload.adoption_request as AdoptionRequest
+            }
+
+            if (!newRequest) {
+                throw new Error("Respuesta del servidor inválida al crear la solicitud")
+            }
 
             // Actualizar el estado local con la nueva solicitud
             setAdoptionRequests((prev) => [newRequest, ...prev])
@@ -173,9 +234,16 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
             throw new Error("Usuario no autenticado")
         }
 
-        // Verificar si el usuario es un dador (role 21)
-        if (user.role !== 21) {
-            throw new Error("Solo los dadores de adopción pueden actualizar solicitudes")
+        const wantsStatus = typeof data.status !== "undefined"
+        const wantsMessage = typeof data.message !== "undefined"
+
+        if (!wantsStatus && !wantsMessage) {
+            throw new Error("No hay cambios para actualizar")
+        }
+
+        // Solo los dadores pueden actualizar el estado de una solicitud
+        if (wantsStatus && user.role !== 21) {
+            throw new Error("Solo los dadores de adopción pueden actualizar el estado")
         }
 
         setLoading(true)
@@ -190,7 +258,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                     adoption_request: AdoptionRequest
                 }
             }>(`/v1/adoptions/adoption-requests/${id}`, {
-                status: data.status,
+                ...(wantsStatus ? { status: data.status } : {}),
+                ...(wantsMessage ? { message: data.message } : {}),
             })
 
             // Actualizar el estado local
@@ -199,7 +268,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                     req.id === id
                         ? {
                               ...req,
-                              status: data.status,
+                              ...(wantsStatus ? { status: data.status } : {}),
+                              ...(wantsMessage ? { message: data.message } : {}),
                               updatedAt: new Date(),
                           }
                         : req

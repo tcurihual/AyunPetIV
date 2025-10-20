@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { View, Alert, ActivityIndicator, Text, Pressable } from "react-native"
+import { View, Alert, ActivityIndicator, Text, Pressable, TextInput } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import RequestDetailCard, { Status } from "@/components/common/RequestDetailCard"
 import { http } from "@/services/http"
@@ -11,22 +11,23 @@ export default function RequestDetail() {
 
     const { id } = useLocalSearchParams<{ id: string }>()
     const router = useRouter()
-    // single hook call for auth user
     const { user: authUser } = useAuthContext()
-    const { deleteAdoptionRequest, refreshRequests } = useAdoptionRequestContext()
+    const { deleteAdoptionRequest, refreshRequests, updateAdoptionRequest } = useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [request, setRequest] = useState<any | null>(null)
 
-    // If request doesn't include post/pet info, try to resolve it via PublicationContext
     const [resolvedPetPhoto, setResolvedPetPhoto] = useState<string | null>(
         null
     )
     const [resolvedPetName, setResolvedPetName] = useState<string | null>(
         null
     )
+    const [editableMessage, setEditableMessage] = useState<string>("")
+    const [savingMessage, setSavingMessage] = useState(false)
+    const [messageError, setMessageError] = useState<string | null>(null)
 
     useEffect(() => {
         async function load() {
@@ -35,11 +36,6 @@ export default function RequestDetail() {
             setError(null)
             try {
                 const resp = await http.get(`/v1/adoptions/adoption-requests/${id}`)
-                // Normalize many possible response shapes from the backend:
-                // - { data: { ... }, message: '...' }
-                // - { values: { adoption_request: { ... } } }
-                // - { adoption_request: { ... } }
-                // - { ...request... }
                 const raw = resp.data
 
                 let reqObj: any = null
@@ -50,15 +46,12 @@ export default function RequestDetail() {
                 } else if (raw.adoption_request) {
                     reqObj = raw.adoption_request
                 } else if (raw.data) {
-                    // data might be an array (list response) or an object (single)
                     if (Array.isArray(raw.data)) {
-                        // if accidentally returned an array, pick the first item
                         reqObj = raw.data[0] ?? null
                     } else {
                         reqObj = raw.data.adoption_request ?? raw.data
                     }
                 } else {
-                    // assume the raw payload is the request
                     reqObj = raw
                 }
 
@@ -73,12 +66,10 @@ export default function RequestDetail() {
         load()
     }, [id])
 
-    // If we don't have pet name/photo, try to fetch publication info by post_id
     useEffect(() => {
         let mounted = true
         async function resolvePublication() {
             if (!request) return
-            // prefer values already present in the request
             if (!resolvedPetPhoto) {
                 const img = (request.postImages && request.postImages[0]) || (request.petImages && request.petImages[0]) || null
                 if (img) setResolvedPetPhoto(img)
@@ -98,7 +89,6 @@ export default function RequestDetail() {
                     if (!resolvedPetPhoto && pub.image && (pub.image as any).uri) setResolvedPetPhoto((pub.image as any).uri)
                 }
             } catch (e) {
-                // swallow
             }
         }
 
@@ -109,29 +99,91 @@ export default function RequestDetail() {
         }
     }, [request, resolvedPetName, resolvedPetPhoto])
 
-    if (loading) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator /></View>
-    if (error) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
-    if (!request) return <View style={{ flex: 1 }} />
-
-    // If backend doesn't include requester name but requester_id matches current user, use authUser
     const requesterName =
-        request.user?.name ||
-        request.requester_name ||
-        (authUser && request.requester_id && Number(request.requester_id) === Number(authUser.id) ? authUser.name : "--")
-    const rawDate = request.createdAt || request.createdat || request.created_at
+        request?.user?.name ||
+        request?.requester_name ||
+        (authUser && request?.requester_id && Number(request.requester_id) === Number(authUser.id) ? authUser.name : "--")
+    const rawDate = request?.createdAt || request?.createdat || request?.created_at
     const date = rawDate ? new Date(rawDate).toLocaleString() : "--"
-    // Normalize message: the backend may return the requester message in different shapes
     const message =
-        request.message ||
-        request.adoption_request?.message ||
-        request.values?.adoption_request?.message ||
-        request.values?.message ||
-        request.data?.message ||
+        request?.message ||
+        request?.adoption_request?.message ||
+        request?.values?.adoption_request?.message ||
+        request?.values?.message ||
+        request?.data?.message ||
         ""
 
-    const isRequester = authUser && request.requester_id && Number(authUser.id) === Number(request.requester_id)
-    const isPostOwner = authUser && request.post_owner_id && Number(authUser.id) === Number(request.post_owner_id)
+    useEffect(() => {
+        setEditableMessage(message ?? "")
+    }, [message])
 
+    const messageChanged = editableMessage !== message
+
+    const isRequester =
+        authUser && request?.requester_id && Number(authUser.id) === Number(request.requester_id)
+    const isPostOwner =
+        authUser && request?.post_owner_id && Number(authUser.id) === Number(request.post_owner_id)
+
+    const handleSaveMessage = async () => {
+        if (!request) return
+        if (editableMessage === message) return
+
+        setSavingMessage(true)
+        setMessageError(null)
+
+        try {
+            await updateAdoptionRequest(request.id, { message: editableMessage })
+
+            setRequest((prev: any) => {
+                if (!prev) return prev
+
+                const next: any = { ...prev, message: editableMessage }
+
+                if (prev.adoption_request && typeof prev.adoption_request === "object") {
+                    next.adoption_request = {
+                        ...prev.adoption_request,
+                        message: editableMessage,
+                    }
+                }
+
+                if (prev.values?.adoption_request) {
+                    next.values = {
+                        ...prev.values,
+                        adoption_request: {
+                            ...prev.values.adoption_request,
+                            message: editableMessage,
+                        },
+                    }
+                }
+
+                if (prev.data?.adoption_request) {
+                    next.data = {
+                        ...prev.data,
+                        adoption_request: {
+                            ...prev.data.adoption_request,
+                            message: editableMessage,
+                        },
+                    }
+                } else if (prev.data && typeof prev.data === "object" && !Array.isArray(prev.data)) {
+                    next.data = {
+                        ...prev.data,
+                        message: editableMessage,
+                    }
+                }
+
+                return next
+            })
+
+            await refreshRequests()
+            Alert.alert("Mensaje actualizado", "Tu mensaje fue guardado correctamente.")
+        } catch (e: any) {
+            setMessageError(
+                e?.response?.data?.message || e?.message || "No se pudo actualizar el mensaje"
+            )
+        } finally {
+            setSavingMessage(false)
+        }
+    }
 
     const handleDelete = async () => {
         try {
@@ -150,9 +202,7 @@ export default function RequestDetail() {
 
     const handleAccept = async () => {
         try {
-            // Use confirm-accept endpoint which is protected and will only allow post owner
             const resp = await http.post(`/v1/adoptions/adoption-requests/${request.id}/confirm-accept`)
-            // prefer server-sent message if present, otherwise show confirmation code
             const serverMessage = resp?.data?.values?.message || resp?.data?.message
             const confirmationCode = resp?.data?.values?.confirmationCode || resp?.data?.confirmationCode
             if (serverMessage) {
@@ -167,6 +217,10 @@ export default function RequestDetail() {
         }
     }
 
+    if (loading) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator /></View>
+    if (error) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
+    if (!request) return <View style={{ flex: 1 }} />
+
     return (
         <View style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
             <RequestDetailCard
@@ -180,12 +234,61 @@ export default function RequestDetail() {
                 onReject={isRequester ? undefined : isPostOwner ? handleDelete : undefined}
             />
 
-            {/* If the requester is viewing, show a single Delete CTA */}
             {isRequester && (
-                <View style={{ padding: 12 }}>
+                <View style={{ padding: 12, gap: 16 }}>
+                    <View style={{ gap: 8 }}>
+                        <Text style={{ fontWeight: "700", color: "#1C1C1C" }}>
+                            Mensaje para el cuidador
+                        </Text>
+                        <TextInput
+                            multiline
+                            numberOfLines={4}
+                            value={editableMessage}
+                            onChangeText={(txt) => {
+                                setEditableMessage(txt)
+                                setMessageError(null)
+                            }}
+                            editable={!savingMessage}
+                            style={{
+                                backgroundColor: "#FFFFFF",
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: "#E5E7EB",
+                                padding: 12,
+                                minHeight: 110,
+                                textAlignVertical: "top",
+                                color: "#1F2933",
+                            }}
+                            placeholder="Agrega un mensaje para el cuidador..."
+                            placeholderTextColor="#9CA3AF"
+                        />
+                        {messageError ? (
+                            <Text style={{ color: "#C0392B" }}>{messageError}</Text>
+                        ) : null}
+                        <Pressable
+                            onPress={handleSaveMessage}
+                            disabled={!messageChanged || savingMessage}
+                            style={{
+                                backgroundColor:
+                                    !messageChanged || savingMessage ? "#D1D5DB" : "#2563EB",
+                                padding: 12,
+                                borderRadius: 8,
+                                alignItems: "center",
+                            }}
+                        >
+                            <Text style={{ color: "#fff", fontWeight: "700" }}>
+                                {savingMessage ? "Guardando..." : "Guardar mensaje"}
+                            </Text>
+                        </Pressable>
+                    </View>
                     <Pressable
                         onPress={handleDelete}
-                        style={{ backgroundColor: "#C0392B", padding: 12, borderRadius: 8, alignItems: "center" }}
+                        style={{
+                            backgroundColor: "#C0392B",
+                            padding: 12,
+                            borderRadius: 8,
+                            alignItems: "center",
+                        }}
                     >
                         <Text style={{ color: "#fff", fontWeight: "800" }}>Eliminar solicitud</Text>
                     </Pressable>

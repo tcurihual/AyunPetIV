@@ -45,7 +45,13 @@
 - Revisar lo de confirmed y como se debe hacer lo de la clave **[Se debe revisar mas adelante en la siguiente tarea de Actualizar el contexto de adoption Request]**
 
 # Tests en conjunto con Mobile
+- Test Con Usuario que hizo las Solicitudes
+- - El usuario puede borrar la solicitud creada por el mismo
+- - El usuario puede listar sus solicitudes con datos correctos, excepto imagen(falta probar con pets que si tengan)
+- - El usuario mediante las publicaciones puede enviar solicitud a las mascota que quiera, no puede repetir.
+- - El usuario puede editar el mensaje que habia enviado(Evaluar su uso)
+- Test con el usuario que hizo la publicacion
+- - puede listar las solicitudes que tiene con datos correctos
+- - puede rechazar y aceptar las solicitud
+- - al aceptar esta el apartado a utilizar del codigo que se envia por correo 
 
-- El usuario puede borrar la solicitud creada por el mismo
-- El usuario puede listar sus solicitudes con datos correctos, excepto imagen(falta probar con pets que si tengan)
-- Por el momento el usuario no puede hacer solicitudes debido a las publicaciones

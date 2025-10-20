@@ -8,7 +8,7 @@ export interface RequestCardProps {
     petName: string
     requester: string
     date: string
-    status: RequestStatus
+    status: RequestStatus | "Aceptada"
     onPress?: () => void
 }
 
@@ -26,7 +26,10 @@ export default function RequestCard({
     status,
     onPress,
 }: RequestCardProps) {
-    const st = statusStyles[status]
+    const normalizedKey =
+        status === "Aceptada" ? ("Aprobada" as RequestStatus) : (status as RequestStatus)
+    const st = statusStyles[normalizedKey] ?? statusStyles.Pendiente
+    const displayStatus = status
 
     return (
         <View style={styles.card}>
@@ -35,7 +38,7 @@ export default function RequestCard({
                 <View style={styles.headerRow}>
                     <Text style={styles.petName}>{petName}</Text>
                     <View style={[styles.badge, { backgroundColor: st.bg }]}>
-                        <Text style={[styles.badgeText, { color: st.fg }]}>{status}</Text>
+                        <Text style={[styles.badgeText, { color: st.fg }]}>{displayStatus}</Text>
                     </View>
                 </View>
 

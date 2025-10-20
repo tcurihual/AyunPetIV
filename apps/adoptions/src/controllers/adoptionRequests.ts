@@ -73,56 +73,80 @@ export const validateCode = async (req: Request, res: Response) => {
 }
 export const listMyRequests = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id
-        const role = req.user.role
-        const { data: myCreatedPosts, error: e1 } = await supabase
-            .from("post")
-            .select("id")
-            .eq("creator_id", userId)
-        if (e1) throw new AppError(500, e1.message)
-
-        const { data: myPets, error: e2 } = await supabase
-            .from("pet")
-            .select("id")
-            .eq("owner_id", userId)
-        if (e2) throw new AppError(500, e2.message)
-
-        let petIds: number[] = (myPets ?? []).map((p) => p.id)
-        let postIdsByPets: number[] = []
-        if (petIds.length > 0) {
-            const { data: postsByPets, error: e3 } = await supabase
-                .from("post")
-                .select("id")
-                .in("pet_id", petIds)
-            if (e3) throw new AppError(500, e3.message)
-            postIdsByPets = (postsByPets ?? []).map((p) => p.id)
-        }
-
-        const postIdSet = new Set<number>([
-            ...(myCreatedPosts ?? []).map((p) => p.id),
-            ...postIdsByPets,
-        ])
-        const allPostIds = Array.from(postIdSet)
-
-        if (allPostIds.length === 0) {
-            return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
+        const rawUserId = req.user.id
+        const numericUserId = Number(rawUserId)
+        if (!Number.isFinite(numericUserId)) {
+            throw new AppError(400, "ID de usuario inválido")
         }
 
         const { data: requests, error: e4 } = await supabase
             .from("adoption_request")
             .select("*")
-            .in("post_id", allPostIds)
+            .eq("post_owner_id", numericUserId)
             .order("created_at", { ascending: false })
         if (e4) throw new AppError(500, e4.message)
 
+        if (!requests || requests.length === 0) {
+            return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
+        }
+
         const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
         const postImages = await getMultipleEntityImages("post", requestPostIds)
-        const petImages = await getMultipleEntityImages("pet", petIds)
+
+        let petImages: Record<string, string[]> = {}
+        const postToPet: Record<number, number> = {}
+
+        if (requestPostIds.length > 0) {
+            const { data: postsInfo, error: postsErr } = await supabase
+                .from("post")
+                .select("id, pet_id")
+                .in("id", requestPostIds)
+            if (postsErr) throw new AppError(500, postsErr.message)
+
+            const petIds = (postsInfo ?? [])
+                .map((p: any) => {
+                    if (p?.id && p?.pet_id) {
+                        postToPet[p.id] = p.pet_id
+                        return p.pet_id
+                    }
+                    return null
+                })
+                .filter(Boolean) as number[]
+
+            if (petIds.length > 0) {
+                petImages = await getMultipleEntityImages("pet", petIds)
+            }
+        }
+
+        const requesterIds = Array.from(
+            new Set((requests ?? []).map((r: any) => Number(r.requester_id)).filter(Boolean))
+        )
+
+        let requesterMap: Record<number, string> = {}
+        if (requesterIds.length > 0) {
+            const { data: requesterRows, error: requesterErr } = await supabase
+                .from("users")
+                .select("id, name")
+                .in("id", requesterIds)
+            if (requesterErr) throw new AppError(500, requesterErr.message)
+            requesterMap = (requesterRows ?? []).reduce(
+                (acc: Record<number, string>, row: any) => {
+                    const key = Number(row.id)
+                    if (Number.isFinite(key)) acc[key] = row.name ?? ""
+                    return acc
+                },
+                {}
+            )
+        }
 
         const requestsWithImages = (requests ?? []).map((r: any) => ({
             ...r,
             postImages: postImages[String(r.post_id)] || [],
-            petImages: petImages[String(r.post_id)] || [],
+            petImages:
+                postToPet[r.post_id] !== undefined
+                    ? petImages[String(postToPet[r.post_id])] || []
+                    : [],
+            requester_name: requesterMap[Number(r.requester_id)] || "",
         }))
 
         return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
@@ -203,9 +227,29 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 postImages = await getEntityImages("post", adoptionRequest.post_id)
             }
 
+            const [requesterInfo, postInfo] = await Promise.all([
+                supabase
+                    .from("users")
+                    .select("id, name")
+                    .eq("id", adoptionRequest.requester_id)
+                    .maybeSingle(),
+                supabase
+                    .from("post")
+                    .select("id, pet_id")
+                    .eq("id", adoptionRequest.post_id)
+                    .maybeSingle(),
+            ])
+
+            let petImages: string[] = []
+            if (postInfo.data?.pet_id) {
+                petImages = await getEntityImages("pet", postInfo.data.pet_id)
+            }
+
             return AppResponse(res, 200, "Solicitud de adopción obtenida exitosamente", {
                 ...adoptionRequest,
                 postImages,
+                petImages,
+                requester_name: requesterInfo?.data?.name ?? null,
             })
         } else {
             // Filtrar según rol del usuario

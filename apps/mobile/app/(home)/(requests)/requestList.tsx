@@ -48,7 +48,6 @@ export default function Requests() {
 
                 try {
                     const pub = await getPublicationByPostId(postId)
-                    console.debug(`[Requests] resolved publication for postId=${postId}:`, pub)
                     if (!mounted) return
                     if (pub) {
                         setResolved((prev) => ({ ...prev, [postId]: { name: pub.name, imageUri: (pub.image as any)?.uri } }))
