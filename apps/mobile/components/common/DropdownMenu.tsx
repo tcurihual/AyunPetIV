@@ -21,37 +21,53 @@ type DropdownMenuProps = {
 
 export default function DropdownMenu({ onClose }: DropdownMenuProps) {
     const router = useRouter()
-    const { signOut } = useAuthContext()
-
+    const { user, signOut } = useAuthContext()
     const slideAnim = useRef(new Animated.Value(-width * 0.7)).current
 
+    // Animación de entrada del menú
     useEffect(() => {
         Animated.timing(slideAnim, {
             toValue: 0,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: false,
         }).start()
     }, [])
 
-    const handleClose = () => {
+    // Cerrar menú con animación
+    const handleClose = (callback?: () => void) => {
         Animated.timing(slideAnim, {
             toValue: -width * 0.7,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: false,
         }).start(() => {
             onClose()
+            if (callback) callback()
         })
     }
 
-    const handleNavigate = (
-        path: `/(auth)` | `/profile` | `/settings` | `/about` | `/help` | `/login`
-    ) => {
-        handleClose()
-        router.push(path)
+    const handleProfileRedirect = () => {
+        handleClose(() => {
+            requestAnimationFrame(() => {
+                if (user?.role === 21 || user?.role === 22) {
+                    router.navigate("/(shelter)/my-profile")
+                } else {
+                    router.navigate("/(home)/my-profile")
+                }
+            })
+        })
+    }
+
+    // Navegación genérica
+    const handleNavigate = (path: string) => {
+        handleClose(() => {
+            requestAnimationFrame(() => {
+                router.navigate(path as any)
+            })
+        })
     }
 
     return (
-        <TouchableWithoutFeedback onPress={handleClose}>
+        <TouchableWithoutFeedback onPress={() => handleClose()}>
             <View style={styles.overlay}>
                 <TouchableWithoutFeedback>
                     <Animated.View
@@ -66,14 +82,11 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
 
                         <View style={styles.profileSection}>
                             <Ionicons name="person-circle-outline" size={64} color="#000" />
-                            <Text style={styles.name}>Nombre Usuario</Text>
-                            <Text style={styles.email}>usuario@email.com</Text>
+                            <Text style={styles.name}>{user?.name || "Usuario"}</Text>
+                            <Text style={styles.email}>{user?.email || "usuario@email.com"}</Text>
                         </View>
 
-                        <TouchableOpacity
-                            style={styles.item}
-                            onPress={() => handleNavigate("/profile")}
-                        >
+                        <TouchableOpacity style={styles.item} onPress={handleProfileRedirect}>
                             <Ionicons name="person-outline" size={22} color="#000" />
                             <Text style={styles.text}>Mi Perfil</Text>
                         </TouchableOpacity>

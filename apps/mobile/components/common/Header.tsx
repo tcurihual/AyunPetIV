@@ -18,6 +18,14 @@ export default function Header({ onMenuPress }: HeaderProps) {
     const defaultAvatar = "https://randomuser.me/api/portraits/women/44.jpg"
     const userAvatar = user?.avatar || defaultAvatar
 
+    const handleProfilePress = () => {
+        if (user?.role === 21 || user?.role === 22) {
+            router.push("/(shelter)/my-profile")
+        } else {
+            router.push("/(home)/my-profile")
+        }
+    }
+
     return (
         <View style={styles.container}>
             <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
@@ -26,10 +34,7 @@ export default function Header({ onMenuPress }: HeaderProps) {
 
             <Image source={require("@/assets/images/Ayun-pet-Logo.png")} style={styles.logo} />
 
-            <TouchableOpacity
-                style={styles.profileCircle}
-                onPress={() => router.push("/(home)/profile" as const)}
-            >
+            <TouchableOpacity style={styles.profileCircle} onPress={handleProfilePress}>
                 <Image source={{ uri: userAvatar }} style={styles.profileImage} />
 
                 {!user && (
@@ -48,13 +53,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: `${Colors.yellow}`,
+        backgroundColor: Colors.yellow,
         paddingHorizontal: width * 0.05,
         paddingVertical: width * 0.02,
     },
-    iconButton: {
-        padding: 5,
-    },
+    iconButton: { padding: 5 },
     logo: {
         width: width * 0.35,
         height: width * 0.15,
@@ -69,11 +72,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    profileImage: {
-        width: "100%",
-        height: "100%",
-        resizeMode: "cover",
-    },
+    profileImage: { width: "100%", height: "100%", resizeMode: "cover" },
     noUserIndicator: {
         position: "absolute",
         top: 0,

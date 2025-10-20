@@ -13,19 +13,9 @@ export default function BottomNavbar() {
     const role = user?.role
 
     const isActiveTab = (tabPath: string) => {
-        if (tabPath === "home") {
-            return (
-                pathname === "/" ||
-                (pathname.includes("/(home)") &&
-                    !pathname.includes("/my-") &&
-                    !pathname.includes("/(requests)") &&
-                    !pathname.includes("/AddPetScreen"))
-            )
-        }
-        if (tabPath === "requests")
-            return pathname.includes("/(requests)") || pathname.includes("/requests")
-
-        if (tabPath === "publications") return pathname.includes("/my-publications")
+        if (tabPath === "home") return pathname === "/" || pathname.includes("/(home)")
+        if (tabPath === "search") return pathname.includes("/search")
+        if (tabPath === "requests") return pathname.includes("/(requests)")
         if (tabPath === "profile") return pathname.includes("/my-profile")
         if (tabPath === "dashboard") return pathname.includes("/(dashboard)")
         if (tabPath === "users") return pathname.includes("/(users)")
@@ -33,12 +23,13 @@ export default function BottomNavbar() {
     }
 
     const getTabStyle = (tabPath: string) => [styles.tab, isActiveTab(tabPath) && styles.tabActive]
-    const getIconColor = (tabPath: string) => (isActiveTab(tabPath) ? "#F59E0B" : "#666")
+    const getIconColor = (tabPath: string) => (isActiveTab(tabPath) ? "#9C27B0" : "#666")
     const getIconName = (baseName: string, tabPath: string): any =>
         isActiveTab(tabPath) ? baseName : `${baseName}-outline`
 
     const renderTabsByRole = () => {
         switch (role) {
+            // 🐾 Usuario normal
             case 20:
                 return (
                     <>
@@ -47,7 +38,7 @@ export default function BottomNavbar() {
                             onPress={() => router.push("/(home)")}
                         >
                             <Ionicons
-                                name={getIconName("home", "home")}
+                                name={getIconName("paw", "home")}
                                 size={26}
                                 color={getIconColor("home")}
                             />
@@ -65,24 +56,6 @@ export default function BottomNavbar() {
                         </Pressable>
 
                         <Pressable
-                            style={styles.addBtn}
-                            onPress={() => router.push("/(home)/AddPetScreen")}
-                        >
-                            <Ionicons name="add" size={28} color="#fff" />
-                        </Pressable>
-
-                        <Pressable
-                            style={getTabStyle("publications")}
-                            onPress={() => router.push("/(home)/my-publications")}
-                        >
-                            <Ionicons
-                                name={getIconName("list", "publications")}
-                                size={26}
-                                color={getIconColor("publications")}
-                            />
-                        </Pressable>
-
-                        <Pressable
                             style={getTabStyle("profile")}
                             onPress={() => router.push("/(home)/my-profile")}
                         >
@@ -95,6 +68,7 @@ export default function BottomNavbar() {
                     </>
                 )
 
+            // 🏠 Refugios / Dadores
             case 21:
             case 22:
                 return (
@@ -130,7 +104,6 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("requests")}
-                            // 👇 ruta correcta según tu estructura: app/(shelter)/requests/requestList.tsx
                             onPress={() => router.push("/(shelter)/requests/requestList")}
                         >
                             <Ionicons
@@ -153,6 +126,7 @@ export default function BottomNavbar() {
                     </>
                 )
 
+            // 👨‍💻 Admin
             case 19:
                 return (
                     <>
@@ -202,7 +176,7 @@ export default function BottomNavbar() {
 const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
-        backgroundColor: `${Colors.yellow}`,
+        backgroundColor: Colors.yellow,
         alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 12,
