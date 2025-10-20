@@ -16,6 +16,25 @@ export function toMediaUrl(relativeOrAbsolute?: string): string {
 
     // Si ya es una URL completa (http/https), devolverla tal cual
     if (/^https?:\/\//i.test(relativeOrAbsolute)) {
+        // Si la URL absoluta contiene "/uploads/" preferimos reescribirla
+        // hacia el API Gateway para que sea accesible desde el dispositivo móvil.
+        const uploadsIndex = relativeOrAbsolute.indexOf("/uploads/")
+        if (uploadsIndex !== -1) {
+            const rel = relativeOrAbsolute.substring(uploadsIndex)
+            // Reusar la lógica de path relativo abajo
+            const gatewayBase =
+                (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_API_GATEWAY?.trim()) ||
+                (Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000")
+
+            const cleanBase = gatewayBase.replace(/\/+$/, "")
+            const cleanPath = rel.replace(/^\/+/, "")
+
+            if (cleanPath.startsWith("uploads/")) {
+                return `${cleanBase}/v1/media/${cleanPath}`
+            }
+            return `${cleanBase}/v1/media/uploads/${cleanPath}`
+        }
+
         return relativeOrAbsolute
     }
 

@@ -6,7 +6,7 @@ const { width } = Dimensions.get("window")
 interface Publication {
     id: string
     name: string
-    image: string | number
+    image: string | number | { uri: string }
     publishedDate: string
     status: "activo" | "inactivo" | "cerrado"
     requestsCount: number

@@ -71,9 +71,19 @@ msRouter.use(
         },
     })
 )
+// Media proxy: allow public GETs to /uploads/* (image files), require auth for other operations
 msRouter.use(
     "/media",
-    verifyAuth,
+    // conditional middleware: skip verifyAuth for GET /uploads/* so images are publicly accessible
+    (req, res, next) => {
+        try {
+            const isUploadsGet = req.method === "GET" && req.path && req.path.startsWith("/uploads")
+            if (isUploadsGet) return next()
+            return verifyAuth(req as any, res as any, next as any)
+        } catch (err) {
+            return next(err)
+        }
+    },
     createProxyMiddleware({
         target: `${MEDIA_URL}`,
         changeOrigin: true,

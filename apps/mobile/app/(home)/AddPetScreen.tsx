@@ -21,7 +21,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Picker } from "@react-native-picker/picker"
 import { Ionicons } from "@expo/vector-icons"
 import ayunData from "@/data/mockData"
-import { uploadMedia } from "@/services/media"
+import { usePublications } from "@/context/PublicationContext"
 import { addLocalPet, LocalPet } from "@/services/petStorage"
 import {
     SpeciesTranslations,
@@ -39,6 +39,7 @@ type PetFormOutput = z.output<typeof PetFormSchema>
 const AddPetScreen = () => {
     const router = useRouter()
     const [photo, setPhoto] = useState<string | null>(null)
+    const { createPublication } = usePublications()
     const { width, height } = Dimensions.get("window")
     const styles = getResponsiveStyles(width, height)
 
@@ -85,31 +86,45 @@ const AddPetScreen = () => {
                 return
             }
 
-            // 1) ID local para la publicación (mock)
-            const tempPetId = `${Date.now()}`
-
-            // 2) Subir imagen a Media (armamos un "asset" mínimo)
-            const fakeAsset = {
-                uri: photo,
-                fileName: `pet-${tempPetId}.jpg`,
-                mimeType: "image/jpeg",
-            } as any
-            const uploaded = await uploadMedia("pet", tempPetId, [fakeAsset])
-
-            // 3) Resolver nombre del publicador desde los mocks
+            // 1) Resolver nombre del publicador desde los mocks
             const owner = (ayunData.users ?? []).find((u) => u.id === data.ownerId)
             const ownerName = owner?.name ?? owner?.email ?? "Fundación Demo"
 
-            // 4) Guardar publicación local (AsyncStorage)
+            // 2) Crear publicación vía API; el PublicationContext se encargará de subir
+            //    las imágenes al microservicio Media usando el id que retorne la BD.
+            const imageAsset = [
+                { uri: photo, fileName: `pet-${Date.now()}.jpg`, mimeType: "image/jpeg" } as any,
+            ]
+
+            const payload = {
+                pet: {
+                    species: data.species,
+                    name: data.name,
+                    gender: data.gender,
+                    age: data.age,
+                    size: data.size,
+                    sterilized: data.sterilized,
+                },
+                post: {
+                    title: `${data.name} en adopción`,
+                    // El backend requiere description no vacío. Generamos una descripción por defecto.
+                    description: `${data.name} está buscando un nuevo hogar. Publicado desde la app.`,
+                },
+                images: imageAsset,
+            }
+
+            const newPost = await createPublication(payload as any)
+
+            // 3) Guardar publicación local (AsyncStorage) como referencia rápida en mobile
             const petLocal: LocalPet = {
-                id: tempPetId,
+                id: String(newPost.pet.id ?? Date.now()),
                 ownerName,
                 name: data.name,
-                gender: translateGenderToSpanish(data.gender), // "Macho"/"Hembra"
-                ageYears: data.age, // ya viene como number gracias a z.coerce
+                gender: translateGenderToSpanish(data.gender),
+                ageYears: data.age,
                 species: translateSpeciesToSpanish(data.species) ?? "Otro",
-                description: "", // tu schema no tiene descripción; dejamos vacío
-                imageUrls: uploaded.map((u) => u.url), // ej: "/uploads/pet/:id/archivo.jpg"
+                description: "",
+                imageUrls: [], // las URLs de media se resuelven luego desde el servicio Media cuando se consulten
                 createdAt: new Date().toISOString(),
             }
             await addLocalPet(petLocal)
@@ -176,7 +191,6 @@ const AddPetScreen = () => {
                                         onBlur={onBlur}
                                         placeholder="Edad en años (ej: 3)"
                                         keyboardType="number-pad"
-                                        returnKeyType="done"
                                         maxLength={2}
                                     />
                                 )}
