@@ -81,7 +81,7 @@ export default function RegisterScreen() {
                         password: data.password,
                         rut: data.rut,
                         phone: phoneWithPrefix,
-                        address: "", 
+                        address: "",
                         description: "",
                     },
                     "user"
@@ -92,9 +92,11 @@ export default function RegisterScreen() {
                     : "Registro exitoso. Tu cuenta será validada por un administrador."
 
                 showAlert(message, "success")
-
                 setTimeout(() => {
-                    router.replace("/(auth)/login")
+                    router.replace({
+                        pathname: "/(auth)/verify-email",
+                        params: { email: data.email },
+                    })
                 }, 2000)
             })
         } catch (e: any) {
