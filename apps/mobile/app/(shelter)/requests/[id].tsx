@@ -11,7 +11,7 @@ export default function ShelterRequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
     const router = useRouter()
     const { user } = useAuthContext()
-    const { refreshRequests, updateAdoptionRequest } = useAdoptionRequestContext()
+    const { refreshRequests, updateAdoptionRequest, acceptAdoptionRequest, validateAdoptionCode } = useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
 
     const [loading, setLoading] = useState(true)
@@ -129,15 +129,30 @@ export default function ShelterRequestDetail() {
         const status = request?.status
         if (!status) return "Pendiente"
         if (status === "approved" || status === "accepted") return "Aceptada"
+        if (status === "completed") return "Completada"
         if (status === "rejected") return "Rechazada"
         return "Pendiente"
     })() as Status
 
     const handleAccept = async () => {
+        if (!request) return
         try {
-            await http.post(`/v1/adoptions/adoption-requests/${request?.id}/confirm-accept`)
+            const result = await acceptAdoptionRequest(Number(request.id))
             await refreshRequests()
-            Alert.alert("Solicitud aceptada")
+            setRequest((prev: any) => (prev ? { ...prev, status: "approved" } : prev))
+
+            const confirmationCode = result?.confirmationCode
+            const serverMessage = result?.message
+
+            if (serverMessage || confirmationCode) {
+                const messageLines = [serverMessage, confirmationCode ? `Código: ${confirmationCode}` : null]
+                    .filter(Boolean)
+                    .join("\n")
+                Alert.alert("Solicitud aceptada", messageLines || "Solicitud aceptada")
+            } else {
+                Alert.alert("Solicitud aceptada")
+            }
+
             router.replace("/(shelter)/requests")
         } catch (e: any) {
             Alert.alert("Error", e?.response?.data?.message || e?.message || "No se pudo aceptar")
@@ -178,6 +193,28 @@ export default function ShelterRequestDetail() {
         }
     }
 
+    const handleConfirmCode = async (code: string) => {
+        if (!request) return
+
+        try {
+            const result = await validateAdoptionCode({ requestId: Number(request.id), code })
+            await refreshRequests()
+            setRequest((prev: any) =>
+                prev ? { ...prev, status: result.status || prev.status } : prev
+            )
+
+            Alert.alert(
+                "Código validado",
+                result.message || "La adopción fue confirmada correctamente."
+            )
+        } catch (e: any) {
+            Alert.alert(
+                "Error",
+                e?.response?.data?.message || e?.message || "No se pudo validar el código"
+            )
+        }
+    }
+
     if (loading)
         return (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -204,6 +241,7 @@ export default function ShelterRequestDetail() {
                 message={message}
                 onAccept={handleAccept}
                 onReject={handleReject}
+                onConfirmCode={handleConfirmCode}
             />
 
             <View style={{ marginTop: 16, gap: 12 }}>

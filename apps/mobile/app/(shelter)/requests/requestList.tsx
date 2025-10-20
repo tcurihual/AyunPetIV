@@ -76,8 +76,9 @@ export default function ShelterRequests() {
     const mapStatus = (serverStatus: string | undefined): RequestStatus => {
         switch (serverStatus) {
             case "approved":
-            case "accepted":
                 return "Aprobada"
+            case "completed":
+                return "Completada"
             case "rejected":
                 return "Rechazada"
             default:

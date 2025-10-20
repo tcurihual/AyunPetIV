@@ -10,8 +10,8 @@ function mapStatus(serverStatus: string | undefined): RequestStatus {
     switch (serverStatus) {
         case "approved":
             return "Aprobada"
-        case "accepted":
-            return "Aprobada"
+        case "completed":
+            return "Completada"
         case "rejected":
             return "Rechazada"
         default:

@@ -15,7 +15,7 @@ interface CreateAdoptionRequestPayload {
 }
 
 interface UpdateAdoptionRequestPayload {
-    status?: "accepted" | "rejected"
+    status?: "approved" | "rejected"
     message?: string
 }
 
@@ -26,6 +26,10 @@ interface AdoptionRequestContextType {
     getAdoptionRequests: () => Promise<void>
     createAdoptionRequest: (data: CreateAdoptionRequestPayload) => Promise<AdoptionRequestRecord>
     updateAdoptionRequest: (id: number, data: UpdateAdoptionRequestPayload) => Promise<void>
+    acceptAdoptionRequest: (
+        id: number
+    ) => Promise<{ confirmationCode?: string | null; expiresAt?: string | null; message?: string | null }>
+    validateAdoptionCode: (payload: { requestId: number; code: string }) => Promise<{ status: string | null; message?: string | null }>
     deleteAdoptionRequest: (id: number) => Promise<any>
     refreshRequests: () => Promise<void>
 }
@@ -214,7 +218,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
             }
 
             // Actualizar el estado local con la nueva solicitud
-            setAdoptionRequests((prev) => [newRequest, ...prev])
+    setAdoptionRequests((prev) => [newRequest, ...prev])
 
             return newRequest
         } catch (e: any) {
@@ -292,6 +296,102 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         }
     }
 
+    async function acceptAdoptionRequest(
+        id: number
+    ): Promise<{
+        confirmationCode?: string | null
+        expiresAt?: string | null
+        message?: string | null
+    }> {
+        if (!user) {
+            throw new Error("Usuario no autenticado")
+        }
+        if (user.role !== 21) {
+            throw new Error("Solo los dadores pueden aceptar solicitudes")
+        }
+
+        setLoading(true)
+        setError(null)
+
+        try {
+            const resp = await http.post(`/v1/adoptions/adoption-requests/${id}/confirm-accept`)
+
+            const confirmationCode =
+                resp?.data?.values?.confirmationCode || resp?.data?.confirmationCode || null
+            const expiresAt = resp?.data?.values?.expiresAt || resp?.data?.expiresAt || null
+            const message = resp?.data?.values?.message || resp?.data?.message || null
+
+            setAdoptionRequests((prev) =>
+                prev.map((req) =>
+                    req.id === id
+                        ? {
+                              ...req,
+                              status: "approved",
+                          }
+                        : req
+                )
+            )
+
+            return { confirmationCode, expiresAt, message }
+        } catch (e: any) {
+            const errorMessage =
+                e?.response?.data?.message || "Error al aceptar solicitud de adopción"
+            setError(errorMessage)
+            console.error("Error accepting adoption request:", e)
+            throw e
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function validateAdoptionCode({
+        requestId,
+        code,
+    }: {
+        requestId: number
+        code: string
+    }): Promise<{ status: string | null; message?: string | null }> {
+        if (!user) {
+            throw new Error("Usuario no autenticado")
+        }
+
+        setLoading(true)
+        setError(null)
+
+        try {
+            const resp = await http.post(`/v1/adoptions/adoption-requests/validate-code`, {
+                requestId,
+                code,
+            })
+
+            const status = resp?.data?.values?.status || resp?.data?.status || null
+            const message = resp?.data?.values?.message || resp?.data?.message || null
+
+            if (status) {
+                setAdoptionRequests((prev) =>
+                    prev.map((req) =>
+                        req.id === requestId
+                            ? {
+                                  ...req,
+                                  status,
+                              }
+                            : req
+                    )
+                )
+            }
+
+            return { status, message }
+        } catch (e: any) {
+            const errorMessage =
+                e?.response?.data?.message || "Error al validar código de adopción"
+            setError(errorMessage)
+            console.error("Error validating adoption code:", e)
+            throw e
+        } finally {
+            setLoading(false)
+        }
+    }
+
     /**
      * DELETE: Eliminar una solicitud de adopción
      * Solo el dueño de la solicitud puede eliminarla
@@ -341,6 +441,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
             getAdoptionRequests,
             createAdoptionRequest,
             updateAdoptionRequest,
+            acceptAdoptionRequest,
+            validateAdoptionCode,
             deleteAdoptionRequest,
             refreshRequests,
         }),

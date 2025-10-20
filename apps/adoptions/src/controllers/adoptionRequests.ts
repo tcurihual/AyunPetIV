@@ -5,8 +5,8 @@ import {
     AdoptionRequest,
     AuthenticatedRequest,
     AppError,
+    sendEmail,
 } from "@repo/utils"
-import { nanoid } from "nanoid"
 import { supabase } from "../index"
 import { getMultipleEntityImages, getEntityImages } from "../utils/mediaService"
 
@@ -65,6 +65,40 @@ export const validateCode = async (req: Request, res: Response) => {
         const { error: histErr } = await supabase.from("adoption_history").insert([payload])
         if (histErr) throw new AppError(500, histErr.message)
 
+        if (request.requester_id == null) {
+            throw new AppError(500, "ID del solicitante no disponible")
+        }
+
+        const { data: requesterUser, error: requesterLookupErr } = await supabase
+            .from("users")
+            .select("email, name")
+            .eq("id", request.requester_id)
+            .maybeSingle()
+        if (requesterLookupErr) throw new AppError(500, requesterLookupErr.message)
+
+        if (requesterUser?.email) {
+            const adopterName = requesterUser.name || "Adoptante"
+            const html = `
+                <div style="font-family: Arial, sans-serif; color:#333;">
+                    <h2 style="color:#2E8B57;">¡Adopción completada! 🐾</h2>
+                    <p>Hola ${adopterName},</p>
+                    <p>
+                        Felicitaciones, la adopción ha sido confirmada exitosamente.
+                        Gracias por brindarle un nuevo hogar a tu nueva mascota.
+                    </p>
+                    <p style="margin-top:24px;">Con cariño,<br/>Equipo Ayün Pet</p>
+                </div>
+            `
+
+            sendEmail({
+                to: requesterUser.email,
+                subject: "¡Felicitaciones! Tu adopción fue confirmada",
+                html,
+            }).catch((err) => {
+                console.error("Error al enviar correo de adopción completada:", err)
+            })
+        }
+
         return AppResponse(res, 200, "Adopción validada y cerrada", { status: "completed" })
     } catch (e: any) {
         if (e instanceof AppError) return AppResponse(res, e.statusCode ?? 500, e.message, null)
@@ -90,14 +124,12 @@ export const listMyRequests = async (req: Request, res: Response) => {
             return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
         }
 
-        const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
-        const postImages = await getMultipleEntityImages("post", requestPostIds)
         const headers = {
             "x-user-id": String(req.user?.id ?? 0),
             "x-user-role": String(req.user?.role ?? ""),
         }
+        const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
         const postImages = await getMultipleEntityImages("post", requestPostIds, headers)
-        const petImages = await getMultipleEntityImages("pet", petIds, headers)
 
         let petImages: Record<string, string[]> = {}
         const postToPet: Record<number, number> = {}
@@ -120,7 +152,7 @@ export const listMyRequests = async (req: Request, res: Response) => {
                 .filter(Boolean) as number[]
 
             if (petIds.length > 0) {
-                petImages = await getMultipleEntityImages("pet", petIds)
+                petImages = await getMultipleEntityImages("pet", petIds, headers)
             }
         }
 
@@ -185,7 +217,7 @@ export const confirmAccept = async (req: Request, res: Response) => {
             .eq("id", id)
         if (updErr) throw new AppError(500, updErr.message)
 
-        const code = nanoid(8)
+        const code = String(Math.floor(100000 + Math.random() * 900000))
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
         const { error: vErr } = await supabase.from("verification_code").insert([
@@ -198,6 +230,45 @@ export const confirmAccept = async (req: Request, res: Response) => {
             },
         ])
         if (vErr) throw new AppError(500, vErr.message)
+
+        let requesterUser: { email?: string | null; name?: string | null } | null = null
+        if (request.requester_id != null) {
+            const { data, error: requesterErr } = await supabase
+                .from("users")
+                .select("email, name")
+                .eq("id", request.requester_id)
+                .maybeSingle()
+            if (requesterErr) throw new AppError(500, requesterErr.message)
+            requesterUser = data
+        }
+
+        if (requesterUser?.email) {
+            const adopterName = requesterUser.name || "Adoptante"
+            const html = `
+                <div style="font-family: Arial, sans-serif; color:#333;">
+                    <h2 style="color:#2E8B57;">¡Solicitud aceptada! 🐾</h2>
+                    <p>Hola ${adopterName},</p>
+                    <p>
+                        Tu solicitud de adopción ha sido aceptada. Para completar el proceso,
+                        comparte el siguiente código con el dador cuando te reúnas:
+                    </p>
+                    <div style="margin:20px 0; padding:16px; border:1px solid #FFD24C; border-radius:8px; text-align:center;">
+                        <span style="font-size:28px; font-weight:bold; letter-spacing:4px;">${code}</span>
+                    </div>
+                    <p>El código expira el <strong>${new Date(expiresAt).toLocaleString()}</strong>.</p>
+                    <p style="margin-top:24px;">¡Gracias por dar un hogar lleno de amor!</p>
+                    <p>Equipo Ayün Pet</p>
+                </div>
+            `
+
+            sendEmail({
+                to: requesterUser.email,
+                subject: "Tu código de adopción - Ayün Pet",
+                html,
+            }).catch((err) => {
+                console.error("Error al enviar correo de confirmación de adopción:", err)
+            })
+        }
 
         return AppResponse(res, 200, "Solicitud aceptada", {
             id: request.id,
@@ -237,22 +308,31 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 postImages = await getEntityImages("post", adoptionRequest.post_id, headers)
             }
 
-            const [requesterInfo, postInfo] = await Promise.all([
-                supabase
-                    .from("users")
-                    .select("id, name")
-                    .eq("id", adoptionRequest.requester_id)
-                    .maybeSingle(),
-                supabase
-                    .from("post")
-                    .select("id, pet_id")
-                    .eq("id", adoptionRequest.post_id)
-                    .maybeSingle(),
-            ])
+            const requesterPromise = adoptionRequest.requester_id
+                ? supabase
+                      .from("users")
+                      .select("id, name")
+                      .eq("id", adoptionRequest.requester_id)
+                      .maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any)
+
+            const postPromise = adoptionRequest.post_id
+                ? supabase
+                      .from("post")
+                      .select("id, pet_id")
+                      .eq("id", adoptionRequest.post_id)
+                      .maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any)
+
+            const [requesterInfo, postInfo] = await Promise.all([requesterPromise, postPromise])
 
             let petImages: string[] = []
             if (postInfo.data?.pet_id) {
-                petImages = await getEntityImages("pet", postInfo.data.pet_id)
+                const headers = {
+                    "x-user-id": String(req.user?.id ?? 0),
+                    "x-user-role": String(req.user?.role ?? ""),
+                }
+                petImages = await getEntityImages("pet", postInfo.data.pet_id, headers)
             }
 
             return AppResponse(res, 200, "Solicitud de adopción obtenida exitosamente", {
