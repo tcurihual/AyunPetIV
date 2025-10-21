@@ -9,6 +9,204 @@ import {
 } from "@repo/utils"
 import { supabase } from "../index"
 import { getMultipleEntityImages, getEntityImages } from "../utils/mediaService"
+import {
+    adoptionApprovedSubject,
+    adoptionApprovedTemplate,
+} from "../utils/templates/adoptionApprovedTemplate"
+import {
+    adoptionCompletedSubject,
+    adoptionCompletedTemplate,
+} from "../utils/templates/adoptionCompletedTemplate"
+
+const SPECIES_LABELS: Record<string, string> = {
+    dog: "Perro",
+    cat: "Gato",
+    other: "Otra especie",
+}
+
+const GENDER_LABELS: Record<string, string> = {
+    male: "Macho",
+    female: "Hembra",
+}
+
+const SIZE_LABELS: Record<string, string> = {
+    small: "Pequeño",
+    medium: "Mediano",
+    large: "Grande",
+}
+
+const DEFAULT_PET_NAME = "Tu nueva mascota"
+const DEFAULT_ADOPTER_NAME = "Adoptante"
+const DEFAULT_SHELTER_NAME = "Equipo AyünPet"
+
+const titleCase = (value: string): string => {
+    if (!value) return value
+    return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+const formatEnumValue = (
+    value: string | null | undefined,
+    labels: Record<string, string>
+): string | null => {
+    if (!value) return null
+    const key = String(value).toLowerCase()
+    return labels[key] ?? titleCase(key)
+}
+
+const formatAge = (
+    years: number | null | undefined,
+    months: number | null | undefined
+): string | null => {
+    const parts: string[] = []
+    if (typeof years === "number" && years > 0) {
+        parts.push(`${years} ${years === 1 ? "año" : "años"}`)
+    }
+    if (typeof months === "number" && months > 0) {
+        parts.push(`${months} ${months === 1 ? "mes" : "meses"}`)
+    }
+    if (parts.length === 0) return null
+    return parts.join(" y ")
+}
+
+type AdoptionEmailContext = {
+    adopter: {
+        name: string
+        email: string | null
+    }
+    pet: {
+        name: string
+        species?: string | null
+        gender?: string | null
+        age?: string | null
+        size?: string | null
+        sterilized?: string | null
+    }
+    shelter: {
+        name: string
+        email: string | null
+        address?: string | null
+    }
+}
+
+const buildAdoptionEmailContext = async (request: {
+    post_id?: number | null
+    requester_id?: number | null
+    post_owner_id?: number | null
+}): Promise<AdoptionEmailContext> => {
+    const context: AdoptionEmailContext = {
+        adopter: {
+            name: DEFAULT_ADOPTER_NAME,
+            email: null,
+        },
+        pet: {
+            name: DEFAULT_PET_NAME,
+            species: null,
+            gender: null,
+            age: null,
+            size: null,
+            sterilized: null,
+        },
+        shelter: {
+            name: DEFAULT_SHELTER_NAME,
+            email: null,
+            address: null,
+        },
+    }
+
+    const requesterId = Number(request.requester_id)
+    const shelterId = Number(request.post_owner_id)
+    const userIds = [requesterId, shelterId].filter(
+        (id) => Number.isFinite(id) && id > 0
+    ) as number[]
+
+    if (userIds.length > 0) {
+        const { data: userRows, error: userErr } = await supabase
+            .from("users")
+            .select("id, name, email, address")
+            .in("id", userIds)
+
+        if (userErr) {
+            console.error("Error fetching users for adoption email context:", userErr)
+        } else if (userRows) {
+            const userMap = new Map<
+                number,
+                { id: number; name?: string | null; email?: string | null; address?: string | null }
+            >()
+            for (const row of userRows) {
+                const id = Number(row.id)
+                if (Number.isFinite(id)) {
+                    userMap.set(id, row)
+                }
+            }
+
+            const adopterRow = Number.isFinite(requesterId) ? userMap.get(requesterId) : undefined
+            if (adopterRow) {
+                context.adopter.name = adopterRow.name || context.adopter.name
+                context.adopter.email = adopterRow.email ?? context.adopter.email
+            }
+
+            const shelterRow = Number.isFinite(shelterId) ? userMap.get(shelterId) : undefined
+            if (shelterRow) {
+                context.shelter.name = shelterRow.name || context.shelter.name
+                context.shelter.email = shelterRow.email ?? context.shelter.email
+                context.shelter.address = shelterRow.address ?? context.shelter.address
+            }
+        }
+    }
+
+    let petId: number | null = null
+    let postTitle: string | null = null
+    if (request.post_id != null) {
+        const { data: postRow, error: postErr } = await supabase
+            .from("post")
+            .select("pet_id, title")
+            .eq("id", request.post_id)
+            .maybeSingle()
+
+        if (postErr) {
+            console.error("Error fetching post for adoption email context:", postErr)
+        } else {
+            postTitle = typeof postRow?.title === "string" ? postRow.title : null
+            if (postRow?.pet_id != null) {
+                petId = Number(postRow.pet_id)
+                if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+                    context.pet.name = postTitle
+                }
+            } else if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+                context.pet.name = postTitle
+            }
+        }
+    }
+
+    if (petId != null && Number.isFinite(petId)) {
+        const { data: petRow, error: petErr } = await supabase
+            .from("pet")
+            .select("name, species, gender, age_years, age_months, size, sterilized")
+            .eq("id", petId)
+            .maybeSingle()
+
+        if (petErr) {
+            console.error("Error fetching pet for adoption email context:", petErr)
+        } else if (petRow) {
+            context.pet.name = petRow.name || context.pet.name
+            context.pet.species = formatEnumValue(petRow.species, SPECIES_LABELS) ?? context.pet.species
+            context.pet.gender = formatEnumValue(petRow.gender, GENDER_LABELS) ?? context.pet.gender
+            context.pet.size = formatEnumValue(petRow.size, SIZE_LABELS) ?? context.pet.size
+            context.pet.age =
+                formatAge(petRow.age_years as number | null, petRow.age_months as number | null) ??
+                context.pet.age
+            if (typeof petRow.sterilized === "boolean") {
+                context.pet.sterilized = petRow.sterilized ? "Sí" : "No"
+            }
+        }
+    }
+
+    if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+        context.pet.name = postTitle
+    }
+
+    return context
+}
 
 export const validateCode = async (req: Request, res: Response) => {
     try {
@@ -69,30 +267,57 @@ export const validateCode = async (req: Request, res: Response) => {
             throw new AppError(500, "ID del solicitante no disponible")
         }
 
-        const { data: requesterUser, error: requesterLookupErr } = await supabase
-            .from("users")
-            .select("email, name")
-            .eq("id", request.requester_id)
-            .maybeSingle()
-        if (requesterLookupErr) throw new AppError(500, requesterLookupErr.message)
+        let emailContext: AdoptionEmailContext | null = null
+        try {
+            emailContext = await buildAdoptionEmailContext({
+                post_id: request.post_id,
+                requester_id: request.requester_id,
+                post_owner_id: request.post_owner_id,
+            })
+        } catch (err) {
+            console.error("Error building adoption email context (completed):", err)
+        }
 
-        if (requesterUser?.email) {
-            const adopterName = requesterUser.name || "Adoptante"
-            const html = `
-                <div style="font-family: Arial, sans-serif; color:#333;">
-                    <h2 style="color:#2E8B57;">¡Adopción completada! 🐾</h2>
-                    <p>Hola ${adopterName},</p>
-                    <p>
-                        Felicitaciones, la adopción ha sido confirmada exitosamente.
-                        Gracias por brindarle un nuevo hogar a tu nueva mascota.
-                    </p>
-                    <p style="margin-top:24px;">Con cariño,<br/>Equipo Ayün Pet</p>
-                </div>
-            `
+        if (emailContext?.adopter.email) {
+            const adopterName = emailContext.adopter.name || DEFAULT_ADOPTER_NAME
+            const petName = emailContext.pet.name || DEFAULT_PET_NAME
+            const shelterName = emailContext.shelter.name || DEFAULT_SHELTER_NAME
+            const adoptionDate = new Date().toLocaleDateString("es-CL", {
+                dateStyle: "long",
+            })
+
+            const html = adoptionCompletedTemplate({
+                adopter: { name: adopterName },
+                pet: {
+                    name: petName,
+                    species: emailContext.pet.species,
+                    gender: emailContext.pet.gender,
+                    age: emailContext.pet.age,
+                    size: emailContext.pet.size,
+                    sterilized: emailContext.pet.sterilized,
+                },
+                adoptionCode: code,
+                adoptionDate,
+                shelter: {
+                    name: shelterName,
+                    email: emailContext.shelter.email ?? "",
+                    address: emailContext.shelter.address ?? undefined,
+                },
+                support: {
+                    resources: [
+                        "Guía de adaptación para los primeros días",
+                        "Consejos de alimentación y cuidados recomendados",
+                        "Lista de veterinarios y centros aliados de AyünPet",
+                    ],
+                    emergencyContact: emailContext.shelter.email ?? undefined,
+                },
+            })
+
+            const subject = adoptionCompletedSubject(petName, adopterName)
 
             sendEmail({
-                to: requesterUser.email,
-                subject: "¡Felicitaciones! Tu adopción fue confirmada",
+                to: emailContext.adopter.email,
+                subject,
                 html,
             }).catch((err) => {
                 console.error("Error al enviar correo de adopción completada:", err)
@@ -203,7 +428,7 @@ export const confirmAccept = async (req: Request, res: Response) => {
 
         const { data: request, error: rErr } = await supabase
             .from("adoption_request")
-            .select("id, requester_id, status, post_owner_id")
+            .select("id, requester_id, status, post_owner_id, post_id")
             .eq("id", id)
             .single()
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
@@ -231,39 +456,50 @@ export const confirmAccept = async (req: Request, res: Response) => {
         ])
         if (vErr) throw new AppError(500, vErr.message)
 
-        let requesterUser: { email?: string | null; name?: string | null } | null = null
-        if (request.requester_id != null) {
-            const { data, error: requesterErr } = await supabase
-                .from("users")
-                .select("email, name")
-                .eq("id", request.requester_id)
-                .maybeSingle()
-            if (requesterErr) throw new AppError(500, requesterErr.message)
-            requesterUser = data
+        let emailContext: AdoptionEmailContext | null = null
+        try {
+            emailContext = await buildAdoptionEmailContext({
+                post_id: request.post_id,
+                requester_id: request.requester_id,
+                post_owner_id: request.post_owner_id,
+            })
+        } catch (err) {
+            console.error("Error building adoption email context (approved):", err)
         }
 
-        if (requesterUser?.email) {
-            const adopterName = requesterUser.name || "Adoptante"
-            const html = `
-                <div style="font-family: Arial, sans-serif; color:#333;">
-                    <h2 style="color:#2E8B57;">¡Solicitud aceptada! 🐾</h2>
-                    <p>Hola ${adopterName},</p>
-                    <p>
-                        Tu solicitud de adopción ha sido aceptada. Para completar el proceso,
-                        comparte el siguiente código con el dador cuando te reúnas:
-                    </p>
-                    <div style="margin:20px 0; padding:16px; border:1px solid #FFD24C; border-radius:8px; text-align:center;">
-                        <span style="font-size:28px; font-weight:bold; letter-spacing:4px;">${code}</span>
-                    </div>
-                    <p>El código expira el <strong>${new Date(expiresAt).toLocaleString()}</strong>.</p>
-                    <p style="margin-top:24px;">¡Gracias por dar un hogar lleno de amor!</p>
-                    <p>Equipo Ayün Pet</p>
-                </div>
-            `
+        if (emailContext?.adopter.email) {
+            const adopterName = emailContext.adopter.name || DEFAULT_ADOPTER_NAME
+            const petName = emailContext.pet.name || DEFAULT_PET_NAME
+            const shelterName = emailContext.shelter.name || DEFAULT_SHELTER_NAME
+            const codeExpiresAt = new Date(expiresAt).toLocaleString("es-CL", {
+                dateStyle: "short",
+                timeStyle: "short",
+            })
+
+            const html = adoptionApprovedTemplate({
+                adopter: { name: adopterName },
+                pet: {
+                    name: petName,
+                    species: emailContext.pet.species,
+                    gender: emailContext.pet.gender,
+                    age: emailContext.pet.age,
+                    size: emailContext.pet.size,
+                    sterilized: emailContext.pet.sterilized,
+                },
+                adoptionCode: code,
+                shelter: {
+                    name: shelterName,
+                    email: emailContext.shelter.email ?? "",
+                    address: emailContext.shelter.address ?? undefined,
+                },
+                codeExpiresAt,
+            })
+
+            const subject = adoptionApprovedSubject(petName)
 
             sendEmail({
-                to: requesterUser.email,
-                subject: "Tu código de adopción - Ayün Pet",
+                to: emailContext.adopter.email,
+                subject,
                 html,
             }).catch((err) => {
                 console.error("Error al enviar correo de confirmación de adopción:", err)

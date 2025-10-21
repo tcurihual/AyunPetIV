@@ -1,3 +1,24 @@
+export interface AdoptionApprovedData {
+  adopter: {
+    name: string
+  }
+  pet: {
+    name: string
+    species?: string | null
+    gender?: string | null
+    age?: string | null
+    size?: string | null
+    sterilized?: string | null
+  }
+  adoptionCode: string
+  shelter: {
+    name: string
+    email: string
+    address?: string | null
+  }
+  codeExpiresAt?: string | null
+}
+
 export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => {
   return `
 <!DOCTYPE html>
@@ -116,10 +137,11 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
             <h3>📋 Información de tu futura mascota:</h3>
             <ul>
                 <li><strong>Nombre:</strong> ${data.pet.name}</li>
-                <li><strong>Especie:</strong> ${data.pet.species}</li>
-                <li><strong>Género:</strong> ${data.pet.gender}</li>
-                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age} años</li>` : ''}
+                ${data.pet.species ? `<li><strong>Especie:</strong> ${data.pet.species}</li>` : ''}
+                ${data.pet.gender ? `<li><strong>Género:</strong> ${data.pet.gender}</li>` : ''}
+                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age}</li>` : ''}
                 ${data.pet.size ? `<li><strong>Tamaño:</strong> ${data.pet.size}</li>` : ''}
+                ${data.pet.sterilized ? `<li><strong>Esterilización:</strong> ${data.pet.sterilized}</li>` : ''}
             </ul>
         </div>
 
@@ -127,6 +149,11 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
             <h3>🔐 Código de Adopción</h3>
             <p>Este es tu código único de adopción:</p>
             <div class="code">${data.adoptionCode}</div>
+            ${
+                data.codeExpiresAt
+                    ? `<p><small>Este código vence el <strong>${data.codeExpiresAt}</strong>. Recuerda utilizarlo antes de esa fecha.</small></p>`
+                    : ""
+            }
             <p><small>Guarda este código de forma segura. Lo necesitarás para completar el proceso de adopción.</small></p>
         </div>
 
@@ -150,7 +177,7 @@ export const adoptionApprovedTemplate = (data: AdoptionApprovedData): string => 
         <div class="shelter-info">
             <h3>🏠 Información del Refugio</h3>
             <p><strong>${data.shelter.name}</strong></p>
-            ${data.shelter.address ? `<p>� <strong>Dirección:</strong> ${data.shelter.address}</p>` : ''}
+            ${data.shelter.address ? `<p>📍 <strong>Dirección:</strong> ${data.shelter.address}</p>` : ''}
             <p>✉️ <strong>Email:</strong> ${data.shelter.email}</p>
             <p><em>Por favor, contacta al refugio para coordinar tu visita.</em></p>
         </div>
