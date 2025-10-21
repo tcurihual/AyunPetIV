@@ -1,20 +1,21 @@
 import React from "react"
 import { View, Text, Image, Pressable, StyleSheet } from "react-native"
 
-export type RequestStatus = "Pendiente" | "Aceptada" | "Rechazada"
+export type RequestStatus = "Pendiente" | "Aprobada" | "Rechazada" | "Completada"
 
 export interface RequestCardProps {
     petPhoto: string
     petName: string
     requester: string
     date: string
-    status: RequestStatus
+    status: RequestStatus | "Aceptada"
     onPress?: () => void
 }
 
 const statusStyles: Record<RequestStatus, { bg: string; fg: string }> = {
     Pendiente: { bg: "#FFE8A3", fg: "#6A4B00" },
-    Aceptada: { bg: "#D1F3DA", fg: "#0E6B2B" },
+    Aprobada: { bg: "#D1F3DA", fg: "#0E6B2B" },
+    Completada: { bg: "#B4E1FA", fg: "#0F4C75" },
     Rechazada: { bg: "#FAD2D2", fg: "#8B1A1A" },
 }
 
@@ -26,7 +27,12 @@ export default function RequestCard({
     status,
     onPress,
 }: RequestCardProps) {
-    const st = statusStyles[status]
+    const normalizedKey =
+        status === "Aceptada"
+            ? ("Aprobada" as RequestStatus)
+            : (status as RequestStatus)
+    const st = statusStyles[normalizedKey] ?? statusStyles.Pendiente
+    const displayStatus = status
 
     return (
         <View style={styles.card}>
@@ -35,7 +41,7 @@ export default function RequestCard({
                 <View style={styles.headerRow}>
                     <Text style={styles.petName}>{petName}</Text>
                     <View style={[styles.badge, { backgroundColor: st.bg }]}>
-                        <Text style={[styles.badgeText, { color: st.fg }]}>{status}</Text>
+                        <Text style={[styles.badgeText, { color: st.fg }]}>{displayStatus}</Text>
                     </View>
                 </View>
 

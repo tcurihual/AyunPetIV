@@ -136,6 +136,29 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
     }
 }
 
+export const getPetById = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const id = parseId(req.params.id)
+        const { data, error } = await supabase.from("pet").select("*").eq("id", id).single()
+
+        if (error || !data) throw new AppError(404, "Mascota no encontrada")
+
+        const images = await getEntityImages("pet", data.id)
+
+        const payload = {
+            pet: {
+                ...(data as Pet["Row"]),
+                images,
+            } as Pet["Row"] & { images: string[] },
+        }
+
+        return AppResponse(res, 200, "Mascota", payload)
+    } catch (e) {
+        if (e instanceof AppError) throw e
+        throw new AppError(500, "Error al obtener la mascota")
+    }
+}
+
 export const createPublication = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const authedUserId = req.user?.id

@@ -1,3 +1,30 @@
+export interface AdoptionCompletedSupportData {
+  resources: string[]
+  emergencyContact?: string | null
+}
+
+export interface AdoptionCompletedData {
+  adopter: {
+    name: string
+  }
+  pet: {
+    name: string
+    species?: string | null
+    gender?: string | null
+    age?: string | null
+    size?: string | null
+    sterilized?: string | null
+  }
+  adoptionCode: string
+  adoptionDate: string
+  shelter: {
+    name: string
+    email: string
+    address?: string | null
+  }
+  support: AdoptionCompletedSupportData
+}
+
 export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string => {
   return `
 <!DOCTYPE html>
@@ -139,10 +166,11 @@ export const adoptionCompletedTemplate = (data: AdoptionCompletedData): string =
             <h3>📋 Detalles de la Adopción</h3>
             <ul>
                 <li><strong>Mascota adoptada:</strong> ${data.pet.name}</li>
-                <li><strong>Especie:</strong> ${data.pet.species}</li>
-                <li><strong>Género:</strong> ${data.pet.gender}</li>
-                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age} años</li>` : ''}
+                ${data.pet.species ? `<li><strong>Especie:</strong> ${data.pet.species}</li>` : ''}
+                ${data.pet.gender ? `<li><strong>Género:</strong> ${data.pet.gender}</li>` : ''}
+                ${data.pet.age ? `<li><strong>Edad:</strong> ${data.pet.age}</li>` : ''}
                 ${data.pet.size ? `<li><strong>Tamaño:</strong> ${data.pet.size}</li>` : ''}
+                ${data.pet.sterilized ? `<li><strong>Esterilización:</strong> ${data.pet.sterilized}</li>` : ''}
                 <li><strong>Fecha de adopción:</strong> ${data.adoptionDate}</li>
                 <li><strong>Nuevo hogar:</strong> ${data.adopter.name}</li>
             </ul>

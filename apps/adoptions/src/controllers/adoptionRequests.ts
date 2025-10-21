@@ -5,10 +5,208 @@ import {
     AdoptionRequest,
     AuthenticatedRequest,
     AppError,
+    sendEmail,
 } from "@repo/utils"
-import { nanoid } from "nanoid"
 import { supabase } from "../index"
 import { getMultipleEntityImages, getEntityImages } from "../utils/mediaService"
+import {
+    adoptionApprovedSubject,
+    adoptionApprovedTemplate,
+} from "../utils/templates/adoptionApprovedTemplate"
+import {
+    adoptionCompletedSubject,
+    adoptionCompletedTemplate,
+} from "../utils/templates/adoptionCompletedTemplate"
+
+const SPECIES_LABELS: Record<string, string> = {
+    dog: "Perro",
+    cat: "Gato",
+    other: "Otra especie",
+}
+
+const GENDER_LABELS: Record<string, string> = {
+    male: "Macho",
+    female: "Hembra",
+}
+
+const SIZE_LABELS: Record<string, string> = {
+    small: "Pequeño",
+    medium: "Mediano",
+    large: "Grande",
+}
+
+const DEFAULT_PET_NAME = "Tu nueva mascota"
+const DEFAULT_ADOPTER_NAME = "Adoptante"
+const DEFAULT_SHELTER_NAME = "Equipo AyünPet"
+
+const titleCase = (value: string): string => {
+    if (!value) return value
+    return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+const formatEnumValue = (
+    value: string | null | undefined,
+    labels: Record<string, string>
+): string | null => {
+    if (!value) return null
+    const key = String(value).toLowerCase()
+    return labels[key] ?? titleCase(key)
+}
+
+const formatAge = (
+    years: number | null | undefined,
+    months: number | null | undefined
+): string | null => {
+    const parts: string[] = []
+    if (typeof years === "number" && years > 0) {
+        parts.push(`${years} ${years === 1 ? "año" : "años"}`)
+    }
+    if (typeof months === "number" && months > 0) {
+        parts.push(`${months} ${months === 1 ? "mes" : "meses"}`)
+    }
+    if (parts.length === 0) return null
+    return parts.join(" y ")
+}
+
+type AdoptionEmailContext = {
+    adopter: {
+        name: string
+        email: string | null
+    }
+    pet: {
+        name: string
+        species?: string | null
+        gender?: string | null
+        age?: string | null
+        size?: string | null
+        sterilized?: string | null
+    }
+    shelter: {
+        name: string
+        email: string | null
+        address?: string | null
+    }
+}
+
+const buildAdoptionEmailContext = async (request: {
+    post_id?: number | null
+    requester_id?: number | null
+    post_owner_id?: number | null
+}): Promise<AdoptionEmailContext> => {
+    const context: AdoptionEmailContext = {
+        adopter: {
+            name: DEFAULT_ADOPTER_NAME,
+            email: null,
+        },
+        pet: {
+            name: DEFAULT_PET_NAME,
+            species: null,
+            gender: null,
+            age: null,
+            size: null,
+            sterilized: null,
+        },
+        shelter: {
+            name: DEFAULT_SHELTER_NAME,
+            email: null,
+            address: null,
+        },
+    }
+
+    const requesterId = Number(request.requester_id)
+    const shelterId = Number(request.post_owner_id)
+    const userIds = [requesterId, shelterId].filter(
+        (id) => Number.isFinite(id) && id > 0
+    ) as number[]
+
+    if (userIds.length > 0) {
+        const { data: userRows, error: userErr } = await supabase
+            .from("users")
+            .select("id, name, email, address")
+            .in("id", userIds)
+
+        if (userErr) {
+            console.error("Error fetching users for adoption email context:", userErr)
+        } else if (userRows) {
+            const userMap = new Map<
+                number,
+                { id: number; name?: string | null; email?: string | null; address?: string | null }
+            >()
+            for (const row of userRows) {
+                const id = Number(row.id)
+                if (Number.isFinite(id)) {
+                    userMap.set(id, row)
+                }
+            }
+
+            const adopterRow = Number.isFinite(requesterId) ? userMap.get(requesterId) : undefined
+            if (adopterRow) {
+                context.adopter.name = adopterRow.name || context.adopter.name
+                context.adopter.email = adopterRow.email ?? context.adopter.email
+            }
+
+            const shelterRow = Number.isFinite(shelterId) ? userMap.get(shelterId) : undefined
+            if (shelterRow) {
+                context.shelter.name = shelterRow.name || context.shelter.name
+                context.shelter.email = shelterRow.email ?? context.shelter.email
+                context.shelter.address = shelterRow.address ?? context.shelter.address
+            }
+        }
+    }
+
+    let petId: number | null = null
+    let postTitle: string | null = null
+    if (request.post_id != null) {
+        const { data: postRow, error: postErr } = await supabase
+            .from("post")
+            .select("pet_id, title")
+            .eq("id", request.post_id)
+            .maybeSingle()
+
+        if (postErr) {
+            console.error("Error fetching post for adoption email context:", postErr)
+        } else {
+            postTitle = typeof postRow?.title === "string" ? postRow.title : null
+            if (postRow?.pet_id != null) {
+                petId = Number(postRow.pet_id)
+                if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+                    context.pet.name = postTitle
+                }
+            } else if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+                context.pet.name = postTitle
+            }
+        }
+    }
+
+    if (petId != null && Number.isFinite(petId)) {
+        const { data: petRow, error: petErr } = await supabase
+            .from("pet")
+            .select("name, species, gender, age_years, age_months, size, sterilized")
+            .eq("id", petId)
+            .maybeSingle()
+
+        if (petErr) {
+            console.error("Error fetching pet for adoption email context:", petErr)
+        } else if (petRow) {
+            context.pet.name = petRow.name || context.pet.name
+            context.pet.species = formatEnumValue(petRow.species, SPECIES_LABELS) ?? context.pet.species
+            context.pet.gender = formatEnumValue(petRow.gender, GENDER_LABELS) ?? context.pet.gender
+            context.pet.size = formatEnumValue(petRow.size, SIZE_LABELS) ?? context.pet.size
+            context.pet.age =
+                formatAge(petRow.age_years as number | null, petRow.age_months as number | null) ??
+                context.pet.age
+            if (typeof petRow.sterilized === "boolean") {
+                context.pet.sterilized = petRow.sterilized ? "Sí" : "No"
+            }
+        }
+    }
+
+    if (postTitle && context.pet.name === DEFAULT_PET_NAME) {
+        context.pet.name = postTitle
+    }
+
+    return context
+}
 
 export const validateCode = async (req: Request, res: Response) => {
     try {
@@ -65,6 +263,67 @@ export const validateCode = async (req: Request, res: Response) => {
         const { error: histErr } = await supabase.from("adoption_history").insert([payload])
         if (histErr) throw new AppError(500, histErr.message)
 
+        if (request.requester_id == null) {
+            throw new AppError(500, "ID del solicitante no disponible")
+        }
+
+        let emailContext: AdoptionEmailContext | null = null
+        try {
+            emailContext = await buildAdoptionEmailContext({
+                post_id: request.post_id,
+                requester_id: request.requester_id,
+                post_owner_id: request.post_owner_id,
+            })
+        } catch (err) {
+            console.error("Error building adoption email context (completed):", err)
+        }
+
+        if (emailContext?.adopter.email) {
+            const adopterName = emailContext.adopter.name || DEFAULT_ADOPTER_NAME
+            const petName = emailContext.pet.name || DEFAULT_PET_NAME
+            const shelterName = emailContext.shelter.name || DEFAULT_SHELTER_NAME
+            const adoptionDate = new Date().toLocaleDateString("es-CL", {
+                dateStyle: "long",
+            })
+
+            const html = adoptionCompletedTemplate({
+                adopter: { name: adopterName },
+                pet: {
+                    name: petName,
+                    species: emailContext.pet.species,
+                    gender: emailContext.pet.gender,
+                    age: emailContext.pet.age,
+                    size: emailContext.pet.size,
+                    sterilized: emailContext.pet.sterilized,
+                },
+                adoptionCode: code,
+                adoptionDate,
+                shelter: {
+                    name: shelterName,
+                    email: emailContext.shelter.email ?? "",
+                    address: emailContext.shelter.address ?? undefined,
+                },
+                support: {
+                    resources: [
+                        "Guía de adaptación para los primeros días",
+                        "Consejos de alimentación y cuidados recomendados",
+                        "Lista de veterinarios y centros aliados de AyünPet",
+                    ],
+                    emergencyContact: emailContext.shelter.email ?? undefined,
+                },
+            })
+
+            const subject = adoptionCompletedSubject(petName, adopterName)
+
+            sendEmail({
+                to: emailContext.adopter.email,
+                subject,
+                html,
+            }).catch((err) => {
+                console.error("Error al enviar correo de adopción completada:", err)
+            })
+        }
+
         return AppResponse(res, 200, "Adopción validada y cerrada", { status: "completed" })
     } catch (e: any) {
         if (e instanceof AppError) return AppResponse(res, e.statusCode ?? 500, e.message, null)
@@ -73,60 +332,84 @@ export const validateCode = async (req: Request, res: Response) => {
 }
 export const listMyRequests = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id
-        const role = req.user.role
-        const { data: myCreatedPosts, error: e1 } = await supabase
-            .from("post")
-            .select("id")
-            .eq("creator_id", userId)
-        if (e1) throw new AppError(500, e1.message)
-
-        const { data: myPets, error: e2 } = await supabase
-            .from("pet")
-            .select("id")
-            .eq("owner_id", userId)
-        if (e2) throw new AppError(500, e2.message)
-
-        let petIds: number[] = (myPets ?? []).map((p) => p.id)
-        let postIdsByPets: number[] = []
-        if (petIds.length > 0) {
-            const { data: postsByPets, error: e3 } = await supabase
-                .from("post")
-                .select("id")
-                .in("pet_id", petIds)
-            if (e3) throw new AppError(500, e3.message)
-            postIdsByPets = (postsByPets ?? []).map((p) => p.id)
-        }
-
-        const postIdSet = new Set<number>([
-            ...(myCreatedPosts ?? []).map((p) => p.id),
-            ...postIdsByPets,
-        ])
-        const allPostIds = Array.from(postIdSet)
-
-        if (allPostIds.length === 0) {
-            return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
+        const rawUserId = req.user.id
+        const numericUserId = Number(rawUserId)
+        if (!Number.isFinite(numericUserId)) {
+            throw new AppError(400, "ID de usuario inválido")
         }
 
         const { data: requests, error: e4 } = await supabase
             .from("adoption_request")
             .select("*")
-            .in("post_id", allPostIds)
+            .eq("post_owner_id", numericUserId)
             .order("created_at", { ascending: false })
         if (e4) throw new AppError(500, e4.message)
 
-        const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
+        if (!requests || requests.length === 0) {
+            return AppResponse(res, 200, "OK", { as: "giver", requests: [] })
+        }
+
         const headers = {
             "x-user-id": String(req.user?.id ?? 0),
             "x-user-role": String(req.user?.role ?? ""),
         }
+        const requestPostIds = (requests ?? []).map((r: any) => r.post_id).filter(Boolean)
         const postImages = await getMultipleEntityImages("post", requestPostIds, headers)
-        const petImages = await getMultipleEntityImages("pet", petIds, headers)
+
+        let petImages: Record<string, string[]> = {}
+        const postToPet: Record<number, number> = {}
+
+        if (requestPostIds.length > 0) {
+            const { data: postsInfo, error: postsErr } = await supabase
+                .from("post")
+                .select("id, pet_id")
+                .in("id", requestPostIds)
+            if (postsErr) throw new AppError(500, postsErr.message)
+
+            const petIds = (postsInfo ?? [])
+                .map((p: any) => {
+                    if (p?.id && p?.pet_id) {
+                        postToPet[p.id] = p.pet_id
+                        return p.pet_id
+                    }
+                    return null
+                })
+                .filter(Boolean) as number[]
+
+            if (petIds.length > 0) {
+                petImages = await getMultipleEntityImages("pet", petIds, headers)
+            }
+        }
+
+        const requesterIds = Array.from(
+            new Set((requests ?? []).map((r: any) => Number(r.requester_id)).filter(Boolean))
+        )
+
+        let requesterMap: Record<number, string> = {}
+        if (requesterIds.length > 0) {
+            const { data: requesterRows, error: requesterErr } = await supabase
+                .from("users")
+                .select("id, name")
+                .in("id", requesterIds)
+            if (requesterErr) throw new AppError(500, requesterErr.message)
+            requesterMap = (requesterRows ?? []).reduce(
+                (acc: Record<number, string>, row: any) => {
+                    const key = Number(row.id)
+                    if (Number.isFinite(key)) acc[key] = row.name ?? ""
+                    return acc
+                },
+                {}
+            )
+        }
 
         const requestsWithImages = (requests ?? []).map((r: any) => ({
             ...r,
             postImages: postImages[String(r.post_id)] || [],
-            petImages: petImages[String(r.post_id)] || [],
+            petImages:
+                postToPet[r.post_id] !== undefined
+                    ? petImages[String(postToPet[r.post_id])] || []
+                    : [],
+            requester_name: requesterMap[Number(r.requester_id)] || "",
         }))
 
         return AppResponse(res, 200, "OK", { as: "giver", requests: requestsWithImages })
@@ -145,10 +428,13 @@ export const confirmAccept = async (req: Request, res: Response) => {
 
         const { data: request, error: rErr } = await supabase
             .from("adoption_request")
-            .select("id, requester_id, status")
+            .select("id, requester_id, status, post_owner_id, post_id")
             .eq("id", id)
             .single()
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
+
+        if (!req.user?.id) throw new AppError(401, "Usuario no autenticado")
+        if (request.post_owner_id !== req.user.id) throw new AppError(403, "No tienes permiso para aceptar esta solicitud")
 
         const { error: updErr } = await supabase
             .from("adoption_request")
@@ -156,7 +442,7 @@ export const confirmAccept = async (req: Request, res: Response) => {
             .eq("id", id)
         if (updErr) throw new AppError(500, updErr.message)
 
-        const code = nanoid(8)
+        const code = String(Math.floor(100000 + Math.random() * 900000))
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
         const { error: vErr } = await supabase.from("verification_code").insert([
@@ -169,6 +455,56 @@ export const confirmAccept = async (req: Request, res: Response) => {
             },
         ])
         if (vErr) throw new AppError(500, vErr.message)
+
+        let emailContext: AdoptionEmailContext | null = null
+        try {
+            emailContext = await buildAdoptionEmailContext({
+                post_id: request.post_id,
+                requester_id: request.requester_id,
+                post_owner_id: request.post_owner_id,
+            })
+        } catch (err) {
+            console.error("Error building adoption email context (approved):", err)
+        }
+
+        if (emailContext?.adopter.email) {
+            const adopterName = emailContext.adopter.name || DEFAULT_ADOPTER_NAME
+            const petName = emailContext.pet.name || DEFAULT_PET_NAME
+            const shelterName = emailContext.shelter.name || DEFAULT_SHELTER_NAME
+            const codeExpiresAt = new Date(expiresAt).toLocaleString("es-CL", {
+                dateStyle: "short",
+                timeStyle: "short",
+            })
+
+            const html = adoptionApprovedTemplate({
+                adopter: { name: adopterName },
+                pet: {
+                    name: petName,
+                    species: emailContext.pet.species,
+                    gender: emailContext.pet.gender,
+                    age: emailContext.pet.age,
+                    size: emailContext.pet.size,
+                    sterilized: emailContext.pet.sterilized,
+                },
+                adoptionCode: code,
+                shelter: {
+                    name: shelterName,
+                    email: emailContext.shelter.email ?? "",
+                    address: emailContext.shelter.address ?? undefined,
+                },
+                codeExpiresAt,
+            })
+
+            const subject = adoptionApprovedSubject(petName)
+
+            sendEmail({
+                to: emailContext.adopter.email,
+                subject,
+                html,
+            }).catch((err) => {
+                console.error("Error al enviar correo de confirmación de adopción:", err)
+            })
+        }
 
         return AppResponse(res, 200, "Solicitud aceptada", {
             id: request.id,
@@ -208,11 +544,79 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
                 postImages = await getEntityImages("post", adoptionRequest.post_id, headers)
             }
 
+            const requesterPromise = adoptionRequest.requester_id
+                ? supabase
+                      .from("users")
+                      .select("id, name")
+                      .eq("id", adoptionRequest.requester_id)
+                      .maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any)
+
+            const postPromise = adoptionRequest.post_id
+                ? supabase
+                      .from("post")
+                      .select("id, pet_id")
+                      .eq("id", adoptionRequest.post_id)
+                      .maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any)
+
+            const [requesterInfo, postInfo] = await Promise.all([requesterPromise, postPromise])
+
+            let petImages: string[] = []
+            if (postInfo.data?.pet_id) {
+                const headers = {
+                    "x-user-id": String(req.user?.id ?? 0),
+                    "x-user-role": String(req.user?.role ?? ""),
+                }
+                petImages = await getEntityImages("pet", postInfo.data.pet_id, headers)
+            }
+
             return AppResponse(res, 200, "Solicitud de adopción obtenida exitosamente", {
                 ...adoptionRequest,
                 postImages,
+                petImages,
+                requester_name: requesterInfo?.data?.name ?? null,
             })
         } else {
+            // Filtrar según rol del usuario
+            const userRole = req.user?.role
+            const userId = req.user?.id
+
+            // Giver: devolver solicitudes relacionadas con sus posts/pets
+            if (userRole === 21) {
+                // Reutilizar listMyRequests (ya realiza las consultas y responde)
+                return await listMyRequests(req as unknown as Request, res)
+            }
+
+            // Adopter (usuario normal): devolver solo sus propias solicitudes
+            if (userRole === 20) {
+                if (!userId) throw new Error("Usuario no autenticado")
+                const numericUserId = Number(userId)
+
+                const { data: adoptionRequests, error } = await supabase
+                    .from("adoption_request")
+                    .select("*")
+                    .eq("requester_id", numericUserId)
+                    .order("created_at", { ascending: false })
+
+                if (error) throw new Error("Error al obtener las solicitudes de adopción")
+
+                const postIds = (adoptionRequests ?? []).map((r: any) => r.post_id).filter(Boolean)
+                const postImages = await getMultipleEntityImages("post", postIds)
+
+                const requestsWithImages = (adoptionRequests ?? []).map((r: any) => ({
+                    ...r,
+                    postImages: postImages[String(r.post_id)] || [],
+                }))
+
+                return AppResponse(
+                    res,
+                    200,
+                    "Solicitudes de adopción obtenidas exitosamente",
+                    requestsWithImages
+                )
+            }
+
             const { data: adoptionRequests, error } = await supabase
                 .from("adoption_request")
                 .select("*")
@@ -246,7 +650,7 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
 }
 
 export const createAdoptionRequest = async (req: Request, res: Response) => {
-    const { post_id, status } = req.body
+    const { post_id, status, message } = req.body
 
     try {
         if (!post_id) {
@@ -292,7 +696,8 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
             requester_id,
             post_id,
             post_owner_id,
-            status: status || "pending",
+            status: "pending",
+            message: message || null,
         }
 
         const { data: newAdoptionRequest, error: insertError } = await supabase
@@ -316,14 +721,19 @@ export const createAdoptionRequest = async (req: Request, res: Response) => {
     }
 }
 
-export const updateAdoptionRequest = async (req: Request, res: Response) => {
+export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
     const { status } = req.body
+    const { message } = req.body
 
     try {
         const numericId = parseInt(id)
         if (isNaN(numericId)) {
             throw new Error("ID debe ser un número válido")
+        }
+
+        if (!req.user?.id) {
+            return AppResponse(res, 401, "Usuario no autenticado", null)
         }
 
         const { data: existingRequest, error: findError } = await supabase
@@ -334,36 +744,55 @@ export const updateAdoptionRequest = async (req: Request, res: Response) => {
 
         if (findError || !existingRequest) throw new Error("Solicitud de adopción no encontrada")
 
-        if (
-            (status === "approved" || status === "completed") &&
-            existingRequest.post_owner_id !== req.user.id
-        ) {
-            return AppResponse(
-                res,
-                403,
-                status === "approved"
-                    ? "No tienes permiso para aprobar esta solicitud"
-                    : "No tienes permiso para marcar esta solicitud como completada",
-                null
-            )
+        if (typeof status !== "undefined") {
+            if (status === "approved" || status === "completed") {
+                if (existingRequest.requester_id === req.user.id) {
+                    return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+                }
+
+                return AppResponse(
+                    res,
+                    403,
+                    "Para aprobar/confirmar una adopción utiliza los endpoints de confirmación (confirmAccept/validate-code)",
+                    null
+                )
+            }
+
+            if (existingRequest.post_owner_id !== req.user.id) {
+                return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+            }
         }
 
-        if (
-            existingRequest.requester_id !== req.user.id &&
-            existingRequest.post_owner_id !== req.user.id
-        ) {
-            return AppResponse(
-                res,
-                403,
-                "No tienes permiso para actualizar esta solicitud de adopción",
-                null
-            )
+        if (typeof message !== "undefined" && existingRequest.requester_id !== req.user.id) {
+            return AppResponse(res, 403, "Solo el usuario que hizo la solicitud puede editar el mensaje", null)
         }
 
-        const payload: AdoptionRequest["Update"] = {
-            status: status || existingRequest.status,
-            updated_at: new Date().toISOString(),
+        if (existingRequest.requester_id !== req.user.id && existingRequest.post_owner_id !== req.user.id) {
+            return AppResponse(res, 403, "No tienes permiso para actualizar esta solicitud de adopción", null)
         }
+
+        const forbiddenIdFields = ["id", "post_id", "requester_id", "post_owner_id"]
+        for (const f of forbiddenIdFields) {
+            if (typeof (req.body as any)[f] !== "undefined" && (req.body as any)[f] !== (existingRequest as any)[f]) {
+                return AppResponse(res, 403, `No tienes permiso para editar el campo ${f}`, null)
+            }
+        }
+
+        const payload: Partial<AdoptionRequest["Update"]> = {}
+
+        if (typeof status !== "undefined" && existingRequest.post_owner_id === req.user.id && status !== existingRequest.status) {
+            payload.status = status
+        }
+
+        if (typeof message !== "undefined" && existingRequest.requester_id === req.user.id && message !== existingRequest.message) {
+            payload.message = message
+        }
+
+        if (Object.keys(payload).length === 0) {
+            return AppResponse(res, 200, "No se realizaron cambios", existingRequest)
+        }
+
+        payload.updated_at = new Date().toISOString()
 
         const { data: updatedRequest, error: updateError } = await supabase
             .from("adoption_request")
@@ -372,15 +801,9 @@ export const updateAdoptionRequest = async (req: Request, res: Response) => {
             .select()
             .maybeSingle()
 
-        if (updateError || !updatedRequest)
-            throw new Error("Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest) throw new Error("Error al actualizar la solicitud de adopción")
 
-        return AppResponse(
-            res,
-            200,
-            "Solicitud de adopción actualizada exitosamente",
-            updatedRequest
-        )
+        return AppResponse(res, 200, "Solicitud de adopción actualizada exitosamente", updatedRequest)
     } catch (e) {
         const message = e instanceof Error ? e.message : "Error interno del servidor"
         return AppResponse(res, 500, message, null)
@@ -404,8 +827,10 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
 
         if (findError || !existingRequest) throw new Error("Solicitud de adopción no encontrada")
 
+        if (!req.user?.id) return AppResponse(res, 401, "Usuario no autenticado", null)
+
         if (existingRequest.requester_id !== req.user.id) {
-            throw new Error("No tienes permiso para eliminar esta solicitud de adopción")
+            return AppResponse(res, 403, "No tienes permiso para eliminar esta solicitud de adopción", null)
         }
 
         const { error: deleteError } = await supabase
@@ -415,9 +840,9 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
 
         if (deleteError) throw new Error("Error al eliminar la solicitud de adopción")
 
-        return AppResponse(null as any, 200, "Solicitud de adopción eliminada exitosamente", {})
+        return AppResponse(res, 200, "Solicitud de adopción eliminada exitosamente", {})
     } catch (e) {
         const message = e instanceof Error ? e.message : "Error interno del servidor"
-        return AppResponse(null as any, 500, message, null)
+        return AppResponse(res, 500, message, null)
     }
 }
