@@ -36,8 +36,15 @@ export async function sendAccountRequestDocuments(params: {
 
     const url = `${MEDIA_URL}/uploads/account-request/${encodeURIComponent(params.user.rut)}`
 
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        "x-user-id": String(params.user.id),
+        "x-user-role": String(params.user.roleId),
+        ...fd.getHeaders(),
+    }
+
     const res = await axios.post(url, fd, {
-        headers: { Authorization: `Bearer ${token}`, ...fd.getHeaders() },
+        headers,
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
         timeout: 20000,

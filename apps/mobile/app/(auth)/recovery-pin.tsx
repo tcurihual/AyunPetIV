@@ -61,6 +61,9 @@ export default function RecoveryPinScreen() {
         setIsLoading(true)
 
         try {
+            // normalizar código (eliminar espacios) antes de enviarlo al backend
+            const normalizedPin = pin.replace(/\s/g, "")
+
             const response = await passwordResetService.verifyResetCode(
                 userEmail,
                 pin.trim(),
@@ -116,7 +119,10 @@ export default function RecoveryPinScreen() {
                     placeholder="Código de 6 dígitos"
                     placeholderTextColor="#888"
                     value={passwordResetService.formatCode(pin)}
-                    onChangeText={(text) => setPin(text.replace(/\s/g, ""))}
+                    onChangeText={(text) => {
+                        const digits = text.replace(/\s/g, "").slice(0, 6) // Limitar a 6 dígitos
+                        setPin(digits)
+                    }}
                     keyboardType="number-pad"
                     maxLength={7} // Permite espacios en el formato
                 />
