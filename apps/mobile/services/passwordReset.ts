@@ -34,9 +34,11 @@ export interface PasswordVerifyResponse {
  */
 export async function requestPasswordReset(email: string): Promise<PasswordResetResponse> {
     try {
-        const response = await http.post("/v1/auth/mobile/reset-password", {
-            email: email.toLowerCase().trim(),
-        })
+        const response = await http.post(
+            "/v1/auth/mobile/reset-password",
+            { email: email.toLowerCase().trim() },
+            { headers: { "x-platform": "mobile" } }
+        )
 
         return {
             type: "success",
@@ -81,7 +83,10 @@ export async function verifyResetCode(
             }
         }
 
-        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+        // Normalizar code (quitar espacios) antes de validar
+        const normalizedCode = code.replace(/\s/g, "")
+
+        if (normalizedCode.length !== 6 || !/^\d{6}$/.test(normalizedCode)) {
             return {
                 type: "error",
                 message: "El código debe ser de 6 dígitos numéricos",
@@ -97,11 +102,15 @@ export async function verifyResetCode(
             }
         }
 
-        const response = await http.post("/v1/auth/mobile/verify-reset-code", {
-            email: email.toLowerCase().trim(),
-            code: code.trim(),
-            newPassword: newPassword,
-        })
+        const response = await http.post(
+            "/v1/auth/mobile/verify-reset-code",
+            {
+                email: email.toLowerCase().trim(),
+                code: normalizedCode,
+                newPassword: newPassword,
+            },
+            { headers: { "x-platform": "mobile" } }
+        )
 
         return {
             type: "success",
@@ -158,10 +167,9 @@ export function isValidEmail(email: string): boolean {
  * @returns Código formateado
  */
 export function formatCode(code: string): string {
-    if (code.length === 6) {
-        return `${code.substring(0, 3)} ${code.substring(3)}`
-    }
-    return code
+    const onlyDigits = (code || "").replace(/\D/g, "").slice(0, 6)
+    if (onlyDigits.length <= 3) return onlyDigits
+    return `${onlyDigits.slice(0, 3)} ${onlyDigits.slice(3)}`
 }
 
 // Hook personalizado para gestionar el estado de recuperación de contraseña

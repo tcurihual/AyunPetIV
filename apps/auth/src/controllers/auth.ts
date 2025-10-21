@@ -19,6 +19,19 @@ import { sendAccountRequestDocuments } from "../middleware/mediaProxy"
 
 type Variation = "user" | "giver" | "shelter"
 
+const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) return err.message
+    if (typeof err === "string") return err
+    if (typeof err === "object" && err !== null && "message" in err) {
+        try {
+            return (err as any).message
+        } catch {
+            return JSON.stringify(err)
+        }
+    }
+    return String(err)
+}
+
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body
 
@@ -29,7 +42,12 @@ export const login = async (req: Request, res: Response) => {
         .select("*")
         .eq("email", email)
         .single()
-    if (error) throw new AppError(404, "El usuario no existe")
+    if (error || !user) throw new AppError(404, "El usuario no existe")
+
+    if (user.validated === false) {
+        console.log(`🔒 [login] Intento de login de usuario no validado: ${email}`)
+        throw new AppError(401, "El usuario no ha validado su correo. Revisa tu email.")
+    }
 
     const isPasswordValid = await comparePassword(password, user.password)
     if (!isPasswordValid) throw new AppError(401, "Datos ingresados no son validos")
@@ -43,6 +61,7 @@ export const login = async (req: Request, res: Response) => {
 
     return AppResponse(res, 200, "Inicio de sesión exitoso", { user, token })
 }
+
 export const register = async (
     req: Request<{ variation: Variation }, any, User["Row"]>,
     res: Response
@@ -117,8 +136,9 @@ export const register = async (
                     mimetype: f.mimetype,
                 })),
             })
-        } catch (e: any) {
-            console.error("❌ Error enviando account-request a MEDIA:", e?.message || e)
+        } catch (e: unknown) {
+            const msg = getErrorMessage(e)
+            console.error("❌ Error enviando account-request a MEDIA:", msg)
             throw new AppError(502, "No fue posible registrar documentos en Media")
         }
     }
@@ -126,7 +146,9 @@ export const register = async (
     const shouldSendVerificationEmail = variation === "user"
 
     if (shouldSendVerificationEmail && inserted) {
-        const isMobile = req.headers["x-platform"] === "mobile"
+        // Normalizamos header (puede venir como string | string[] | undefined)
+        const platformHeader = req.headers["x-platform"]
+        const isMobile = String(platformHeader ?? "").toLowerCase() === "mobile"
 
         if (isMobile) {
             console.log("📱 Registro desde mobile → Enviando correo con código de verificación...")
@@ -196,24 +218,37 @@ export const register = async (
         </html>
       `
 
-            await sendEmail({
-                to: user.email,
-                subject: "Bienvenido a Ayün Pet 🐾 - Verifica tu correo",
-                html,
-            })
-
-            console.log(`✅ Correo con código enviado correctamente a ${user.email}`)
+            try {
+                const result = await sendEmail({
+                    to: user.email,
+                    subject: "Bienvenido a Ayün Pet 🐾 - Verifica tu correo",
+                    html,
+                })
+                console.log(`✅ Correo con código enviado correctamente a ${user.email}`, result)
+            } catch (emailErr: unknown) {
+                const msg = getErrorMessage(emailErr)
+                console.error("❌ Error enviando correo de verificación (mobile):", msg)
+                // No bloqueamos el registro; si quieres bloquear, reemplaza con throw.
+                // Si quieres exponer el code en dev, podrías devolverlo aquí.
+            }
         } else {
             console.log("🖥️ Registro desde web → Enviando correo con link de verificación...")
 
             const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "1h" })
             const verificationLink = `${WEB_URL}/verify-email?token=${token}`
 
-            await sendEmail({
-                to: user.email,
-                subject: "Verifica tu correo - Ayün Pet",
-                html: emailTemplate(verificationLink),
-            })
+            try {
+                const result = await sendEmail({
+                    to: user.email,
+                    subject: "Verifica tu correo - Ayün Pet",
+                    html: emailTemplate(verificationLink),
+                })
+                console.log(`✅ Link de verificación enviado a ${user.email}`, result)
+            } catch (emailErr: unknown) {
+                const msg = getErrorMessage(emailErr)
+                console.error("❌ Error enviando link de verificación (web):", msg)
+                // No bloqueamos el registro: se puede reintentar desde el front o admin
+            }
         }
     }
 
@@ -286,17 +321,30 @@ export const forgotPassword = async (req: Request, res: Response) => {
         const token = jwt.sign({ id: user.email }, JWT_SECRET, { expiresIn: "30m" })
         const resetLink = `${WEB_URL}/reset-password?token=${token}`
 
-        // En desarrollo: solo log, no enviar email
-        console.log(`🔑 Link de recuperación para ${email}: ${resetLink}`)
-
-        return AppResponse(
-            res,
-            200,
-            "Link de recuperación generado. Revisa la consola del servidor.",
-            {}
-        )
-    } catch (error) {
-        console.error("❌ ERROR EN forgotPassword:", error)
+        // Intentar enviar email real
+        try {
+            await sendEmail({
+                to: email,
+                subject: "Recuperación de contraseña - Ayün Pet",
+                html: `<p>Para restablecer tu contraseña, visita: <a href="${resetLink}">${resetLink}</a></p>`,
+            })
+            console.log(`📧 Link de recuperación enviado a ${email}`)
+            return AppResponse(res, 200, "Link de recuperación enviado al correo", {})
+        } catch (emailErr: unknown) {
+            const msg = getErrorMessage(emailErr)
+            console.error("❌ Error enviando email en forgotPassword:", msg)
+            // Fallback para desarrollo: devolvemos el link en la respuesta para testing
+            return AppResponse(
+                res,
+                200,
+                "Link de recuperación generado (email falló en dev). Revisa devLink en respuesta.",
+                { devLink: resetLink }
+            )
+        }
+    } catch (error: unknown) {
+        const msg = getErrorMessage(error)
+        console.error("❌ ERROR EN forgotPassword:", msg)
+        if (error instanceof AppError) throw error
         throw new AppError(500, "Error al enviar el correo de recuperación")
     }
 }
