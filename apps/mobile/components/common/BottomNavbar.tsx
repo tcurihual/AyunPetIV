@@ -97,7 +97,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={styles.addBtn}
-                            onPress={() => router.push("/(shelter)/dashboard")}
+                            onPress={() => router.push("/(shelter)/AddPetScreen")}
                         >
                             <Ionicons name="add" size={28} color="#fff" />
                         </Pressable>
