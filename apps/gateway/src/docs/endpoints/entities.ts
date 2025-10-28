@@ -35,6 +35,8 @@ export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
         method: "get",
         path: "/v1/entities/giverRequests",
         tags: ["GiverRequests"],
+        description:
+            "Obtiene las organizaciones o solicitudes de dadores pendientes de validación.",
         responses: {
             200: {
                 description: "Organizaciones no validadas obtenidas correctamente",
@@ -55,6 +57,15 @@ export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
         description:
             "Valida la cuenta de un dador, cambia el estado `validated` a `true` y envía un correo electrónico de confirmación. Requiere permisos de administrador.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "userId",
+                in: "path",
+                required: true,
+                description: "ID del usuario a validar",
+                schema: { type: "integer", example: 55 },
+            },
+        ],
         responses: {
             200: {
                 description: "Cuenta validada exitosamente",
@@ -92,6 +103,8 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         method: "get",
         path: "/v1/entities/adoption-history",
         tags: ["AdoptionHistory"],
+        summary: "Listar historiales de adopción",
+        description: "Obtiene un listado de historiales de adopción registrados en el sistema.",
         responses: {
             200: {
                 description: "Historial de adopciones obtenido exitosamente",
@@ -110,6 +123,15 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         tags: ["AdoptionHistory"],
         summary: "Obtener historial de adopción por ID",
         description: "Retorna el historial de adopción de una mascota específica usando su ID.",
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID numérico del historial de adopción",
+                schema: { type: "integer", example: 42 },
+            },
+        ],
         responses: {
             200: {
                 description: "Historial de adopción obtenido exitosamente",
@@ -131,6 +153,8 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history",
         tags: ["AdoptionHistory"],
         summary: "Crear nuevo historial de adopción",
+        description:
+            "Crea un nuevo historial de adopción asociado a una mascota y registro de la fecha/usuario.",
         security: [{ bearerAuth: [] }],
         request: {
             body: {
@@ -166,7 +190,18 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history/{id}",
         tags: ["AdoptionHistory"],
         summary: "Actualizar historial de adopción",
+        description:
+            "Actualiza los datos de un historial de adopción existente identificado por su ID.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del historial a actualizar",
+                schema: { type: "integer" },
+            },
+        ],
         request: {
             body: {
                 content: { "application/json": { schema: UpdateAdoptionHistoryRequestSchema } },
@@ -205,7 +240,18 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history/{id}",
         tags: ["AdoptionHistory"],
         summary: "Eliminar historial de adopción",
+        description:
+            "Elimina un historial de adopción por su ID. Operación restringida a usuarios autorizados.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del historial a eliminar",
+                schema: { type: "integer" },
+            },
+        ],
         responses: {
             200: {
                 description: "Historial eliminado exitosamente",
@@ -271,6 +317,15 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
         summary: "Obtener usuario por ID",
         description: "Obtiene la información de un usuario específico con sus imágenes de perfil.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del usuario",
+                schema: { type: "integer", example: 7 },
+            },
+        ],
         responses: {
             200: {
                 description: "Usuario obtenido exitosamente",
@@ -326,6 +381,15 @@ export function registerAdoptionRequestsPaths(registry: OpenAPIRegistry) {
         description:
             "Obtiene información detallada de una solicitud de adopción específica, incluyendo imágenes del post asociado.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID de la solicitud",
+                schema: { type: "integer", example: 101 },
+            },
+        ],
         responses: {
             200: {
                 description: "Solicitud obtenida exitosamente",
@@ -351,6 +415,9 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         method: "post",
         path: "/v1/entities/verification-codes",
         tags: ["VerificationCodes"],
+        summary: "Crear un código de verificación",
+        description:
+            "Genera un código de verificación para distintos usos (verify, reset, adoption) para un usuario.",
         security: [{ bearerAuth: [] }],
         request: {
             body: {
@@ -394,6 +461,9 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         method: "post",
         path: "/v1/entities/verification-codes/validate",
         tags: ["VerificationCodes"],
+        summary: "Validar un código de verificación",
+        description:
+            "Valida un código previamente generado. Espera `code`, `type` y `userId` en el body.",
         request: {
             body: {
                 content: {
@@ -433,6 +503,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/verification-codes/user/{userId}",
         tags: ["VerificationCodes"],
         security: [{ bearerAuth: [] }],
+        description: "Obtiene los códigos de verificación asociados a un usuario específico.",
         parameters: [
             {
                 name: "userId",
@@ -466,6 +537,8 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses",
         tags: ["FormResponses"],
         summary: "Listar respuestas de formulario por id_post_form",
+        description:
+            "Obtiene las respuestas de formularios filtradas por el parámetro `id_post_form` (query).",
         parameters: [
             {
                 name: "id_post_form",
@@ -500,6 +573,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses",
         tags: ["FormResponses"],
         summary: "Crear una nueva respuesta de formulario",
+        description: "Crea una nueva respuesta para un formulario asociado a una publicación.",
         request: {
             body: {
                 content: {
@@ -535,6 +609,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/{id}",
         tags: ["FormResponses"],
         summary: "Actualizar una respuesta de formulario",
+        description: "Actualiza la respuesta de un formulario identificado por su ID.",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         request: {
             body: {
@@ -571,6 +646,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/{id}",
         tags: ["FormResponses"],
         summary: "Eliminar una respuesta de formulario",
+        description: "Elimina una respuesta de formulario por su ID.",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
             200: {
@@ -598,6 +674,8 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/publication/{postId}",
         tags: ["FormResponses"],
         summary: "Obtener respuestas asociadas a una publicación",
+        description:
+            "Lista las respuestas de formulario asociadas a la publicación indicada por postId.",
         parameters: [{ name: "postId", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
             200: {

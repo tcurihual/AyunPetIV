@@ -9,12 +9,27 @@ import {
     PublicationsWithImagesResponseSchema,
     PublicationByIdWithImagesResponseSchema,
 } from "@repo/utils"
+// Removed leftover opening markdown fence
 
 export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "post",
-        path: "/v1/adoptions/adoption-requests/:id/confirm-accept", //esto esta sin probar por cuestiones de la base de datos
+        path: "/v1/adoptions/adoption-requests/{id}/confirm-accept",
         tags: ["AdoptionRequests"],
+        summary: "Confirmar aceptación de solicitud de adopción",
+        description:
+            "Confirma que la solicitud de adopción identificada por `id` ha sido aceptada por el dueño/organización. " +
+            "Se espera un body con la información de confirmación y opcionalmente detalles de la aceptación.",
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID numérico de la solicitud de adopción a aceptar",
+                schema: { type: "integer", example: 123 },
+            },
+        ],
+        security: [{ bearerAuth: [] }],
         request: {
             body: {
                 content: {
@@ -25,7 +40,7 @@ export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
             },
         },
         responses: {
-            "200": {
+            200: {
                 description: "Solicitud aceptada",
                 content: {
                     "application/json": {
@@ -33,7 +48,7 @@ export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
-            "400": {
+            400: {
                 description: "Error al aceptar la solicitud",
                 content: {
                     "application/json": {
@@ -48,8 +63,12 @@ export function ConfirmAcceptDocs(registry: OpenAPIRegistry) {
 export function validateCodeDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
         method: "post",
-        path: "/v1/adoptions/adoption-requests/validate-code", //esto esta sin probar por cuestiones de la base de datos
+        path: "/v1/adoptions/adoption-requests/validate-code",
         tags: ["AdoptionRequests"],
+        summary: "Validar código de adopción",
+        description:
+            "Valida un código de adopción (por ejemplo, entregado al adoptante) y cierra la solicitud asociada si el código es correcto. " +
+            "El request debe incluir el `adoption_code` y el `requestId` o `postId` según el flujo.",
         request: {
             body: {
                 content: {
@@ -59,8 +78,9 @@ export function validateCodeDocs(registry: OpenAPIRegistry) {
                 },
             },
         },
+        security: [{ bearerAuth: [] }],
         responses: {
-            "200": {
+            200: {
                 description: "Código de adopción validado y solicitud cerrada",
                 content: {
                     "application/json": {
@@ -68,7 +88,7 @@ export function validateCodeDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
-            "400": {
+            400: {
                 description: "Error al validar el código",
                 content: {
                     "application/json": {
