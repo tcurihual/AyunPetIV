@@ -18,6 +18,7 @@ import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { PublicationProvider } from "@/context/PublicationContext"
+import { PostFormProvider } from "@/context/PostFormContext"
 import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
@@ -51,40 +52,42 @@ export default function RootLayout() {
   
     return (
         <AuthProvider>
-            <MessageProvider>
-                <ReportProvider>
-                    <AdoptionRequestProvider>
-                        <PublicationProvider>
-                            <ModalProvider>
-                                <AlertProvider>
-                                    <LoadingProvider>
-                                    <ThemeProvider
-                                        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                                    >
-                                        <Stack
-                                            initialRouteName="splash"
-                                            screenOptions={{ headerShown: false }}
-                                        >
-                                            <Stack.Screen name="splash" />
-                                            <Stack.Screen name="(auth)" />
-                                            <Stack.Screen name="(home)" />
-                                            <Stack.Screen name="(shelter)" />
-                                            <Stack.Screen name="+not-found" />
-                                        </Stack>
+            <PostFormProvider>
+                <MessageProvider>
+                    <ReportProvider>
+                        <AdoptionRequestProvider>
+                            <PublicationProvider>
+                                <ModalProvider>
+                                    <AlertProvider>
+                                        <LoadingProvider>
+                                            <ThemeProvider
+                                                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                                            >
+                                                <Stack
+                                                    initialRouteName="splash"
+                                                    screenOptions={{ headerShown: false }}
+                                                >
+                                                    <Stack.Screen name="splash" />
+                                                    <Stack.Screen name="(auth)" />
+                                                    <Stack.Screen name="(home)" />
+                                                    <Stack.Screen name="(shelter)" />
+                                                    <Stack.Screen name="+not-found" />
+                                                </Stack>
 
-                                        <ModalHost />
-                                        <Alert />
-                                        <AuthRedirect />
-                                        {/* <RoleRedirect /> */}
-                                        <StatusBar style="inverted" backgroundColor="#000" />
-                                    </ThemeProvider>
-                                </LoadingProvider>
-                            </AlertProvider>
-                        </ModalProvider>
-                    </PublicationProvider>
-                </AdoptionRequestProvider>
-            </ReportProvider>
-        </MessageProvider>
-    </AuthProvider>
+                                                <ModalHost />
+                                                <Alert />
+                                                <AuthRedirect />
+                                                {/* <RoleRedirect /> */}
+                                                <StatusBar style="inverted" backgroundColor="#000" />
+                                            </ThemeProvider>
+                                        </LoadingProvider>
+                                    </AlertProvider>
+                                </ModalProvider>
+                            </PublicationProvider>
+                        </AdoptionRequestProvider>
+                    </ReportProvider>
+                </MessageProvider>
+            </PostFormProvider>
+        </AuthProvider>
     )
 }
