@@ -73,11 +73,7 @@ export const mediaService = {
             } as any)
         })
 
-        const response = await http.post(`/v1/media/uploads/${entityType}/${entityId}`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        })
+        const response = await http.post(`/v1/media/uploads/${entityType}/${entityId}`, formData)
 
         return response.data
     },

@@ -80,6 +80,67 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
             throw new HttpError(403, "Access denied to this entity type")
         }
 
+        // Calcular totals y parsear metadata enviada por el cliente (original/compressed sizes)
+        const total = files.reduce((s, f) => s + (f.size || 0), 0)
+
+        let metas: Array<{ fileName: string; compressedSize?: number; originalSize?: number }> = []
+        try {
+            // Primero intentar body (multipart text fields)
+            const raw =
+                (req.body && req.body.filesMeta) || req.body?.filesmeta || req.body?.filesMetaJSON
+            // Si no viene por body, intentar header fallback 'x-files-meta'
+            const headerRaw =
+                (!raw && req.headers && (req.headers["x-files-meta"] as string)) || undefined
+            const source = raw || headerRaw
+            if (raw) {
+                if (Array.isArray(raw)) {
+                    metas = raw
+                        .map((r) => {
+                            try {
+                                return JSON.parse(r)
+                            } catch (e) {
+                                return typeof r === "object" ? r : null
+                            }
+                        })
+                        .filter(Boolean) as any
+                } else if (typeof raw === "string") {
+                    // Could be a single JSON string for an array or object
+                    try {
+                        const parsed = JSON.parse(raw)
+                        if (Array.isArray(parsed)) metas = parsed
+                        else metas = [parsed]
+                    } catch (e) {
+                        // Not JSON: ignore
+                    }
+                } else if (typeof raw === "object") {
+                    metas = [raw]
+                }
+            } else if (headerRaw) {
+                // headerRaw is a string with JSON (array or object)
+                try {
+                    const parsed = JSON.parse(headerRaw)
+                    metas = Array.isArray(parsed) ? parsed : [parsed]
+                } catch (e) {
+                    // ignore
+                }
+            }
+        } catch (e) {
+            // ignore parse errors
+        }
+
+        // Correlacionar por file.originalname (nombre enviado por cliente) cuando sea posible
+        const detailed = files.map((f) => {
+            const meta = metas.find((m) => m.fileName === (f.originalname || f.filename))
+            return {
+                fileNameSaved: f.filename,
+                originalName: f.originalname,
+                sizeReceived: f.size,
+                mime: f.mimetype,
+                originalSizeReported: meta?.originalSize,
+                compressedSizeReported: meta?.compressedSize,
+            }
+        })
+
         const uploaded = files.map((file) => ({
             url: `${MEDIA_URL}/uploads/${entityType}/${entityId}/${file.filename}`,
             fileName: file.filename,

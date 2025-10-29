@@ -30,7 +30,9 @@ export function uniqueName(dir: string, name: string) {
     return path.basename(candidate)
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+// Aumentado ligeramente por compresión en cliente. 10 MB permite archivos grandes
+// que no siempre pueden ser reducidos lo suficiente desde el móvil.
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_MIME = ["image/jpeg", "image/png", "application/pdf"]
 
 const publicStorage = diskStorage({
