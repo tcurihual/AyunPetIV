@@ -19,6 +19,8 @@ import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { PublicationProvider } from "@/context/PublicationContext"
 import { router } from "expo-router"
+import { PostFormProvider } from "@/context/PostFormContext"
+import { PostResponsesProvider } from "@/context/PostResponsesContext"
 
 SplashScreen.preventAutoHideAsync()
 // function RoleRedirect() {
@@ -48,43 +50,52 @@ export default function RootLayout() {
     }, [loaded])
 
     if (!loaded) return null
-  
+
     return (
         <AuthProvider>
-            <MessageProvider>
-                <ReportProvider>
-                    <AdoptionRequestProvider>
-                        <PublicationProvider>
-                            <ModalProvider>
-                                <AlertProvider>
-                                    <LoadingProvider>
-                                    <ThemeProvider
-                                        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                                    >
-                                        <Stack
-                                            initialRouteName="splash"
-                                            screenOptions={{ headerShown: false }}
-                                        >
-                                            <Stack.Screen name="splash" />
-                                            <Stack.Screen name="(auth)" />
-                                            <Stack.Screen name="(home)" />
-                                            <Stack.Screen name="(shelter)" />
-                                            <Stack.Screen name="+not-found" />
-                                        </Stack>
+            <PostResponsesProvider>
+                <MessageProvider>
+                    <ReportProvider>
+                        <AdoptionRequestProvider>
+                            <PublicationProvider>
+                                <ModalProvider>
+                                    <AlertProvider>
+                                        <LoadingProvider>
+                                            <ThemeProvider
+                                                value={
+                                                    colorScheme === "dark"
+                                                        ? DarkTheme
+                                                        : DefaultTheme
+                                                }
+                                            >
+                                                <Stack
+                                                    initialRouteName="splash"
+                                                    screenOptions={{ headerShown: false }}
+                                                >
+                                                    <Stack.Screen name="splash" />
+                                                    <Stack.Screen name="(auth)" />
+                                                    <Stack.Screen name="(home)" />
+                                                    <Stack.Screen name="(shelter)" />
+                                                    <Stack.Screen name="+not-found" />
+                                                </Stack>
 
-                                        <ModalHost />
-                                        <Alert />
-                                        <AuthRedirect />
-                                        {/* <RoleRedirect /> */}
-                                        <StatusBar style="inverted" backgroundColor="#000" />
-                                    </ThemeProvider>
-                                </LoadingProvider>
-                            </AlertProvider>
-                        </ModalProvider>
-                    </PublicationProvider>
-                </AdoptionRequestProvider>
-            </ReportProvider>
-        </MessageProvider>
-    </AuthProvider>
+                                                <ModalHost />
+                                                <Alert />
+                                                <AuthRedirect />
+                                                {/* <RoleRedirect /> */}
+                                                <StatusBar
+                                                    style="inverted"
+                                                    backgroundColor="#000"
+                                                />
+                                            </ThemeProvider>
+                                        </LoadingProvider>
+                                    </AlertProvider>
+                                </ModalProvider>
+                            </PublicationProvider>
+                        </AdoptionRequestProvider>
+                    </ReportProvider>
+                </MessageProvider>
+            </PostResponsesProvider>
+        </AuthProvider>
     )
 }
