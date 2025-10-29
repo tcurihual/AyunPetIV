@@ -1,9 +1,10 @@
 import React from "react"
 import { View, TouchableOpacity, Image, StyleSheet, Dimensions, Text } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import { useRouter, usePathname } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { Colors } from "@/constants/Colors"
+import BackButton from "@common/BackButton"
 
 const { width } = Dimensions.get("window")
 
@@ -13,6 +14,7 @@ type HeaderProps = {
 
 export default function Header({ onMenuPress }: HeaderProps) {
     const router = useRouter()
+    const pathname = usePathname().toLowerCase()
     const { user } = useAuthContext()
 
     const defaultAvatar = "https://randomuser.me/api/portraits/women/44.jpg"
@@ -26,23 +28,51 @@ export default function Header({ onMenuPress }: HeaderProps) {
         }
     }
 
+    // 🔙 Mostrar back solo en rutas que no sean home
+    const showBack =
+        pathname.includes("my-profile") ||
+        pathname.includes("request") ||
+        pathname.includes("detail") ||
+        pathname.includes("message")
+
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
-                <Ionicons name="menu" size={width * 0.07} color="#000" />
-            </TouchableOpacity>
-
-            <Image source={require("@/assets/images/Ayun-pet-Logo.png")} style={styles.logo} />
-
-            <TouchableOpacity style={styles.profileCircle} onPress={handleProfilePress}>
-                <Image source={{ uri: userAvatar }} style={styles.profileImage} />
-
-                {!user && (
-                    <View style={styles.noUserIndicator}>
-                        <Text style={styles.noUserText}>?</Text>
-                    </View>
+            {/* Izquierda: menú o back */}
+            <View style={styles.leftContainer}>
+                {showBack ? (
+                    <BackButton
+                        floating={false}
+                        style={{
+                            backgroundColor: "#fff",
+                            borderRadius: width * 0.06,
+                            padding: width * 0.02,
+                            elevation: 3,
+                            marginLeft: -4,
+                        }}
+                    />
+                ) : (
+                    <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
+                        <Ionicons name="menu" size={width * 0.07} color="#000" />
+                    </TouchableOpacity>
                 )}
-            </TouchableOpacity>
+            </View>
+
+            {/* Centro: logo */}
+            <View style={styles.centerContainer}>
+                <Image source={require("@/assets/images/Ayun-pet-Logo.png")} style={styles.logo} />
+            </View>
+
+            {/* Derecha: perfil */}
+            <View style={styles.rightContainer}>
+                <TouchableOpacity style={styles.profileCircle} onPress={handleProfilePress}>
+                    <Image source={{ uri: userAvatar }} style={styles.profileImage} />
+                    {!user && (
+                        <View style={styles.noUserIndicator}>
+                            <Text style={styles.noUserText}>?</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
     )
 }
@@ -56,6 +86,19 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.yellow,
         paddingHorizontal: width * 0.05,
         paddingVertical: width * 0.02,
+    },
+    leftContainer: {
+        flex: 0.4, // menos espacio al back/menu
+        alignItems: "flex-start",
+    },
+    centerContainer: {
+        flex: 1.2, // más espacio para el logo
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    rightContainer: {
+        flex: 0.4,
+        alignItems: "flex-end",
     },
     iconButton: { padding: 5 },
     logo: {
