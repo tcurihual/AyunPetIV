@@ -1,14 +1,15 @@
 import React from "react"
 import { View, StyleSheet, Pressable, useWindowDimensions } from "react-native"
-import { useRouter, usePathname } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext } from "@/context/AuthContext"
+import { usePathname } from "expo-router"
+import { useSafeNavigation } from "@/utils/navigation"
 
 export default function BottomNavbar() {
     const { height } = useWindowDimensions()
-    const router = useRouter()
     const pathname = usePathname()
+    const { navigate } = useSafeNavigation()
     const { user } = useAuthContext()
     const role = user?.role
 
@@ -33,10 +34,7 @@ export default function BottomNavbar() {
             case 20:
                 return (
                     <>
-                        <Pressable
-                            style={getTabStyle("home")}
-                            onPress={() => router.push("/(home)")}
-                        >
+                        <Pressable style={getTabStyle("home")} onPress={() => navigate("/(home)")}>
                             <Ionicons
                                 name={getIconName("paw", "home")}
                                 size={26}
@@ -46,7 +44,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("requests")}
-                            onPress={() => router.push("/(home)/(requests)/requestList")}
+                            onPress={() => navigate("/(home)/(requests)/requestList")}
                         >
                             <Ionicons
                                 name={getIconName("mail", "requests")}
@@ -57,7 +55,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("profile")}
-                            onPress={() => router.push("/(home)/my-profile")}
+                            onPress={() => navigate("/(home)/my-profile")}
                         >
                             <Ionicons
                                 name={getIconName("person", "profile")}
@@ -75,7 +73,7 @@ export default function BottomNavbar() {
                     <>
                         <Pressable
                             style={getTabStyle("home")}
-                            onPress={() => router.push("/(shelter)")}
+                            onPress={() => navigate("/(shelter)")}
                         >
                             <Ionicons
                                 name={getIconName("home", "home")}
@@ -86,7 +84,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("dashboard")}
-                            onPress={() => router.push("/(shelter)/dashboard")}
+                            onPress={() => navigate("/(shelter)/dashboard")}
                         >
                             <Ionicons
                                 name={getIconName("stats-chart", "dashboard")}
@@ -97,14 +95,14 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={styles.addBtn}
-                            onPress={() => router.push("/(shelter)/AddPetScreen")}
+                            onPress={() => navigate("/(shelter)/AddPetScreen")}
                         >
                             <Ionicons name="add" size={28} color="#fff" />
                         </Pressable>
 
                         <Pressable
                             style={getTabStyle("requests")}
-                            onPress={() => router.push("/(shelter)/requests/requestList")}
+                            onPress={() => navigate("/(shelter)/requests/requestList")}
                         >
                             <Ionicons
                                 name={getIconName("mail", "requests")}
@@ -115,7 +113,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("profile")}
-                            onPress={() => router.push("/(shelter)/my-profile")}
+                            onPress={() => navigate("/(shelter)/my-profile")}
                         >
                             <Ionicons
                                 name={getIconName("person", "profile")}
@@ -132,7 +130,7 @@ export default function BottomNavbar() {
                     <>
                         <Pressable
                             style={getTabStyle("dashboard")}
-                            onPress={() => router.push("/(dashboard)")}
+                            onPress={() => navigate("/(dashboard)")}
                         >
                             <Ionicons
                                 name={getIconName("stats-chart", "dashboard")}
@@ -143,7 +141,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("users")}
-                            onPress={() => router.push("/(users)")}
+                            onPress={() => navigate("/(users)")}
                         >
                             <Ionicons
                                 name={getIconName("people", "users")}
@@ -154,7 +152,7 @@ export default function BottomNavbar() {
 
                         <Pressable
                             style={getTabStyle("profile")}
-                            onPress={() => router.push("/(home)/my-profile")}
+                            onPress={() => navigate("/(home)/my-profile")}
                         >
                             <Ionicons
                                 name={getIconName("person-circle", "profile")}

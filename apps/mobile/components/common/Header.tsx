@@ -21,11 +21,12 @@ export default function Header({ onMenuPress }: HeaderProps) {
     const userAvatar = user?.avatar || defaultAvatar
 
     const handleProfilePress = () => {
-        if (user?.role === 21 || user?.role === 22) {
-            router.push("/(shelter)/my-profile")
-        } else {
-            router.push("/(home)/my-profile")
-        }
+        const target =
+            user?.role === 21 || user?.role === 22 ? "/(shelter)/my-profile" : "/(home)/my-profile"
+
+        if (pathname === target) return 
+
+        router.push(target)
     }
 
     // 🔙 Mostrar back solo en rutas que no sean home
