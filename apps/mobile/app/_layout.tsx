@@ -20,6 +20,8 @@ import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { PublicationProvider } from "@/context/PublicationContext"
 import { QuestionProvider } from "@/context/QuestionContext"
 import { router } from "expo-router"
+import { PostFormProvider } from "@/context/PostFormContext"
+import { PostResponsesProvider } from "@/context/PostResponsesContext"
 
 SplashScreen.preventAutoHideAsync()
 // function RoleRedirect() {
