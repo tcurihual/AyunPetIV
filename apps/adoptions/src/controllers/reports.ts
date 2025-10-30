@@ -44,11 +44,11 @@ export const updateReport = async (req: AuthenticatedRequest, res: Response) => 
     const { id } = req.params
     const { description, resolved } = req.body
 
-    const updateData = {
-        description,
-        resolved,
-        updatedat: new Date().toISOString(),
-    }
+    const updateData: Record<string, any> = {}
+    if (description !== undefined) updateData.description = description
+    if (resolved !== undefined) updateData.resolved = resolved
+
+    updateData.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
         .from("report")

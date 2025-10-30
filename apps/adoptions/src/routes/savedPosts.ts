@@ -15,8 +15,8 @@ import {
 const router = express.Router()
 
 router.get("/", listSavedPosts)
-router.get("/:id", requireSavedPostOwnership, getSavedPostById)
 router.get("/check/:postId", checkIfPostIsSaved)
+router.get("/:id", requireSavedPostOwnership, getSavedPostById)
 router.post("/", requireValidSaveAction, savePost)
 router.delete("/:id", requireSavedPostOwnership, removeSavedPost)
 router.delete("/post/:postId", removeSavedPostByPostId)
