@@ -7,6 +7,7 @@ import {
     createUser,
     updateUser,
     deleteUser,
+    deleteMe,
     getMe,
     patchMe,
 } from "../controllers/user"
@@ -29,6 +30,11 @@ usersRouter.patch(
     "/me",
     requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
     asyncHandler((req, res) => patchMe(req as any, res))
+)
+usersRouter.delete(
+    "/me",
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    asyncHandler((req, res) => deleteMe(req as any, res))
 )
 
 usersRouter.get(
