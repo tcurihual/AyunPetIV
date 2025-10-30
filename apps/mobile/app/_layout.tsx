@@ -48,7 +48,7 @@ export default function RootLayout() {
     }, [loaded])
 
     if (!loaded) return null
-  
+
     return (
         <AuthProvider>
             <MessageProvider>
@@ -58,33 +58,32 @@ export default function RootLayout() {
                             <ModalProvider>
                                 <AlertProvider>
                                     <LoadingProvider>
-                                    <ThemeProvider
-                                        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                                    >
-                                        <Stack
-                                            initialRouteName="splash"
-                                            screenOptions={{ headerShown: false }}
+                                        <ThemeProvider
+                                            value={
+                                                colorScheme === "dark" ? DarkTheme : DefaultTheme
+                                            }
                                         >
-                                            <Stack.Screen name="splash" />
-                                            <Stack.Screen name="(auth)" />
-                                            <Stack.Screen name="(home)" />
-                                            <Stack.Screen name="(shelter)" />
-                                            <Stack.Screen name="+not-found" />
-                                        </Stack>
+                                            <Stack screenOptions={{ headerShown: false }}>
+                                                <Stack.Screen name="index" />
+                                                <Stack.Screen name="(auth)" />
+                                                <Stack.Screen name="(home)" />
+                                                <Stack.Screen name="(shelter)" />
+                                                <Stack.Screen name="+not-found" />
+                                            </Stack>
 
-                                        <ModalHost />
-                                        <Alert />
-                                        <AuthRedirect />
-                                        {/* <RoleRedirect /> */}
-                                        <StatusBar style="inverted" backgroundColor="#000" />
-                                    </ThemeProvider>
-                                </LoadingProvider>
-                            </AlertProvider>
-                        </ModalProvider>
-                    </PublicationProvider>
-                </AdoptionRequestProvider>
-            </ReportProvider>
-        </MessageProvider>
-    </AuthProvider>
+                                            <ModalHost />
+                                            <Alert />
+                                            <AuthRedirect />
+                                            {/* <RoleRedirect /> */}
+                                            <StatusBar style="inverted" backgroundColor="#000" />
+                                        </ThemeProvider>
+                                    </LoadingProvider>
+                                </AlertProvider>
+                            </ModalProvider>
+                        </PublicationProvider>
+                    </AdoptionRequestProvider>
+                </ReportProvider>
+            </MessageProvider>
+        </AuthProvider>
     )
 }
