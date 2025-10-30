@@ -20,7 +20,7 @@ export default function CheckRoleScreen() {
                 router.replace("/(admin)")
                 break
             case 22:
-                router.replace("/(home)") // puedes personalizar
+                router.replace("/(shelter)")
                 break
             default:
                 router.replace("/(home)")

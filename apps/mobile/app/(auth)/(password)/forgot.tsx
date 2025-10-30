@@ -10,71 +10,44 @@ import {
     Alert,
     ActivityIndicator,
 } from "react-native"
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+
 import { passwordResetService } from "@/services/passwordReset"
 
 const { width, height } = Dimensions.get("window")
 
-export default function RecoveryPinScreen() {
+export default function ForgotPasswordScreen() {
     const router = useRouter()
-    const params = useLocalSearchParams<{ email?: string }>()
-    const [pin, setPin] = useState("")
-    const [newPassword, setNewPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+    const [email, setEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const styles = useThemeStyles(width, height)
 
-    const userEmail = params.email || ""
-
-    const handleVerifyPin = async () => {
-        if (!pin.trim()) {
-            Alert.alert("Error", "Por favor ingresa el código de 6 dígitos")
+    const handleSendCode = async () => {
+        if (!email.trim()) {
+            Alert.alert("Error", "Por favor ingresa tu correo electrónico")
             return
         }
 
-        if (!passwordResetService.isValidCode(pin.trim())) {
-            Alert.alert("Error", "El código debe ser de 6 dígitos numéricos")
-            return
-        }
-
-        if (!newPassword.trim()) {
-            Alert.alert("Error", "Por favor ingresa tu nueva contraseña")
-            return
-        }
-
-        if (newPassword.length < 6) {
-            Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres")
-            return
-        }
-
-        if (newPassword !== confirmPassword) {
-            Alert.alert("Error", "Las contraseñas no coinciden")
-            return
-        }
-
-        if (!userEmail) {
-            Alert.alert("Error", "No se encontró el email. Por favor regresa y vuelve a intentar.")
+        if (!passwordResetService.isValidEmail(email.trim())) {
+            Alert.alert("Error", "Por favor ingresa un correo válido")
             return
         }
 
         setIsLoading(true)
 
         try {
-            // normalizar código (eliminar espacios) antes de enviarlo al backend
-            const normalizedPin = pin.replace(/\s/g, "")
-
-            const response = await passwordResetService.verifyResetCode(
-                userEmail,
-                pin.trim(),
-                newPassword
-            )
+            const response = await passwordResetService.requestPasswordReset(email.trim())
 
             if (response.type === "success") {
-                Alert.alert("¡Contraseña cambiada!", response.message, [
+                Alert.alert("¡Código enviado!", response.message, [
                     {
-                        text: "Ir al inicio de sesión",
-                        onPress: () => router.push("/(auth)/login"),
+                        text: "Continuar",
+                        onPress: () =>
+                            router.push({
+                                pathname: "/(auth)/(password)/recover",
+                                params: { email: email.trim() },
+                            }),
                     },
                 ])
             } else {
@@ -94,7 +67,7 @@ export default function RecoveryPinScreen() {
             </TouchableOpacity>
 
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Ingresar PIN</Text>
+                <Text style={styles.headerTitle}>Recuperar contraseña</Text>
                 <View style={styles.semiCircle} />
                 <Image
                     source={require("@images/ayun-pet.png")}
@@ -106,54 +79,32 @@ export default function RecoveryPinScreen() {
             <View style={styles.content}>
                 <View style={styles.row}>
                     <View style={styles.iconCircle}>
-                        <Ionicons name="mail-outline" size={22} color="#A47CF3" />
+                        <Ionicons name="key-outline" size={22} color="#A47CF3" />
                     </View>
                     <Text style={styles.instruction}>
-                        Un código de recuperación fue{"\n"}enviado a{" "}
-                        {userEmail ? userEmail : "su correo"}
+                        Ingresa tu correo para{"\n"}restablecer tu contraseña
                     </Text>
                 </View>
 
                 <TextInput
                     style={styles.input}
-                    placeholder="Código de 6 dígitos"
+                    placeholder="Correo electrónico"
                     placeholderTextColor="#888"
-                    value={passwordResetService.formatCode(pin)}
-                    onChangeText={(text) => {
-                        const digits = text.replace(/\s/g, "").slice(0, 6) // Limitar a 6 dígitos
-                        setPin(digits)
-                    }}
-                    keyboardType="number-pad"
-                    maxLength={7} // Permite espacios en el formato
-                />
-
-                <TextInput
-                    style={[styles.input, { textAlign: "left", letterSpacing: 0 }]}
-                    placeholder="Nueva contraseña"
-                    placeholderTextColor="#888"
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    secureTextEntry
-                />
-
-                <TextInput
-                    style={[styles.input, { textAlign: "left", letterSpacing: 0 }]}
-                    placeholder="Confirmar nueva contraseña"
-                    placeholderTextColor="#888"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
                 />
 
                 <TouchableOpacity
                     style={[styles.button, isLoading && styles.buttonDisabled]}
-                    onPress={handleVerifyPin}
+                    onPress={handleSendCode}
                     disabled={isLoading}
                 >
                     {isLoading ? (
                         <ActivityIndicator color="#222" size="small" />
                     ) : (
-                        <Text style={styles.buttonText}>Cambiar contraseña</Text>
+                        <Text style={styles.buttonText}>Enviar código</Text>
                     )}
                 </TouchableOpacity>
 
@@ -257,8 +208,6 @@ const useThemeStyles = (width: number, height: number) => {
             borderWidth: 1,
             borderColor: "#A47CF3",
             color: "#222",
-            textAlign: "center",
-            letterSpacing: 4,
         },
         button: {
             width: "80%",

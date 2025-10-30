@@ -87,10 +87,10 @@ export default function rememberedLogin() {
                 <Text style={styles.buttonText}>Iniciar Sesión</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/(password)/forgot")}>
                 <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/(login)/")}>
                 <Text style={styles.forgotPassword}>Ingresar con otra cuenta</Text>
             </TouchableOpacity>
         </KeyboardAwareScrollView>

@@ -100,6 +100,7 @@ export default function RegisterScreen() {
                 }, 2000)
             })
         } catch (e: any) {
+            // TODO: Console.error, no es relevante en despliegue, corroborar correcto funcionamiento y eliminar
             console.error("Error en registro:", e)
             const msg =
                 e?.response?.data?.error ||

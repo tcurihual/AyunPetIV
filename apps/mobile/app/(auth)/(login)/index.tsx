@@ -8,17 +8,20 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useAuthContext } from "@/context/AuthContext"
 import { useLoading } from "@/context/LoadingContext"
 import { useAlert } from "@/context/AlertContext"
+import { useModal } from "@/context/ModalContext"
 
+import { Colors } from "@/constants/Colors"
 import Input from "@ui/Input"
+import { ChooseRegisterModalContent } from "@common/modals/registerSelectionModal"
 import { LoginFormSchema } from "@/utils/schemas"
 import { LoginFormType } from "@/utils/types"
-import { Colors } from "@/constants/Colors"
 
 export default function LoginScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
     const { signIn, status, user } = useAuthContext()
+    const { openModal } = useModal()
 
     const {
         control,
@@ -29,6 +32,12 @@ export default function LoginScreen() {
         defaultValues: { email: "", password: "" },
         mode: "onTouched",
     })
+
+    useEffect(() => {
+        if (user) {
+            return router.replace("/remembered")
+        }
+    }, [])
 
     useEffect(() => {
         if (status === "authenticated" && user) {
@@ -99,15 +108,15 @@ export default function LoginScreen() {
                 <Text style={styles.buttonText}>Iniciar Sesión</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/(password)/forgot")}>
                 <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
                 style={[styles.buttonPrimary, styles.buttonSecondary]}
-                onPress={() => router.push("/(auth)/register")}
+                onPress={() => openModal(<ChooseRegisterModalContent />)}
             >
-                <Text style={styles.buttonText}>Registrarse</Text>
+                <Text style={styles.buttonText}>¿No tienes cuenta?</Text>
             </TouchableOpacity>
         </KeyboardAwareScrollView>
     )

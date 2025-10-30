@@ -1,36 +1,24 @@
-import React, { useEffect } from "react"
+import React from "react"
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from "react-native"
 import { useRouter } from "expo-router"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext, User } from "@/context/AuthContext"
-import { getUser, getPlainPassword } from "@/utils/storage"
+import Ionicons from "@expo/vector-icons/Ionicons"
 
 const Welcome = () => {
     const { height } = useWindowDimensions()
     const router = useRouter()
-    const { signIn } = useAuthContext()
-    useEffect(() => {
-        const checkAutoLogin = async () => {
-            const storedUser = await getUser<User>()
-            const storedPassword = await getPlainPassword()
 
-            if (storedUser && storedPassword && storedUser.email) {
-                try {
-                    await signIn({ email: storedUser.email, password: storedPassword })
-                    router.replace("/check-role")
-                } catch {}
-            }
-        }
-
-        checkAutoLogin()
-    }, [])
-
-    const handleAdoptPress = () => {
-        router.push("/(auth)/login")
+    const handleLoginPress = () => {
+        router.push("/(auth)/(login)/")
     }
 
-    const handleGivePress = () => {
-        router.push("/(auth)/giver_register")
+    const handleUserPress = () => {
+        router.push("/(auth)/(register)/user")
+    }
+
+    const handleGiverPress = () => {
+        router.push("/(auth)/(register)/giver")
     }
 
     return (
@@ -41,28 +29,37 @@ const Welcome = () => {
                 <Text></Text>
                 <Text style={styles.titleDesc}>¡Donde podrás encontrar</Text>
                 <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
+                <View style={styles.iconContainer}>
+                    <Ionicons name="paw" size={30} color="#555" style={styles.icon1} />
+                    <Ionicons name="paw" size={40} color="#9B6DD7" style={styles.icon2} />
+                    <Ionicons name="paw" size={30} color="#9B6DD7" style={styles.icon3} />
+                    <Ionicons name="paw" size={35} color="#555" style={styles.icon4} />
+                </View>
             </View>
 
             <View style={{ gap: 16, alignItems: "center", width: "100%" }}>
+                <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress}>
+                    <Text style={styles.LoginText}>¡Ya tengo cuenta!</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={handleAdoptPress}
+                    onPress={handleUserPress}
                 >
-                    <Text style={styles.buttonText}>¡Quiero Adoptar!</Text>
+                    <Text style={styles.buttonText}>¡Quiero adoptar!</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     style={[styles.buttonPrimary, styles.buttonSecondary]}
-                    onPress={handleGivePress}
+                    onPress={handleGiverPress}
                 >
-                    <Text style={styles.buttonText}>Quiero Dar en Adopción</Text>
+                    <Text style={styles.buttonText}>¡Quiero dar en adopción!</Text>
                 </TouchableOpacity>
             </View>
 
             <View style={styles.childContainer}>
                 <Image
                     source={require("@images/welcome-pets.png")}
-                    style={[styles.petImg, { top: -height * 0.08 }]}
+                    style={[styles.petImg, { top: -height * 0.1 }]}
                     resizeMode="none"
                 />
             </View>
@@ -102,6 +99,50 @@ const styles = StyleSheet.create({
         width: "70%",
         alignItems: "center",
     },
-    buttonSecondary: { marginTop: 0 },
+    buttonSecondary: { marginTop: "1%" },
     buttonText: { color: "#fff", fontSize: 16 },
+    LoginText: { color: "#eee", fontSize: 16 },
+    loginButton: {
+        backgroundColor: "rgba(155, 109, 215, 0.15)",
+        borderColor: "#9B6DD7",
+        borderWidth: 1.5,
+        borderRadius: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        width: "70%",
+        alignItems: "center",
+        marginBottom: "5%",
+    },
+
+    iconContainer: {
+        position: "absolute",
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
+
+    icon1: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        transform: [{ rotate: "20deg" }],
+    },
+    icon2: {
+        position: "absolute",
+        top: 50,
+        right: 30,
+        transform: [{ rotate: "-15deg" }],
+    },
+    icon3: {
+        position: "absolute",
+        top: 110,
+        right: 5,
+        transform: [{ rotate: "35deg" }],
+    },
+    icon4: {
+        position: "absolute",
+        top: 150,
+        right: 50,
+        transform: [{ rotate: "-25deg" }],
+    },
 })

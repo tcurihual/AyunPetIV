@@ -5,9 +5,6 @@ export const getHeaders = (req: AuthenticatedRequest, res: Response, next: NextF
     const userId = req.headers["x-user-id"]
     const role = req.headers["x-user-role"]
 
-    // Log para depuración (usamos debug para poder filtrar)
-    console.debug("[getHeaders] x-user-id:", userId, "x-user-role:", role)
-
     if (userId && role) {
         req.user = {
             id: Number(userId),

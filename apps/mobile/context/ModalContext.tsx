@@ -27,19 +27,21 @@ export type ReportPayload = { type: "REPORT"; props: ReportProps }
 export type ConfirmPayload = { type: "CONFIRM"; props: ConfirmProps }
 
 import { SessionExpiredPayload } from "./SessionExpiredModal.types"
+import { Modal, StyleSheet } from "react-native"
+import { View } from "react-native"
 
 export type ModalPayload = AdoptionPayload | ReportPayload | ConfirmPayload | SessionExpiredPayload
 
 /** ===== Estado y contexto ===== */
 type ModalState = {
     isOpen: boolean
-    current: ModalPayload | null
+    content: React.ReactNode | null
 }
 
 type ModalContextValue = {
     isOpen: boolean
-    current: ModalPayload | null
-    openModal: (payload: ModalPayload) => void
+    content: React.ReactNode | null
+    openModal: (content: React.ReactNode) => void
     closeModal: () => void
 }
 
@@ -47,27 +49,32 @@ const ModalContext = createContext<ModalContextValue | null>(null)
 
 /** ===== Provider ===== */
 export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [state, setState] = useState<ModalState>({ isOpen: false, current: null })
+    const [state, setState] = useState<ModalState>({ isOpen: false, content: null })
 
-    const openModal = useCallback((payload: ModalPayload) => {
-        setState({ isOpen: true, current: payload })
+    const openModal = useCallback((content: React.ReactNode) => {
+        setState({ isOpen: true, content })
     }, [])
 
     const closeModal = useCallback(() => {
-        setState({ isOpen: false, current: null })
+        setState({ isOpen: false, content: null })
     }, [])
 
-    const value = useMemo<ModalContextValue>(
-        () => ({
-            isOpen: state.isOpen,
-            current: state.current,
-            openModal,
-            closeModal,
-        }),
-        [state.isOpen, state.current, openModal, closeModal]
+    const value = useMemo(
+        () => ({ ...state, openModal, closeModal }),
+        [state.isOpen, state.content]
     )
 
-    return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>
+    return (
+        <ModalContext.Provider value={value}>
+            {children}
+            {/* Aquí renderizamos el contenido del modal */}
+            {state.isOpen && (
+                <Modal transparent animationType="fade" onRequestClose={closeModal}>
+                    <View style={styles.overlay}>{state.content}</View>
+                </Modal>
+            )}
+        </ModalContext.Provider>
+    )
 }
 
 /** ===== Hook ===== */
@@ -76,3 +83,12 @@ export const useModal = () => {
     if (!ctx) throw new Error("useModal debe usarse dentro de <ModalProvider />")
     return ctx
 }
+
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.8)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+})
