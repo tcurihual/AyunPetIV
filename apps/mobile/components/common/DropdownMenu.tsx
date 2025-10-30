@@ -24,7 +24,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
     const { user, signOut } = useAuthContext()
     const slideAnim = useRef(new Animated.Value(-width * 0.7)).current
 
-    // Animación de entrada del menú
     useEffect(() => {
         Animated.timing(slideAnim, {
             toValue: 0,
@@ -33,7 +32,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
         }).start()
     }, [])
 
-    // Cerrar menú con animación
     const handleClose = (callback?: () => void) => {
         Animated.timing(slideAnim, {
             toValue: -width * 0.7,
@@ -57,7 +55,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
         })
     }
 
-    // Navegación genérica
     const handleNavigate = (path: string) => {
         handleClose(() => {
             requestAnimationFrame(() => {
@@ -119,7 +116,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                             style={[styles.item, styles.logout]}
                             onPress={async () => {
                                 await signOut()
-                                handleNavigate("/(auth)")
                             }}
                         >
                             <Ionicons name="log-out-outline" size={22} color="red" />

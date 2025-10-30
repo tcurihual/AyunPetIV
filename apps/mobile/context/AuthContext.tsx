@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { setAuthToken } from "@/services/http"
+import { http, setAuthToken } from "@/services/http"
 import { authService } from "@/services/auth"
 import {
     clearAuth,
@@ -11,6 +11,7 @@ import {
     saveUser,
 } from "@/utils/storage"
 import { useRouter } from "expo-router"
+import { DeviceEventEmitter } from "react-native"
 
 type Role = 19 | 20 | 21 | 22
 
@@ -58,7 +59,10 @@ interface AuthContextType {
     user: User | null
     token: string | null
     signIn: (data: LoginPayload) => Promise<void>
-    signUp: (data: RegisterPayload, variation?: "user" | "giver" | "shelter") => Promise<SignUpResult>
+    signUp: (
+        data: RegisterPayload,
+        variation?: "user" | "giver" | "shelter"
+    ) => Promise<SignUpResult>
     signOut: () => Promise<void>
 }
 
@@ -75,19 +79,35 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             try {
                 const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
 
-                if (storedToken && storedUser) {
-                    setAuthToken(storedToken)
-                    setTokenState(storedToken)
-                    setUser(storedUser)
-                    setStatus("authenticated")
-                } else {
+                if (!storedUser) throw new Error("No user")
+
+                setUser(storedUser)
+
+                if (!storedToken) {
                     setStatus("unauthenticated")
+                    return
                 }
-            } catch (e) {
-                await clearDown()
+
+                setAuthToken(storedToken)
+                await http.get("/v1/check-auth")
+
+                setTokenState(storedToken)
+                setStatus("authenticated")
+            } catch (err) {
+                console.log("Auth init error:", err)
                 setStatus("unauthenticated")
             }
         })()
+    }, [])
+
+    useEffect(() => {
+        const sub = DeviceEventEmitter.addListener("SESSION_EXPIRED", async () => {
+            await clearDown()
+            setStatus("unauthenticated")
+            router.replace("/(auth)/(login)/")
+        })
+
+        return () => sub.remove()
     }, [])
 
     async function signIn(data: LoginPayload) {
@@ -157,7 +177,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     async function signOut() {
         await clearDown()
-        router.replace("/(auth)/login")
+        router.replace("/(auth)/(login)/")
         setStatus("unauthenticated")
     }
 

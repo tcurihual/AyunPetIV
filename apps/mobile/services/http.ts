@@ -1,6 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
-import { Platform } from "react-native"
-// Eliminado manejo extra, solo usar función global
+import { router } from "expo-router"
+import { DeviceEventEmitter, Platform } from "react-native"
 
 let accessToken: string | null = null
 
@@ -29,11 +30,10 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response && error.response.status === 401) {
-            if (typeof window !== "undefined" && (window as any).showSessionExpiredModal) {
-                ;(window as any).showSessionExpiredModal()
-            }
+    async (error) => {
+        if (error.response?.status === 401) {
+            DeviceEventEmitter.emit("SESSION_EXPIRED")
+            console.log("hola")
         }
         return Promise.reject(error)
     }

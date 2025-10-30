@@ -77,7 +77,6 @@ export default function MyProfileScreen() {
                 onPress: async () => {
                     try {
                         await signOut()
-                        router.replace("/(auth)/login")
                     } catch (error) {
                         console.error("Error al cerrar sesión:", error)
                         Alert.alert("Error", "No se pudo cerrar la sesión")

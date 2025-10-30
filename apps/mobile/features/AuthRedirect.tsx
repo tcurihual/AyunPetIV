@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter, useSegments } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
-import { isFirstLaunch } from "@/utils/storage"
 
 export default function AuthRedirect() {
     const router = useRouter()
@@ -33,7 +32,7 @@ export default function AuthRedirect() {
         }
 
         if (status === "unauthenticated" && inPrivateGroup) {
-            const target = user ? "/(auth)/remembered-login" : "/(auth)/login"
+            const target = "/(auth)/(login)/"
             if (!redirected.current && currentPath !== target) {
                 redirected.current = true
                 router.replace(target)
