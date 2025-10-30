@@ -177,12 +177,19 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             name,
         } = req.body as any
 
-        const ownerIdNum = ownerId !== undefined ? Number(ownerId) : undefined
+        const ownerIdNumFromBody = ownerId !== undefined ? Number(ownerId) : undefined
         const ageMonthsNum = age_months !== undefined ? Number(age_months) : undefined
         const ageYearsNum = age_years !== undefined ? Number(age_years) : undefined
 
+        const ownerIdFinal = ownerIdNumFromBody ?? authedUserId
+
+        if (!isAdmin(req) && ownerIdFinal !== authedUserId) {
+            throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
+        }
+
+        // Validación mínima de payload: ahora ownerIdFinal siempre existe (porque al menos tenemos authedUserId)
         if (
-            !ownerIdNum ||
+            !ownerIdFinal ||
             !title ||
             !description ||
             !species ||
@@ -195,11 +202,22 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(400, "Payload inválido")
         }
 
-        if (!isAdmin(req) && !isSelf(req, ownerIdNum))
-            throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
+        const { data: ownerRow, error: ownerErr } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", ownerIdFinal)
+            .maybeSingle()
+
+        if (ownerErr) {
+            console.error("Error al verificar owner en BD:", ownerErr)
+            throw new AppError(500, "Error al verificar propietario")
+        }
+        if (!ownerRow) {
+            throw new AppError(404, "Usuario propietario (owner) no encontrado")
+        }
 
         const petInsert: Pet["Insert"] = {
-            owner_id: ownerIdNum,
+            owner_id: ownerIdFinal,
             name: name ?? null,
             age_months: ageMonthsNum,
             age_years: ageYearsNum,
@@ -217,7 +235,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
         if (petErr || !pet) throw new AppError(500, petErr?.message ?? "Error al crear la mascota")
 
         const postInsert: Post["Insert"] = {
-            creator_id: ownerId,
+            creator_id: ownerIdFinal,
             pet_id: pet.id,
             title,
             description,
@@ -234,7 +252,6 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(500, postErr?.message ?? "Error al crear la publicación")
         }
 
-        // Si vienen archivos, subirlos al microservicio de media
         let uploadedImages: any[] = []
         try {
             const files = req.files as Express.Multer.File[] | undefined
@@ -258,6 +275,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
                             "x-user-id": String(req.user?.id ?? 0),
                             "x-user-role": String(req.user?.role ?? ""),
                         },
+                        timeout: 10000,
                     }
                 )
 
@@ -265,9 +283,12 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             }
         } catch (mediaError: any) {
             console.error("Error al subir imágenes de la publicación:", mediaError?.message)
-            // Intentar limpiar DB: eliminar post y pet
-            await supabase.from("post").delete().eq("id", post.id)
-            await supabase.from("pet").delete().eq("id", pet.id)
+            try {
+                await supabase.from("post").delete().eq("id", post.id)
+                await supabase.from("pet").delete().eq("id", pet.id)
+            } catch (cleanupErr) {
+                console.error("Error limpiando BD tras fallo de media:", cleanupErr)
+            }
             throw new AppError(500, "Error al subir las imágenes de la publicación")
         }
 

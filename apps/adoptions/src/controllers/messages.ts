@@ -45,11 +45,10 @@ export const updateMessage = async (req: AuthenticatedRequest, res: Response) =>
     const { id } = req.params
     const { description, status } = req.body
 
-    const updateData = {
-        description,
-        status,
-        updated_at: new Date().toISOString(), // ← nombre correcto de columna
-    }
+    const updateData: Record<string, any> = {}
+    if (description !== undefined) updateData.description = description
+    if (status !== undefined) updateData.status = status
+    updateData.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
         .from("message")
