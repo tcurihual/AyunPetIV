@@ -6,12 +6,13 @@ import {
     listPublicationsDocs,
     getPublicationByIdDocs,
     mineRequestWithImagesDocs,
+    registerAdoptionRequestDocs,
 } from "./endpoints/adoptions"
 import { registerAllEntitiesDocs } from "./endpoints/entities"
 
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
-import { savedPostsDocs } from "./endpoints/savedPosts"
+import { savedPostsDocs, postsDocs } from "./endpoints/savedPosts"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -28,11 +29,12 @@ export function buildOpenApi() {
     // Adoptions endpoints
     ConfirmAcceptDocs(registry)
     validateCodeDocs(registry)
+    mineRequestWithImagesDocs(registry)
+    registerAdoptionRequestDocs(registry)
 
     // Adoptions endpoints con imágenes (comunicación entre microservicios)
     listPublicationsDocs(registry)
     getPublicationByIdDocs(registry)
-    mineRequestWithImagesDocs(registry)
 
     // Entities
     registerAllEntitiesDocs(registry)
@@ -43,7 +45,9 @@ export function buildOpenApi() {
     // Messages endpoints
     registerMessagesDocs(registry)
 
+    // Saved Posts y Public Posts
     savedPostsDocs(registry)
+    postsDocs(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 

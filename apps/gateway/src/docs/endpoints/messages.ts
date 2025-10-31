@@ -11,6 +11,22 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
             "Obtiene la lista completa de mensajes registrados en la plataforma. " +
             "Cada mensaje está asociado a una publicación y muestra los datos del usuario emisor y receptor. " +
             "Este endpoint requiere autenticación con token JWT.",
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de mensajes por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         security: [{ bearerAuth: [] }],
         responses: {
             200: {
@@ -163,6 +179,10 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
                 description: "No autenticado - Token JWT requerido",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            403: {
+                description: "No autorizado (usuario no es admin ni autor)",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -193,6 +213,10 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
             },
             401: {
                 description: "No autenticado - Token JWT requerido",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado (usuario no es admin ni autor)",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
