@@ -9,6 +9,24 @@ import {
 } from "@repo/utils"
 import { supabase } from "../index"
 import axios from "axios"
+import { MEDIA_PUBLIC_URL } from "@repo/utils"
+
+const normalizeMediaUrls = (list: any[] | undefined) => {
+    const arr = Array.isArray(list) ? list : []
+    return arr.map((u) => {
+        try {
+            if (!u) return u
+            const idx = String(u).indexOf("/uploads/")
+            if (idx !== -1) {
+                const rel = String(u).substring(idx + 1)
+                return `${MEDIA_PUBLIC_URL}/${rel}`
+            }
+            return u
+        } catch (e) {
+            return u
+        }
+    })
+}
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 type RoleType = keyof typeof ROLES
@@ -294,7 +312,7 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
             const mediaListResp = await axios.get(`${MEDIA_URL}/uploads/publications/${postId}`, {
                 headers,
             })
-            const imageUrls: string[] = mediaListResp.data?.data || []
+            const imageUrls: string[] = normalizeMediaUrls(mediaListResp.data?.data || [])
             const imageNames = imageUrls.map((u) => u.split("/").pop() || "").filter(Boolean)
             if (imageNames.length > 0) {
                 await axios.delete(`${MEDIA_URL}/uploads/publications/${postId}`, {

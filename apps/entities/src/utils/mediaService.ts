@@ -1,5 +1,5 @@
 import axios from "axios"
-import { MEDIA_URL } from "@repo/utils"
+import { MEDIA_URL, MEDIA_PUBLIC_URL } from "@repo/utils"
 
 /**
  * Obtiene las URLs de imágenes de una entidad desde el microservicio de media
@@ -17,7 +17,20 @@ export const getEntityImages = async (
             `${MEDIA_URL}/uploads/${entityType}/${entityId}`,
             { timeout: 5000, headers }
         )
-        return Array.isArray(data.data) ? data.data : []
+        const list = Array.isArray(data.data) ? data.data : []
+        return list.map((u) => {
+            try {
+                if (!u) return u
+                const uploadsIndex = u.indexOf("/uploads/")
+                if (uploadsIndex !== -1) {
+                    const rel = u.substring(uploadsIndex + 1)
+                    return `${MEDIA_PUBLIC_URL}/${rel}`
+                }
+                return u
+            } catch (e) {
+                return u
+            }
+        })
     } catch (error) {
         // Si no hay imágenes o hay error, retornamos array vacío
         return []

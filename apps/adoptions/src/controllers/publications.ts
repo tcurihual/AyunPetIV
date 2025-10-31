@@ -12,7 +12,24 @@ import type {
 import axios from "axios"
 import { supabase } from "../index"
 import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
-import { MEDIA_URL } from "@repo/utils"
+import { MEDIA_URL, MEDIA_PUBLIC_URL } from "@repo/utils"
+
+const normalizeMediaUrls = (list: any[] | undefined) => {
+    const arr = Array.isArray(list) ? list : []
+    return arr.map((u) => {
+        try {
+            if (!u) return u
+            const idx = String(u).indexOf("/uploads/")
+            if (idx !== -1) {
+                const rel = String(u).substring(idx + 1)
+                return `${MEDIA_PUBLIC_URL}/${rel}`
+            }
+            return u
+        } catch (e) {
+            return u
+        }
+    })
+}
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 const isAdmin = (req: AuthenticatedRequest) => req.user?.role === ROLES.ADMIN
@@ -279,7 +296,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
                     }
                 )
 
-                uploadedImages = mediaResponse.data.data || []
+                uploadedImages = normalizeMediaUrls(mediaResponse.data.data || [])
             }
         } catch (mediaError: any) {
             console.error("Error al subir imágenes de la publicación:", mediaError?.message)
@@ -468,7 +485,7 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
                     "x-user-role": String(req.user?.role ?? ""),
                 },
             })
-            allImages = mediaResponse.data.data || []
+            allImages = normalizeMediaUrls(mediaResponse.data.data || [])
         } catch (err) {
             // continuar si no hay imágenes
         }
@@ -543,7 +560,7 @@ export const deletePublication = async (req: AuthenticatedRequest, res: Response
                     "x-user-role": String(req.user?.role ?? ""),
                 },
             })
-            const imageUrls = mediaResponse.data.data || []
+            const imageUrls = normalizeMediaUrls(mediaResponse.data.data || [])
             imagesToDelete = imageUrls.map((url: string) => url.split("/").pop() || "")
         } catch (err) {
             // continuar aunque no haya imágenes
