@@ -1,6 +1,6 @@
+import { UserReponseDTO } from "./auth/"
 import { z } from "./zod-extended"
 import { z as baseZ } from "zod"
-import { UserReponseDTO } from "./entities"
 
 export const createApiResponseSchema = <T extends baseZ.ZodTypeAny>(valuesSchema: T) =>
     BaseResponseSchema.extend({

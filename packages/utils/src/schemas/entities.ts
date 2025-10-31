@@ -2,7 +2,7 @@ import { z } from "./zod-extended"
 
 export const RoleSchema = z.object({
     id: z.number(),
-    roletype: z.enum(["admin", "user", "shelter"]),
+    roletype: z.enum(["admin", "user", "shelter", "giver"]),
 })
 
 export const UserSchema = z.object({
@@ -13,9 +13,9 @@ export const UserSchema = z.object({
     name: z.string(),
     password: z.string(),
     validated: z.boolean(),
-    address: z.string(),
-    description: z.string(),
-    createdat: z.date(),
+    address: z.string().optional(),
+    description: z.string().optional(),
+    createdat: z.date(),    
     updatedat: z.date(),
 })
 
@@ -120,16 +120,6 @@ export const AdoptionRequestFormSchema = AdoptionRequestSchema.pick({
 export const AdoptionHistoryFormSchema = AdoptionHistorySchema.omit({
     id: true,
     createdat: true,
-})
-
-export const UserReponseDTO = UserSchema.omit({ password: true })
-
-export const LoginSchema = UserSchema.pick({ email: true, password: true })
-export const RegisterSchema = UserSchema.pick({
-    name: true,
-    email: true,
-    password: true,
-    rut: true,
 })
 
 export const GiverRequestResponseSchema = z.object({
