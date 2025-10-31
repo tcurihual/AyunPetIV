@@ -11,10 +11,27 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         method: "get",
         path: "/v1/adoptions/reports",
         tags: ["Reports"],
-        summary: "Listar todos los reportes registrados",
+        summary: "Listar todos los reportes registrados (Admin)",
         description:
             "Obtiene la lista completa de reportes creados por los usuarios. " +
-            "Incluye información sobre el usuario denunciante, la publicación reportada y la descripción del reporte.",
+            "Incluye información sobre el usuario denunciante, la publicación reportada y la descripción del reporte. " +
+            "Requiere permisos de Administrador.",
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de reportes por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         security: [{ bearerAuth: [] }],
         responses: {
             200: {
@@ -29,6 +46,10 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
                 description: "No autenticado - Token JWT requerido",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            403: {
+                description: "No autorizado - Requiere rol de Administrador",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
             500: {
                 description: "Error interno del servidor",
                 content: { "application/json": { schema: ErrorValuesSchema } },
@@ -40,9 +61,10 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         method: "get",
         path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
-        summary: "Obtener un reporte específico por ID",
+        summary: "Obtener un reporte específico por ID (Admin)",
         description:
-            "Devuelve la información completa de un reporte determinado, incluyendo los datos del usuario y la publicación asociada.",
+            "Devuelve la información completa de un reporte determinado, incluyendo los datos del usuario y la publicación asociada. " +
+            "Requiere permisos de Administrador.",
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -68,6 +90,10 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
             },
             401: {
                 description: "No autenticado - Token JWT requerido",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de Administrador",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
@@ -115,9 +141,9 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         method: "put",
         path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
-        summary: "Actualizar la descripción de un reporte existente",
+        summary: "Actualizar la descripción de un reporte existente (Admin)",
         description:
-            "Permite modificar la descripción de un reporte. Solo usuarios autorizados pueden realizar esta acción.",
+            "Permite modificar la descripción de un reporte. Solo usuarios autorizados (Admin) pueden realizar esta acción.",
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -146,6 +172,14 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de Administrador",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
             404: {
                 description: "Reporte no encontrado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
@@ -157,7 +191,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         method: "delete",
         path: "/v1/adoptions/reports/{id}",
         tags: ["Reports"],
-        summary: "Eliminar un reporte existente",
+        summary: "Eliminar un reporte existente (Admin)",
         description:
             "Elimina un reporte determinado por su ID. Solo administradores tienen permisos para eliminar reportes.",
         security: [{ bearerAuth: [] }],
@@ -172,6 +206,10 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         ],
         responses: {
             200: { description: "Reporte eliminado correctamente" },
+            403: {
+                description: "No autorizado - Requiere rol de Administrador",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
             404: {
                 description: "Reporte no encontrado",
                 content: { "application/json": { schema: ErrorValuesSchema } },

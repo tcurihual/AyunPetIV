@@ -1,5 +1,6 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import { z } from "zod"
+import { ErrorValuesSchema } from "@repo/utils"
 
 const SavedPostSchema = z.object({
     id: z.number().describe("ID único de la publicación guardada"),
@@ -69,6 +70,22 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         summary: "Listar publicaciones guardadas",
         tags: ["Saved Posts"],
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de publicaciones por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Lista obtenida exitosamente",
@@ -82,8 +99,14 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
-            401: { description: "No autenticado" },
-            500: { description: "Error interno del servidor" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno del servidor",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -101,7 +124,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación guardada",
-                schema: { type: "string", example: "42" },
+                schema: { type: "integer", example: 42 },
             },
         ],
         responses: {
@@ -109,9 +132,18 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                 description: "Publicación obtenida exitosamente",
                 content: { "application/json": { schema: SavedPostSchema } },
             },
-            401: { description: "No autenticado" },
-            403: { description: "No autorizado" },
-            404: { description: "No encontrada" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -129,7 +161,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación a verificar",
-                schema: { type: "string", example: "101" },
+                schema: { type: "integer", example: 101 },
             },
         ],
         responses: {
@@ -139,7 +171,10 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                     "application/json": { schema: CheckSavedStatusSchema },
                 },
             },
-            401: { description: "No autenticado" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -154,10 +189,22 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         request: { body: { content: { "application/json": { schema: SavePostRequestSchema } } } },
         responses: {
             201: { description: "Guardada exitosamente" },
-            400: { description: "Datos inválidos" },
-            401: { description: "No autenticado" },
-            404: { description: "Publicación no encontrada" },
-            409: { description: "Ya está guardada" },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "Publicación no encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            409: {
+                description: "Ya está guardada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -175,14 +222,23 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación guardada",
-                schema: { type: "string", example: "45" },
+                schema: { type: "integer", example: 45 },
             },
         ],
         responses: {
             200: { description: "Eliminada exitosamente" },
-            401: { description: "No autenticado" },
-            403: { description: "No autorizado" },
-            404: { description: "No encontrada" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -200,13 +256,19 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación original",
-                schema: { type: "string", example: "99" },
+                schema: { type: "integer", example: 99 },
             },
         ],
         responses: {
             200: { description: "Eliminada exitosamente" },
-            401: { description: "No autenticado" },
-            404: { description: "No encontrada" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 }
@@ -232,6 +294,22 @@ export function postsDocs(registry: OpenAPIRegistry) {
         description:
             "Obtiene lista de publicaciones activas. Soporta paginación y filtros básicos.",
         tags: ["Publicaciones"],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de publicaciones por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Lista obtenida exitosamente",
@@ -245,7 +323,10 @@ export function postsDocs(registry: OpenAPIRegistry) {
                     },
                 },
             },
-            500: { description: "Error interno del servidor" },
+            500: {
+                description: "Error interno del servidor",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -262,14 +343,19 @@ export function postsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación",
-                schema: { type: "string", example: "55" },
+                schema: { type: "integer", example: 55 },
             },
         ],
         responses: {
             200: { description: "Publicación obtenida exitosamente" },
-            401: { description: "No autenticado" },
-            404: { description: "No encontrada" },
-            500: { description: "Error interno" },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -292,9 +378,18 @@ export function postsDocs(registry: OpenAPIRegistry) {
         },
         responses: {
             201: { description: "Publicación creada" },
-            400: { description: "Datos inválidos" },
-            401: { description: "No autenticado" },
-            500: { description: "Error interno" },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -312,7 +407,7 @@ export function postsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación a actualizar",
-                schema: { type: "string", example: "55" },
+                schema: { type: "integer", example: 55 },
             },
         ],
         request: {
@@ -320,10 +415,22 @@ export function postsDocs(registry: OpenAPIRegistry) {
         },
         responses: {
             200: { description: "Actualizada" },
-            400: { description: "Datos inválidos" },
-            401: { description: "No autenticado" },
-            403: { description: "No autorizado" },
-            404: { description: "No encontrada" },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 
@@ -341,14 +448,23 @@ export function postsDocs(registry: OpenAPIRegistry) {
                 in: "path",
                 required: true,
                 description: "ID de la publicación a eliminar",
-                schema: { type: "string", example: "55" },
+                schema: { type: "integer", example: 55 },
             },
         ],
         responses: {
             200: { description: "Eliminada exitosamente" },
-            401: { description: "No autenticado" },
-            403: { description: "No autorizado" },
-            404: { description: "No encontrada" },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            404: {
+                description: "No encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 }

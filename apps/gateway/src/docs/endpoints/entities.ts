@@ -35,8 +35,26 @@ export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
         method: "get",
         path: "/v1/entities/giverRequests",
         tags: ["GiverRequests"],
+        summary: "Listar solicitudes de dadores pendientes",
         description:
-            "Obtiene las organizaciones o solicitudes de dadores pendientes de validación.",
+            "Obtiene un listado paginado de organizaciones o solicitudes de dadores pendientes de validación. Requiere permisos de administrador.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de solicitudes por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Organizaciones no validadas obtenidas correctamente",
@@ -44,6 +62,14 @@ export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
             },
             400: {
                 description: "Error al obtener organizaciones",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado - Requiere rol de administrador",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
@@ -104,7 +130,24 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history",
         tags: ["AdoptionHistory"],
         summary: "Listar historiales de adopción",
-        description: "Obtiene un listado de historiales de adopción registrados en el sistema.",
+        description: "Obtiene un listado paginado de historiales de adopción. Requiere autenticación.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de historiales por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Historial de adopciones obtenido exitosamente",
@@ -112,6 +155,14 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
             },
             400: {
                 description: "Error al obtener el historial de adopciones",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
@@ -122,7 +173,8 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history/{id}",
         tags: ["AdoptionHistory"],
         summary: "Obtener historial de adopción por ID",
-        description: "Retorna el historial de adopción de una mascota específica usando su ID.",
+        description: "Retorna el historial de adopción de una mascota específica usando su ID. Requiere autenticación.",
+        security: [{ bearerAuth: [] }],
         parameters: [
             {
                 name: "id",
@@ -136,6 +188,10 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
             200: {
                 description: "Historial de adopción obtenido exitosamente",
                 content: { "application/json": { schema: AdoptionHistoryByIdResponseSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
             },
             404: {
                 description: "Historial no encontrado",
@@ -290,6 +346,22 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
             "Obtiene un listado paginado de usuarios. Solo accesible para administradores. " +
             "Las imágenes de perfil se obtienen desde el microservicio de Media.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de usuarios por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Usuarios obtenidos exitosamente",
@@ -353,8 +425,24 @@ export function registerAdoptionRequestsPaths(registry: OpenAPIRegistry) {
         tags: ["AdoptionRequests"],
         summary: "Listar solicitudes de adopción",
         description:
-            "Obtiene un listado de todas las solicitudes de adopción, incluyendo las imágenes de los posts asociados.",
+            "Obtiene un listado paginado de todas las solicitudes de adopción, incluyendo las imágenes de los posts asociados.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de solicitudes por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
         responses: {
             200: {
                 description: "Solicitudes obtenidas exitosamente",
@@ -368,6 +456,10 @@ export function registerAdoptionRequestsPaths(registry: OpenAPIRegistry) {
             },
             401: {
                 description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },
@@ -464,6 +556,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         summary: "Validar un código de verificación",
         description:
             "Valida un código previamente generado. Espera `code`, `type` y `userId` en el body.",
+        security: [{ bearerAuth: [] }],
         request: {
             body: {
                 content: {
@@ -490,6 +583,10 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
                 description: "Código inválido o expirado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
             404: {
                 description: "Código no encontrado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
@@ -503,13 +600,14 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/verification-codes/user/{userId}",
         tags: ["VerificationCodes"],
         security: [{ bearerAuth: [] }],
+        summary: "Obtener códigos por ID de usuario",
         description: "Obtiene los códigos de verificación asociados a un usuario específico.",
         parameters: [
             {
                 name: "userId",
                 in: "path",
                 required: true,
-                schema: { type: "string", pattern: "^\\d+$" },
+                schema: { type: "integer", example: 10 },
                 description: "ID del usuario",
             },
         ],
@@ -526,11 +624,27 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
                 description: "Sin permisos",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            404: {
+                description: "Usuario no encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
         },
     })
 }
 
 export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
+    const security = [{ bearerAuth: [] }];
+    const authResponses = {
+        401: {
+            description: "No autenticado",
+            content: { "application/json": { schema: ErrorValuesSchema } },
+        },
+        403: {
+            description: "No autorizado (permisos insuficientes)",
+            content: { "application/json": { schema: ErrorValuesSchema } },
+        },
+    };
+
     // Listar respuestas
     registry.registerPath({
         method: "get",
@@ -538,13 +652,15 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         tags: ["FormResponses"],
         summary: "Listar respuestas de formulario por id_post_form",
         description:
-            "Obtiene las respuestas de formularios filtradas por el parámetro `id_post_form` (query).",
+            "Obtiene las respuestas de formularios filtradas por el parámetro `id_post_form` (query). Requiere autenticación.",
+        security,
         parameters: [
             {
                 name: "id_post_form",
                 in: "query",
                 required: true,
                 schema: { type: "integer" },
+                description: "ID del formulario de la publicación"
             },
         ],
         responses: {
@@ -564,6 +680,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                 description: "Error en parámetros",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            ...authResponses,
         },
     })
 
@@ -573,7 +690,8 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses",
         tags: ["FormResponses"],
         summary: "Crear una nueva respuesta de formulario",
-        description: "Crea una nueva respuesta para un formulario asociado a una publicación.",
+        description: "Crea una nueva respuesta para un formulario asociado a una publicación. Requiere autenticación.",
+        security,
         request: {
             body: {
                 content: {
@@ -600,6 +718,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                 description: "Error en el cuerpo",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            ...authResponses,
         },
     })
 
@@ -609,8 +728,9 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/{id}",
         tags: ["FormResponses"],
         summary: "Actualizar una respuesta de formulario",
-        description: "Actualiza la respuesta de un formulario identificado por su ID.",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        description: "Actualiza la respuesta de un formulario identificado por su ID. Requiere autenticación.",
+        security,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" }, description: "ID de la respuesta" }],
         request: {
             body: {
                 content: {
@@ -633,10 +753,15 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                     },
                 },
             },
+            400: {
+                description: "Datos inválidos",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
             404: {
                 description: "No encontrada",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            ...authResponses,
         },
     })
 
@@ -646,8 +771,9 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/{id}",
         tags: ["FormResponses"],
         summary: "Eliminar una respuesta de formulario",
-        description: "Elimina una respuesta de formulario por su ID.",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        description: "Elimina una respuesta de formulario por su ID. Requiere autenticación.",
+        security,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" }, description: "ID de la respuesta" }],
         responses: {
             200: {
                 description: "Respuesta eliminada exitosamente",
@@ -665,6 +791,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                 description: "No encontrada",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            ...authResponses,
         },
     })
 
@@ -675,8 +802,9 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         tags: ["FormResponses"],
         summary: "Obtener respuestas asociadas a una publicación",
         description:
-            "Lista las respuestas de formulario asociadas a la publicación indicada por postId.",
-        parameters: [{ name: "postId", in: "path", required: true, schema: { type: "integer" } }],
+            "Lista las respuestas de formulario asociadas a la publicación indicada por postId. Requiere autenticación.",
+        security,
+        parameters: [{ name: "postId", in: "path", required: true, schema: { type: "integer" }, description: "ID de la publicación" }],
         responses: {
             200: {
                 description: "Respuestas obtenidas exitosamente",
@@ -691,9 +819,14 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                 },
             },
             400: {
-                description: "Error",
+                description: "Error en parámetros",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
+            404: {
+                description: "Publicación no encontrada",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            ...authResponses,
         },
     })
 }
