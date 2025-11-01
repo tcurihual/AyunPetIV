@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
 import { useColorScheme } from "react-native"
 
-import { AuthProvider, useAuthContext } from "@/context/AuthContext"
+import { AuthProvider } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
@@ -18,24 +18,8 @@ import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { PublicationProvider } from "@/context/PublicationContext"
-import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
-// function RoleRedirect() {
-//     const { user } = useAuthContext()
-
-//     useEffect(() => {
-//         if (!user) return
-
-//         if (user.role === 20) {
-//             router.replace("/(shelter)")
-//         } else if (user.role === 19 || user.role === 21) {
-//             router.replace("/(home)")
-//         }
-//     }, [user])
-
-//     return null
-// }
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
