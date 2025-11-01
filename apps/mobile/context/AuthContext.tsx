@@ -63,7 +63,8 @@ interface AuthContextType {
         data: RegisterPayload,
         variation?: "user" | "giver" | "shelter"
     ) => Promise<SignUpResult>
-    signOut: () => Promise<void>
+    signOut: (partial?: boolean) => Promise<void>
+    clearFull: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -175,8 +176,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
     }
 
-    async function signOut() {
-        await clearDown()
+    async function signOut(full: boolean = false) {
+        if (full) await clearFull()
+        else await clearDown()
         router.replace("/(auth)/(login)/")
         setStatus("unauthenticated")
     }
@@ -195,6 +197,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setTokenState(null)
     }
 
+    async function clearFull() {
+        await clearAuth()
+        setAuthToken(null)
+        setTokenState(null)
+        setUser(null)
+    }
+
     const value = useMemo(
         () => ({
             status,
@@ -203,6 +212,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             signIn,
             signUp,
             signOut,
+            clearFull,
         }),
         [status, user, token]
     )
