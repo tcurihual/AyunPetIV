@@ -48,7 +48,6 @@ export const PostResponsesProvider: React.FC<React.PropsWithChildren> = ({ child
     }
 
     async function listByPostForm(id_post_form: number) {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         lastQueryRef.current = { kind: "byPostForm", id_post_form }
@@ -63,14 +62,13 @@ export const PostResponsesProvider: React.FC<React.PropsWithChildren> = ({ child
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener respuestas del formulario"
             setError(msg)
-            throw e
+            console.error(msg, e)
         } finally {
             setLoading(false)
         }
     }
 
     async function listByPublication(postId: number) {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         lastQueryRef.current = { kind: "byPublication", postId }
@@ -86,40 +84,44 @@ export const PostResponsesProvider: React.FC<React.PropsWithChildren> = ({ child
             const msg =
                 e?.response?.data?.message || "Error al obtener respuestas de la publicación"
             setError(msg)
-            throw e
+            console.error(msg, e)
         } finally {
             setLoading(false)
         }
     }
 
     async function create(data: CreateResponsePayload): Promise<FormResponse> {
-        assertAuthenticated()
+        // No verificamos usuario aquí, el backend lo hace con JWT
         setLoading(true)
         setError(null)
         try {
-            const id_user = Number(user!.id)
+            // Ya no enviamos id_user, el backend lo obtiene del JWT
+            const payload = {
+                id_post_form: data.id_post_form,
+                answer: data.answer,
+            }
+
+            console.log("📤 PostResponsesContext.create - Payload:", payload)
+
             const response = await http.post<{
                 type: "success" | "error"
                 message: string
                 data: FormResponse
-            }>(`/v1/entities/form-responses`, {
-                id_user,
-                id_post_form: data.id_post_form,
-                answer: data.answer,
-            })
+            }>(`/v1/entities/form-responses`, payload)
 
             const created = response.data.data
+            console.log("✅ PostResponsesContext.create - Respuesta del backend:", created)
             setResponses((prev) => [created, ...prev])
             return created
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al crear respuesta"
             setError(msg)
+            console.error("❌ PostResponsesContext.create - Error:", e)
             throw e
         } finally {
             setLoading(false)
         }
     }
-
     async function update(id: number, answer: string): Promise<FormResponse> {
         assertAuthenticated()
         setLoading(true)

@@ -87,9 +87,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
 
         const imageUri =
-            postImages[0] ||
-            petImages[0] ||
-            "https://placehold.co/400x400?text=Mascota"
+            postImages[0] || petImages[0] || "https://placehold.co/400x400?text=Mascota"
 
         return {
             id: String(post?.id ?? ""),
@@ -206,9 +204,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             const numericId = Number(postId)
             if (!Number.isFinite(numericId) || numericId <= 0) return null
 
-            const existing = publications.find(
-                (pub) => Number(pub.postId ?? pub.id) === numericId
-            )
+            const existing = publications.find((pub) => Number(pub.postId ?? pub.id) === numericId)
             if (existing) {
                 return existing
             }

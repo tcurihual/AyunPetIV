@@ -10,20 +10,17 @@ export interface Question {
     type: QuestionType
     created_at: string
     updated_at: string
-    active: boolean
 }
 
 export interface CreateQuestionPayload {
     content: string
     type: QuestionType
-    active?: boolean
 }
 
 export type UpdateQuestionPayload = Partial<CreateQuestionPayload>
 
 interface GetParams {
     q?: string
-    active?: boolean
     page?: number
     pageSize?: number
 }
@@ -60,7 +57,18 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function getQuestions(params?: GetParams) {
-        assertAuthenticated()
+        console.log(
+            "🔍 QuestionContext.getQuestions: Starting, user:",
+            user ? `ID ${user.id}` : "null"
+        )
+
+        if (!user) {
+            const msg = "Usuario no autenticado"
+            console.error("❌ QuestionContext.getQuestions: No user found")
+            setError(msg)
+            throw new Error(msg)
+        }
+
         setLoading(true)
         setError(null)
         lastParamsRef.current = params
@@ -68,12 +76,13 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
         try {
             const search = new URLSearchParams()
             if (params?.q) search.set("q", params.q)
-            if (typeof params?.active === "boolean") search.set("active", String(params.active))
             if (params?.page) search.set("page", String(params.page))
             if (params?.pageSize) search.set("pageSize", String(params.pageSize))
 
             const qs = search.toString()
             const url = `/v1/entities/questions${qs ? `?${qs}` : ""}`
+
+            console.log("🔍 QuestionContext: Fetching questions from:", url)
 
             const response = await http.get<{
                 type: "success" | "error"
@@ -84,10 +93,15 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
                 total?: number
             }>(url)
 
+            console.log("✅ QuestionContext: Response received:", response.data)
+
             const items = Array.isArray(response.data.data) ? response.data.data : []
+            console.log("📋 QuestionContext: Questions loaded:", items.length, items)
             setQuestions(items)
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener preguntas"
+            console.error("❌ QuestionContext: Error fetching questions:", e)
+            console.error("❌ QuestionContext: Error details:", e?.response?.data)
             setError(msg)
             throw e
         } finally {
@@ -172,7 +186,7 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
                 data: { id: number }
             }>(`/v1/entities/questions/${id}`)
 
-            setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, active: false } : q)))
+            setQuestions((prev) => prev.filter((q) => q.id !== id))
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al eliminar pregunta"
             setError(msg)

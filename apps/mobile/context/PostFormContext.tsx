@@ -6,8 +6,8 @@ export type QuestionType = "text" | "number" | "boolean" | "select" | "multisele
 
 export interface PostFormItem {
     id: number
-    id_post: number
-    id_question: number
+    post_id: number
+    question_id: number
     created_at: string
     question: {
         id: number
@@ -24,8 +24,8 @@ export interface ListPostFormParams {
 }
 
 export interface CreatePostFormPayload {
-    id_post: number
-    id_question: number
+    post_id: number
+    question_id: number
 }
 
 export type UpdatePostFormPayload = Partial<CreatePostFormPayload>
@@ -54,12 +54,7 @@ export const PostFormProvider: React.FC<React.PropsWithChildren> = ({ children }
     const lastParamsRef = useRef<ListPostFormParams | null>(null)
     const { user } = useAuthContext()
 
-    function assertAuthenticated() {
-        if (!user) throw new Error("Usuario no autenticado")
-    }
-
     async function listByPost(params: ListPostFormParams) {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         lastParamsRef.current = params
@@ -81,7 +76,7 @@ export const PostFormProvider: React.FC<React.PropsWithChildren> = ({ children }
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener formularios del post"
             setError(msg)
-            throw e
+            console.error(msg, e)
         } finally {
             setLoading(false)
         }
@@ -95,7 +90,6 @@ export const PostFormProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function create(data: CreatePostFormPayload): Promise<PostFormItem> {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         try {
@@ -118,7 +112,6 @@ export const PostFormProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function update(id: number, data: UpdatePostFormPayload): Promise<PostFormItem> {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         try {
@@ -141,7 +134,6 @@ export const PostFormProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function remove(id: number): Promise<void> {
-        assertAuthenticated()
         setLoading(true)
         setError(null)
         try {

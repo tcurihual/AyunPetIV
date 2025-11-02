@@ -3,7 +3,7 @@ import { QuestionCreateSchema, QuestionUpdateSchema } from "@repo/utils"
 import { supabase } from "../index"
 
 export const listQuestions = async (req: Request, res: Response) => {
-    const { q, active, page = "1", pageSize = "20" } = req.query as any
+    const { q, page = "1", pageSize = "20" } = req.query as any
     const take = Math.max(1, Math.min(100, parseInt(pageSize)))
     const from = (Math.max(1, parseInt(page)) - 1) * take
 
@@ -16,10 +16,6 @@ export const listQuestions = async (req: Request, res: Response) => {
         // Encadenamos filtros condicionalmente
         if (typeof q === "string" && q.trim()) {
             supabaseQuery = supabaseQuery.ilike("content", `%${q}%`)
-        }
-
-        if (typeof active !== "undefined") {
-            supabaseQuery = supabaseQuery.eq("active", String(active) === "true")
         }
 
         const { data, error, count } = await supabaseQuery.range(from, from + take - 1)
@@ -139,7 +135,7 @@ export const deleteQuestion = async (req: Request, res: Response) => {
     try {
         const { data, error } = await supabase
             .from("question")
-            .update({ active: false, updated_at: new Date().toISOString() })
+            .delete()
             .eq("id", id)
             .select("id")
             .maybeSingle()

@@ -19,9 +19,9 @@ import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
 import { PublicationProvider } from "@/context/PublicationContext"
 import { QuestionProvider } from "@/context/QuestionContext"
-import { router } from "expo-router"
 import { PostFormProvider } from "@/context/PostFormContext"
 import { PostResponsesProvider } from "@/context/PostResponsesContext"
+import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
 // function RoleRedirect() {
@@ -55,47 +55,51 @@ export default function RootLayout() {
     return (
         <AuthProvider>
             <QuestionProvider>
-                <MessageProvider>
-                    <ReportProvider>
-                        <AdoptionRequestProvider>
-                            <PublicationProvider>
-                                <ModalProvider>
-                                    <AlertProvider>
-                                        <LoadingProvider>
-                                            <ThemeProvider
-                                                value={
-                                                    colorScheme === "dark"
-                                                        ? DarkTheme
-                                                        : DefaultTheme
-                                                }
-                                            >
-                                                <Stack
-                                                    initialRouteName="splash"
-                                                    screenOptions={{ headerShown: false }}
-                                                >
-                                                    <Stack.Screen name="splash" />
-                                                    <Stack.Screen name="(auth)" />
-                                                    <Stack.Screen name="(home)" />
-                                                    <Stack.Screen name="(shelter)" />
-                                                    <Stack.Screen name="+not-found" />
-                                                </Stack>
+                <PostFormProvider>
+                    <PostResponsesProvider>
+                        <MessageProvider>
+                            <ReportProvider>
+                                <AdoptionRequestProvider>
+                                    <PublicationProvider>
+                                        <ModalProvider>
+                                            <AlertProvider>
+                                                <LoadingProvider>
+                                                    <ThemeProvider
+                                                        value={
+                                                            colorScheme === "dark"
+                                                                ? DarkTheme
+                                                                : DefaultTheme
+                                                        }
+                                                    >
+                                                        <Stack
+                                                            initialRouteName="splash"
+                                                            screenOptions={{ headerShown: false }}
+                                                        >
+                                                            <Stack.Screen name="splash" />
+                                                            <Stack.Screen name="(auth)" />
+                                                            <Stack.Screen name="(home)" />
+                                                            <Stack.Screen name="(shelter)" />
+                                                            <Stack.Screen name="+not-found" />
+                                                        </Stack>
 
-                                                <ModalHost />
-                                                <Alert />
-                                                <AuthRedirect />
-                                                {/* <RoleRedirect /> */}
-                                                <StatusBar
-                                                    style="inverted"
-                                                    backgroundColor="#000"
-                                                />
-                                            </ThemeProvider>
-                                        </LoadingProvider>
-                                    </AlertProvider>
-                                </ModalProvider>
-                            </PublicationProvider>
-                        </AdoptionRequestProvider>
-                    </ReportProvider>
-                </MessageProvider>
+                                                        <ModalHost />
+                                                        <Alert />
+                                                        <AuthRedirect />
+                                                        {/* <RoleRedirect /> */}
+                                                        <StatusBar
+                                                            style="inverted"
+                                                            backgroundColor="#000"
+                                                        />
+                                                    </ThemeProvider>
+                                                </LoadingProvider>
+                                            </AlertProvider>
+                                        </ModalProvider>
+                                    </PublicationProvider>
+                                </AdoptionRequestProvider>
+                            </ReportProvider>
+                        </MessageProvider>
+                    </PostResponsesProvider>
+                </PostFormProvider>
             </QuestionProvider>
         </AuthProvider>
     )

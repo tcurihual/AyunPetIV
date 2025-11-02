@@ -15,18 +15,18 @@ const ListQuerySchema = z.object({
 })
 
 const CreateBodySchema = z.object({
-    id_post: z.number().int().positive(),
-    id_question: z.number().int().positive(),
+    post_id: z.number().int().positive(),
+    question_id: z.number().int().positive(),
 })
 
 const UpdateBodySchema = z
     .object({
-        id_post: z.number().int().positive().optional(),
-        id_question: z.number().int().positive().optional(),
+        post_id: z.number().int().positive().optional(),
+        question_id: z.number().int().positive().optional(),
     })
-    .refine((d) => d.id_post !== undefined || d.id_question !== undefined, {
-        message: "Debe enviar al menos uno de: id_post, id_question",
-        path: ["id_post", "id_question"],
+    .refine((d) => d.post_id !== undefined || d.question_id !== undefined, {
+        message: "Debe enviar al menos uno de: post_id, question_id",
+        path: ["post_id", "question_id"],
     })
 
 function badRequest(res: Response, message: string, details?: any) {
@@ -49,14 +49,14 @@ export async function list(req: Request, res: Response) {
         .select(
             `
       id,
-      id_post,
-      id_question,
+      post_id,
+      question_id,
       created_at,
       question:question(id, content, type)
       `,
             { count: "exact" }
         )
-        .eq("id_post", post_id)
+        .eq("post_id", post_id)
         .order(col as "created_at" | "id", { ascending: dir === "asc" })
         .range(from, to)
 
@@ -73,55 +73,87 @@ export async function list(req: Request, res: Response) {
 export async function create(req: Request, res: Response) {
     const parsed = CreateBodySchema.safeParse(req.body)
     if (!parsed.success) {
+        console.error("❌ Validation error en post_form create:", parsed.error.flatten())
         return res.status(422).json({
             type: "error",
             message: "VALIDATION_ERROR",
             details: parsed.error.flatten(),
         })
     }
-    const { id_post, id_question } = parsed.data
+    const { post_id, question_id } = parsed.data
+    console.log(`📋 Creating post_form: post_id=${post_id}, question_id=${question_id}`)
 
     const { data: post, error: postErr } = await supabase
         .from("post")
         .select("id")
-        .eq("id", id_post)
+        .eq("id", post_id)
         .maybeSingle()
-    if (postErr) return res.status(500).json({ type: "error", message: postErr.message })
-    if (!post) return res.status(404).json({ type: "error", message: "POST_NOT_FOUND" })
+    if (postErr) {
+        console.error("❌ Error checking post existence:", postErr.message)
+        return res.status(500).json({ type: "error", message: postErr.message })
+    }
+    if (!post) {
+        console.error(`❌ POST_NOT_FOUND: post_id=${post_id}`)
+        return res.status(404).json({ type: "error", message: "POST_NOT_FOUND" })
+    }
+    console.log(`✅ Post exists: id=${post.id}`)
 
     const { data: question, error: qErr } = await supabase
         .from("question")
         .select("id")
-        .eq("id", id_question)
+        .eq("id", question_id)
         .maybeSingle()
-    if (qErr) return res.status(500).json({ type: "error", message: qErr.message })
-    if (!question) return res.status(404).json({ type: "error", message: "QUESTION_NOT_FOUND" })
+    if (qErr) {
+        console.error("❌ Error checking question existence:", qErr.message)
+        return res.status(500).json({ type: "error", message: qErr.message })
+    }
+    if (!question) {
+        console.error(`❌ QUESTION_NOT_FOUND: question_id=${question_id}`)
+        return res.status(404).json({ type: "error", message: "QUESTION_NOT_FOUND" })
+    }
+    console.log(`✅ Question exists: id=${question.id}`)
 
+    console.log(`🔍 Checking for duplicates...`)
     const { data: dup, error: dupErr } = await supabase
         .from(TABLE)
         .select("id")
-        .eq("id_post", id_post)
-        .eq("id_question", id_question)
+        .eq("post_id", post_id)
+        .eq("question_id", question_id)
         .maybeSingle()
-    if (dupErr) return res.status(500).json({ type: "error", message: dupErr.message })
-    if (dup) return res.status(409).json({ type: "error", message: "ALREADY_EXISTS" })
+    if (dupErr) {
+        console.error("❌ Error checking duplicates:", dupErr.message)
+        return res.status(500).json({ type: "error", message: dupErr.message })
+    }
+    if (dup) {
+        console.error(`❌ ALREADY_EXISTS: duplicate found with id=${dup.id}`)
+        return res.status(409).json({ type: "error", message: "ALREADY_EXISTS" })
+    }
+    console.log(`✅ No duplicates found`)
 
     const now = new Date().toISOString()
+    console.log(
+        `💾 Inserting into database: post_id=${post_id}, question_id=${question_id}, created_at=${now}`
+    )
     const { data, error } = await supabase
         .from(TABLE)
-        .insert({ id_post, id_question, created_at: now })
+        .insert({ post_id, question_id, created_at: now })
         .select(
             `
       id,
-      id_post,
-      id_question,
+      post_id,
+      question_id,
       created_at,
       question:question(id, content, type)
       `
         )
         .single()
 
-    if (error) return res.status(500).json({ type: "error", message: error.message })
+    if (error) {
+        console.error("❌ Error inserting post_form:", error)
+        console.error("❌ Error details:", JSON.stringify(error, null, 2))
+        return res.status(500).json({ type: "error", message: error.message })
+    }
+    console.log(`✅ post_form created successfully:`, data)
     return res.status(201).json({ type: "success", message: "CREATED", data })
 }
 
@@ -139,56 +171,56 @@ export async function update(req: Request, res: Response) {
             details: parsed.error.flatten(),
         })
     }
-    const { id_post, id_question } = parsed.data
+    const { post_id, question_id } = parsed.data
 
     const { data: row, error: rowErr } = await supabase
         .from(TABLE)
-        .select("id, id_post, id_question")
+        .select("id, post_id, question_id")
         .eq("id", id)
-        .maybeSingle()
+        .maybeSingle<{ id: number; post_id: number; question_id: number }>()
 
     if (rowErr) return res.status(500).json({ type: "error", message: rowErr.message })
     if (!row) return res.status(404).json({ type: "error", message: "NOT_FOUND" })
 
-    const next_post = id_post ?? row.id_post
-    const next_question = id_question ?? row.id_question
+    const next_post = post_id ?? row.post_id
+    const next_question = question_id ?? row.question_id
 
     if (typeof next_post !== "number" || typeof next_question !== "number") {
         return res.status(422).json({
             type: "error",
-            message: "id_post e id_question no pueden ser null",
+            message: "post_id e question_id no pueden ser null",
         })
     }
 
     const nextPostNum: number = next_post
     const nextQuestionNum: number = next_question
 
-    if (id_post !== undefined) {
+    if (post_id !== undefined) {
         const { data: post, error: postErr } = await supabase
             .from("post")
             .select("id")
-            .eq("id", id_post)
+            .eq("id", post_id)
             .maybeSingle()
         if (postErr) return res.status(500).json({ type: "error", message: postErr.message })
         if (!post) return res.status(404).json({ type: "error", message: "POST_NOT_FOUND" })
     }
 
-    if (id_question !== undefined) {
+    if (question_id !== undefined) {
         const { data: question, error: qErr } = await supabase
             .from("question")
             .select("id")
-            .eq("id", id_question)
+            .eq("id", question_id)
             .maybeSingle()
         if (qErr) return res.status(500).json({ type: "error", message: qErr.message })
         if (!question) return res.status(404).json({ type: "error", message: "QUESTION_NOT_FOUND" })
     }
 
-    if (nextPostNum !== row.id_post || nextQuestionNum !== row.id_question) {
+    if (nextPostNum !== row.post_id || nextQuestionNum !== row.question_id) {
         const { data: dup, error: dupErr } = await supabase
             .from(TABLE)
             .select("id")
-            .eq("id_post", nextPostNum)
-            .eq("id_question", nextQuestionNum)
+            .eq("post_id", nextPostNum)
+            .eq("question_id", nextQuestionNum)
             .maybeSingle()
         if (dupErr) return res.status(500).json({ type: "error", message: dupErr.message })
         if (dup && dup.id !== id) {
@@ -197,8 +229,8 @@ export async function update(req: Request, res: Response) {
     }
 
     const patch: Record<string, any> = {}
-    if (id_post !== undefined) patch.id_post = id_post
-    if (id_question !== undefined) patch.id_question = id_question
+    if (post_id !== undefined) patch.post_id = post_id
+    if (question_id !== undefined) patch.question_id = question_id
 
     const { data, error } = await supabase
         .from(TABLE)
@@ -207,8 +239,8 @@ export async function update(req: Request, res: Response) {
         .select(
             `
       id,
-      id_post,
-      id_question,
+      post_id,
+      question_id,
       created_at,
       question:question(id, content, type)
       `
