@@ -104,8 +104,8 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
                     <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0; background-color:#f4f4f4;">
                         <tr>
                             <td align="center">
-                                <table width="600" cellpadding="0" cellspacing="0" 
-                                    style="background-color:#ffffff; border-radius:10px; overflow:hidden; 
+                                <table width="600" cellpadding="0" cellspacing="0"
+                                    style="background-color:#ffffff; border-radius:10px; overflow:hidden;
                                     box-shadow:0 2px 10px rgba(0,0,0,0.1);">
                                     <tr>
                                         <td style="background-color:#FFD24C; padding:40px 30px; text-align:center;">
@@ -118,7 +118,7 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
                                         <td style="padding:40px 30px; text-align:center;">
                                             <p style="font-size:16px; color:#333; line-height:1.6;">
                                                 Hola <strong>${user.name}</strong>,
-                                                tu cuenta de <strong>dador de adopción</strong> ha sido revisada y validada 
+                                                tu cuenta de <strong>dador de adopción</strong> ha sido revisada y validada
                                                 por el equipo de <strong>Ayün Pet</strong>.
                                             </p>
                                             <p style="font-size:16px; color:#555;">
@@ -127,15 +127,15 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
                                             <a href="${
                                                 process.env.WEB_URL ?? "https://ayunpet.vercel.app"
                                             }"
-                                                style="display:inline-block; margin-top:25px; padding:12px 24px; 
-                                                background-color:#FFD24C; color:#000; border-radius:8px; 
+                                                style="display:inline-block; margin-top:25px; padding:12px 24px;
+                                                background-color:#FFD24C; color:#000; border-radius:8px;
                                                 text-decoration:none; font-weight:bold;">
                                                 Ir a Ayün Pet
                                             </a>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="background-color:#f8f9fa; text-align:center; padding:15px; 
+                                        <td style="background-color:#f8f9fa; text-align:center; padding:15px;
                                             font-size:12px; color:#666;">
                                             © 2025 Ayün Pet — Todos los derechos reservados.
                                         </td>
@@ -161,7 +161,7 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
 
         // 4️⃣ Respuesta final
         return AppResponse(res, 200, "Cuenta validada exitosamente", {
-            userId: user.id,
+            id: user.id,
             email: user.email,
             validated: true,
         })

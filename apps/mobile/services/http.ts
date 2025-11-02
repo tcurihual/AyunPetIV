@@ -33,7 +33,6 @@ http.interceptors.response.use(
     async (error) => {
         if (error.response?.status === 401) {
             DeviceEventEmitter.emit("SESSION_EXPIRED")
-            console.log("hola")
         }
         return Promise.reject(error)
     }

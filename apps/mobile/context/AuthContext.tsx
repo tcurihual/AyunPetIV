@@ -64,7 +64,6 @@ interface AuthContextType {
         variation?: "user" | "giver" | "shelter"
     ) => Promise<SignUpResult>
     signOut: (partial?: boolean) => Promise<void>
-    clearFull: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -212,7 +211,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             signIn,
             signUp,
             signOut,
-            clearFull,
         }),
         [status, user, token]
     )

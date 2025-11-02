@@ -189,7 +189,8 @@ const buildAdoptionEmailContext = async (request: {
             console.error("Error fetching pet for adoption email context:", petErr)
         } else if (petRow) {
             context.pet.name = petRow.name || context.pet.name
-            context.pet.species = formatEnumValue(petRow.species, SPECIES_LABELS) ?? context.pet.species
+            context.pet.species =
+                formatEnumValue(petRow.species, SPECIES_LABELS) ?? context.pet.species
             context.pet.gender = formatEnumValue(petRow.gender, GENDER_LABELS) ?? context.pet.gender
             context.pet.size = formatEnumValue(petRow.size, SIZE_LABELS) ?? context.pet.size
             context.pet.age =
@@ -210,8 +211,8 @@ const buildAdoptionEmailContext = async (request: {
 
 export const validateCode = async (req: Request, res: Response) => {
     try {
-        const { code, requestId } = req.body as { code: string; requestId: number }
-        if (!code || !requestId) throw new AppError(400, "code y requestId son requeridos")
+        const { code, request_id } = req.body as { code: string; request_id: number }
+        if (!code || !request_id) throw new AppError(400, "code y request_id son requeridos")
 
         const { data: vcode, error: vErr } = await supabase
             .from("verification_code")
@@ -236,7 +237,7 @@ export const validateCode = async (req: Request, res: Response) => {
         const { data: request, error: rErr } = await supabase
             .from("adoption_request")
             .select("id, post_id, requester_id, post_owner_id, status")
-            .eq("id", requestId)
+            .eq("id", request_id)
             .single()
 
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
@@ -392,14 +393,11 @@ export const listMyRequests = async (req: Request, res: Response) => {
                 .select("id, name")
                 .in("id", requesterIds)
             if (requesterErr) throw new AppError(500, requesterErr.message)
-            requesterMap = (requesterRows ?? []).reduce(
-                (acc: Record<number, string>, row: any) => {
-                    const key = Number(row.id)
-                    if (Number.isFinite(key)) acc[key] = row.name ?? ""
-                    return acc
-                },
-                {}
-            )
+            requesterMap = (requesterRows ?? []).reduce((acc: Record<number, string>, row: any) => {
+                const key = Number(row.id)
+                if (Number.isFinite(key)) acc[key] = row.name ?? ""
+                return acc
+            }, {})
         }
 
         const requestsWithImages = (requests ?? []).map((r: any) => ({
@@ -420,8 +418,6 @@ export const listMyRequests = async (req: Request, res: Response) => {
 }
 
 export const confirmAccept = async (req: Request, res: Response) => {
-    const { id } = req.params
-
     try {
         const id = Number(req.params.id)
         if (Number.isNaN(id)) throw new AppError(400, "ID inválido")
@@ -434,7 +430,8 @@ export const confirmAccept = async (req: Request, res: Response) => {
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
 
         if (!req.user?.id) throw new AppError(401, "Usuario no autenticado")
-        if (request.post_owner_id !== req.user.id) throw new AppError(403, "No tienes permiso para aceptar esta solicitud")
+        if (request.post_owner_id !== req.user.id)
+            throw new AppError(403, "No tienes permiso para aceptar esta solicitud")
 
         const { error: updErr } = await supabase
             .from("adoption_request")
@@ -747,7 +744,12 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
         if (typeof status !== "undefined") {
             if (status === "approved" || status === "completed") {
                 if (existingRequest.requester_id === req.user.id) {
-                    return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+                    return AppResponse(
+                        res,
+                        403,
+                        "No tienes permiso para cambiar el estado de esta solicitud",
+                        null
+                    )
                 }
 
                 return AppResponse(
@@ -759,32 +761,61 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             }
 
             if (existingRequest.post_owner_id !== req.user.id) {
-                return AppResponse(res, 403, "No tienes permiso para cambiar el estado de esta solicitud", null)
+                return AppResponse(
+                    res,
+                    403,
+                    "No tienes permiso para cambiar el estado de esta solicitud",
+                    null
+                )
             }
         }
 
         if (typeof message !== "undefined" && existingRequest.requester_id !== req.user.id) {
-            return AppResponse(res, 403, "Solo el usuario que hizo la solicitud puede editar el mensaje", null)
+            return AppResponse(
+                res,
+                403,
+                "Solo el usuario que hizo la solicitud puede editar el mensaje",
+                null
+            )
         }
 
-        if (existingRequest.requester_id !== req.user.id && existingRequest.post_owner_id !== req.user.id) {
-            return AppResponse(res, 403, "No tienes permiso para actualizar esta solicitud de adopción", null)
+        if (
+            existingRequest.requester_id !== req.user.id &&
+            existingRequest.post_owner_id !== req.user.id
+        ) {
+            return AppResponse(
+                res,
+                403,
+                "No tienes permiso para actualizar esta solicitud de adopción",
+                null
+            )
         }
 
         const forbiddenIdFields = ["id", "post_id", "requester_id", "post_owner_id"]
         for (const f of forbiddenIdFields) {
-            if (typeof (req.body as any)[f] !== "undefined" && (req.body as any)[f] !== (existingRequest as any)[f]) {
+            if (
+                typeof (req.body as any)[f] !== "undefined" &&
+                (req.body as any)[f] !== (existingRequest as any)[f]
+            ) {
                 return AppResponse(res, 403, `No tienes permiso para editar el campo ${f}`, null)
             }
         }
 
         const payload: Partial<AdoptionRequest["Update"]> = {}
 
-        if (typeof status !== "undefined" && existingRequest.post_owner_id === req.user.id && status !== existingRequest.status) {
+        if (
+            typeof status !== "undefined" &&
+            existingRequest.post_owner_id === req.user.id &&
+            status !== existingRequest.status
+        ) {
             payload.status = status
         }
 
-        if (typeof message !== "undefined" && existingRequest.requester_id === req.user.id && message !== existingRequest.message) {
+        if (
+            typeof message !== "undefined" &&
+            existingRequest.requester_id === req.user.id &&
+            message !== existingRequest.message
+        ) {
             payload.message = message
         }
 
@@ -801,9 +832,15 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             .select()
             .maybeSingle()
 
-        if (updateError || !updatedRequest) throw new Error("Error al actualizar la solicitud de adopción")
+        if (updateError || !updatedRequest)
+            throw new Error("Error al actualizar la solicitud de adopción")
 
-        return AppResponse(res, 200, "Solicitud de adopción actualizada exitosamente", updatedRequest)
+        return AppResponse(
+            res,
+            200,
+            "Solicitud de adopción actualizada exitosamente",
+            updatedRequest
+        )
     } catch (e) {
         const message = e instanceof Error ? e.message : "Error interno del servidor"
         return AppResponse(res, 500, message, null)
@@ -830,7 +867,12 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
         if (!req.user?.id) return AppResponse(res, 401, "Usuario no autenticado", null)
 
         if (existingRequest.requester_id !== req.user.id) {
-            return AppResponse(res, 403, "No tienes permiso para eliminar esta solicitud de adopción", null)
+            return AppResponse(
+                res,
+                403,
+                "No tienes permiso para eliminar esta solicitud de adopción",
+                null
+            )
         }
 
         const { error: deleteError } = await supabase

@@ -7,8 +7,6 @@ import {
     ConfirmAcceptResponseSchema,
     ValidateCodeRequestSchema,
     ValidateCodeResponseSchema,
-    PublicationsWithImagesResponseSchema,
-    PublicationByIdWithImagesResponseSchema,
     AdoptionRequestsWithImagesResponseSchema,
     AdoptionRequestByIdWithImagesResponseSchema,
 } from "@repo/utils"
@@ -108,7 +106,8 @@ export function validateCodeDocs(registry: OpenAPIRegistry) {
         security: [{ bearerAuth: [] }],
         responses: {
             200: {
-                description: "Código de adopción validado y solicitud cerrada",
+                description:
+                    "Código de adopción validado y solicitud cerrada, los valores de status pueden ser `pendiente`, `aprobado`, `denegado`, `completada`",
                 content: {
                     "application/json": {
                         schema: ValidateCodeResponseSchema,
@@ -117,119 +116,6 @@ export function validateCodeDocs(registry: OpenAPIRegistry) {
             },
             400: {
                 description: "Error al validar el código",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-
-/**
- * Documentación para el endpoint de listado de publicaciones
- * Incluye imágenes de posts y mascotas obtenidas del microservicio de Media
- */
-export function listPublicationsDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/adoptions/publications",
-        tags: ["Publications"],
-        summary: "Listar publicaciones de adopción",
-        description:
-            "Obtiene un listado paginado de publicaciones de adopción. " +
-            "Cada publicación incluye información del post y la mascota asociada. " +
-            "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
-        parameters: [
-            {
-                name: "page",
-                in: "query",
-                required: false,
-                description: "Número de la página a obtener",
-                schema: { type: "integer", default: 1, minimum: 1 },
-            },
-            {
-                name: "pageSize",
-                in: "query",
-                required: false,
-                description: "Cantidad de publicaciones por página",
-                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
-            },
-        ],
-        security: [{ bearerAuth: [] }],
-        responses: {
-            200: {
-                description: "Publicaciones obtenidas exitosamente con imágenes",
-                content: {
-                    "application/json": {
-                        schema: PublicationsWithImagesResponseSchema,
-                    },
-                },
-            },
-            400: {
-                description: "Error en los parámetros de consulta",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-        },
-    })
-}
-
-/**
- * Documentación para el endpoint de obtener publicación por ID
- * Incluye imágenes obtenidas del microservicio de Media
- */
-export function getPublicationByIdDocs(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/adoptions/publications/{id}",
-        tags: ["Publications"],
-        summary: "Obtener publicación por ID",
-        description:
-            "Obtiene una publicación específica por su ID. " +
-            "Incluye información completa del post y la mascota asociada. " +
-            "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
-        parameters: [
-            {
-                name: "id",
-                in: "path",
-                required: true,
-                description: "ID numérico de la publicación a obtener",
-                schema: { type: "integer", example: 42 },
-            },
-        ],
-        security: [{ bearerAuth: [] }],
-        responses: {
-            200: {
-                description: "Publicación obtenida exitosamente con imágenes",
-                content: {
-                    "application/json": {
-                        schema: PublicationByIdWithImagesResponseSchema,
-                    },
-                },
-            },
-            404: {
-                description: "Publicación no encontrada",
-                content: {
-                    "application/json": {
-                        schema: ErrorValuesSchema,
-                    },
-                },
-            },
-            401: {
-                description: "No autenticado - Token JWT requerido",
                 content: {
                     "application/json": {
                         schema: ErrorValuesSchema,

@@ -3,8 +3,6 @@ import { registerAuthPaths } from "./endpoints/auth"
 import {
     ConfirmAcceptDocs,
     validateCodeDocs,
-    listPublicationsDocs,
-    getPublicationByIdDocs,
     mineRequestWithImagesDocs,
     registerAdoptionRequestDocs,
 } from "./endpoints/adoptions"
@@ -13,6 +11,7 @@ import { registerAllEntitiesDocs } from "./endpoints/entities"
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
 import { savedPostsDocs, postsDocs } from "./endpoints/savedPosts"
+import { PublicationRegistryPaths } from "./endpoints/publications"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -32,10 +31,6 @@ export function buildOpenApi() {
     mineRequestWithImagesDocs(registry)
     registerAdoptionRequestDocs(registry)
 
-    // Adoptions endpoints con imágenes (comunicación entre microservicios)
-    listPublicationsDocs(registry)
-    getPublicationByIdDocs(registry)
-
     // Entities
     registerAllEntitiesDocs(registry)
 
@@ -46,8 +41,11 @@ export function buildOpenApi() {
     registerMessagesDocs(registry)
 
     // Saved Posts y Public Posts
-    savedPostsDocs(registry)
-    postsDocs(registry)
+    // savedPostsDocs(registry)
+    // postsDocs(registry)
+
+    // Publications
+    PublicationRegistryPaths(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
