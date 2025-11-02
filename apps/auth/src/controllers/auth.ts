@@ -61,7 +61,7 @@ export const login = async (req: Request, res: Response) => {
 
     const { password: _, ...publicUser } = user
 
-    return AppResponse(res, 200, "Inicio de sesión exitoso", { publicUser, token })
+    return AppResponse(res, 200, "Inicio de sesión exitoso", { user: publicUser, token })
 }
 
 export const register = async (

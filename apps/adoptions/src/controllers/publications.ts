@@ -182,7 +182,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
         if (!authedUserId) throw new AppError(401, "No autenticado")
 
         const {
-            ownerId,
+            owner_id,
             title,
             description,
             species,
@@ -194,7 +194,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             name,
         } = req.body as any
 
-        const ownerIdNumFromBody = ownerId !== undefined ? Number(ownerId) : undefined
+        const ownerIdNumFromBody = owner_id !== undefined ? Number(owner_id) : undefined
         const ageMonthsNum = age_months !== undefined ? Number(age_months) : undefined
         const ageYearsNum = age_years !== undefined ? Number(age_years) : undefined
 

@@ -1,10 +1,5 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
-import {
-    ReportInsertSchema,
-    ReportUpdateSchema,
-    ReportResponseSchema,
-    ErrorValuesSchema,
-} from "@repo/utils"
+import { ReportResponseSchema, ErrorValuesSchema, ReportFormSchema } from "@repo/utils"
 
 export function registerReportsDocs(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -112,7 +107,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
             body: {
                 content: {
                     "application/json": {
-                        schema: ReportInsertSchema,
+                        schema: ReportFormSchema,
                     },
                 },
             },
@@ -158,7 +153,7 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
             body: {
                 content: {
                     "application/json": {
-                        schema: ReportUpdateSchema,
+                        schema: ReportFormSchema,
                     },
                 },
             },

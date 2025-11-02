@@ -36,21 +36,3 @@ export const ResetPasswordRequestSchema = z.object({
 
 // Responses
 export const UserReponseDTO = UserSchema.omit({ password: true })
-
-export const VerifyEmailResponseSchema = z.object({
-    message: z.string(),
-    type: z.enum(["success", "error"]),
-    data: z.record(z.string(), z.unknown()).optional(),
-})
-
-export const ForgotPasswordResponseSchema = z.object({
-    message: z.string(),
-    type: z.enum(["success", "error"]),
-    data: z.record(z.string(), z.unknown()).optional(),
-})
-
-export const ResetPasswordResponseSchema = z.object({
-    message: z.string(),
-    type: z.enum(["success", "error"]),
-    data: z.record(z.string(), z.unknown()).optional(),
-})

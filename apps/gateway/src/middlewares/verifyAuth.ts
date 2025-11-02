@@ -20,21 +20,6 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     next()
 }
 
-// Middleware para verificar roles permitidos
-export const checkRole = (roles: Array<number>) => {
-    return (req: Request, _res: Response, next: NextFunction) => {
-        if (!req.user) {
-            throw new AppError(401, "Usuario no autenticado")
-        }
-
-        if (req.user.role === null || !roles.includes(req.user.role)) {
-            throw new AppError(403, "No tienes permisos para realizar esta acción")
-        }
-
-        next()
-    }
-}
-
 declare global {
     namespace Express {
         interface Request {

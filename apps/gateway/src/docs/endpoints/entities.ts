@@ -16,6 +16,13 @@ import {
     UserByIdWithImagesResponseSchema,
     AdoptionRequestsWithImagesResponseSchema,
     AdoptionRequestByIdWithImagesResponseSchema,
+    VerificationCodeSchema,
+    CreateVerificationCodeRequestSchema,
+    CreateVerificationCodeResponseSchema,
+    BaseResponseSchema,
+    GetUserVerificationCodesResponseSchema,
+    ValidateCodeResponseSchema,
+    ValidateVerificationCodeResponseSchema,
 } from "@repo/utils"
 
 const FormResponseSchema = z.object({
@@ -130,7 +137,8 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history",
         tags: ["AdoptionHistory"],
         summary: "Listar historiales de adopción",
-        description: "Obtiene un listado paginado de historiales de adopción. Requiere autenticación.",
+        description:
+            "Obtiene un listado paginado de historiales de adopción. Requiere autenticación.",
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -173,7 +181,8 @@ export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/adoption-history/{id}",
         tags: ["AdoptionHistory"],
         summary: "Obtener historial de adopción por ID",
-        description: "Retorna el historial de adopción de una mascota específica usando su ID. Requiere autenticación.",
+        description:
+            "Retorna el historial de adopción de una mascota específica usando su ID. Requiere autenticación.",
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -509,20 +518,19 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         tags: ["VerificationCodes"],
         summary: "Crear un código de verificación",
         description:
-            "Genera un código de verificación para distintos usos (verify, reset, adoption) para un usuario.",
+            "Genera un código de verificación para distintos usos (`verify`, `reset`, `adoption`) para un usuario. " +
+            "`adoption`: Uso general, genera un código que confirma una adopción, dura `24 horas`," +
+            " `verify`: Uso mobile, para verificar correo, dura `30 minutos`," +
+            " `reset`: Uso mobile, para resetear password, dura `15 minutos`",
         security: [{ bearerAuth: [] }],
         request: {
             body: {
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            properties: {
-                                type: { type: "string", enum: ["verify", "reset", "adoption"] },
-                                userId: { type: "number" },
-                                duration: { type: "number", minimum: 1, maximum: 1440 },
-                            },
-                            required: ["type"],
+                        schema: CreateVerificationCodeRequestSchema,
+                        example: {
+                            user_id: 1,
+                            type: "adoption || verify || reset",
                         },
                     },
                 },
@@ -531,7 +539,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         responses: {
             201: {
                 description: "Código creado",
-                content: { "application/json": { schema: { type: "object" } } },
+                content: { "application/json": { schema: CreateVerificationCodeResponseSchema } },
             },
             400: {
                 description: "Datos inválidos",
@@ -566,7 +574,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
                             properties: {
                                 code: { type: "string", pattern: "^\\d{6}$" },
                                 type: { type: "string", enum: ["verify", "reset", "adoption"] },
-                                userId: { type: "number" },
+                                user_id: { type: "number" },
                             },
                             required: ["code", "type", "userId"],
                         },
@@ -577,7 +585,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         responses: {
             200: {
                 description: "Código validado",
-                content: { "application/json": { schema: { type: "object" } } },
+                content: { "application/json": { schema: ValidateVerificationCodeResponseSchema } },
             },
             400: {
                 description: "Código inválido o expirado",
@@ -597,14 +605,14 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
     // Obtener códigos por usuario
     registry.registerPath({
         method: "get",
-        path: "/v1/entities/verification-codes/user/{userId}",
+        path: "/v1/entities/verification-codes/user/{user_id}",
         tags: ["VerificationCodes"],
         security: [{ bearerAuth: [] }],
         summary: "Obtener códigos por ID de usuario",
         description: "Obtiene los códigos de verificación asociados a un usuario específico.",
         parameters: [
             {
-                name: "userId",
+                name: "user_id",
                 in: "path",
                 required: true,
                 schema: { type: "integer", example: 10 },
@@ -614,7 +622,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
         responses: {
             200: {
                 description: "Códigos obtenidos",
-                content: { "application/json": { schema: { type: "object" } } },
+                content: { "application/json": { schema: GetUserVerificationCodesResponseSchema } },
             },
             401: {
                 description: "No autorizado",
@@ -633,7 +641,7 @@ export function registerVerificationCodesPaths(registry: OpenAPIRegistry) {
 }
 
 export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
-    const security = [{ bearerAuth: [] }];
+    const security = [{ bearerAuth: [] }]
     const authResponses = {
         401: {
             description: "No autenticado",
@@ -643,7 +651,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
             description: "No autorizado (permisos insuficientes)",
             content: { "application/json": { schema: ErrorValuesSchema } },
         },
-    };
+    }
 
     // Listar respuestas
     registry.registerPath({
@@ -660,7 +668,7 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
                 in: "query",
                 required: true,
                 schema: { type: "integer" },
-                description: "ID del formulario de la publicación"
+                description: "ID del formulario de la publicación",
             },
         ],
         responses: {
@@ -690,7 +698,8 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses",
         tags: ["FormResponses"],
         summary: "Crear una nueva respuesta de formulario",
-        description: "Crea una nueva respuesta para un formulario asociado a una publicación. Requiere autenticación.",
+        description:
+            "Crea una nueva respuesta para un formulario asociado a una publicación. Requiere autenticación.",
         security,
         request: {
             body: {
@@ -728,9 +737,18 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         path: "/v1/entities/form-responses/{id}",
         tags: ["FormResponses"],
         summary: "Actualizar una respuesta de formulario",
-        description: "Actualiza la respuesta de un formulario identificado por su ID. Requiere autenticación.",
+        description:
+            "Actualiza la respuesta de un formulario identificado por su ID. Requiere autenticación.",
         security,
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" }, description: "ID de la respuesta" }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                schema: { type: "integer" },
+                description: "ID de la respuesta",
+            },
+        ],
         request: {
             body: {
                 content: {
@@ -773,7 +791,15 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         summary: "Eliminar una respuesta de formulario",
         description: "Elimina una respuesta de formulario por su ID. Requiere autenticación.",
         security,
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" }, description: "ID de la respuesta" }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                schema: { type: "integer" },
+                description: "ID de la respuesta",
+            },
+        ],
         responses: {
             200: {
                 description: "Respuesta eliminada exitosamente",
@@ -804,7 +830,15 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
         description:
             "Lista las respuestas de formulario asociadas a la publicación indicada por postId. Requiere autenticación.",
         security,
-        parameters: [{ name: "postId", in: "path", required: true, schema: { type: "integer" }, description: "ID de la publicación" }],
+        parameters: [
+            {
+                name: "postId",
+                in: "path",
+                required: true,
+                schema: { type: "integer" },
+                description: "ID de la publicación",
+            },
+        ],
         responses: {
             200: {
                 description: "Respuestas obtenidas exitosamente",
