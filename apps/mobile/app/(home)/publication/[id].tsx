@@ -11,7 +11,7 @@ import {
     TextInput,
     Alert,
 } from "react-native"
-import { useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import Animated from "react-native-reanimated"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,6 +51,7 @@ const mockComments: Comment[] = [
 ]
 
 export default function PublicationDetail() {
+    const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
     const [comments, setComments] = useState<Comment[]>(mockComments)
     const [showReportModal, setShowReportModal] = useState(false)
@@ -224,8 +225,14 @@ export default function PublicationDetail() {
             )
             return
         }
-        setRequestError(null)
-        setShowRequestModal(true)
+
+        router.push({
+            pathname: "/adoption-request-form" as any,
+            params: {
+                postId: String(pet?.id || id),
+                petName: pet?.name || "esta mascota",
+            },
+        })
     }
 
     const handleSubmitAdoptionRequest = async () => {
@@ -244,8 +251,7 @@ export default function PublicationDetail() {
             setShowRequestModal(false)
             setRequestMessage("")
         } catch (e: any) {
-            const msg =
-                e?.response?.data?.message || e?.message || "No se pudo enviar la solicitud"
+            const msg = e?.response?.data?.message || e?.message || "No se pudo enviar la solicitud"
             setRequestError(msg)
         } finally {
             setSubmittingRequest(false)

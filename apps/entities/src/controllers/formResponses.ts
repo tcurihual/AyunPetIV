@@ -31,26 +31,35 @@ export async function list(req: Request, res: Response) {
  * Crea una nueva respuesta de formulario.
  */
 export async function create(req: Request, res: Response) {
-    const { id_user, id_post_form, answer } = req.body
+    const { id_post_form, answer } = req.body
 
-    if (!id_user || !id_post_form || !answer) {
+    if (!id_post_form || !answer) {
         return res.status(400).json({
             type: "error",
-            message: "Los campos 'id_user', 'id_post_form' y 'answer' son requeridos.",
+            message: "Los campos 'id_post_form' y 'answer' son requeridos.",
         })
+    }
+
+    const id_user = (req as any).user?.id
+
+    if (!id_user) {
+        return res.status(401).json({
+            type: "error",
+            message: "Usuario no autenticado",
+        })
+    }
+
+    const insertPayload = {
+        id_user,
+        id_post_form,
+        answer,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
     }
 
     const { data, error } = await supabase
         .from(TABLE)
-        .insert([
-            {
-                id_user,
-                id_post_form,
-                answer,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            },
-        ])
+        .insert([insertPayload])
         .select()
         .maybeSingle()
 

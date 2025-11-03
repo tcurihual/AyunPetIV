@@ -1,17 +1,29 @@
 import React, { useEffect, useState } from "react"
-import { View, ActivityIndicator, Alert, Pressable, Text, ScrollView, TextInput } from "react-native"
+import {
+    View,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    Text,
+    ScrollView,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+} from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import RequestDetailCard, { Status } from "@/components/common/RequestDetailCard"
 import { http } from "@/services/http"
 import { useAuthContext } from "@/context/AuthContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function ShelterRequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
     const router = useRouter()
     const { user } = useAuthContext()
-    const { refreshRequests, updateAdoptionRequest, acceptAdoptionRequest, validateAdoptionCode } = useAdoptionRequestContext()
+    const { refreshRequests, updateAdoptionRequest, acceptAdoptionRequest, validateAdoptionCode } =
+        useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
 
     const [loading, setLoading] = useState(true)
@@ -92,8 +104,7 @@ export default function ShelterRequestDetail() {
                     if (!resolvedPetPhoto && pub.image && (pub.image as any).uri)
                         setResolvedPetPhoto((pub.image as any).uri)
                 }
-            } catch (e) {
-            }
+            } catch (e) {}
         }
 
         resolvePublication()
@@ -145,7 +156,10 @@ export default function ShelterRequestDetail() {
             const serverMessage = result?.message
 
             if (serverMessage || confirmationCode) {
-                const messageLines = [serverMessage, confirmationCode ? `Código: ${confirmationCode}` : null]
+                const messageLines = [
+                    serverMessage,
+                    confirmationCode ? `Código: ${confirmationCode}` : null,
+                ]
                     .filter(Boolean)
                     .join("\n")
                 Alert.alert("Solicitud aceptada", messageLines || "Solicitud aceptada")
@@ -179,9 +193,7 @@ export default function ShelterRequestDetail() {
 
         try {
             await updateAdoptionRequest(request.id, { message: editableMessage })
-            setRequest((prev: any) =>
-                prev ? { ...prev, message: editableMessage } : prev
-            )
+            setRequest((prev: any) => (prev ? { ...prev, message: editableMessage } : prev))
             await refreshRequests()
             Alert.alert("Mensaje actualizado", "Mensaje guardado correctamente.")
         } catch (e: any) {
@@ -230,8 +242,40 @@ export default function ShelterRequestDetail() {
     if (!request)
         return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
 
+    const postId = request.postid || request.post_id || request.post?.id
+
+    const handleViewFormResponses = () => {
+        if (!postId) {
+            Alert.alert("Error", "No se pudo obtener el ID de la publicación")
+            return
+        }
+
+        const requesterId = request?.requester_id || request?.requesterid
+        //console.log(
+        //    "🔍 handleViewFormResponses - Request object:",
+        //    JSON.stringify(request, null, 2)
+        //)
+        //console.log("🔍 handleViewFormResponses - RequesterId:", requesterId)
+
+        if (!requesterId) {
+            Alert.alert("Error", "No se pudo obtener el ID del solicitante")
+            return
+        }
+
+        router.push({
+            pathname: "/(shelter)/view-adoption-responses" as any,
+            params: {
+                postId: String(postId),
+                petName: resolvedPetName || "la mascota",
+                requesterId: String(requesterId),
+            },
+        })
+    }
+
     return (
-        <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: "#F2F2F2", flexGrow: 1 }}>
+        <ScrollView
+            contentContainerStyle={{ padding: 16, backgroundColor: "#F2F2F2", flexGrow: 1 }}
+        >
             <RequestDetailCard
                 petPhoto={resolvedPetPhoto || "https://placehold.co/400x400?text=Mascota"}
                 petName={resolvedPetName || "Mascota"}
@@ -286,7 +330,38 @@ export default function ShelterRequestDetail() {
                         {savingMessage ? "Guardando..." : "Guardar notas"}
                     </Text>
                 </Pressable>
+
+                {/* Botón para ver respuestas del formulario */}
+                <TouchableOpacity
+                    onPress={handleViewFormResponses}
+                    style={styles.viewResponsesButton}
+                >
+                    <Ionicons name="clipboard-outline" size={20} color="#007AFF" />
+                    <Text style={styles.viewResponsesText}>Ver Respuestas del Formulario</Text>
+                    <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
+                </TouchableOpacity>
             </View>
         </ScrollView>
     )
 }
+
+const styles = StyleSheet.create({
+    viewResponsesButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#F0F8FF",
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#007AFF",
+        marginTop: 8,
+    },
+    viewResponsesText: {
+        flex: 1,
+        fontSize: 15,
+        fontWeight: "600",
+        color: "#007AFF",
+        marginLeft: 12,
+    },
+})

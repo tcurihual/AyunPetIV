@@ -32,6 +32,8 @@ import {
     translateSizeToSpanish,
 } from "@/utils/petTranslations"
 import { Colors } from "@/constants/Colors"
+import { QuestionSelector } from "@/components/common/QuestionSelector"
+import { usePostFormContext } from "@/context/PostFormContext"
 
 type PetFormInput = z.input<typeof PetFormSchema>
 type PetFormOutput = z.output<typeof PetFormSchema>
@@ -39,7 +41,9 @@ type PetFormOutput = z.output<typeof PetFormSchema>
 const AddPetScreen = () => {
     const router = useRouter()
     const [photo, setPhoto] = useState<string | null>(null)
+    const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([])
     const { createPublication } = usePublications()
+    const { create: createPostForm } = usePostFormContext()
     const { width, height } = Dimensions.get("window")
     const styles = getResponsiveStyles(width, height)
 
@@ -114,8 +118,34 @@ const AddPetScreen = () => {
             }
 
             const newPost = await createPublication(payload as any)
+            console.log("📝 Publicación creada:", newPost)
+            console.log("📝 Post ID:", newPost.id)
 
-            // 3) Guardar publicación local (AsyncStorage) como referencia rápida en mobile
+            // 3) Guardar post_form (asociar preguntas seleccionadas a la publicación)
+            if (selectedQuestionIds.length > 0) {
+                try {
+                    console.log(
+                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
+                    )
+                    for (const questionId of selectedQuestionIds) {
+                        console.log(`   → Asociando pregunta ${questionId}...`)
+                        await createPostForm({
+                            post_id: newPost.id,
+                            question_id: questionId,
+                        })
+                        console.log(`   ✅ Pregunta ${questionId} asociada`)
+                    }
+                    console.log(
+                        `✅ ${selectedQuestionIds.length} preguntas asociadas a la publicación`
+                    )
+                } catch (error) {
+                    console.error("⚠️ Error al asociar preguntas:", error)
+                    console.error("⚠️ Error completo:", JSON.stringify(error, null, 2))
+                    // No bloqueamos la creación de la publicación si falla esto
+                }
+            }
+
+            // 4) Guardar publicación local (AsyncStorage) como referencia rápida en mobile
             const petLocal: LocalPet = {
                 id: String(newPost.pet.id ?? Date.now()),
                 ownerName,
@@ -284,6 +314,12 @@ const AddPetScreen = () => {
                                     {String(errors.sterilized.message)}
                                 </Text>
                             )}
+
+                            <QuestionSelector
+                                selectedIds={selectedQuestionIds}
+                                onSelectionChange={setSelectedQuestionIds}
+                                disabled={isSubmitting}
+                            />
 
                             <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
                                 <Ionicons name="camera-outline" size={20} color="#A47CF3" />
