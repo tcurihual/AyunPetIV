@@ -1,88 +1,79 @@
 import React, { useEffect } from "react"
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider as NavThemeProvider,
+} from "@react-navigation/native"
 import { useFonts } from "expo-font"
-import { Stack } from "expo-router"
-import * as SplashScreen from "expo-splash-screen"
-import { StatusBar } from "expo-status-bar"
-import "react-native-reanimated"
-import { useColorScheme } from "react-native"
+import { SplashScreen, Stack } from "expo-router"
+import { AuthProvider } from "../context/AuthContext"
+import { LoadingProvider } from "../context/LoadingContext"
+import { AlertProvider } from "../context/AlertContext"
+import { ModalProvider } from "../context/ModalContext"
+import { PublicationProvider } from "../context/PublicationContext"
 
-import { AuthProvider } from "@/context/AuthContext"
-import { ModalProvider } from "@/context/ModalContext"
-import { AlertProvider } from "@/context/AlertContext"
-import { Alert } from "@/components/ui/Alert"
-import ModalHost from "@common/modals/ModalHost"
-import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/features/AuthRedirect"
-import { MessageProvider } from "@/context/MessageContext"
-import { ReportProvider } from "@/context/ReportContext"
-import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
-import { PublicationProvider } from "@/context/PublicationContext"
-import { QuestionProvider } from "@/context/QuestionContext"
-import { PostFormProvider } from "@/context/PostFormContext"
-import { PostResponsesProvider } from "@/context/PostResponsesContext"
+import { ThemeProvider, useTheme } from "../context/ThemeContext"
 
-SplashScreen.preventAutoHideAsync()
+export { ErrorBoundary } from "expo-router"
+
+export const unstable_settings = {
+    initialRouteName: "(home)",
+}
 
 export default function RootLayout() {
-    const colorScheme = useColorScheme()
-    const [loaded] = useFonts({
-        SpaceMono: require("@fonts/SpaceMono-Regular.ttf"),
+    const [loaded, error] = useFonts({
+        SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     })
 
     useEffect(() => {
-        if (loaded) SplashScreen.hideAsync()
+        if (error) throw error
+    }, [error])
+
+    useEffect(() => {
+        if (loaded) {
+            SplashScreen.hideAsync()
+        }
     }, [loaded])
 
-    if (!loaded) return null
+    if (!loaded) {
+        return null
+    }
 
     return (
-        <AuthProvider>
-            <QuestionProvider>
-                <PostFormProvider>
-                    <PostResponsesProvider>
-                        <MessageProvider>
-                            <ReportProvider>
-                                <AdoptionRequestProvider>
-                                    <PublicationProvider>
-                                        <ModalProvider>
-                                            <AlertProvider>
-                                                <LoadingProvider>
-                                                    <ThemeProvider
-                                                        value={
-                                                            colorScheme === "dark"
-                                                                ? DarkTheme
-                                                                : DefaultTheme
-                                                        }
-                                                    >
-                                                        <Stack
-                                                            screenOptions={{ headerShown: false }}
-                                                        >
-                                                            <Stack.Screen name="splash" />
-                                                            <Stack.Screen name="(auth)" />
-                                                            <Stack.Screen name="(home)" />
-                                                            <Stack.Screen name="(shelter)" />
-                                                            <Stack.Screen name="+not-found" />
-                                                        </Stack>
+        <ThemeProvider>
+            <RootLayoutNav />
+        </ThemeProvider>
+    )
+}
 
-                                                        <ModalHost />
-                                                        <Alert />
-                                                        <AuthRedirect />
-                                                        <StatusBar
-                                                            style="inverted"
-                                                            backgroundColor="#000"
-                                                        />
-                                                    </ThemeProvider>
-                                                </LoadingProvider>
-                                            </AlertProvider>
-                                        </ModalProvider>
-                                    </PublicationProvider>
-                                </AdoptionRequestProvider>
-                            </ReportProvider>
-                        </MessageProvider>
-                    </PostResponsesProvider>
-                </PostFormProvider>
-            </QuestionProvider>
-        </AuthProvider>
+function RootLayoutNav() {
+    const { theme } = useTheme()
+
+    return (
+        <LoadingProvider>
+            <AlertProvider>
+                <ModalProvider>
+                    <AuthProvider>
+                        <PublicationProvider>
+                            <NavThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
+                                <Stack>
+                                    <Stack.Screen name="(home)" options={{ headerShown: false }} />
+                                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                                    <Stack.Screen
+                                        name="(shelter)"
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen name="camera" options={{ headerShown: false }} />
+                                    <Stack.Screen
+                                        name="publication-test"
+                                        options={{ headerShown: false }}
+                                    />
+                                </Stack>
+                            </NavThemeProvider>
+                        </PublicationProvider>
+                    </AuthProvider>
+                </ModalProvider>
+            </AlertProvider>
+        </LoadingProvider>
     )
 }
