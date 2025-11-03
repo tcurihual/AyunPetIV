@@ -33,10 +33,16 @@ router.get(
     asyncHandler((req, res) => listPublications(req as any, res))
 )
 router.get(
+    "/pets/:id",
+    requireRole(19, 20, 21),
+    asyncHandler((req, res) => getPetById(req as any, res))
+)
+router.get(
     "/:id",
     requireRole(19, 20, 21),
     asyncHandler((req, res) => getPublicationById(req as any, res))
 )
+
 router.post(
     "/",
     requireRole(19, 20, 21),

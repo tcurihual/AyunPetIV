@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
 import { useColorScheme } from "react-native"
 
-import { AuthProvider, useAuthContext } from "@/context/AuthContext"
+import { AuthProvider } from "@/context/AuthContext"
 import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
@@ -21,24 +21,8 @@ import { PublicationProvider } from "@/context/PublicationContext"
 import { QuestionProvider } from "@/context/QuestionContext"
 import { PostFormProvider } from "@/context/PostFormContext"
 import { PostResponsesProvider } from "@/context/PostResponsesContext"
-import { router } from "expo-router"
 
 SplashScreen.preventAutoHideAsync()
-// function RoleRedirect() {
-//     const { user } = useAuthContext()
-
-//     useEffect(() => {
-//         if (!user) return
-
-//         if (user.role === 20) {
-//             router.replace("/(shelter)")
-//         } else if (user.role === 19 || user.role === 21) {
-//             router.replace("/(home)")
-//         }
-//     }, [user])
-
-//     return null
-// }
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -72,7 +56,6 @@ export default function RootLayout() {
                                                         }
                                                     >
                                                         <Stack
-                                                            initialRouteName="splash"
                                                             screenOptions={{ headerShown: false }}
                                                         >
                                                             <Stack.Screen name="splash" />
@@ -85,7 +68,6 @@ export default function RootLayout() {
                                                         <ModalHost />
                                                         <Alert />
                                                         <AuthRedirect />
-                                                        {/* <RoleRedirect /> */}
                                                         <StatusBar
                                                             style="inverted"
                                                             backgroundColor="#000"

@@ -24,4 +24,5 @@ export const Colors = {
         tabIconSelected: tintColorLight,
     },
     yellow: "#F9C53D",
+    purple: "#9B6DD7",
 }

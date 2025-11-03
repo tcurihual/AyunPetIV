@@ -3,15 +3,12 @@
     "name": "ayunpet",
     "scripts": {
         "dev": "turbo dev",
-        "api": "turbo dev --filter=\"!mobile\" --filter=\"!web\"",
-        "web": "turbo dev --filter=\"web\"",
+        "api": "turbo dev --filter=\"!mobile\"",
         "mobile": "turbo dev --filter=\"mobile\"",
-        "api:web": "turbo dev --filter=\"!mobile\"",
-        "api:mobile": "turbo dev --filter=\"!web\"",
         "build": "turbo build",
-        "build:api": "turbo build --filter=\"!mobile\" --filter=\"!web\"",
+        "build:api": "turbo build --filter=\"!mobile\"",
         "start": "turbo start",
-        "start:api": "turbo start --filter=\"!mobile\" --filter=\"!web\" --filter=\"!@repo/utils\""
+        "start:api": "turbo start --filter=\"!mobile\" --filter=\"!@repo/utils\""
     },
     "devDependencies": {
         "tsup": "^8.5.0",
@@ -23,11 +20,6 @@
         "dotenv-cli": "^10.0.0"
     },
     "pnpm": {
-        "overrides": {
-            "react": "19.0.0",
-            "react-dom": "19.0.0",
-            "@types/react": "~19.0.14"
-        },
         "ignoredBuiltDependencies": [
             "@scarf/scarf",
             "@swc/core",

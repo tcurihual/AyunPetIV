@@ -1,6 +1,32 @@
 import type { Response } from "express"
-import { AppResponse, AppError, AuthenticatedRequest, User, hashPassword } from "@repo/utils"
+import {
+    AppResponse,
+    AppError,
+    AuthenticatedRequest,
+    User,
+    hashPassword,
+    MEDIA_URL,
+} from "@repo/utils"
 import { supabase } from "../index"
+import axios from "axios"
+import { MEDIA_PUBLIC_URL } from "@repo/utils"
+
+const normalizeMediaUrls = (list: any[] | undefined) => {
+    const arr = Array.isArray(list) ? list : []
+    return arr.map((u) => {
+        try {
+            if (!u) return u
+            const idx = String(u).indexOf("/uploads/")
+            if (idx !== -1) {
+                const rel = String(u).substring(idx + 1)
+                return `${MEDIA_PUBLIC_URL}/${rel}`
+            }
+            return u
+        } catch (e) {
+            return u
+        }
+    })
+}
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 type RoleType = keyof typeof ROLES
@@ -236,8 +262,105 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
     const id = parseId(req.params.id)
     if (!isAdmin(req)) throw new AppError(403, "Solo ADMIN puede eliminar por id") // si quieres self-delete, crea DELETE /me
 
-    const { data, error } = await supabase.from("users").delete().eq("id", id).select("*").single()
-    if (error) throw new AppError(500, error.message)
+    // Reutilizar la lógica completa de eliminación (dependencias, media, etc.)
+    await deleteAccountById(id, req)
 
-    return AppResponse(res, 200, "Eliminado", data as User["Row"])
+    const { data } = await supabase.from("users").select("*").eq("id", id).maybeSingle()
+    return AppResponse(res, 200, "Eliminado", data as User["Row"] | null)
 }
+
+export const deleteMe = async (req: AuthenticatedRequest, res: Response) => {
+    const id = req.user?.id
+    if (!id) throw new AppError(401, "No autenticado")
+
+    // Eliminar media asociada y la fila de usuario. Las filas relacionadas quedarán a cargo de la DB (CASCADE)
+    await deleteAccountById(id, req)
+
+    return AppResponse(res, 200, "Cuenta eliminada", null)
+}
+
+/**
+ * Elimina las imágenes asociadas a las publicaciones de un usuario y luego
+ * elimina la fila del usuario. La limpieza de filas relacionadas se deja a la
+ * base de datos (ON DELETE CASCADE) para evitar dobles borrados.
+ */
+const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
+    // Obtener ids de publicaciones del usuario y sus mascotas asociadas
+    const { data: posts } = await supabase
+        .from("post")
+        .select("id, pet_id")
+        .eq("creator_id", userId)
+    const postRows = Array.isArray(posts) ? posts : []
+
+    // Recolectar ids de mascotas para eliminarlas (evitar duplicados)
+    const petIdSet = new Set<number>()
+    for (const r of postRows) {
+        const pid = Number((r as any).pet_id)
+        if (pid) petIdSet.add(pid)
+    }
+    // Intentar eliminar imágenes asociadas a cada publicación (no es transactional)
+    const headers = {
+        "x-user-id": String(req.user?.id ?? 0),
+        "x-user-role": String(req.user?.role ?? ""),
+    }
+
+    for (const p of postRows) {
+        const postId = Number((p as any).id)
+        if (!postId) continue
+
+        try {
+            const mediaListResp = await axios.get(`${MEDIA_URL}/uploads/publications/${postId}`, {
+                headers,
+            })
+            const imageUrls: string[] = normalizeMediaUrls(mediaListResp.data?.data || [])
+            const imageNames = imageUrls.map((u) => u.split("/").pop() || "").filter(Boolean)
+            if (imageNames.length > 0) {
+                await axios.delete(`${MEDIA_URL}/uploads/publications/${postId}`, {
+                    data: { fileNamesArray: imageNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
+            }
+        } catch (mediaErr: any) {
+            // No detener el proceso si falla la eliminación de media, solo loguear.
+            console.error(
+                "Warning: fallo al eliminar imágenes de media para post:",
+                postId,
+                mediaErr?.message
+            )
+        }
+    }
+
+    // Intentar eliminar historial de adopciones y las mascotas asociadas a las publicaciones.
+    // No detenemos el proceso si falla alguno, solo logueamos.
+    for (const petId of Array.from(petIdSet)) {
+        try {
+            const { error: histErr } = await supabase
+                .from("adoption_history")
+                .delete()
+                .eq("pet_id", petId)
+            if (histErr) {
+                console.error(
+                    "Warning: fallo al eliminar adoption_history para pet:",
+                    petId,
+                    histErr?.message
+                )
+            }
+
+            const { error: petDelErr } = await supabase.from("pet").delete().eq("id", petId)
+            if (petDelErr) {
+                console.error("Warning: fallo al eliminar pet:", petId, petDelErr?.message)
+            }
+        } catch (err: any) {
+            console.error(
+                "Warning: error inesperado al eliminar pet/ historial:",
+                petId,
+                err?.message
+            )
+        }
+    }
+
+    // Finalmente eliminar la fila del usuario; las FK con CASCADE se encargarán del resto
+    const { error: userDelErr } = await supabase.from("users").delete().eq("id", userId)
+    if (userDelErr) throw new AppError(500, `Error al eliminar usuario: ${userDelErr.message}`)
+}
+// 4) Eliminar mensajes creados por el usuario

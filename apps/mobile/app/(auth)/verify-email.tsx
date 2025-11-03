@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -8,11 +8,10 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { http } from "@/services/http"
 import Input from "@ui/Input"
 import { useAlert } from "@/context/AlertContext"
-import { Colors } from "@/constants/Colors"
 import { z } from "zod"
 
 const schema = z.object({
-    email: z.string().email("Correo inválido"),
+    email: z.email("Correo inválido"),
     code: z.string().min(4, "Código inválido"),
 })
 
@@ -105,7 +104,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     resend: {
-        color: "#6C63FF", 
+        color: "#6C63FF",
         textAlign: "center",
         marginTop: 20,
         fontWeight: "500",

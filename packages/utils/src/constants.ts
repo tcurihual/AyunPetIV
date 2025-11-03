@@ -23,6 +23,16 @@ export const ENTITIES_URL = `${SERVER_URL}:${ENTITIES_PORT}`
 export const MEDIA_URL = `${SERVER_URL}:${MEDIA_PORT}`
 export const WEB_URL = `${SERVER_URL}:${WEB_PORT}`
 
+// URL pública del gateway usada por clientes (Expo/móvil/web).
+// Preferir EXPO_PUBLIC_API_GATEWAY desde .env
+// En caso de no estar definida, usar el gateway construido a partir de SERVER_URL:API_GATEWAY_PORT
+const rawApiGatewayBase = process.env.EXPO_PUBLIC_API_GATEWAY ?? `${SERVER_URL}:${API_GATEWAY_PORT}`
+// Quitar la barra final si existe
+export const API_GATEWAY_BASE = rawApiGatewayBase.replace(/\/+$/g, "")
+
+// URL pública para acceder al servicio de media a través del gateway. Las aplicaciones cliente deberían usar esta.
+export const MEDIA_PUBLIC_URL = `${API_GATEWAY_BASE}/v1/media`
+
 export const SUPABASE_URL = process.env.SUPABASE_URL
 export const SUPABASE_KEY = process.env.SUPABASE_KEY
 

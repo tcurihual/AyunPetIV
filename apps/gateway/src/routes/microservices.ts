@@ -4,6 +4,7 @@ import { ClientRequest } from "http"
 
 import { AUTH_URL, ADOPTIONS_URL, ENTITIES_URL, MEDIA_URL } from "@repo/utils"
 import { verifyAuth } from "../middlewares/verifyAuth"
+import { checkAuth } from "../controllers/checkAuth"
 
 export const msRouter = Router()
 
@@ -101,3 +102,5 @@ msRouter.use(
         },
     })
 )
+
+msRouter.use("/check-auth", verifyAuth, checkAuth)

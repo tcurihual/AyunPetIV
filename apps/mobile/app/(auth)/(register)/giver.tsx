@@ -23,10 +23,11 @@ import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
 import { useLoading } from "@/context/LoadingContext"
 
+import Input from "@ui/Input"
+
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
-import { mediaService, FileInfo } from "@/services/http"
-import Input from "@ui/Input"
+import { FileInfo } from "@/services/http"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
     { title: "Nombre", fields: ["name"] },
@@ -97,6 +98,7 @@ export default function RegisterScreen() {
                     "giver"
                 )
 
+                // TODO: console.log no realiza nada, implementar lo que se debe po sacar validación
                 if (pendingFiles.length > 0) {
                     console.log("Archivos pendientes de subir:", pendingFiles.length)
                 }
@@ -112,6 +114,7 @@ export default function RegisterScreen() {
                 }, 2000)
             })
         } catch (e: any) {
+            // TODO: Console.error, no es relevante en despliegue, corroborar correcto funcionamiento y eliminar
             console.error("Error en registro de dador:", e)
             const msg =
                 e?.response?.data?.error ||

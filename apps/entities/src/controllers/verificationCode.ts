@@ -26,9 +26,9 @@ const getExpirationTime = (type: VerificationType): Date => {
 
 export const createVerificationCode = async (req: Request, res: Response) => {
     try {
-        const { type, userId, duration } = req.body
+        const { type, user_id } = req.body
 
-        const targetUserId = userId || req.user.id
+        const targetUserId = user_id || req.user.id
 
         const { data: userExists, error: userError } = await supabase
             .from("users")
@@ -40,6 +40,7 @@ export const createVerificationCode = async (req: Request, res: Response) => {
             throw new AppError(404, "Usuario no encontrado")
         }
 
+        // invalidar códigos previos del mismo tipo
         const { error: invalidateError } = await supabase
             .from("verification_code")
             .update({ used: true })
@@ -54,12 +55,7 @@ export const createVerificationCode = async (req: Request, res: Response) => {
         const code = generateVerificationCode()
         const hashedCode = await hashPassword(code)
 
-        let expiresAt: Date
-        if (duration && typeof duration === "number" && duration > 0) {
-            expiresAt = new Date(Date.now() + duration * 60 * 1000)
-        } else {
-            expiresAt = getExpirationTime(type)
-        }
+        const expiresAt = getExpirationTime(type)
 
         const { data, error } = await supabase
             .from("verification_code")
@@ -77,19 +73,12 @@ export const createVerificationCode = async (req: Request, res: Response) => {
             throw new AppError(500, "Error al crear el código de verificación", { error })
         }
 
-        // Solo devolver el código sin hashear para el usuario (en desarrollo)
-        // En producción, este código debería enviarse por email/SMS
         return AppResponse(res, 201, "Código de verificación creado exitosamente", {
-            id: data.id,
-            code: code, // Solo para desarrollo - remover en producción
-            type: data.type,
+            code,
             expires_at: data.expires_at,
-            user_id: data.user_id,
         })
     } catch (error) {
-        if (error instanceof AppError) {
-            throw error
-        }
+        if (error instanceof AppError) throw error
         console.error("Error en createVerificationCode:", error)
         throw new AppError(500, "Error interno del servidor")
     }
@@ -97,12 +86,12 @@ export const createVerificationCode = async (req: Request, res: Response) => {
 
 export const validateVerificationCode = async (req: Request, res: Response) => {
     try {
-        const { code, type, userId } = req.body
+        const { code, type, user_id } = req.body
 
         const { data: verificationCodes, error: fetchError } = await supabase
             .from("verification_code")
             .select("*")
-            .eq("user_id", userId)
+            .eq("user_id", user_id)
             .eq("type", type)
             .eq("used", false)
             .order("created_at", { ascending: false })
@@ -155,7 +144,7 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
             const { error: userUpdateError } = await supabase
                 .from("users")
                 .update({ validated: true })
-                .eq("id", userId)
+                .eq("id", user_id)
 
             if (userUpdateError) {
                 console.error("Error al actualizar usuario como verificado:", userUpdateError)
@@ -181,16 +170,16 @@ export const validateVerificationCode = async (req: Request, res: Response) => {
 
 export const getUserVerificationCodes = async (req: Request, res: Response) => {
     try {
-        const userId = Number(req.params.userId)
+        const user_id = Number(req.params.user_id)
 
-        if (req.user.role !== 19 && req.user.id !== userId) {
+        if (req.user.role !== 19 && req.user.id !== user_id) {
             throw new AppError(403, "No tienes permisos para ver estos códigos")
         }
 
         const { data: codes, error } = await supabase
             .from("verification_code")
             .select("id, type, used, created_at, expires_at")
-            .eq("user_id", userId)
+            .eq("user_id", user_id)
             .order("created_at", { ascending: false })
 
         if (error) {

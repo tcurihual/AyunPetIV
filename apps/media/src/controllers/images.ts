@@ -4,7 +4,7 @@ import fs from "fs/promises"
 
 import { HttpError } from "../middleware/upload"
 import { PUBLIC_ENTITIES, UPLOADS_BASE, getAllFiles } from "../utils"
-import { AppResponse, MEDIA_URL } from "@repo/utils"
+import { AppResponse, MEDIA_PUBLIC_URL } from "@repo/utils"
 
 export const getFiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -25,10 +25,12 @@ export const getFiles = async (req: Request, res: Response, next: NextFunction) 
 
         for (const abs of allFiles) {
             const rel = path.relative(path.join(__dirname, ".."), abs)
-            const url = `${MEDIA_URL}/${rel.replace(/\\/g, "/")}`
+            const relPath = rel.replace(/\\/g, "/")
+            const url = `${MEDIA_PUBLIC_URL}/${relPath}`
 
-            const parts = url.split("/")
-            const entityId = parts[3]
+            // relPath example: "uploads/<entityType>/<entityId>/<filename>"
+            const partsRel = relPath.split("/")
+            const entityId = partsRel[2]
 
             if (!grouped[entityId]) grouped[entityId] = []
             grouped[entityId].push(url)
@@ -57,7 +59,8 @@ export const getFilesById = async (req: Request, res: Response, next: NextFuncti
         const allFiles = await getAllFiles(entityPath)
         const fileUrls = allFiles.map((abs) => {
             const rel = path.relative(path.join(__dirname, ".."), abs)
-            return `${MEDIA_URL}/${rel.replace(/\\/g, "/")}`
+            const relPath = rel.replace(/\\/g, "/")
+            return `${MEDIA_PUBLIC_URL}/${relPath}`
         })
 
         return AppResponse(res, 200, "Files retrieved successfully", fileUrls)
@@ -142,7 +145,7 @@ export const postFiles = (req: Request, res: Response, next: NextFunction) => {
         })
 
         const uploaded = files.map((file) => ({
-            url: `${MEDIA_URL}/uploads/${entityType}/${entityId}/${file.filename}`,
+            url: `${MEDIA_PUBLIC_URL}/uploads/${entityType}/${entityId}/${file.filename}`,
             fileName: file.filename,
             size: file.size,
             mime: file.mimetype,

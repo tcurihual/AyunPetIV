@@ -14,12 +14,13 @@ import { LoginFormSchema } from "@/utils/schemas"
 import { LoginFormType } from "@/utils/types"
 import { Colors } from "@/constants/Colors"
 import { useBiometricLogin } from "@/hooks/useBiometricsLogin"
+import { clearAuth } from "@/utils/storage"
 
 export default function rememberedLogin() {
     const router = useRouter()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-    const { signIn, status, user } = useAuthContext()
+    const { signIn, status, user, signOut } = useAuthContext()
     const { tryBiometricLogin } = useBiometricLogin()
 
     useEffect(() => {
@@ -55,6 +56,10 @@ export default function rememberedLogin() {
 
     const disabled = isSubmitting || status === "loading"
 
+    const handleNewSession = async () => {
+        await signOut(true)
+    }
+
     return (
         <KeyboardAwareScrollView
             style={styles.container}
@@ -87,10 +92,10 @@ export default function rememberedLogin() {
                 <Text style={styles.buttonText}>Iniciar Sesión</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/(password)/forgot")}>
                 <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <TouchableOpacity onPress={handleNewSession}>
                 <Text style={styles.forgotPassword}>Ingresar con otra cuenta</Text>
             </TouchableOpacity>
         </KeyboardAwareScrollView>

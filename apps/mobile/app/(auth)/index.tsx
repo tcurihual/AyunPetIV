@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react"
 import { View, ActivityIndicator } from "react-native"
 import { useRouter } from "expo-router"
-import { isFirstLaunch, markFirstLaunch } from "@/utils/storage"
+
 import { useAuthContext } from "@/context/AuthContext"
+import { isFirstLaunch, markFirstLaunch } from "@/utils/storage"
 
 export default function Index() {
     const router = useRouter()
@@ -10,6 +11,7 @@ export default function Index() {
     const [checking, setChecking] = useState(true)
 
     useEffect(() => {
+        router.replace("/(auth)/welcome")
         ;(async () => {
             const first = await isFirstLaunch()
 
@@ -27,8 +29,7 @@ export default function Index() {
             }
 
             if (status === "unauthenticated") {
-                const target = user ? "/(auth)/remembered-login" : "/(auth)/login"
-                router.replace(target)
+                router.replace("/(auth)/(login)/")
                 return
             }
             setChecking(false)

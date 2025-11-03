@@ -59,7 +59,9 @@ export const login = async (req: Request, res: Response) => {
     const token = generateAuthToken(payload)
     if (!token) throw new AppError(500, "Ocurrio un error inesperado")
 
-    return AppResponse(res, 200, "Inicio de sesión exitoso", { user, token })
+    const { password: _, ...publicUser } = user
+
+    return AppResponse(res, 200, "Inicio de sesión exitoso", { user: publicUser, token })
 }
 
 export const register = async (

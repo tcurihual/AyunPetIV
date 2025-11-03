@@ -12,7 +12,24 @@ import type {
 import axios from "axios"
 import { supabase } from "../index"
 import { getEntityImages, getMultipleEntityImages } from "../utils/mediaService"
-import { MEDIA_URL } from "@repo/utils"
+import { MEDIA_URL, MEDIA_PUBLIC_URL } from "@repo/utils"
+
+const normalizeMediaUrls = (list: any[] | undefined) => {
+    const arr = Array.isArray(list) ? list : []
+    return arr.map((u) => {
+        try {
+            if (!u) return u
+            const idx = String(u).indexOf("/uploads/")
+            if (idx !== -1) {
+                const rel = String(u).substring(idx + 1)
+                return `${MEDIA_PUBLIC_URL}/${rel}`
+            }
+            return u
+        } catch (e) {
+            return u
+        }
+    })
+}
 
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 const isAdmin = (req: AuthenticatedRequest) => req.user?.role === ROLES.ADMIN
@@ -165,7 +182,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
         if (!authedUserId) throw new AppError(401, "No autenticado")
 
         const {
-            ownerId,
+            owner_id,
             title,
             description,
             species,
@@ -177,12 +194,19 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             name,
         } = req.body as any
 
-        const ownerIdNum = ownerId !== undefined ? Number(ownerId) : undefined
+        const ownerIdNumFromBody = owner_id !== undefined ? Number(owner_id) : undefined
         const ageMonthsNum = age_months !== undefined ? Number(age_months) : undefined
         const ageYearsNum = age_years !== undefined ? Number(age_years) : undefined
 
+        const ownerIdFinal = ownerIdNumFromBody ?? authedUserId
+
+        if (!isAdmin(req) && ownerIdFinal !== authedUserId) {
+            throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
+        }
+
+        // Validación mínima de payload: ahora ownerIdFinal siempre existe (porque al menos tenemos authedUserId)
         if (
-            !ownerIdNum ||
+            !ownerIdFinal ||
             !title ||
             !description ||
             !species ||
@@ -195,11 +219,22 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(400, "Payload inválido")
         }
 
-        if (!isAdmin(req) && !isSelf(req, ownerIdNum))
-            throw new AppError(403, "No autorizado para crear publicaciones para otro usuario")
+        const { data: ownerRow, error: ownerErr } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", ownerIdFinal)
+            .maybeSingle()
+
+        if (ownerErr) {
+            console.error("Error al verificar owner en BD:", ownerErr)
+            throw new AppError(500, "Error al verificar propietario")
+        }
+        if (!ownerRow) {
+            throw new AppError(404, "Usuario propietario (owner) no encontrado")
+        }
 
         const petInsert: Pet["Insert"] = {
-            owner_id: ownerIdNum,
+            owner_id: ownerIdFinal,
             name: name ?? null,
             age_months: ageMonthsNum,
             age_years: ageYearsNum,
@@ -217,7 +252,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
         if (petErr || !pet) throw new AppError(500, petErr?.message ?? "Error al crear la mascota")
 
         const postInsert: Post["Insert"] = {
-            creator_id: ownerId,
+            creator_id: ownerIdFinal,
             pet_id: pet.id,
             title,
             description,
@@ -234,7 +269,6 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(500, postErr?.message ?? "Error al crear la publicación")
         }
 
-        // Si vienen archivos, subirlos al microservicio de media
         let uploadedImages: any[] = []
         try {
             const files = req.files as Express.Multer.File[] | undefined
@@ -258,16 +292,20 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
                             "x-user-id": String(req.user?.id ?? 0),
                             "x-user-role": String(req.user?.role ?? ""),
                         },
+                        timeout: 10000,
                     }
                 )
 
-                uploadedImages = mediaResponse.data.data || []
+                uploadedImages = normalizeMediaUrls(mediaResponse.data.data || [])
             }
         } catch (mediaError: any) {
             console.error("Error al subir imágenes de la publicación:", mediaError?.message)
-            // Intentar limpiar DB: eliminar post y pet
-            await supabase.from("post").delete().eq("id", post.id)
-            await supabase.from("pet").delete().eq("id", pet.id)
+            try {
+                await supabase.from("post").delete().eq("id", post.id)
+                await supabase.from("pet").delete().eq("id", pet.id)
+            } catch (cleanupErr) {
+                console.error("Error limpiando BD tras fallo de media:", cleanupErr)
+            }
             throw new AppError(500, "Error al subir las imágenes de la publicación")
         }
 
@@ -447,7 +485,7 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
                     "x-user-role": String(req.user?.role ?? ""),
                 },
             })
-            allImages = mediaResponse.data.data || []
+            allImages = normalizeMediaUrls(mediaResponse.data.data || [])
         } catch (err) {
             // continuar si no hay imágenes
         }
@@ -522,7 +560,7 @@ export const deletePublication = async (req: AuthenticatedRequest, res: Response
                     "x-user-role": String(req.user?.role ?? ""),
                 },
             })
-            const imageUrls = mediaResponse.data.data || []
+            const imageUrls = normalizeMediaUrls(mediaResponse.data.data || [])
             imagesToDelete = imageUrls.map((url: string) => url.split("/").pop() || "")
         } catch (err) {
             // continuar aunque no haya imágenes

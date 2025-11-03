@@ -2,9 +2,13 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import {
     LoginSchema,
     LoginResponseSchema,
-    RegisterSchema,
+    UserRegisterSchema,
     BaseResponseSchema,
     ErrorValuesSchema,
+    GiverRegisterSchema,
+    VerifyEmailRequestSchema,
+    ForgotPasswordRequestSchema,
+    ResetPasswordRequestSchema,
 } from "@repo/utils"
 
 export function registerAuthPaths(registry: OpenAPIRegistry) {
@@ -39,25 +43,108 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
 
     registry.registerPath({
         method: "post",
+        path: "/v1/auth/register/user",
+        tags: ["Auth"],
+        summary: "Registrar un nuevo usuario adoptante en la plataforma",
+        description:
+            "Crea un nuevo usuario adoptante, durante el registro," +
+            ", se enviará un correo de verificación " +
+            "con un token único para validar su dirección de correo electrónico.",
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: UserRegisterSchema,
+                        examples: {
+                            sinDocuments: {
+                                summary: "Registro con valores obligatorios",
+                                value: {
+                                    name: "Julio",
+                                    email: "julio@acme.com",
+                                    password: "********",
+                                    rut: "12.345.678-9",
+                                },
+                            },
+                            conDocuments: {
+                                summary: "Registro con valores opcionales",
+                                value: {
+                                    name: "Julio",
+                                    email: "julio@acme.com",
+                                    password: "********",
+                                    rut: "12.345.678-9",
+                                    description: "Julio el bakan",
+                                    address: "Av. Siempre Viva 742",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses: {
+            201: {
+                description: "Usuario creado exitosamente — correo de verificación enviado",
+                content: { "application/json": { schema: BaseResponseSchema } },
+            },
+            409: {
+                description: "El correo o RUT ya están registrados",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error interno al registrar el usuario",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "post",
         path: "/v1/auth/register/{variation}",
         tags: ["Auth"],
-        summary: "Registrar un nuevo usuario en la plataforma",
+        summary: "Registrar un nuevo usuario dador de adopción en la plataforma",
         description:
-            "Crea un nuevo usuario con base en la variación indicada (`user`, `giver` o `shelter`). " +
-            "Durante el registro, si el usuario es de tipo normal (`user`), se enviará un correo de verificación " +
-            "con un token único para validar su dirección de correo electrónico.",
+            "Crea un nuevo usuario con base en la variación indicada (`giver` o `shelter`). " +
+            "Este tipo de usuario debe ser validado por un `administrador`",
         parameters: [
             {
                 name: "variation",
                 in: "path",
                 required: true,
-                description: "Tipo de usuario a registrar (`user`, `giver`, `shelter`)",
+                description: "Tipo de usuario a registrar ( `giver`, `shelter`)",
                 schema: { type: "string", example: "user" },
             },
         ],
         request: {
             body: {
-                content: { "application/json": { schema: RegisterSchema } },
+                content: {
+                    "application/json": {
+                        schema: GiverRegisterSchema,
+                        examples: {
+                            sinDocuments: {
+                                summary: "Registro con valores obligatorios",
+                                value: {
+                                    name: "Patitas Sucias",
+                                    email: "patsu@acme.com",
+                                    password: "********",
+                                    rut: "12.345.678-9",
+                                    documents: ["doc_123", "doc_456"],
+                                },
+                            },
+                            conDocuments: {
+                                summary: "Registro con valores opcionales",
+                                value: {
+                                    name: "Patitas Sucias",
+                                    email: "patsu@acme.com",
+                                    password: "********",
+                                    rut: "12.345.678-9",
+                                    description: "Fundación Patitas Sucias",
+                                    address: "Av. Siempre Viva 742",
+                                    documents: ["doc_123", "doc_456"],
+                                },
+                            },
+                        },
+                    },
+                },
             },
         },
         responses: {
@@ -88,18 +175,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
             body: {
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            properties: {
-                                token: {
-                                    type: "string",
-                                    description:
-                                        "Token único recibido desde el correo de verificación",
-                                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                                },
-                            },
-                            required: ["token"],
-                        },
+                        schema: VerifyEmailRequestSchema,
+                        example: { token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
                     },
                 },
             },
@@ -126,22 +203,14 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         summary: "Solicitar recuperación de contraseña",
         description:
-            "Recibe una dirección de correo electrónico registrada en la plataforma y envía un correo con un enlace " +
-            "que contiene un token único con validez de 30 minutos para restablecer la contraseña.",
+            "Recibe un email registrado y envía un enlace con un token válido por 30 minutos para restablecer contraseña.",
         request: {
             body: {
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            properties: {
-                                email: {
-                                    type: "string",
-                                    format: "email",
-                                    example: "usuario@ejemplo.com",
-                                },
-                            },
-                            required: ["email"],
+                        schema: ForgotPasswordRequestSchema,
+                        example: {
+                            email: "usuario@ejemplo.com",
                         },
                     },
                 },
@@ -169,27 +238,15 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         summary: "Restablecer contraseña mediante token",
         description:
-            "Permite al usuario establecer una nueva contraseña utilizando el token recibido en el correo de recuperación. " +
-            "El token es validado y, si es correcto, la contraseña se actualiza en la base de datos con el hash correspondiente.",
+            "Permite al usuario establecer una nueva contraseña usando el token recibido por correo.",
         request: {
             body: {
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            properties: {
-                                token: {
-                                    type: "string",
-                                    description: "Token único enviado por correo",
-                                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                                },
-                                password: {
-                                    type: "string",
-                                    description: "Nueva contraseña segura del usuario",
-                                    example: "Nuev@Contr4seña123!",
-                                },
-                            },
-                            required: ["token", "password"],
+                        schema: ResetPasswordRequestSchema,
+                        example: {
+                            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                            password: "*********",
                         },
                     },
                 },

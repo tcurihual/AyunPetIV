@@ -14,5 +14,5 @@
         }
     },
     "skipLibCheck": true,
-    "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "app/(auth)/index.tsx", "app/(auth)/remembered-login.tsx", "app/(shelter)/index.tsx", "features/TryBiometricLogin.tsx"]
+    "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "app/(auth)/index.tsx", "app/(auth)/(login)/remembered.tsx", "app/(shelter)/index.tsx", "features/TryBiometricLogin.tsx"]
 }

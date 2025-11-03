@@ -1,7 +1,31 @@
 import { Request, Response } from "express"
 import axios from "axios"
 import { supabase } from "../"
-import { AppError, AppResponse, News, AuthenticatedRequest, MEDIA_URL } from "@repo/utils"
+import {
+    AppError,
+    AppResponse,
+    News,
+    AuthenticatedRequest,
+    MEDIA_URL,
+    MEDIA_PUBLIC_URL,
+} from "@repo/utils"
+
+const normalizeMediaUrls = (list: any[] | undefined) => {
+    const arr = Array.isArray(list) ? list : []
+    return arr.map((u) => {
+        try {
+            if (!u) return u
+            const idx = String(u).indexOf("/uploads/")
+            if (idx !== -1) {
+                const rel = String(u).substring(idx + 1)
+                return `${MEDIA_PUBLIC_URL}/${rel}`
+            }
+            return u
+        } catch (e) {
+            return u
+        }
+    })
+}
 
 /**
  * Obtener todas las noticias o una noticia específica por ID
@@ -33,7 +57,7 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
                         "x-user-role": String(req.user?.role || ""),
                     },
                 })
-                images = mediaResponse.data.data || []
+                images = normalizeMediaUrls(mediaResponse.data.data || [])
             } catch (err) {
                 // Si no hay imágenes, continuamos con array vacío
                 console.log("No images found for this news")
@@ -65,7 +89,7 @@ export const getNews = async (req: AuthenticatedRequest, res: Response) => {
                                 },
                             }
                         )
-                        images = mediaResponse.data.data || []
+                        images = normalizeMediaUrls(mediaResponse.data.data || [])
                     } catch (err) {
                         // Si no hay imágenes, continuamos con array vacío
                     }
@@ -142,7 +166,7 @@ export const createNews = async (req: Request, res: Response) => {
                     }
                 )
 
-                uploadedImages = mediaResponse.data.data || []
+                uploadedImages = normalizeMediaUrls(mediaResponse.data.data || [])
             } catch (mediaError: any) {
                 console.error("❌ Error al subir imágenes:", {
                     message: mediaError.message,
@@ -235,7 +259,7 @@ export const updateNews = async (req: Request, res: Response) => {
                     }
                 )
 
-                uploadedImages = mediaResponse.data.data || []
+                uploadedImages = normalizeMediaUrls(mediaResponse.data.data || [])
             } catch (mediaError: any) {
                 console.error("❌ Error al subir nuevas imágenes:", {
                     message: mediaError.message,
@@ -255,7 +279,7 @@ export const updateNews = async (req: Request, res: Response) => {
                     "x-user-role": req.user.role,
                 },
             })
-            allImages = mediaResponse.data.data || []
+            allImages = normalizeMediaUrls(mediaResponse.data.data || [])
         } catch (err) {
             // Si no hay imágenes, continuamos
         }
@@ -303,7 +327,7 @@ export const deleteNews = async (req: Request, res: Response) => {
                     "x-user-role": req.user.role,
                 },
             })
-            const imageUrls = mediaResponse.data.data || []
+            const imageUrls = normalizeMediaUrls(mediaResponse.data.data || [])
             // Extraer solo los nombres de archivo de las URLs
             imagesToDelete = imageUrls.map((url: string) => {
                 const parts = url.split("/")

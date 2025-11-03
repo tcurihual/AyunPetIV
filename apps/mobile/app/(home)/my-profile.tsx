@@ -17,6 +17,7 @@ import { UserProfileSchema } from "@/utils/schemas"
 import type { UserProfileData } from "@/utils/schemas"
 import Input from "@/components/ui/Input"
 import { useAuthContext } from "@/context/AuthContext"
+import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
 
 export default function MyProfileScreen() {
@@ -76,7 +77,6 @@ export default function MyProfileScreen() {
                 onPress: async () => {
                     try {
                         await signOut()
-                        router.replace("/(auth)/login")
                     } catch (error) {
                         console.error("Error al cerrar sesión:", error)
                         Alert.alert("Error", "No se pudo cerrar la sesión")
@@ -84,6 +84,35 @@ export default function MyProfileScreen() {
                 },
             },
         ])
+    }
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "Eliminar cuenta",
+            "¿Estás seguro? Esta acción eliminará permanentemente tu cuenta y todos tus datos.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Eliminar",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            // Llamar al servicio para eliminar la cuenta
+                            await userService.deleteMe()
+                            // Luego cerrar sesión y redirigir a login
+                            await signOut()
+                            router.replace("/(auth)/login")
+                        } catch (error) {
+                            console.error("Error al eliminar cuenta:", error)
+                            Alert.alert(
+                                "Error",
+                                "No se pudo eliminar la cuenta. Intenta nuevamente más tarde."
+                            )
+                        }
+                    },
+                },
+            ]
+        )
     }
 
     return (
@@ -120,6 +149,10 @@ export default function MyProfileScreen() {
 
                     <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                         <Text style={styles.editButtonText}>Editar Perfil</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+                        <Text style={styles.deleteButtonText}>Eliminar Cuenta</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -254,31 +287,49 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: "100%",
         marginTop: 30,
-        gap: 15,
+        justifyContent: "space-between",
     },
     signOutButton: {
-        flex: 1,
+        width: "30%",
         backgroundColor: "#ff4757",
         borderRadius: 12,
-        paddingVertical: 15,
+        paddingVertical: 12,
         alignItems: "center",
+        justifyContent: "center",
     },
     signOutButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
+        fontSize: 14,
+        fontWeight: "700",
         color: "#fff",
+        textAlign: "center",
     },
     editButton: {
-        flex: 1,
+        width: "30%",
         backgroundColor: "#F9C80E",
         borderRadius: 12,
-        paddingVertical: 15,
+        paddingVertical: 12,
         alignItems: "center",
+        justifyContent: "center",
     },
     editButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
+        fontSize: 14,
+        fontWeight: "700",
         color: "#000",
+        textAlign: "center",
+    },
+    deleteButton: {
+        width: "30%",
+        backgroundColor: "#c0392b",
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    deleteButtonText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#fff",
+        textAlign: "center",
     },
     editFormOverlay: {
         flex: 1,
