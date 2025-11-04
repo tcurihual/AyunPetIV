@@ -83,3 +83,10 @@ export const authService = {
         return response.data
     },
 }
+
+export const deleteAccount = async (password: string) => {
+    const response = await http.delete("/auth/delete-account", {
+        data: { password },
+    })
+    return response.data
+}
