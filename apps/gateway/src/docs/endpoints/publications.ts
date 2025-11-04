@@ -18,7 +18,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Listar publicaciones de adopción",
         description:
             "Obtiene un listado paginado de publicaciones de adopción. " +
-            "Cada publicación incluye información del post y la mascota asociada. " +
+            "Cada publicación incluye información del post, la mascota asociada y datos del creador (id, nombre y foto de perfil). " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
         parameters: [
             {
@@ -86,7 +86,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Obtener publicación por ID",
         description:
             "Obtiene una publicación específica por su ID. " +
-            "Incluye información completa del post y la mascota asociada. " +
+            "Incluye información completa del post, la mascota asociada y datos del creador (id, nombre y foto de perfil). " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
         parameters: [
             {

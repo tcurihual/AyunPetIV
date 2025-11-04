@@ -46,6 +46,7 @@ export interface PublicationItem {
     gender: string
     age: string
     publisher: string
+    publisherPhoto?: string | null
     description: string
     image: { uri: string } | any
     species?: string
@@ -82,30 +83,34 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     const [error, setError] = useState<string | null>(null)
     const { user, status } = useAuthContext()
 
-    const buildPublicationItem = React.useCallback((post: any, pet: any): PublicationItem => {
-        const postImages: string[] = Array.isArray(post?.images) ? post.images : []
-        const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
+    const buildPublicationItem = React.useCallback(
+        (post: any, pet: any, creator?: any): PublicationItem => {
+            const postImages: string[] = Array.isArray(post?.images) ? post.images : []
+            const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
 
-        const imageUri =
-            postImages[0] || petImages[0] || "https://placehold.co/400x400?text=Mascota"
+            const imageUri =
+                postImages[0] || petImages[0] || "https://placehold.co/400x400?text=Mascota"
 
-        return {
-            id: String(post?.id ?? ""),
-            name: pet?.name || "Sin nombre",
-            gender: pet?.gender ?? "",
-            age: typeof pet?.age === "number" ? `${pet.age} años` : "",
-            publisher: "Usuario",
-            description: post?.description ?? "",
-            image: { uri: imageUri },
-            species: pet?.species,
-            size: pet?.size,
-            sterilized: pet?.sterilized,
-            status: post?.status,
-            postId: post?.id,
-            petId: pet?.id,
-            creatorId: post?.creator_id,
-        }
-    }, [])
+            return {
+                id: String(post?.id ?? ""),
+                name: pet?.name || "Sin nombre",
+                gender: pet?.gender ?? "",
+                age: typeof pet?.age === "number" ? `${pet.age} años` : "",
+                publisher: creator?.name || "Usuario",
+                publisherPhoto: creator?.profilePhoto || null,
+                description: post?.description ?? "",
+                image: { uri: imageUri },
+                species: pet?.species,
+                size: pet?.size,
+                sterilized: pet?.sterilized,
+                status: post?.status,
+                postId: post?.id,
+                petId: pet?.id,
+                creatorId: post?.creator_id,
+            }
+        },
+        []
+    )
 
     // Cargar publicaciones automáticamente cuando el usuario esté autenticado
     useEffect(() => {
@@ -154,6 +159,11 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                             updated_at: string
                             images?: string[]
                         }
+                        creator: {
+                            id: number
+                            name: string
+                            profilePhoto: string | null
+                        } | null
                     }>
                     total: number
                     page: number
@@ -169,7 +179,8 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                     name: item.pet.name || "Sin nombre",
                     gender: item.pet.gender,
                     age: `${item.pet.age} años`,
-                    publisher: "Usuario", // Por ahora no viene info del creador en la respuesta
+                    publisher: item.creator?.name || "Usuario",
+                    publisherPhoto: item.creator?.profilePhoto || null,
                     description: item.post.description,
                     image:
                         item.post.images && item.post.images.length > 0
@@ -214,15 +225,20 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                     data: {
                         post: any
                         pet: any
+                        creator: {
+                            id: number
+                            name: string
+                            profilePhoto: string | null
+                        } | null
                     }
                 }>(`/v1/adoptions/publications/${numericId}`)
 
-                const { post, pet } = response.data.data || {}
+                const { post, pet, creator } = response.data.data || {}
                 if (!post || !pet) {
                     return null
                 }
 
-                const mapped = buildPublicationItem(post, pet)
+                const mapped = buildPublicationItem(post, pet, creator)
                 setPublications((prev) => {
                     const hasPublication = prev.some(
                         (pub) => Number(pub.postId ?? pub.id) === numericId
