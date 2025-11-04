@@ -1,7 +1,7 @@
-import { z } from "schemas/zod-extended"
+import { z } from "./zod-extended"
 
-import { UserSchema } from "schemas/entities"
-import { DocumentsSchema } from "schemas/media"
+import { UserSchema } from "./entities"
+import { DocumentsSchema } from "./media"
 
 // Requests
 
@@ -32,6 +32,11 @@ export const ForgotPasswordRequestSchema = UserSchema.pick({
 export const ResetPasswordRequestSchema = z.object({
     ...VerifyEmailRequestSchema.shape,
     ...ForgotPasswordRequestSchema.shape,
+})
+
+export const CheckUserExistsSchema = z.object({
+    email: z.string().email("Debe ser un email válido").optional(),
+    rut: z.string().optional(),
 })
 
 // Responses

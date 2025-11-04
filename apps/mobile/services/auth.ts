@@ -39,6 +39,19 @@ export interface RegisterResponse {
     data: Record<string, never>
 }
 
+export interface CheckUserExistsRequest {
+    email?: string
+    rut?: string
+}
+
+export interface CheckUserExistsResponse {
+    type: string
+    message: string
+    data: {
+        available: boolean
+    }
+}
+
 /**
  * Servicio de autenticación para comunicarse con la API
  */
@@ -81,5 +94,27 @@ export const authService = {
         )
 
         return response.data
+    },
+
+    /**
+     * Verifica si un email o RUT ya existe en la base de datos
+     * @param data - Objeto con email y/o rut a verificar
+     * @returns Promise<boolean> - true si está disponible, false si ya existe
+     */
+    checkUserExists: async (data: CheckUserExistsRequest): Promise<boolean> => {
+        try {
+            const response = await http.post<CheckUserExistsResponse>(
+                "/v1/auth/check-user-exists",
+                data
+            )
+            return response.data.data.available
+        } catch (error: any) {
+            // Si retorna 409, significa que el email/rut ya existe
+            if (error?.response?.status === 409) {
+                return false
+            }
+            // Si hay otro error, lo lanzamos
+            throw error
+        }
     },
 }
