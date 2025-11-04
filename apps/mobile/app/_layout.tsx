@@ -12,7 +12,8 @@ import { ModalProvider } from "@/context/ModalContext"
 import { AlertProvider } from "@/context/AlertContext"
 import { Alert } from "@/components/ui/Alert"
 import ModalHost from "@common/modals/ModalHost"
-import { LoadingProvider } from "@/context/LoadingContext"
+import { LoadingProvider, useLoading } from "@/context/LoadingContext"
+import { registerLoadingHandler } from "@/services/http"
 import AuthRedirect from "@/features/AuthRedirect"
 import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
@@ -23,6 +24,16 @@ import { PostFormProvider } from "@/context/PostFormContext"
 import { PostResponsesProvider } from "@/context/PostResponsesContext"
 
 SplashScreen.preventAutoHideAsync()
+
+function LoadingHandlerBridge({ children }: { children: React.ReactNode }) {
+    const { showLoading, hideLoading } = useLoading()
+
+    useEffect(() => {
+        registerLoadingHandler({ showLoading, hideLoading })
+    }, [showLoading, hideLoading])
+
+    return <>{children}</>
+}
 
 export default function RootLayout() {
     const colorScheme = useColorScheme()
@@ -48,31 +59,35 @@ export default function RootLayout() {
                                         <ModalProvider>
                                             <AlertProvider>
                                                 <LoadingProvider>
-                                                    <ThemeProvider
-                                                        value={
-                                                            colorScheme === "dark"
-                                                                ? DarkTheme
-                                                                : DefaultTheme
-                                                        }
-                                                    >
-                                                        <Stack
-                                                            screenOptions={{ headerShown: false }}
+                                                    <LoadingHandlerBridge>
+                                                        <ThemeProvider
+                                                            value={
+                                                                colorScheme === "dark"
+                                                                    ? DarkTheme
+                                                                    : DefaultTheme
+                                                            }
                                                         >
-                                                            <Stack.Screen name="splash" />
-                                                            <Stack.Screen name="(auth)" />
-                                                            <Stack.Screen name="(home)" />
-                                                            <Stack.Screen name="(shelter)" />
-                                                            <Stack.Screen name="+not-found" />
-                                                        </Stack>
+                                                            <Stack
+                                                                screenOptions={{
+                                                                    headerShown: false,
+                                                                }}
+                                                            >
+                                                                <Stack.Screen name="splash" />
+                                                                <Stack.Screen name="(auth)" />
+                                                                <Stack.Screen name="(home)" />
+                                                                <Stack.Screen name="(shelter)" />
+                                                                <Stack.Screen name="+not-found" />
+                                                            </Stack>
 
-                                                        <ModalHost />
-                                                        <Alert />
-                                                        <AuthRedirect />
-                                                        <StatusBar
-                                                            style="inverted"
-                                                            backgroundColor="#000"
-                                                        />
-                                                    </ThemeProvider>
+                                                            <ModalHost />
+                                                            <Alert />
+                                                            <AuthRedirect />
+                                                            <StatusBar
+                                                                style="inverted"
+                                                                backgroundColor="#000"
+                                                            />
+                                                        </ThemeProvider>
+                                                    </LoadingHandlerBridge>
                                                 </LoadingProvider>
                                             </AlertProvider>
                                         </ModalProvider>

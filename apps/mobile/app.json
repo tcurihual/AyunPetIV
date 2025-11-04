@@ -52,7 +52,10 @@
             "typedRoutes": true
         },
         "extra": {
-            "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000/api"
+            "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000/api",
+            "router": {
+                "disableSplashScreen": true
+            }
         }
     }
 }
