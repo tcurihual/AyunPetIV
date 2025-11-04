@@ -21,6 +21,7 @@ import { PublicationProvider } from "@/context/PublicationContext"
 import { QuestionProvider } from "@/context/QuestionContext"
 import { PostFormProvider } from "@/context/PostFormContext"
 import { PostResponsesProvider } from "@/context/PostResponsesContext"
+import { NotificationProvider } from "@/context/NotificationContext"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -38,16 +39,17 @@ export default function RootLayout() {
 
     return (
         <AuthProvider>
-            <QuestionProvider>
-                <PostFormProvider>
-                    <PostResponsesProvider>
-                        <MessageProvider>
-                            <ReportProvider>
-                                <AdoptionRequestProvider>
-                                    <PublicationProvider>
-                                        <ModalProvider>
-                                            <AlertProvider>
-                                                <LoadingProvider>
+            <NotificationProvider>
+                <QuestionProvider>
+                    <PostFormProvider>
+                        <PostResponsesProvider>
+                            <MessageProvider>
+                                <ReportProvider>
+                                    <AdoptionRequestProvider>
+                                        <PublicationProvider>
+                                            <ModalProvider>
+                                                <AlertProvider>
+                                                    <LoadingProvider>
                                                     <ThemeProvider
                                                         value={
                                                             colorScheme === "dark"
@@ -73,16 +75,17 @@ export default function RootLayout() {
                                                             backgroundColor="#000"
                                                         />
                                                     </ThemeProvider>
-                                                </LoadingProvider>
-                                            </AlertProvider>
-                                        </ModalProvider>
-                                    </PublicationProvider>
-                                </AdoptionRequestProvider>
-                            </ReportProvider>
-                        </MessageProvider>
-                    </PostResponsesProvider>
-                </PostFormProvider>
-            </QuestionProvider>
+                                                    </LoadingProvider>
+                                                </AlertProvider>
+                                            </ModalProvider>
+                                        </PublicationProvider>
+                                        </AdoptionRequestProvider>
+                                </ReportProvider>
+                            </MessageProvider>
+                        </PostResponsesProvider>
+                    </PostFormProvider>
+                </QuestionProvider>
+            </NotificationProvider>
         </AuthProvider>
     )
 }

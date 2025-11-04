@@ -17,6 +17,10 @@ import {
     adoptionCompletedSubject,
     adoptionCompletedTemplate,
 } from "../utils/templates/adoptionCompletedTemplate"
+import {
+    sendAdoptionApprovedNotification,
+    sendAdoptionRejectedNotification,
+} from "../utils/pushNotifications"
 
 const SPECIES_LABELS: Record<string, string> = {
     dog: "Perro",
@@ -501,6 +505,13 @@ export const confirmAccept = async (req: Request, res: Response) => {
             }).catch((err) => {
                 console.error("Error al enviar correo de confirmación de adopción:", err)
             })
+
+            // 🔔 Enviar notificación push al adoptante
+            if (request.requester_id) {
+                sendAdoptionApprovedNotification(request.requester_id, petName, request.id, code).catch((err: any) => {
+                    console.error("Error al enviar notificación push de aprobación:", err)
+                })
+            }
         }
 
         return AppResponse(res, 200, "Solicitud aceptada", {
@@ -834,6 +845,43 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
 
         if (updateError || !updatedRequest)
             throw new Error("Error al actualizar la solicitud de adopción")
+
+        // 🔔 Enviar notificación push si el estado cambió a "rejected"
+        if (payload.status === "rejected" && existingRequest.requester_id && existingRequest.post_id) {
+            try {
+                // Obtener el nombre de la mascota para la notificación
+                const { data: post } = await supabase
+                    .from("post")
+                    .select("id")
+                    .eq("id", existingRequest.post_id)
+                    .single()
+
+                let petName = "la mascota"
+                if (post?.id) {
+                    const { data: pet } = await supabase
+                        .from("pet")
+                        .select("name")
+                        .eq("post_id", post.id)
+                        .maybeSingle()
+                    
+                    if (pet?.name) {
+                        petName = pet.name
+                    }
+                }
+
+                // Enviar notificación push de rechazo
+                sendAdoptionRejectedNotification(
+                    existingRequest.requester_id,
+                    petName,
+                    numericId,
+                    message
+                ).catch((err: any) => {
+                    console.error("Error al enviar notificación push de rechazo:", err)
+                })
+            } catch (err) {
+                console.error("Error al obtener datos para notificación de rechazo:", err)
+            }
+        }
 
         return AppResponse(
             res,
