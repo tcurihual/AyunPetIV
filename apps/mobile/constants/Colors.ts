@@ -44,4 +44,7 @@ export const Colors = {
         tabIconDefault: "#888",
         tabIconSelected: tintColorDark,
     },
+    // parcheado para evitar colores erroneos
+    yellow: "#F9C53D",
+    purple: "#9B6DD7",
 }

@@ -1,5 +1,9 @@
 import React, { useEffect } from "react"
-import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from "@react-navigation/native"
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider as NavThemeProvider,
+} from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { SplashScreen, Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
@@ -55,10 +59,18 @@ function RootLayoutNav() {
                                                 <PublicationProvider>
                                                     <LoadingHandlerBridge>
                                                         <NavThemeProvider
-                                                            value={theme === "dark" ? DarkTheme : DefaultTheme}
+                                                            value={
+                                                                theme === "dark"
+                                                                    ? DarkTheme
+                                                                    : DefaultTheme
+                                                            }
                                                         >
-                                                            <Stack screenOptions={{ headerShown: false }}>
-                                                                <Stack.Screen name="splash" />
+                                                            <Stack
+                                                                screenOptions={{
+                                                                    headerShown: false,
+                                                                }}
+                                                            >
+                                                                <Stack.Screen name="index" />
                                                                 <Stack.Screen name="(auth)" />
                                                                 <Stack.Screen name="(home)" />
                                                                 <Stack.Screen name="(shelter)" />

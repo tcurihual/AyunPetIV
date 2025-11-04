@@ -11,7 +11,6 @@ export default function Index() {
     const [checking, setChecking] = useState(true)
 
     useEffect(() => {
-        router.replace("/(auth)/welcome")
         ;(async () => {
             const first = await isFirstLaunch()
 
