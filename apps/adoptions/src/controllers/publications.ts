@@ -233,6 +233,13 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(404, "Usuario propietario (owner) no encontrado")
         }
 
+        // Validar que se hayan enviado archivos (imágenes obligatorias)
+        const files = req.files as Express.Multer.File[] | undefined
+
+        if (!files || files.length === 0) {
+            throw new AppError(400, "Se debe proporcionar al menos una imagen de la mascota")
+        }
+
         const petInsert: Pet["Insert"] = {
             owner_id: ownerIdFinal,
             name: name ?? null,
@@ -271,7 +278,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
 
         let uploadedImages: any[] = []
         try {
-            const files = req.files as Express.Multer.File[] | undefined
+            // Los archivos ya fueron validados antes, así que siempre hay files aquí
             if (files && files.length > 0) {
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
