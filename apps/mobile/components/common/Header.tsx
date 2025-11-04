@@ -1,9 +1,17 @@
 import React from "react"
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions, Text } from "react-native"
+import {
+    View,
+    TouchableOpacity,
+    Image,
+    StyleSheet,
+    Dimensions,
+    Text,
+    useColorScheme, // 1. Importar hook
+} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter, usePathname } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
-import { Colors } from "@/constants/Colors"
+import { Colors } from "@/constants/Colors" // 2. Importar { Colors }
 import BackButton from "@common/BackButton"
 
 const { width } = Dimensions.get("window")
@@ -17,6 +25,10 @@ export default function Header({ onMenuPress }: HeaderProps) {
     const pathname = usePathname().toLowerCase()
     const { user } = useAuthContext()
 
+    // 3. Obtener el tema actual
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+
     const defaultAvatar = "https://randomuser.me/api/portraits/women/44.jpg"
     const userAvatar = user?.avatar || defaultAvatar
 
@@ -24,12 +36,11 @@ export default function Header({ onMenuPress }: HeaderProps) {
         const target =
             user?.role === 21 || user?.role === 22 ? "/(shelter)/my-profile" : "/(home)/my-profile"
 
-        if (pathname === target) return 
+        if (pathname === target) return
 
         router.push(target)
     }
 
-    // 🔙 Mostrar back solo en rutas que no sean home
     const showBack =
         pathname.includes("my-profile") ||
         pathname.includes("request") ||
@@ -37,14 +48,16 @@ export default function Header({ onMenuPress }: HeaderProps) {
         pathname.includes("message")
 
     return (
-        <View style={styles.container}>
+        // 4. Aplicar el color de fondo 'tint' (mostaza)
+        <View style={[styles.container, { backgroundColor: themeColors.tint }]}>
             {/* Izquierda: menú o back */}
             <View style={styles.leftContainer}>
                 {showBack ? (
                     <BackButton
                         floating={false}
                         style={{
-                            backgroundColor: "#fff",
+                            // 5. Aplicar el color 'card' para el fondo del botón
+                            backgroundColor: themeColors.card,
                             borderRadius: width * 0.06,
                             padding: width * 0.02,
                             elevation: 3,
@@ -53,6 +66,7 @@ export default function Header({ onMenuPress }: HeaderProps) {
                     />
                 ) : (
                     <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
+                        {/* 6. Color de icono fijo (negro) para contrastar con fondo 'tint' */}
                         <Ionicons name="menu" size={width * 0.07} color="#000" />
                     </TouchableOpacity>
                 )}
@@ -65,7 +79,11 @@ export default function Header({ onMenuPress }: HeaderProps) {
 
             {/* Derecha: perfil */}
             <View style={styles.rightContainer}>
-                <TouchableOpacity style={styles.profileCircle} onPress={handleProfilePress}>
+                {/* 7. Aplicar color de fallback 'tabIconDefault' (gris) */}
+                <TouchableOpacity
+                    style={[styles.profileCircle, { backgroundColor: themeColors.tabIconDefault }]}
+                    onPress={handleProfilePress}
+                >
                     <Image source={{ uri: userAvatar }} style={styles.profileImage} />
                     {!user && (
                         <View style={styles.noUserIndicator}>
@@ -78,22 +96,23 @@ export default function Header({ onMenuPress }: HeaderProps) {
     )
 }
 
+// 8. Quitar colores fijos del StyleSheet
 const styles = StyleSheet.create({
     container: {
         width: "100%",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: Colors.yellow,
+        // backgroundColor: Colors.yellow, // <-- Quitado (se aplica inline)
         paddingHorizontal: width * 0.05,
         paddingVertical: width * 0.02,
     },
     leftContainer: {
-        flex: 0.4, // menos espacio al back/menu
+        flex: 0.4,
         alignItems: "flex-start",
     },
     centerContainer: {
-        flex: 1.2, // más espacio para el logo
+        flex: 1.2,
         alignItems: "center",
         justifyContent: "center",
     },
@@ -112,7 +131,7 @@ const styles = StyleSheet.create({
         height: width * 0.12,
         borderRadius: (width * 0.12) / 2,
         overflow: "hidden",
-        backgroundColor: "#ccc",
+        // backgroundColor: "#e60000ff", // <-- Quitado (fallback rojo)
         alignItems: "center",
         justifyContent: "center",
     },
@@ -123,12 +142,12 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        backgroundColor: "rgba(0, 0, 0, 0.7)", // Overlay oscuro se mantiene
         justifyContent: "center",
         alignItems: "center",
     },
     noUserText: {
-        color: "#fff",
+        color: "#fff", // Texto blanco sobre overlay oscuro se mantiene
         fontSize: width * 0.04,
         fontWeight: "bold",
     },

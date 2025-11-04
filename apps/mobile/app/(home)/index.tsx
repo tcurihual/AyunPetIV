@@ -9,6 +9,7 @@ import {
     Image,
     ActivityIndicator,
     RefreshControl,
+    useColorScheme,
 } from "react-native"
 import { useRouter } from "expo-router"
 import PublicationCard from "@/components/common/PublicationCard"
@@ -17,6 +18,7 @@ import { hasPrefsDone } from "@/utils/storage"
 import { useAuthContext } from "@/context/AuthContext"
 import { usePublications } from "@/context/PublicationContext"
 import { useAlert } from "@/context/AlertContext"
+import { Colors } from "../../constants/Colors"
 
 // import petsData from "@/assets/data/pets.json"
 
@@ -35,11 +37,14 @@ export default function Home() {
     const { user } = useAuthContext()
     const { petsForHome, loading, error, refreshPublications, clearError } = usePublications()
 
-//    const petsForHome = petsData
-//    const loading = false
-//    const error = null
-//    const refreshPublications = async () => {}
-//    const clearError = () => {}
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+
+    //    const petsForHome = petsData
+    //    const loading = false
+    //    const error = null
+    //    const refreshPublications = async () => {}
+    //    const clearError = () => {}
 
     const { showAlert } = useAlert()
 
@@ -141,55 +146,72 @@ export default function Home() {
     }
 
     const renderPetItem = ({ item }: { item: any }) => (
-        <View style={styles.cardContainer}>
+        <View style={[styles.cardContainer, { backgroundColor: themeColors.card }]}>
             <PublicationCard pet={item} />
         </View>
     )
 
     if (checking) {
         return (
-            <View style={styles.loader}>
+            <View style={[styles.loader, { backgroundColor: themeColors.background }]}>
                 <ActivityIndicator size="large" />
-                <Text style={styles.loaderText}>Preparando tu inicio…</Text>
+                <Text style={[styles.loaderText, { color: themeColors.text }]}>
+                    Preparando tu inicio…
+                </Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.categoriesSection}>
-                <Text style={styles.categoriesTitle}>Categorías</Text>
+        // 6. Aplicar color de fondo al contenedor principal
+        <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+            {/* 7. Aplicar color de fondo a la sección de categorías */}
+            <View style={[styles.categoriesSection, { backgroundColor: themeColors.background }]}>
+                {/* 8. Aplicar color de texto al título */}
+                <Text style={[styles.categoriesTitle, { color: themeColors.text }]}>
+                    Categorías
+                </Text>
                 <View style={styles.categoriesContainer}>
                     <TouchableOpacity
                         style={[
                             styles.categoryButton,
-                            selectedCategory === "dog" && styles.categoryButtonActive,
+                            { backgroundColor: themeColors.card }, // 9. Color de tarjeta
+                            selectedCategory === "dog" && {
+                                backgroundColor: themeColors.tint, // Color mostaza
+                            },
                         ]}
                         onPress={() => setSelectedCategory("dog")}
                     >
                         <Text style={styles.categoryEmoji}>🐕</Text>
-                        <Text style={styles.categoryText}>Perro</Text>
+                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                            Perro
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[
                             styles.categoryButton,
-                            selectedCategory === "cat" && styles.categoryButtonActive,
+                            { backgroundColor: themeColors.card }, // 10. Color de tarjeta
+                            selectedCategory === "cat" && {
+                                backgroundColor: themeColors.tint, // Color mostaza
+                            },
                         ]}
                         onPress={() => setSelectedCategory("cat")}
                     >
                         <Text style={styles.categoryEmoji}>🐱</Text>
-                        <Text style={styles.categoryText}>Gato</Text>
+                        <Text style={[styles.categoryText, { color: themeColors.text }]}>Gato</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[
                             styles.categoryButton,
+                            { backgroundColor: themeColors.card }, // 11. Color de tarjeta
                             (showFilterModal ||
                                 activeFilters.type !== "all" ||
                                 activeFilters.gender !== "all" ||
-                                activeFilters.age !== "all") &&
-                                styles.categoryButtonActive,
+                                activeFilters.age !== "all") && {
+                                backgroundColor: themeColors.tint, // Color mostaza
+                            },
                         ]}
                         onPress={() => setShowFilterModal(true)}
                     >
@@ -200,11 +222,16 @@ export default function Home() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={styles.categoryButton}
+                        style={[
+                            styles.categoryButton,
+                            { backgroundColor: themeColors.card }, // 12. Color de tarjeta
+                        ]}
                         onPress={() => router.push("/(home)/my-publications")}
                     >
                         <Text style={styles.categoryEmoji}>📋</Text>
-                        <Text style={styles.categoryText}>Mis Publicaciones</Text>
+                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                            Mis Publicaciones
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -221,24 +248,36 @@ export default function Home() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
-                        colors={["#FFD700"]}
-                        tintColor="#FFD700"
+                        colors={[themeColors.tint]} // 13. Color mostaza
+                        tintColor={themeColors.tint} // 14. Color mostaza
                     />
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyContainer}>
                         {loading ? (
                             <>
-                                <ActivityIndicator size="large" color="#FFD700" />
-                                <Text style={styles.emptyText}>Cargando publicaciones...</Text>
+                                <ActivityIndicator size="large" color={themeColors.tint} />
+                                <Text style={[styles.emptyText, { color: themeColors.text }]}>
+                                    Cargando publicaciones...
+                                </Text>
                             </>
                         ) : (
                             <>
                                 <Text style={styles.emptyEmoji}>🐾</Text>
-                                <Text style={styles.emptyText}>
+                                <Text
+                                    style={[
+                                        styles.emptyText,
+                                        { color: themeColors.text, opacity: 0.7 },
+                                    ]}
+                                >
                                     No hay publicaciones disponibles
                                 </Text>
-                                <Text style={styles.emptySubtext}>
+                                <Text
+                                    style={[
+                                        styles.emptySubtext,
+                                        { color: themeColors.text, opacity: 0.5 },
+                                    ]}
+                                >
                                     Desliza hacia abajo para actualizar
                                 </Text>
                             </>
@@ -257,12 +296,14 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, marginTop: 16, backgroundColor: "#fff" },
-    categoriesSection: { paddingHorizontal: 16, paddingVertical: 16, backgroundColor: "#fff" },
-    categoriesTitle: { fontSize: 18, fontWeight: "bold", color: "#000", marginBottom: 12 },
+    container: { flex: 1, marginTop: 16 },
+    categoriesSection: {
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+    },
+    categoriesTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
     categoriesContainer: { flexDirection: "row", gap: 12, flexWrap: "wrap" },
     categoryButton: {
-        backgroundColor: "#fff",
         borderRadius: 20,
         paddingVertical: 8,
         paddingHorizontal: 16,
@@ -275,20 +316,28 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
-    categoryButtonActive: { backgroundColor: "#FFD700" },
+    categoryButtonActive: {
+        backgroundColor: "#FFD700",
+    },
     categoryEmoji: { fontSize: 16, lineHeight: 18 },
     categoryIcon: { width: 16, height: 16, resizeMode: "contain" },
-    categoryText: { fontSize: 14, fontWeight: "600", color: "#000" },
+    categoryText: { fontSize: 14, fontWeight: "600" },
     petsGrid: { paddingHorizontal: 16, paddingBottom: 20 },
     row: { justifyContent: "space-between" },
     cardContainer: {
+        borderRadius: 20,
+        paddingVertical: 4,
+        paddingHorizontal: 1,
         flex: 1,
         maxWidth: (width - 48) / 2,
         marginBottom: 16,
-        backgroundColor: "#fff",
     },
-    loader: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-    loaderText: { marginTop: 8, color: "#000" },
+    loader: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    loaderText: { marginTop: 8 },
     emptyContainer: {
         flex: 1,
         alignItems: "center",
@@ -300,9 +349,8 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#666",
         textAlign: "center",
         marginBottom: 8,
     },
-    emptySubtext: { fontSize: 14, color: "#999", textAlign: "center" },
+    emptySubtext: { fontSize: 14, textAlign: "center" },
 })
