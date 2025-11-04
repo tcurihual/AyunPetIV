@@ -211,8 +211,14 @@ const buildAdoptionEmailContext = async (request: {
 
 export const validateCode = async (req: Request, res: Response) => {
     try {
-        const { code, request_id } = req.body as { code: string; request_id: number }
-        if (!code || !request_id) throw new AppError(400, "code y request_id son requeridos")
+        const { code, request_id, requestId } = req.body as {
+            code: string
+            request_id?: number
+            requestId?: number
+        }
+        const finalRequestId = request_id || requestId
+
+        if (!code || !finalRequestId) throw new AppError(400, "code y request_id son requeridos")
 
         const { data: vcode, error: vErr } = await supabase
             .from("verification_code")
@@ -237,18 +243,61 @@ export const validateCode = async (req: Request, res: Response) => {
         const { data: request, error: rErr } = await supabase
             .from("adoption_request")
             .select("id, post_id, requester_id, post_owner_id, status")
-            .eq("id", request_id)
+            .eq("id", finalRequestId)
             .single()
 
         if (rErr || !request) throw new AppError(404, "Solicitud no encontrada")
         if (request.requester_id !== vcode.user_id)
             throw new AppError(403, "El código no corresponde a esta solicitud")
 
+        if (!request.post_id) {
+            throw new AppError(400, "La solicitud no tiene un post asociado")
+        }
+
+        const { data: postData, error: postErr } = await supabase
+            .from("post")
+            .select("pet_id")
+            .eq("id", request.post_id)
+            .single()
+
+        if (postErr || !postData || !postData.pet_id) {
+            throw new AppError(500, "No se pudo obtener la información de la mascota")
+        }
+
         const { error: updErr } = await supabase
             .from("adoption_request")
             .update({ status: "completed" })
             .eq("id", request.id)
         if (updErr) throw new AppError(500, updErr.message)
+
+        const { error: postUpdateErr } = await supabase
+            .from("post")
+            .update({ status: "closed", updated_at: new Date().toISOString() })
+            .eq("id", request.post_id)
+        if (postUpdateErr) {
+            console.error("Error al actualizar el estado del post:", postUpdateErr)
+            throw new AppError(500, "Error al actualizar el estado del post")
+        }
+
+        const { error: petUpdateErr } = await supabase
+            .from("pet")
+            .update({ adopted: true, updated_at: new Date().toISOString() })
+            .eq("id", postData.pet_id)
+        if (petUpdateErr) {
+            console.error("Error al actualizar el estado de la mascota:", petUpdateErr)
+            throw new AppError(500, "Error al actualizar el estado de la mascota")
+        }
+
+        const { error: rejectErr } = await supabase
+            .from("adoption_request")
+            .update({ status: "rejected", updated_at: new Date().toISOString() })
+            .eq("post_id", request.post_id)
+            .eq("status", "pending")
+            .neq("id", request.id)
+
+        if (rejectErr) {
+            console.error("Error al rechazar otras solicitudes:", rejectErr)
+        }
 
         await supabase
             .from("verification_code")
@@ -259,7 +308,7 @@ export const validateCode = async (req: Request, res: Response) => {
         const payload: AdoptionHistory["Insert"] = {
             from_owner_id: request.post_owner_id,
             to_owner_id: request.requester_id,
-            pet_id: request.post_id,
+            pet_id: postData.pet_id,
         }
         const { error: histErr } = await supabase.from("adoption_history").insert([payload])
         if (histErr) throw new AppError(500, histErr.message)

@@ -45,7 +45,17 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const lastParamsRef = useRef<GetParams | undefined>(undefined)
-    const { user } = useAuthContext()
+    const { user, status } = useAuthContext()
+    const initialLoadRef = useRef(false)
+
+    React.useEffect(() => {
+        if (status === "authenticated" && user && !initialLoadRef.current) {
+            initialLoadRef.current = true
+            getQuestions().catch((err) => {
+                console.error("❌ QuestionContext: Error auto-loading questions:", err)
+            })
+        }
+    }, [status, user])
 
     function assertAuthenticated() {
         if (!user) throw new Error("Usuario no autenticado")
@@ -66,7 +76,8 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
             const msg = "Usuario no autenticado"
             console.error("❌ QuestionContext.getQuestions: No user found")
             setError(msg)
-            throw new Error(msg)
+            setLoading(false)
+            return
         }
 
         setLoading(true)
