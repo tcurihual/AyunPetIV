@@ -1,16 +1,24 @@
 import React, { useEffect } from "react"
-import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider as NavThemeProvider,
-} from "@react-navigation/native"
+import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from "@react-navigation/native"
 import { useFonts } from "expo-font"
 import { SplashScreen, Stack } from "expo-router"
-import { AuthProvider } from "../context/AuthContext"
-import { LoadingProvider } from "../context/LoadingContext"
-import { AlertProvider } from "../context/AlertContext"
-import { ModalProvider } from "../context/ModalContext"
-import { PublicationProvider } from "../context/PublicationContext"
+import { StatusBar } from "expo-status-bar"
+
+import { AuthProvider } from "@/context/AuthContext"
+import { LoadingProvider, useLoading } from "@/context/LoadingContext"
+import { registerLoadingHandler } from "@/services/http"
+import { AlertProvider } from "@/context/AlertContext"
+import { ModalProvider } from "@/context/ModalContext"
+import { PublicationProvider } from "@/context/PublicationContext"
+import { MessageProvider } from "@/context/MessageContext"
+import { ReportProvider } from "@/context/ReportContext"
+import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
+import { QuestionProvider } from "@/context/QuestionContext"
+import { PostFormProvider } from "@/context/PostFormContext"
+import { PostResponsesProvider } from "@/context/PostResponsesContext"
+import ModalHost from "@common/modals/ModalHost"
+import { Alert } from "@/components/ui/Alert"
+import AuthRedirect from "@/features/AuthRedirect"
 
 import { ThemeProvider, useTheme } from "../context/ThemeContext"
 
@@ -18,6 +26,63 @@ export { ErrorBoundary } from "expo-router"
 
 export const unstable_settings = {
     initialRouteName: "(home)",
+}
+
+function LoadingHandlerBridge({ children }: { children: React.ReactNode }) {
+    const { showLoading, hideLoading } = useLoading()
+
+    useEffect(() => {
+        registerLoadingHandler({ showLoading, hideLoading })
+    }, [showLoading, hideLoading])
+
+    return <>{children}</>
+}
+
+function RootLayoutNav() {
+    const { theme } = useTheme()
+
+    return (
+        <LoadingProvider>
+            <AlertProvider>
+                <ModalProvider>
+                    <AuthProvider>
+                        <QuestionProvider>
+                            <PostFormProvider>
+                                <PostResponsesProvider>
+                                    <MessageProvider>
+                                        <ReportProvider>
+                                            <AdoptionRequestProvider>
+                                                <PublicationProvider>
+                                                    <LoadingHandlerBridge>
+                                                        <NavThemeProvider
+                                                            value={theme === "dark" ? DarkTheme : DefaultTheme}
+                                                        >
+                                                            <Stack screenOptions={{ headerShown: false }}>
+                                                                <Stack.Screen name="splash" />
+                                                                <Stack.Screen name="(auth)" />
+                                                                <Stack.Screen name="(home)" />
+                                                                <Stack.Screen name="(shelter)" />
+                                                                <Stack.Screen name="+not-found" />
+                                                            </Stack>
+
+                                                            <ModalHost />
+                                                            <Alert />
+                                                            <AuthRedirect />
+                                                            <StatusBar style="auto" />
+                                                        </NavThemeProvider>
+                                                    </LoadingHandlerBridge>
+                                                </PublicationProvider>
+                                            </AdoptionRequestProvider>
+                                        </ReportProvider>
+                                    </MessageProvider>
+                                </PostResponsesProvider>
+                            </PostFormProvider>
+                        </QuestionProvider>
+                    </AuthProvider>
+                </ModalProvider>
+            </AlertProvider>
+        </LoadingProvider>
+    )
 }
 
 export default function RootLayout() {
@@ -35,45 +100,11 @@ export default function RootLayout() {
         }
     }, [loaded])
 
-    if (!loaded) {
-        return null
-    }
+    if (!loaded) return null
 
     return (
         <ThemeProvider>
             <RootLayoutNav />
         </ThemeProvider>
-    )
-}
-
-function RootLayoutNav() {
-    const { theme } = useTheme()
-
-    return (
-        <LoadingProvider>
-            <AlertProvider>
-                <ModalProvider>
-                    <AuthProvider>
-                        <PublicationProvider>
-                            <NavThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
-                                <Stack>
-                                    <Stack.Screen name="(home)" options={{ headerShown: false }} />
-                                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                                    <Stack.Screen
-                                        name="(shelter)"
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen name="camera" options={{ headerShown: false }} />
-                                    <Stack.Screen
-                                        name="publication-test"
-                                        options={{ headerShown: false }}
-                                    />
-                                </Stack>
-                            </NavThemeProvider>
-                        </PublicationProvider>
-                    </AuthProvider>
-                </ModalProvider>
-            </AlertProvider>
-        </LoadingProvider>
     )
 }
