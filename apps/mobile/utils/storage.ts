@@ -68,3 +68,21 @@ export async function savePlainPassword(password: string) {
 export async function getPlainPassword() {
     return await SecureStore.getItemAsync("plainPassword")
 }
+
+export async function hasSeenWelcome(): Promise<boolean> {
+    try {
+        const value = await AsyncStorage.getItem("first_launch")
+        return value === "done"
+    } catch (e) {
+        console.error("Error leyendo flag de welcome:", e)
+        return false
+    }
+}
+
+export async function setWelcomeSeen() {
+    try {
+        await AsyncStorage.setItem("first_launch", "done")
+    } catch (e) {
+        console.error("Error guardando flag de welcome:", e)
+    }
+}

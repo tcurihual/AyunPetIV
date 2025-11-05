@@ -4,6 +4,7 @@ import { useRouter } from "expo-router"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { isFirstLaunch, markFirstLaunch } from "@/utils/storage"
+import { hasSeenWelcome } from "@/utils/storage"
 
 export default function Index() {
     const router = useRouter()
@@ -12,11 +13,11 @@ export default function Index() {
 
     useEffect(() => {
         ;(async () => {
-            const first = await isFirstLaunch()
-
             if (status === "loading") return
-            if (first) {
-                await markFirstLaunch()
+
+            const seenWelcome = await hasSeenWelcome()
+
+            if (status === "unauthenticated" && !seenWelcome) {
                 router.replace("/(auth)/welcome")
                 return
             }
@@ -27,10 +28,11 @@ export default function Index() {
                 return
             }
 
-            if (status === "unauthenticated") {
+            if (status === "unauthenticated" && seenWelcome) {
                 router.replace("/(auth)/(login)/")
                 return
             }
+
             setChecking(false)
         })()
     }, [status, user])

@@ -4,20 +4,24 @@ import { useRouter } from "expo-router"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext, User } from "@/context/AuthContext"
 import Ionicons from "@expo/vector-icons/Ionicons"
+import { setWelcomeSeen } from "@/utils/storage"
 
 const Welcome = () => {
     const { height } = useWindowDimensions()
     const router = useRouter()
 
-    const handleLoginPress = () => {
+    const handleLoginPress = async () => {
+        await setWelcomeSeen()
         router.push("/(auth)/(login)/")
     }
 
-    const handleUserPress = () => {
+    const handleUserPress = async () => {
+        await setWelcomeSeen()
         router.push("/(auth)/(register)/user")
     }
 
-    const handleGiverPress = () => {
+    const handleGiverPress = async () => {
+        await setWelcomeSeen()
         router.push("/(auth)/(register)/giver")
     }
 
