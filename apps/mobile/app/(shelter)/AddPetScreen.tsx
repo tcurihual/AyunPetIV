@@ -368,8 +368,6 @@ const AddPetScreen = () => {
 
                             {photo && <Image source={{ uri: photo }} style={styles.image} />}
 
-                            {/* Previsualización de la imagen */}
-                            {photo && <Image source={{ uri: photo }} style={styles.image} />}
 
                             <TouchableOpacity
                                 style={[
