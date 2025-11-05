@@ -45,6 +45,16 @@ interface RegisterPayload {
     address?: string
     description?: string
     variation?: "user" | "giver" | "shelter"
+    profileImage?: {
+        uri: string
+        name: string
+        type: string
+    }
+    documents?: Array<{
+        uri: string
+        name: string
+        type: string
+    }>
 }
 
 type Status = "loading" | "authenticated" | "unauthenticated"

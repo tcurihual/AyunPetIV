@@ -69,8 +69,41 @@ export const requireFileOwnership = async (req: Request, res: Response, next: Ne
                 break
             }
 
-            case "giver":
+            case "profile_picture": {
+                // Los usuarios pueden eliminar su propia foto de perfil
+                if (numericId !== user.id) {
+                    throw new AppError(
+                        403,
+                        "No tienes permiso para modificar la foto de perfil de otro usuario"
+                    )
+                }
+                break
+            }
+
             case "account-request": {
+                // Los usuarios giver pueden eliminar sus propios documentos
+                // Primero obtenemos el RUT del usuario
+                const { data: userData, error: userError } = await supabase
+                    .from("users")
+                    .select("rut")
+                    .eq("id", user.id)
+                    .single()
+
+                if (userError || !userData) {
+                    throw new AppError(404, "Usuario no encontrado")
+                }
+
+                // El entityId en account-request es el RUT, no un número
+                if (entityId !== userData.rut && user.role !== 19) {
+                    throw new AppError(
+                        403,
+                        "No tienes permiso para modificar los documentos de otro usuario"
+                    )
+                }
+                break
+            }
+
+            case "giver": {
                 throw new AppError(403, "Solo administradores pueden modificar estos archivos")
             }
 

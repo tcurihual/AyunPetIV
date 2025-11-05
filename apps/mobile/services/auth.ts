@@ -13,6 +13,16 @@ export interface RegisterData {
     phone?: string
     address?: string
     description?: string
+    profileImage?: {
+        uri: string
+        name: string
+        type: string
+    }
+    documents?: Array<{
+        uri: string
+        name: string
+        type: string
+    }>
 }
 
 export interface AuthResponse {
@@ -60,22 +70,44 @@ export const authService = {
         data: RegisterData,
         variation: "user" | "giver" | "shelter" = "user"
     ): Promise<RegisterResponse> => {
-        // La API espera estos campos según RegisterSchema
-        const payload = {
-            name: data.name,
-            email: data.email,
-            password: data.password,
-            rut: data.rut,
-            role: 0, // Se sobrescribe en el backend según variation
-            address: data.address || "",
-            description: data.description || "",
+        const formData = new FormData()
+        
+        // Agregar campos del usuario
+        formData.append("name", data.name)
+        formData.append("email", data.email)
+        formData.append("password", data.password)
+        formData.append("rut", data.rut)
+        formData.append("role", "0") // Se sobrescribe en el backend según variation
+        formData.append("address", data.address || "")
+        formData.append("description", data.description || "")
+
+        // Agregar foto de perfil si existe
+        if (data.profileImage) {
+            formData.append("image", {
+                uri: data.profileImage.uri,
+                name: data.profileImage.name,
+                type: data.profileImage.type,
+            } as any)
         }
+
+        // Agregar documentos si existen (para givers)
+        if (data.documents && data.documents.length > 0) {
+            data.documents.forEach((doc) => {
+                formData.append("documents", {
+                    uri: doc.uri,
+                    name: doc.name,
+                    type: doc.type,
+                } as any)
+            })
+        }
+
         const response = await http.post<RegisterResponse>(
             `/v1/auth/register/${variation}`,
-            payload,
+            formData,
             {
                 headers: {
                     "x-platform": "mobile",
+                    "Content-Type": "multipart/form-data",
                 },
             }
         )

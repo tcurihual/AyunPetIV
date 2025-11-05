@@ -8,11 +8,13 @@ import {
     ScrollView,
     StatusBar,
     useWindowDimensions,
+    Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import * as ImagePicker from "expo-image-picker"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
@@ -26,6 +28,7 @@ const steps: { title: string; fields: (keyof RegisterFormType)[] }[] = [
     { title: "Nombre y RUT", fields: ["name", "rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
     { title: "Datos de Contacto", fields: ["email", "phone"] },
+    { title: "Foto de Perfil (Opcional)", fields: ["profileImage"] },
 ]
 
 export default function RegisterScreen() {
@@ -44,6 +47,7 @@ export default function RegisterScreen() {
         trigger,
         getValues,
         setValue,
+        watch,
         formState: { isSubmitting },
     } = useForm<RegisterFormType>({
         resolver: zodResolver(RegisterFormSchema),
@@ -55,8 +59,11 @@ export default function RegisterScreen() {
             verifyPassword: "",
             email: "",
             phone: "",
+            profileImage: undefined,
         },
     })
+
+    const profileImage = watch("profileImage")
 
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
@@ -83,6 +90,7 @@ export default function RegisterScreen() {
                         phone: phoneWithPrefix,
                         address: "",
                         description: "",
+                        profileImage: data.profileImage,
                     },
                     "user"
                 )
@@ -108,6 +116,87 @@ export default function RegisterScreen() {
                 "No se pudo registrar la cuenta. Por favor intenta de nuevo."
             showAlert(msg, "error")
         }
+    }
+
+    const handleSelectProfileImage = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de galería para continuar", "error")
+                return
+            }
+
+            Alert.alert("Seleccionar Foto", "¿Cómo deseas obtener tu foto de perfil?", [
+                {
+                    text: "Cancelar",
+                    style: "cancel",
+                },
+                {
+                    text: "Tomar Foto",
+                    onPress: () => takeProfilePicture(),
+                },
+                {
+                    text: "Elegir de Galería",
+                    onPress: () => pickFromGallery(),
+                },
+            ])
+        } catch (error) {
+            showAlert("Error al acceder a las fotos", "error")
+        }
+    }
+
+    const takeProfilePicture = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de cámara para continuar", "error")
+                return
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch (error) {
+            showAlert("Error al tomar la foto", "error")
+        }
+    }
+
+    const pickFromGallery = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch (error) {
+            showAlert("Error al seleccionar la foto", "error")
+        }
+    }
+
+    const removeProfileImage = () => {
+        setValue("profileImage", undefined)
     }
 
     const disabled = isSubmitting || status === "loading"
@@ -155,7 +244,6 @@ export default function RegisterScreen() {
                     </>
                 )
             case 2:
-            default:
                 return (
                     <>
                         <Input<RegisterFormType>
@@ -185,6 +273,41 @@ export default function RegisterScreen() {
                         </View>
                     </>
                 )
+            case 3:
+            default:
+                return (
+                    <View style={{ width: "100%", alignItems: "center" }}>
+                        <Text style={styles.phoneLabel}>Foto de Perfil (Opcional)</Text>
+                        <Text style={styles.profileHelperText}>
+                            Agrega una foto de perfil para personalizar tu cuenta
+                        </Text>
+
+                        {profileImage ? (
+                            <View style={styles.imagePreviewContainer}>
+                                <Image
+                                    source={{ uri: profileImage.uri }}
+                                    style={styles.profileImagePreview}
+                                />
+                                <TouchableOpacity
+                                    style={styles.removeImageButton}
+                                    onPress={removeProfileImage}
+                                >
+                                    <Ionicons name="close-circle" size={32} color="#ff4444" />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.uploadButton}
+                                onPress={handleSelectProfileImage}
+                            >
+                                <Ionicons name="camera-outline" size={48} color="#A47CF3" />
+                                <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <Text style={styles.skipText}>Puedes omitir este paso si lo deseas</Text>
+                    </View>
+                )
         }
     }
 
@@ -207,14 +330,12 @@ export default function RegisterScreen() {
                         <View style={styles.semiCircle} />
                     </View>
 
-                    <View style={styles.stepIndicator}>
+                        <View style={styles.stepIndicator}>
                         <View style={styles.stepCircleContainer}>
-                            <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
+                            <Text style={styles.stepCircle}>{`${step + 1}/4`}</Text>
                         </View>
                         <Text style={styles.stepTitle}>{steps[step].title}</Text>
-                    </View>
-
-                    <View style={styles.formContent}>
+                    </View>                    <View style={styles.formContent}>
                         {renderFields()}
 
                         {step < steps.length - 1 ? (
@@ -407,6 +528,56 @@ const useThemeStyles = (width: number, height: number) => {
             color: "#FFD24C",
             fontWeight: "600",
             fontSize: 16,
+        },
+        profileHelperText: {
+            fontSize: 12,
+            color: "#666",
+            marginBottom: 20,
+            textAlign: "center",
+            fontStyle: "italic",
+        },
+        uploadButton: {
+            width: Math.min(width * 0.5, 200),
+            height: Math.min(width * 0.5, 200),
+            borderRadius: Math.min(width * 0.25, 100),
+            backgroundColor: "#f5f5f5",
+            borderWidth: 2,
+            borderColor: "#A47CF3",
+            borderStyle: "dashed",
+            justifyContent: "center",
+            alignItems: "center",
+            marginVertical: 20,
+        },
+        uploadButtonText: {
+            marginTop: 10,
+            fontSize: 14,
+            color: "#A47CF3",
+            fontWeight: "600",
+        },
+        imagePreviewContainer: {
+            position: "relative",
+            marginVertical: 20,
+        },
+        profileImagePreview: {
+            width: Math.min(width * 0.5, 200),
+            height: Math.min(width * 0.5, 200),
+            borderRadius: Math.min(width * 0.25, 100),
+            borderWidth: 3,
+            borderColor: "#A47CF3",
+        },
+        removeImageButton: {
+            position: "absolute",
+            top: -5,
+            right: -5,
+            backgroundColor: "#fff",
+            borderRadius: 16,
+        },
+        skipText: {
+            fontSize: 12,
+            color: "#999",
+            marginTop: 10,
+            textAlign: "center",
+            fontStyle: "italic",
         },
     })
 }
