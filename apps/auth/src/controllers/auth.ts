@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { Request, Response, NextFunction } from "express"
 import jwt from "jsonwebtoken"
 import { supabase } from "../"
 import {
@@ -751,5 +751,47 @@ export const validateVerificationCodeMobile = async (req: Request, res: Response
         return AppResponse(res, 200, "Correo verificado correctamente ✅", {})
     } catch {
         throw new AppError(500, "Error al validar el código de verificación")
+    }
+}
+
+export const deleteAccount = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new AppError(401, "No autorizado")
+        }
+        const userId = req.user.id
+
+        const { password } = req.body
+
+        if (!password) {
+            throw new AppError(400, "Contraseña requerida")
+        }
+
+        const { data: user, error: userError } = await supabase
+            .from("users")
+            .select("password")
+            .eq("id", userId)
+            .single()
+
+        if (userError || !user) {
+            throw new AppError(404, "Usuario no encontrado")
+        }
+
+        const isPasswordValid = await comparePassword(password, user.password)
+
+        if (!isPasswordValid) {
+            throw new AppError(401, "Contraseña inválida")
+        }
+
+        const { error: deleteError } = await supabase.from("users").delete().eq("id", userId)
+
+        if (deleteError) {
+            console.error("Error al eliminar usuario de Supabase:", deleteError)
+            throw new AppError(500, "Error al eliminar la cuenta")
+        }
+
+        return AppResponse(res, 200, "Cuenta eliminada exitosamente", {})
+    } catch (error) {
+        next(error)
     }
 }
