@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { StyleSheet } from "react-native"
+import { StyleSheet, useColorScheme } from "react-native"
 import { Slot, usePathname } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
@@ -13,6 +13,8 @@ export default function HomeLayout() {
     const [menuVisible, setMenuVisible] = useState(false)
     const pathname = usePathname()
     const { showLoading, hideLoading } = useLoading()
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
 
     useEffect(() => {
         let timeout: ReturnType<typeof setTimeout> | null = null
@@ -34,7 +36,7 @@ export default function HomeLayout() {
     }, [pathname])
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: themeColors.navBackground }]}>
             <StatusBar style="inverted" />
             <Header onMenuPress={() => setMenuVisible(true)} />
             <Slot />
@@ -47,6 +49,5 @@ export default function HomeLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.yellow,
     },
 })

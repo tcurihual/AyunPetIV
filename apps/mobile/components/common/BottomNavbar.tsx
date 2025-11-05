@@ -17,16 +17,19 @@ export default function BottomNavbar() {
     const themeColors = Colors[colorScheme]
 
     const isActiveTab = (tabPath: string) => {
-        if (tabPath === "home")
-            return (
-                pathname === "/" ||
-                pathname.startsWith("/(home)") ||
-                pathname.startsWith("/(shelter)")
-            )
+        if (tabPath === "home") {
+            // Para shelter, el home es el index (mis publicaciones)
+            if (role === 21 || role === 22) {
+                return pathname === "/" || pathname === "/(shelter)"
+            }
+            // Para usuarios normales
+            return pathname === "/" || pathname.startsWith("/(home)")
+        }
         if (tabPath === "search") return pathname.includes("/search")
         if (tabPath === "requests") return pathname.includes("/(requests)")
         if (tabPath === "profile") return pathname.includes("/my-profile")
-        if (tabPath === "dashboard") return pathname.includes("/(dashboard)")
+        if (tabPath === "dashboard")
+            return pathname.includes("/(dashboard)") || pathname.includes("/dashboard")
         if (tabPath === "users") return pathname.includes("/(users)")
         return false
     }

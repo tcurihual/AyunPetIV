@@ -67,14 +67,9 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function getQuestions(params?: GetParams) {
-        console.log(
-            "🔍 QuestionContext.getQuestions: Starting, user:",
-            user ? `ID ${user.id}` : "null"
-        )
-
         if (!user) {
             const msg = "Usuario no autenticado"
-            console.error("❌ QuestionContext.getQuestions: No user found")
+            console.error("❌ QuestionContext: No user found")
             setError(msg)
             setLoading(false)
             return
@@ -93,8 +88,6 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
             const qs = search.toString()
             const url = `/v1/entities/questions${qs ? `?${qs}` : ""}`
 
-            console.log("🔍 QuestionContext: Fetching questions from:", url)
-
             const response = await http.get<{
                 type: "success" | "error"
                 message: string
@@ -104,10 +97,7 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
                 total?: number
             }>(url)
 
-            console.log("✅ QuestionContext: Response received:", response.data)
-
             const items = Array.isArray(response.data.data) ? response.data.data : []
-            console.log("📋 QuestionContext: Questions loaded:", items.length, items)
             setQuestions(items)
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener preguntas"

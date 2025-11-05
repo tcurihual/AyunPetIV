@@ -37,6 +37,7 @@ interface UpdatePublicationPayload {
         description?: string
         status?: string
     }
+    images?: ImagePicker.ImagePickerAsset[]
 }
 
 // Interface para la respuesta de publicaciones transformada para el frontend
@@ -86,6 +87,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         const postImages: string[] = Array.isArray(post?.images) ? post.images : []
         const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
 
+        // Tomar la primera imagen disponible (ahora el backend solo mantiene la más reciente)
         const imageUri =
             postImages[0] || petImages[0] || "https://placehold.co/400x400?text=Mascota"
 
@@ -404,14 +406,40 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             if (data.pet?.sterilized !== undefined) payload.sterilized = data.pet.sterilized
             if (data.pet?.name !== undefined) payload.name = data.pet.name
 
-            const response = await http.patch<{
-                status: number
-                message: string
-                data: {
-                    post: any
-                    pet: any
-                }
-            }>(`/v1/adoptions/publications/${id}`, payload)
+            let response
+
+            // Si se enviaron imágenes, construir FormData y enviar multipart/form-data
+            if (data.images && data.images.length > 0) {
+                const form = new FormData()
+
+                // Añadir campos del payload al formData
+                Object.entries(payload).forEach(([k, v]) => {
+                    if (v !== undefined && v !== null) form.append(k, String(v))
+                })
+
+                // Añadir archivos
+                data.images.forEach((a, idx) => {
+                    const file = {
+                        uri: (a as any).uri,
+                        name: (a as any).fileName ?? `photo-${Date.now()}-${idx}.jpg`,
+                        type: (a as any).mimeType ?? "image/jpeg",
+                    }
+                    form.append("files", file as any)
+                })
+
+                response = await http.patch(`/v1/adoptions/publications/${id}`, form, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                })
+            } else {
+                response = await http.patch<{
+                    status: number
+                    message: string
+                    data: {
+                        post: any
+                        pet: any
+                    }
+                }>(`/v1/adoptions/publications/${id}`, payload)
+            }
 
             // Refrescar la lista de publicaciones
             await getPublications()

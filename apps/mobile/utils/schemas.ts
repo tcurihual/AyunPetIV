@@ -79,17 +79,23 @@ export const PostFormSchema = z.object({
 })
 
 export const PetFormSchema = z.object({
-  ownerId: z.number("Debe ingresar un id valido"),
-  species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
-  name: z.string("Debes ingresar el nombre de tu mascota")
-           .min(3, "El nombre debe tener al menos 3 caracteres"),
-  gender: z.enum(["Male", "Female"]),
-  age: z.coerce.number("Debe ingresar una edad")
-               .int("Debe ser un número entero")
-               .min(0, "La edad no puede ser negativa")
-               .max(40, "Revisa la edad (máx 40)"),
-  size: z.enum(["Small", "Medium", "Large"]),
-  sterilized: z.boolean(),
+    ownerId: z.number("Debe ingresar un id valido"),
+    species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
+    name: z
+        .string("Debes ingresar el nombre de tu mascota")
+        .min(3, "El nombre debe tener al menos 3 caracteres"),
+    gender: z.enum(["Male", "Female"]),
+    age: z.coerce
+        .number("Debe ingresar una edad")
+        .int("Debe ser un número entero")
+        .min(0, "La edad no puede ser negativa")
+        .max(40, "Revisa la edad (máx 40)"),
+    size: z.enum(["Small", "Medium", "Large"]),
+    sterilized: z.boolean(),
+    description: z
+        .string("Debes ingresar una descripción")
+        .min(10, "La descripción debe tener al menos 10 caracteres")
+        .max(500, "La descripción es muy larga (máximo 500 caracteres)"),
 })
 
 export const MessageFormSchema = z.object({
