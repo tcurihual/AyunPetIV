@@ -6,11 +6,14 @@ import { DeviceEventEmitter, Platform } from "react-native"
 let accessToken: string | null = null
 
 function resolveGatewayBaseURL() {
-    if (process.env.EXPO_PUBLIC_API_GATEWAY) {
-        return process.env.EXPO_PUBLIC_API_GATEWAY
+    let baseURL = process.env.EXPO_PUBLIC_API_GATEWAY;
+    
+    if (!baseURL) {
+        baseURL = Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
     }
-
-    return Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000"
+    
+    // Remover trailing slash si existe para evitar URLs con doble slash
+    return baseURL.replace(/\/+$/, "");
 }
 
 export const http = axios.create({

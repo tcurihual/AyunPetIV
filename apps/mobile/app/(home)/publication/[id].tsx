@@ -26,6 +26,7 @@ import { toMediaUrl } from "@/utils/mediaUrl"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import type { PublicationItem } from "@/context/PublicationContext"
+import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -92,6 +93,30 @@ export default function PublicationDetail() {
         )
     }, [id, publications])
 
+    const formatAge = (age?: string | number | null) => {
+        // Si viene vacío o indefinido
+        if (!age || age === "undefined" || age === "null") return "Desconocida"
+
+        // Si viene como cadena no numérica
+        if (typeof age === "string") {
+            const numericAge = Number(age)
+            if (isNaN(numericAge)) {
+                // si la cadena no es número (ej: "Cachorro"), devuélvela tal cual
+                return age.trim().length > 0 ? age : "Desconocida"
+            }
+            age = numericAge
+        }
+
+        // A esta altura, age es número
+        if (typeof age === "number") {
+            if (age <= 0) return "Cachorro"
+            if (age === 1) return "1 año"
+            if (age > 1) return `${age} años`
+        }
+
+        return "Desconocida"
+    }
+
     const mapPublicationToPet = React.useCallback((pub: PublicationItem): Pet => {
         const imageSource =
             typeof pub.image === "string"
@@ -100,15 +125,36 @@ export default function PublicationDetail() {
                 ? { uri: (pub.image as any).uri }
                 : pub.image || { uri: "https://placehold.co/800x600?text=Mascota" }
 
+        // 🔹 Extraer años y meses si existen (ya sea en PublicationItem o si vienen del backend)
+        const years =
+            Number((pub as any).age_years ?? 0) ||
+            (typeof pub.age === "string" && pub.age.includes("año") ? parseInt(pub.age) : 0)
+        const months =
+            Number((pub as any).age_months ?? 0) ||
+            (typeof pub.age === "string" && pub.age.includes("mes") ? parseInt(pub.age) : 0)
+
+        // 🔹 Construir texto de edad consistente
+        const totalAge =
+            years > 0 && months > 0
+                ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
+                      months === 1 ? "mes" : "meses"
+                  }`
+                : years > 0
+                ? `${years} ${years === 1 ? "año" : "años"}`
+                : months > 0
+                ? `${months} ${months === 1 ? "mes" : "meses"}`
+                : "Desconocida"
+
         return {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
-            age: pub.age ?? "",
+            age: totalAge,
             publisher: pub.publisher ?? "Usuario",
             publisherPhoto: pub.publisherPhoto ?? null,
             description: pub.description ?? "",
             image: imageSource,
+            type: pub.type ?? pub.species ?? "",
         }
     }, [])
 
@@ -131,10 +177,11 @@ export default function PublicationDetail() {
                             id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: `${raw.ageYears} años`,
+                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida", // 👈 corregido
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
+                            type: raw.type || raw.species || "",
                         }
                         if (alive) setPet(petObj)
                     } else if (alive) {
@@ -303,10 +350,20 @@ export default function PublicationDetail() {
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
                                     <Text style={styles.infoLabel}>
-                                        Género: <Text style={styles.infoValue}>{pet.gender}</Text>
+                                        Especie:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateSpeciesToSpanish((pet as any).type || "")}
+                                        </Text>
                                     </Text>
                                     <Text style={styles.infoLabel}>
-                                        Edad: <Text style={styles.infoValue}>{pet.age}</Text>
+                                        Género:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateGenderToSpanish(pet.gender || "")}
+                                        </Text>
+                                    </Text>
+                                    <Text style={styles.infoLabel}>
+                                        Edad:{" "}
+                                        <Text style={styles.infoValue}>{formatAge(pet.age)}</Text>
                                     </Text>
                                 </View>
                                 <View style={styles.infoColumn}>
