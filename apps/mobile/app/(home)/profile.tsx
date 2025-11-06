@@ -1,8 +1,10 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import ayunData from "@/data/mockData"
+import { useThemeColor } from "@/hooks/useThemeColor"
+import { Colors } from "@/constants/Colors"
 
 type Giver = {
     id: string
@@ -27,6 +29,39 @@ export default function GiverProfileScreen() {
     const { giverId } = useLocalSearchParams<{ giverId: string }>()
     const router = useRouter()
     const { signOut, status, user } = useAuthContext()
+
+    const backgroundColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const dangerColor = useThemeColor({}, "danger")
+    const borderColor = useThemeColor({}, "border")
+    const shadowColor = useThemeColor({}, "shadow")
+
+    const brandYellow = Colors.yellow
+
+    const styles = useMemo(
+        () =>
+            createStyles({
+                background: backgroundColor,
+                card: cardColor,
+                text: textColor,
+                textSecondary: textSecondaryColor,
+                danger: dangerColor,
+                border: borderColor,
+                shadow: shadowColor,
+                brandYellow: brandYellow,
+            }),
+        [
+            backgroundColor,
+            cardColor,
+            textColor,
+            textSecondaryColor,
+            dangerColor,
+            borderColor,
+            shadowColor,
+        ]
+    )
 
     const giver: Giver = {
         id: user?.id || "1",
@@ -171,114 +206,108 @@ export default function GiverProfileScreen() {
     )
 }
 
-const YELLOW = "#F9C80E"
-const BLACK = "#000000"
-const TEXT_MUTED = "#555"
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff", padding: 16 },
-
-    topBar: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 8 },
-    logoutBtn: {
-        borderWidth: 1,
-        borderColor: "#e5e7eb",
-        borderRadius: 999,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        backgroundColor: "#fd5353ff",
-    },
-    logoutText: { color: BLACK, fontWeight: "bold", fontSize: 12 },
-
-    header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-    avatar: { width: 72, height: 72, borderRadius: 36, marginRight: 12 },
-    name: { fontSize: 18, fontWeight: "bold", color: BLACK },
-    location: { fontSize: 13, color: TEXT_MUTED, marginTop: 2 },
-    badge: {
-        alignSelf: "flex-start",
-        marginTop: 6,
-        backgroundColor: YELLOW,
-        color: BLACK,
-        fontWeight: "bold",
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 999,
-        overflow: "hidden",
-    },
-    logoutPill: {
-        marginLeft: 8,
-        backgroundColor: "#fff",
-        borderWidth: 1,
-        borderColor: "#f00",
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-    },
-    logoutPillText: { color: "#f00", fontWeight: "bold", fontSize: 12 },
-
-    statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
-    statCard: {
-        flex: 1,
-        marginHorizontal: 4,
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        paddingVertical: 10,
-        alignItems: "center",
-        elevation: 2,
-        shadowColor: BLACK,
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-    },
-    statNum: { fontSize: 16, fontWeight: "bold", color: BLACK },
-    statLabel: { fontSize: 12, color: TEXT_MUTED },
-    bio: { fontSize: 14, color: "#333", marginBottom: 16, lineHeight: 20 },
-    actions: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 16,
-        gap: 8,
-    },
-    buttonPrimary: {
-        backgroundColor: YELLOW,
-        borderRadius: 10,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        alignItems: "center",
-        flex: 1,
-    },
-    buttonText: { color: BLACK, fontWeight: "bold" },
-    sectionTitle: { fontSize: 16, fontWeight: "bold", color: BLACK, marginBottom: 12 },
-    grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-    card: {
-        width: "48%",
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        marginBottom: 16,
-        padding: 10,
-        elevation: 2,
-        shadowColor: BLACK,
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-    },
-    petImage: { width: "100%", height: 110, borderRadius: 10, marginBottom: 8 },
-    petName: { fontWeight: "bold", color: BLACK },
-    petMeta: { color: TEXT_MUTED, fontSize: 12, marginBottom: 8 },
-    infoButton: {
-        backgroundColor: YELLOW,
-        paddingVertical: 8,
-        borderRadius: 8,
-        alignItems: "center",
-    },
-    infoButtonText: { fontSize: 12, fontWeight: "bold", color: BLACK },
-    emptyCard: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 16,
-        alignItems: "center",
-        elevation: 2,
-        shadowColor: BLACK,
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-    },
-    emptyTitle: { fontWeight: "bold", color: BLACK, marginBottom: 6 },
-    emptyText: { fontSize: 13, color: TEXT_MUTED, textAlign: "center" },
-})
+function createStyles(colors: {
+    background: string
+    card: string
+    text: string
+    textSecondary: string
+    danger: string
+    border: string
+    shadow: string
+    brandYellow: string
+}) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background, padding: 16 },
+        header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+        avatar: { width: 72, height: 72, borderRadius: 36, marginRight: 12 },
+        name: { fontSize: 18, fontWeight: "bold", color: colors.text },
+        location: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+        badge: {
+            alignSelf: "flex-start",
+            marginTop: 6,
+            backgroundColor: colors.brandYellow,
+            color: colors.text,
+            fontWeight: "bold",
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 999,
+            overflow: "hidden",
+        },
+        logoutPill: {
+            marginLeft: 8,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.danger,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 999,
+        },
+        logoutPillText: { color: colors.danger, fontWeight: "bold", fontSize: 12 },
+        statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
+        statCard: {
+            flex: 1,
+            marginHorizontal: 4,
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            paddingVertical: 10,
+            alignItems: "center",
+            elevation: 2,
+            shadowColor: colors.shadow,
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+        },
+        statNum: { fontSize: 16, fontWeight: "bold", color: colors.text },
+        statLabel: { fontSize: 12, color: colors.textSecondary },
+        bio: { fontSize: 14, color: colors.text, marginBottom: 16, lineHeight: 20 },
+        actions: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 16,
+            gap: 8,
+        },
+        buttonPrimary: {
+            backgroundColor: colors.brandYellow,
+            borderRadius: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+            alignItems: "center",
+            flex: 1,
+        },
+        buttonText: { color: colors.text, fontWeight: "bold" },
+        sectionTitle: { fontSize: 16, fontWeight: "bold", color: colors.text, marginBottom: 12 },
+        grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+        card: {
+            width: "48%",
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            marginBottom: 16,
+            padding: 10,
+            elevation: 2,
+            shadowColor: colors.shadow,
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+        },
+        petImage: { width: "100%", height: 110, borderRadius: 10, marginBottom: 8 },
+        petName: { fontWeight: "bold", color: colors.text },
+        petMeta: { color: colors.textSecondary, fontSize: 12, marginBottom: 8 },
+        infoButton: {
+            backgroundColor: colors.brandYellow,
+            paddingVertical: 8,
+            borderRadius: 8,
+            alignItems: "center",
+        },
+        infoButtonText: { fontSize: 12, fontWeight: "bold", color: colors.text },
+        emptyCard: {
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            padding: 16,
+            alignItems: "center",
+            elevation: 2,
+            shadowColor: colors.shadow,
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+        },
+        emptyTitle: { fontWeight: "bold", color: colors.text, marginBottom: 6 },
+        emptyText: { fontSize: 13, color: colors.textSecondary, textAlign: "center" },
+    })
+}

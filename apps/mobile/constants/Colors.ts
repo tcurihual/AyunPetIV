@@ -25,6 +25,15 @@ export const Colors = {
         navActiveTabBg: brandLightYellow,
         navAddButton: brandPurple,
 
+        primary: "#A47CF3",       // El violeta de los bordes
+        textSecondary: "#666",    // Texto gris (ej. "Seleccionar Foto")
+        textMuted: "#333",        // Texto gris oscuro (ej. "Nombre", "Edad")
+        textInverted: "#222",     // Texto sobre fondos de color (ej. header, botón)
+        danger: "#e74c3c",        // Para mensajes de error
+        disabled: "#E0E0E0",      // Fondo de botón deshabilitado
+        shadow: "#000",
+        border: "#e5e7eb",
+
         tabIconDefault: "#ccc",
         tabIconSelected: tintColorLight,
     },
@@ -41,10 +50,18 @@ export const Colors = {
         navActiveTabBg: "#333",
         navAddButton: brandPurple,
 
+        textSecondary: "#ddd",
+        border: "#333",
+        danger: "#ff5252",
+        shadow: "#000",
+        primary: "#A47CF3",
+        textMuted: "#bbb",
+        textInverted: "#ffffff",
+        disabled: "#444",
+
         tabIconDefault: "#888",
         tabIconSelected: tintColorDark,
     },
-    // parcheado para evitar colores erroneos
     yellow: "#F9C53D",
     purple: "#9B6DD7",
 }
