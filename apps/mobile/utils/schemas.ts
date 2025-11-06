@@ -61,6 +61,14 @@ export const GiverRegisterFormSchema = z
             .array(z.string())
             .min(1, "Debes subir al menos un archivo (imagen o PDF)")
             .or(z.string().min(1, "Debes subir al menos un archivo (imagen o PDF)")),
+        address: z
+            .string()
+            .max(200, "La dirección no puede tener más de 200 caracteres")
+            .optional(),
+        description: z
+            .string()
+            .max(500, "La descripción no puede tener más de 500 caracteres")
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
@@ -79,17 +87,19 @@ export const PostFormSchema = z.object({
 })
 
 export const PetFormSchema = z.object({
-  ownerId: z.number("Debe ingresar un id valido"),
-  species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
-  name: z.string("Debes ingresar el nombre de tu mascota")
-           .min(3, "El nombre debe tener al menos 3 caracteres"),
-  gender: z.enum(["Male", "Female"]),
-  age: z.coerce.number("Debe ingresar una edad")
-               .int("Debe ser un número entero")
-               .min(0, "La edad no puede ser negativa")
-               .max(40, "Revisa la edad (máx 40)"),
-  size: z.enum(["Small", "Medium", "Large"]),
-  sterilized: z.boolean(),
+    ownerId: z.number("Debe ingresar un id valido"),
+    species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
+    name: z
+        .string("Debes ingresar el nombre de tu mascota")
+        .min(3, "El nombre debe tener al menos 3 caracteres"),
+    gender: z.enum(["Male", "Female"]),
+    age: z.coerce
+        .number("Debe ingresar una edad")
+        .int("Debe ser un número entero")
+        .min(0, "La edad no puede ser negativa")
+        .max(40, "Revisa la edad (máx 40)"),
+    size: z.enum(["Small", "Medium", "Large"]),
+    sterilized: z.boolean(),
 })
 
 export const MessageFormSchema = z.object({
