@@ -18,7 +18,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Listar publicaciones de adopción",
         description:
             "Obtiene un listado paginado de publicaciones de adopción. " +
-            "Cada publicación incluye información del post y la mascota asociada. " +
+            "Cada publicación incluye información del post, la mascota asociada y datos del creador (id, nombre y foto de perfil). " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna entre microservicios.",
         parameters: [
             {
@@ -86,7 +86,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Obtener publicación por ID",
         description:
             "Obtiene una publicación específica por su ID. " +
-            "Incluye información completa del post y la mascota asociada. " +
+            "Incluye información completa del post, la mascota asociada y datos del creador (id, nombre y foto de perfil). " +
             "Las imágenes se obtienen automáticamente desde el microservicio de Media mediante comunicación interna.",
         parameters: [
             {
@@ -123,14 +123,62 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Crear publicación de adopción",
         description:
             "Crea una nueva publicación de adopción junto con la mascota asociada. " +
-            "se debe subir imágenes (campo `files`) que quedan asociadas a la publicación (entityType = `publications`). " +
+            "**OBLIGATORIO**: se deben subir al menos una imagen (campo `files`) en formato multipart/form-data. " +
+            "Las imágenes quedan asociadas a la publicación (entityType = `publications`). " +
             "Requiere autenticación. Solo un ADMIN puede crear para otro usuario (`ownerId`).",
         security: [{ bearerAuth: [] }],
         request: {
             body: {
                 content: {
-                    "application/json": {
-                        schema: CreatePublicationBodySchema,
+                    "multipart/form-data": {
+                        schema: {
+                            type: "object",
+                            required: [
+                                "title",
+                                "description",
+                                "species",
+                                "gender",
+                                "size",
+                                "sterilized",
+                                "age_months",
+                                "age_years",
+                                "files",
+                            ],
+                            properties: {
+                                title: { type: "string", description: "Título de la publicación" },
+                                description: {
+                                    type: "string",
+                                    description: "Descripción de la publicación",
+                                },
+                                species: {
+                                    type: "string",
+                                    description: "Especie de la mascota (dog, cat, etc.)",
+                                },
+                                name: {
+                                    type: "string",
+                                    description: "Nombre de la mascota (opcional)",
+                                },
+                                gender: { type: "string", description: "Género de la mascota" },
+                                age_months: { type: "integer", description: "Edad en meses" },
+                                age_years: { type: "integer", description: "Edad en años" },
+                                size: { type: "string", description: "Tamaño de la mascota" },
+                                sterilized: {
+                                    type: "boolean",
+                                    description: "Si la mascota está esterilizada",
+                                },
+                                owner_id: {
+                                    type: "integer",
+                                    description:
+                                        "ID del propietario (solo ADMIN puede especificar)",
+                                },
+                                files: {
+                                    type: "array",
+                                    items: { type: "string", format: "binary" },
+                                    minItems: 1,
+                                    description: "Al menos una imagen de la mascota (OBLIGATORIO)",
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -145,7 +193,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
                 },
             },
             400: {
-                description: "Payload inválido",
+                description: "Payload inválido o falta la imagen de la mascota",
                 content: {
                     "application/json": {
                         schema: ErrorValuesSchema,
@@ -178,7 +226,7 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         summary: "Actualizar publicación de adopción",
         description:
             "Actualiza los campos del post (título, descripción) y/o de la mascota asociada (nombre, edad, género, tamaño, especie, esterilizado). " +
-            "Permite subir nuevas imágenes (campo `files`) al microservicio de Media para la publicación indicada. " +
+            "Permite subir nuevas imágenes (campo `files`) al microservicio de Media para la publicación indicada (opcional en actualización). " +
             "Requiere autenticación y ser creador de la publicación o ADMIN.",
         parameters: [
             {
@@ -193,8 +241,53 @@ export function PublicationRegistryPaths(registry: OpenAPIRegistry) {
         request: {
             body: {
                 content: {
-                    "application/json": {
-                        schema: UpdatePublicationBodySchema,
+                    "multipart/form-data": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                title: {
+                                    type: "string",
+                                    description: "Título de la publicación (opcional)",
+                                },
+                                description: {
+                                    type: "string",
+                                    description: "Descripción de la publicación (opcional)",
+                                },
+                                species: {
+                                    type: "string",
+                                    description: "Especie de la mascota (opcional)",
+                                },
+                                name: {
+                                    type: "string",
+                                    description: "Nombre de la mascota (opcional)",
+                                },
+                                gender: {
+                                    type: "string",
+                                    description: "Género de la mascota (opcional)",
+                                },
+                                age_months: {
+                                    type: "integer",
+                                    description: "Edad en meses (opcional)",
+                                },
+                                age_years: {
+                                    type: "integer",
+                                    description: "Edad en años (opcional)",
+                                },
+                                size: {
+                                    type: "string",
+                                    description: "Tamaño de la mascota (opcional)",
+                                },
+                                sterilized: {
+                                    type: "boolean",
+                                    description: "Si la mascota está esterilizada (opcional)",
+                                },
+                                files: {
+                                    type: "array",
+                                    items: { type: "string", format: "binary" },
+                                    description: "Nuevas imágenes a agregar (opcional)",
+                                },
+                            },
+                        },
                     },
                 },
             },

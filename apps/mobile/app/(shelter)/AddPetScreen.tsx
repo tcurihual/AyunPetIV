@@ -34,6 +34,7 @@ import {
 import { Colors } from "@/constants/Colors"
 import { QuestionSelector } from "@/components/common/QuestionSelector"
 import { usePostFormContext } from "@/context/PostFormContext"
+import { Camera } from "expo-camera"
 
 type PetFormInput = z.input<typeof PetFormSchema>
 type PetFormOutput = z.output<typeof PetFormSchema>
@@ -67,18 +68,53 @@ const AddPetScreen = () => {
     })
 
     const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (status !== "granted") {
-            Alert.alert("Error", "Se necesita permiso para acceder a la galería.")
-            return
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.9,
-        })
-        if (!result.canceled && result.assets?.length) setPhoto(result.assets[0].uri)
-        else Alert.alert("Sin selección", "No se seleccionó ninguna imagen.")
+        Alert.alert("Seleccionar imagen", "Elige una opción", [
+            {
+                text: "Tomar foto",
+                onPress: async () => {
+                    const { status } = await Camera.requestCameraPermissionsAsync()
+                    if (status !== "granted") {
+                        Alert.alert("Error", "Se necesita permiso para acceder a la cámara.")
+                        return
+                    }
+
+                    const result = await ImagePicker.launchCameraAsync({
+                        allowsEditing: true,
+                        aspect: [1, 1],
+                        quality: 0.9,
+                    })
+
+                    if (!result.canceled && result.assets?.length) {
+                        setPhoto(result.assets[0].uri)
+                    } else {
+                        Alert.alert("Sin captura", "No se tomó ninguna foto.")
+                    }
+                },
+            },
+            {
+                text: "Elegir de galería",
+                onPress: async () => {
+                    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+                    if (status !== "granted") {
+                        Alert.alert("Error", "Se necesita permiso para acceder a la galería.")
+                        return
+                    }
+
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        quality: 0.9,
+                    })
+
+                    if (!result.canceled && result.assets?.length) {
+                        setPhoto(result.assets[0].uri)
+                    } else {
+                        Alert.alert("Sin selección", "No se seleccionó ninguna imagen.")
+                    }
+                },
+            },
+            { text: "Cancelar", style: "cancel" },
+        ])
     }
 
     const onSubmit: SubmitHandler<PetFormInput> = async (raw) => {
@@ -126,23 +162,24 @@ const AddPetScreen = () => {
             // 3) Guardar post_form (asociar preguntas seleccionadas a la publicación)
             if (selectedQuestionIds.length > 0) {
                 try {
-                    //console.log(
-                    //    `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
-                    //)
+                    console.log(
+                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
+                    )
                     for (const questionId of selectedQuestionIds) {
-                        //console.log(`   → Asociando pregunta ${questionId}...`)
+                        console.log(`   → Asociando pregunta ${questionId}...`)
                         await createPostForm({
                             post_id: newPost.id,
                             question_id: questionId,
                         })
-                        //console.log(`   ✅ Pregunta ${questionId} asociada`)
+                        console.log(`   ✅ Pregunta ${questionId} asociada`)
                     }
-                    //console.log(
-                    //    `✅ ${selectedQuestionIds.length} preguntas asociadas a la publicación`
-                    //)
+                    console.log(
+                        `✅ ${selectedQuestionIds.length} preguntas asociadas a la publicación`
+                    )
                 } catch (error) {
                     console.error("⚠️ Error al asociar preguntas:", error)
                     console.error("⚠️ Error completo:", JSON.stringify(error, null, 2))
+                    // No bloqueamos la creación de la publicación si falla esto
                 }
             }
 
@@ -346,12 +383,17 @@ const AddPetScreen = () => {
                                 disabled={isSubmitting}
                             />
 
-                            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                                <Ionicons name="camera-outline" size={20} color="#A47CF3" />
-                                <Text style={styles.photoButtonText}>Seleccionar Foto</Text>
+
+                            <TouchableOpacity
+                                style={[styles.photoButton, { flex: 1, marginLeft: 6 }]}
+                                onPress={pickImage}
+                            >
+                                <Ionicons name="image-outline" size={20} color="#A47CF3" />
+                                <Text style={styles.photoButtonText}>Galería</Text>
                             </TouchableOpacity>
 
                             {photo && <Image source={{ uri: photo }} style={styles.image} />}
+
 
                             <TouchableOpacity
                                 style={[

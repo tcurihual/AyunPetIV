@@ -5,6 +5,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-na
 import { Pet } from "@/interfaces/pet"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext } from "@/context/AuthContext"
+import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 interface PublicationCardProps {
     pet: Pet
@@ -28,7 +29,6 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         )
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
         setTimeout(() => {
-            // Detectar si es shelter por el rol del usuario (21 o 22)
             const isShelter = user?.role === 21 || user?.role === 22
             const route = isShelter ? "/(shelter)/publication/[id]" : "/(home)/publication/[id]"
 
@@ -62,6 +62,16 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         }
     })
 
+    const formatAge = (age?: string | number) => {
+        if (age === undefined || age === null || age === "" || age === "undefined")
+            return "Desconocida"
+        const numericAge = Number(age)
+        if (isNaN(numericAge)) return String(age)
+        if (numericAge <= 0) return "Cachorro"
+        if (numericAge === 1) return "1 año"
+        return `${numericAge} años`
+    }
+
     return (
         <Animated.View
             style={[styles.card, animatedStyle]}
@@ -76,7 +86,12 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
                 <Animated.Text style={styles.name} sharedTransitionTag={`pet-name-${pet.id}`}>
                     {pet.name}
                 </Animated.Text>
-                <Text style={styles.details}>{`${pet.gender} ${pet.age}`}</Text>
+                <Text style={styles.details}>
+                    {`${translateSpeciesToSpanish(
+                        (pet as any).type || ""
+                    )} • ${translateGenderToSpanish(pet.gender || "")} • ${formatAge(pet.age)}`}
+                </Text>
+
                 <Text style={styles.publisher}>Publicado por: {pet.publisher}</Text>
             </View>
             <TouchableOpacity
