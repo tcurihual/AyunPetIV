@@ -754,9 +754,44 @@ export const validateVerificationCodeMobile = async (req: Request, res: Response
     }
 }
 
-/**
- * Guarda o actualiza el token push del usuario para notificaciones
- */
+export const checkUserExists = async (req: Request, res: Response) => {
+    const { email, rut } = req.body
+
+    if (!email && !rut) {
+        throw new AppError(400, "Debe proporcionar email o rut")
+    }
+
+    let query = supabase.from("users").select("id")
+
+    if (email && rut) {
+        query = query.or(`email.eq.${email},rut.eq.${rut}`)
+    } else if (email) {
+        query = query.eq("email", email)
+    } else if (rut) {
+        query = query.eq("rut", rut)
+    }
+
+    const { data, error } = await query.maybeSingle()
+
+    if (error) {
+        throw new AppError(500, "Error al verificar la existencia del usuario")
+    }
+
+    if (data) {
+        if (email && rut) {
+            throw new AppError(409, "El email o RUT ya están registrados")
+        } else if (email) {
+            throw new AppError(409, "El email ya está registrado")
+        } else {
+            throw new AppError(409, "El RUT ya está registrado")
+        }
+    }
+
+    return AppResponse(res, 200, "El email o RUT están disponibles", {
+        available: true,
+    })
+}
+
 export const savePushToken = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user?.id
@@ -770,7 +805,6 @@ export const savePushToken = async (req: Request, res: Response) => {
             throw new AppError(400, "Token push es requerido")
         }
 
-        // Actualizar el token en la tabla users
         const { error } = await supabase
             .from("users")
             .update({

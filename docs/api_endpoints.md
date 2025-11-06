@@ -166,6 +166,98 @@ Response Body:
 }
 ```
 
+#### Check User Exists
+
+_Proceso para usar el endpoint:_
+
+1. Este endpoint se utiliza antes del registro para verificar si un email o RUT ya están registrados
+2. Se envía únicamente el email o el rut (también pueden enviarse ambos)
+3. El backend verifica si existe algún usuario con ese email o RUT
+4. Si existe, retorna error 409. Si no existe, retorna 200
+
+Método: <span style="color:yellow">POST</span>\
+Endpoint: `/check-user-exists`\
+Request Body (opción 1 - solo email):
+
+```json
+{
+    "email": "usuario@ejemplo.com"
+}
+```
+
+Request Body (opción 2 - solo RUT):
+
+```json
+{
+    "rut": "12.345.678-9"
+}
+```
+
+Request Body (opción 3 - ambos):
+
+```json
+{
+    "email": "usuario@ejemplo.com",
+    "rut": "12.345.678-9"
+}
+```
+
+Código de respuesta exitoso: `200`\
+Response Body (cuando el email/RUT están disponibles):
+
+```json
+{
+    "status": 200,
+    "message": "El email o RUT están disponibles",
+    "type": "success",
+    "data": {
+        "available": true
+    }
+}
+```
+
+Código de respuesta error: `409`\
+Response Body (cuando el email ya existe):
+
+```json
+{
+    "status": 409,
+    "message": "El email ya está registrado",
+    "type": "error"
+}
+```
+
+Response Body (cuando el RUT ya existe):
+
+```json
+{
+    "status": 409,
+    "message": "El RUT ya está registrado",
+    "type": "error"
+}
+```
+
+Response Body (cuando se envían ambos y alguno existe):
+
+```json
+{
+    "status": 409,
+    "message": "El email o RUT ya están registrados",
+    "type": "error"
+}
+```
+
+Código de respuesta error: `400`\
+Response Body (cuando no se proporciona ni email ni RUT):
+
+```json
+{
+    "status": 400,
+    "message": "Debe proporcionar email o rut",
+    "type": "error"
+}
+```
+
 ### Microservicio Adoptions
 
 Prefijo para acceder a cualquier endpoint de este microservicio: `api/adoptions`
