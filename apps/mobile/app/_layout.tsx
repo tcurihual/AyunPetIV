@@ -42,54 +42,54 @@ function RootLayoutNav() {
     const { theme } = useTheme()
 
     return (
-        <AuthProvider>
-            <LoadingProvider>
+        <LoadingProvider>
+            <AuthProvider>
                 <AlertProvider>
                     <ModalProvider>
                         <QuestionProvider>
                             <PostFormProvider>
                                 <PostResponsesProvider>
                                     <MessageProvider>
-                                        {/* <ReportProvider> */}
-                                        <AdoptionRequestProvider>
-                                            <PublicationProvider>
-                                                <LoadingHandlerBridge>
-                                                    <NavThemeProvider
-                                                        value={
-                                                            theme === "dark"
-                                                                ? DarkTheme
-                                                                : DefaultTheme
-                                                        }
-                                                    >
-                                                        <Stack
-                                                            screenOptions={{
-                                                                headerShown: false,
-                                                            }}
+                                        <ReportProvider>
+                                            <AdoptionRequestProvider>
+                                                <PublicationProvider>
+                                                    <LoadingHandlerBridge>
+                                                        <NavThemeProvider
+                                                            value={
+                                                                theme === "dark"
+                                                                    ? DarkTheme
+                                                                    : DefaultTheme
+                                                            }
                                                         >
-                                                            <Stack.Screen name="index" />
-                                                            <Stack.Screen name="(auth)" />
-                                                            <Stack.Screen name="(home)" />
-                                                            <Stack.Screen name="(shelter)" />
-                                                            <Stack.Screen name="+not-found" />
-                                                        </Stack>
+                                                            <Stack
+                                                                screenOptions={{
+                                                                    headerShown: false,
+                                                                }}
+                                                            >
+                                                                <Stack.Screen name="index" />
+                                                                <Stack.Screen name="(auth)" />
+                                                                <Stack.Screen name="(home)" />
+                                                                <Stack.Screen name="(shelter)" />
+                                                                <Stack.Screen name="+not-found" />
+                                                            </Stack>
 
-                                                        <ModalHost />
-                                                        <Alert />
-                                                        <AuthRedirect />
-                                                        <StatusBar style="auto" />
-                                                    </NavThemeProvider>
-                                                </LoadingHandlerBridge>
-                                            </PublicationProvider>
-                                        </AdoptionRequestProvider>
-                                        {/* </ReportProvider> */}
+                                                            <ModalHost />
+                                                            <Alert />
+                                                            <AuthRedirect />
+                                                            <StatusBar style="auto" />
+                                                        </NavThemeProvider>
+                                                    </LoadingHandlerBridge>
+                                                </PublicationProvider>
+                                            </AdoptionRequestProvider>
+                                        </ReportProvider>
                                     </MessageProvider>
                                 </PostResponsesProvider>
                             </PostFormProvider>
                         </QuestionProvider>
                     </ModalProvider>
                 </AlertProvider>
-            </LoadingProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </LoadingProvider>
     )
 }
 
