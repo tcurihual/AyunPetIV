@@ -10,7 +10,7 @@ export default function AuthRedirect() {
 
     useEffect(() => {
         if (status === "loading") return
-        redirected.current = false
+        redirected.current = false  
 
         const currentPath = `/${segments.join("/")}`
         const inPrivateGroup = segments[0] === "(home)" || segments[0] === "(shelter)"

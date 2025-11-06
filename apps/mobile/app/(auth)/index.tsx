@@ -11,7 +11,6 @@ export default function Index() {
     const [checking, setChecking] = useState(true)
 
     useEffect(() => {
-        router.replace("/(auth)/welcome")
         ;(async () => {
             const first = await isFirstLaunch()
 
@@ -21,17 +20,18 @@ export default function Index() {
                 router.replace("/(auth)/welcome")
                 return
             }
+            router.replace("/(auth)/(login)/")
 
-            if (status === "authenticated" && user) {
-                const isGiverOrShelter = user.role === 21 || user.role === 22
-                router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
-                return
-            }
+            // if (status === "authenticated" && user) {
+            //     const isGiverOrShelter = user.role === 21 || user.role === 22
+            //     router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
+            //     return
+            // }
 
-            if (status === "unauthenticated") {
-                router.replace("/(auth)/(login)/")
-                return
-            }
+            // if (status === "unauthenticated") {
+            //     router.replace("/(auth)/(login)/")
+            //     return
+            // }
             setChecking(false)
         })()
     }, [status, user])

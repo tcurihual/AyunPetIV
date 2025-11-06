@@ -123,7 +123,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
 
         try {
-            // Llamar al endpoint de publicaciones
+            // Llamar al endpoint de publicaciones filtrando solo las activas
             const response = await http.get<{
                 status: number
                 message: string
@@ -160,7 +160,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                     pageSize: number
                     totalPages: number
                 }
-            }>("/v1/adoptions/publications")
+            }>("/v1/adoptions/publications?status=active")
 
             // Transformar los datos de la API para el frontend
             const transformedPublications: PublicationItem[] = response.data.data.items.map(

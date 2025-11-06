@@ -45,7 +45,17 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const lastParamsRef = useRef<GetParams | undefined>(undefined)
-    const { user } = useAuthContext()
+    const { user, status } = useAuthContext()
+    const initialLoadRef = useRef(false)
+
+    React.useEffect(() => {
+        if (status === "authenticated" && user && !initialLoadRef.current) {
+            initialLoadRef.current = true
+            getQuestions().catch((err) => {
+                console.error("❌ QuestionContext: Error auto-loading questions:", err)
+            })
+        }
+    }, [status, user])
 
     function assertAuthenticated() {
         if (!user) throw new Error("Usuario no autenticado")
@@ -57,16 +67,12 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     async function getQuestions(params?: GetParams) {
-        console.log(
-            "🔍 QuestionContext.getQuestions: Starting, user:",
-            user ? `ID ${user.id}` : "null"
-        )
-
         if (!user) {
             const msg = "Usuario no autenticado"
             console.error("❌ QuestionContext.getQuestions: No user found")
             setError(msg)
-            throw new Error(msg)
+            setLoading(false)
+            return
         }
 
         setLoading(true)
@@ -82,8 +88,6 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
             const qs = search.toString()
             const url = `/v1/entities/questions${qs ? `?${qs}` : ""}`
 
-            console.log("🔍 QuestionContext: Fetching questions from:", url)
-
             const response = await http.get<{
                 type: "success" | "error"
                 message: string
@@ -93,10 +97,7 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
                 total?: number
             }>(url)
 
-            console.log("✅ QuestionContext: Response received:", response.data)
-
             const items = Array.isArray(response.data.data) ? response.data.data : []
-            console.log("📋 QuestionContext: Questions loaded:", items.length, items)
             setQuestions(items)
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener preguntas"

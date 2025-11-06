@@ -1,91 +1,120 @@
 import React, { useEffect } from "react"
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider as NavThemeProvider,
+} from "@react-navigation/native"
 import { useFonts } from "expo-font"
-import { Stack } from "expo-router"
-import * as SplashScreen from "expo-splash-screen"
+import { SplashScreen, Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import "react-native-reanimated"
-import { useColorScheme } from "react-native"
 
 import { AuthProvider } from "@/context/AuthContext"
-import { ModalProvider } from "@/context/ModalContext"
+import { LoadingProvider, useLoading } from "@/context/LoadingContext"
+import { registerLoadingHandler } from "@/services/http"
 import { AlertProvider } from "@/context/AlertContext"
-import { Alert } from "@/components/ui/Alert"
-import ModalHost from "@common/modals/ModalHost"
-import { LoadingProvider } from "@/context/LoadingContext"
-import AuthRedirect from "@/features/AuthRedirect"
+import { ModalProvider } from "@/context/ModalContext"
+import { PublicationProvider } from "@/context/PublicationContext"
 import { MessageProvider } from "@/context/MessageContext"
 import { ReportProvider } from "@/context/ReportContext"
 import { AdoptionRequestProvider } from "@/context/AdoptionRequestContext"
-import { PublicationProvider } from "@/context/PublicationContext"
 import { QuestionProvider } from "@/context/QuestionContext"
 import { PostFormProvider } from "@/context/PostFormContext"
 import { PostResponsesProvider } from "@/context/PostResponsesContext"
 import { NotificationProvider } from "@/context/NotificationContext"
+import ModalHost from "@common/modals/ModalHost"
+import { Alert } from "@/components/ui/Alert"
+import AuthRedirect from "@/features/AuthRedirect"
+import { ThemeProvider, useTheme } from "../context/ThemeContext"
 
-SplashScreen.preventAutoHideAsync()
+export { ErrorBoundary } from "expo-router"
+
+function LoadingHandlerBridge({ children }: { children: React.ReactNode }) {
+    const { showLoading, hideLoading } = useLoading()
+
+    useEffect(() => {
+        registerLoadingHandler({ showLoading, hideLoading })
+    }, [showLoading, hideLoading])
+
+    return <>{children}</>
+}
+
+function RootLayoutNav() {
+    const { theme } = useTheme()
+
+    return (
+        <LoadingProvider>
+            <AuthProvider>
+                <AlertProvider>
+                    <ModalProvider>
+                        <QuestionProvider>
+                            <PostFormProvider>
+                                <PostResponsesProvider>
+                                    <MessageProvider>
+                                        <ReportProvider>
+                                            <AdoptionRequestProvider>
+                                                <PublicationProvider>
+                                                    <NotificationProvider>
+                                                        <LoadingHandlerBridge>
+                                                            <NavThemeProvider
+                                                                value={
+                                                                    theme === "dark"
+                                                                        ? DarkTheme
+                                                                        : DefaultTheme
+                                                                }
+                                                            >
+                                                                <Stack
+                                                                    screenOptions={{
+                                                                        headerShown: false,
+                                                                    }}
+                                                                >
+                                                                    <Stack.Screen name="index" />
+                                                                    <Stack.Screen name="(auth)" />
+                                                                    <Stack.Screen name="(home)" />
+                                                                    <Stack.Screen name="(shelter)" />
+                                                                    <Stack.Screen name="+not-found" />
+                                                                </Stack>
+
+                                                                <ModalHost />
+                                                                <Alert />
+                                                                <AuthRedirect />
+                                                                <StatusBar style="auto" />
+                                                            </NavThemeProvider>
+                                                        </LoadingHandlerBridge>
+                                                    </NotificationProvider>
+                                                </PublicationProvider>
+                                            </AdoptionRequestProvider>
+                                        </ReportProvider>
+                                    </MessageProvider>
+                                </PostResponsesProvider>
+                            </PostFormProvider>
+                        </QuestionProvider>
+                    </ModalProvider>
+                </AlertProvider>
+            </AuthProvider>
+        </LoadingProvider>
+    )
+}
 
 export default function RootLayout() {
-    const colorScheme = useColorScheme()
-    const [loaded] = useFonts({
-        SpaceMono: require("@fonts/SpaceMono-Regular.ttf"),
+    const [loaded, error] = useFonts({
+        SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     })
 
     useEffect(() => {
-        if (loaded) SplashScreen.hideAsync()
+        if (error) throw error
+    }, [error])
+
+    useEffect(() => {
+        if (loaded) {
+            SplashScreen.hideAsync()
+        }
     }, [loaded])
 
     if (!loaded) return null
 
     return (
-        <AuthProvider>
-            <NotificationProvider>
-                <QuestionProvider>
-                    <PostFormProvider>
-                        <PostResponsesProvider>
-                            <MessageProvider>
-                                <ReportProvider>
-                                    <AdoptionRequestProvider>
-                                        <PublicationProvider>
-                                            <ModalProvider>
-                                                <AlertProvider>
-                                                    <LoadingProvider>
-                                                    <ThemeProvider
-                                                        value={
-                                                            colorScheme === "dark"
-                                                                ? DarkTheme
-                                                                : DefaultTheme
-                                                        }
-                                                    >
-                                                        <Stack
-                                                            screenOptions={{ headerShown: false }}
-                                                        >
-                                                            <Stack.Screen name="splash" />
-                                                            <Stack.Screen name="(auth)" />
-                                                            <Stack.Screen name="(home)" />
-                                                            <Stack.Screen name="(shelter)" />
-                                                            <Stack.Screen name="+not-found" />
-                                                        </Stack>
-
-                                                        <ModalHost />
-                                                        <Alert />
-                                                        <AuthRedirect />
-                                                        <StatusBar
-                                                            style="inverted"
-                                                            backgroundColor="#000"
-                                                        />
-                                                    </ThemeProvider>
-                                                    </LoadingProvider>
-                                                </AlertProvider>
-                                            </ModalProvider>
-                                        </PublicationProvider>
-                                        </AdoptionRequestProvider>
-                                </ReportProvider>
-                            </MessageProvider>
-                        </PostResponsesProvider>
-                    </PostFormProvider>
-                </QuestionProvider>
-            </NotificationProvider>
-        </AuthProvider>
+        <ThemeProvider>
+            <RootLayoutNav />
+        </ThemeProvider>
     )
 }

@@ -24,19 +24,43 @@ export function setAuthToken(token: string | null) {
     accessToken = token
 }
 
-http.interceptors.request.use((config) => {
-    if (accessToken && config.headers) {
-        config.headers.Authorization = `Bearer ${accessToken}`
+let loadingHandler: {
+    showLoading: () => void
+    hideLoading: () => void
+} | null = null
+
+export const registerLoadingHandler = (handler: typeof loadingHandler) => {
+    loadingHandler = handler
+}
+
+http.interceptors.request.use(
+    (config) => {
+        if (accessToken && config.headers) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+        }
+
+        loadingHandler?.showLoading()
+
+        return config
+    },
+    (error) => {
+        loadingHandler?.hideLoading()
+        return Promise.reject(error)
     }
-    return config
-})
+)
 
 http.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        loadingHandler?.hideLoading()
+        return response
+    },
     async (error) => {
+        loadingHandler?.hideLoading()
+
         if (error.response?.status === 401) {
             DeviceEventEmitter.emit("SESSION_EXPIRED")
         }
+
         return Promise.reject(error)
     }
 )
@@ -67,7 +91,7 @@ export const mediaService = {
     ): Promise<UploadResponse> => {
         const formData = new FormData()
 
-        files.forEach((file, index) => {
+        files.forEach((file) => {
             formData.append("files", {
                 uri: file.uri,
                 name: file.name,
@@ -76,7 +100,6 @@ export const mediaService = {
         })
 
         const response = await http.post(`/v1/media/uploads/${entityType}/${entityId}`, formData)
-
         return response.data
     },
 

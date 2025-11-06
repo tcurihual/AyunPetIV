@@ -41,9 +41,7 @@
       "expo-web-browser",
       [
         "expo-secure-store",
-        {
-          "configureAndroidBackup": true
-        }
+        { "configureAndroidBackup": true }
       ],
       [
         "expo-notifications",
@@ -59,7 +57,9 @@
     },
     "extra": {
       "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000/api",
-      "router": {},
+      "router": {
+        "disableSplashScreen": true
+      },
       "eas": {
         "projectId": "4aa28d79-94b1-4e6c-844f-c26888e1db13"
       }

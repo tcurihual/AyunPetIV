@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, Pressable, useWindowDimensions } from "react-native"
+import { View, StyleSheet, Pressable, useWindowDimensions, useColorScheme } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext } from "@/context/AuthContext"
@@ -13,8 +13,16 @@ export default function BottomNavbar() {
     const { user } = useAuthContext()
     const role = user?.role
 
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+
     const isActiveTab = (tabPath: string) => {
-        if (tabPath === "home") return pathname === "/" || pathname.includes("/(home)")
+        if (tabPath === "home")
+            return (
+                pathname === "/" ||
+                pathname.startsWith("/(home)") ||
+                pathname.startsWith("/(shelter)")
+            )
         if (tabPath === "search") return pathname.includes("/search")
         if (tabPath === "requests") return pathname.includes("/(requests)")
         if (tabPath === "profile") return pathname.includes("/my-profile")
@@ -23,14 +31,19 @@ export default function BottomNavbar() {
         return false
     }
 
-    const getTabStyle = (tabPath: string) => [styles.tab, isActiveTab(tabPath) && styles.tabActive]
-    const getIconColor = (tabPath: string) => (isActiveTab(tabPath) ? "#9C27B0" : "#666")
+    const getTabStyle = (tabPath: string) => [
+        styles.tab,
+        isActiveTab(tabPath) && [styles.tabActive, { backgroundColor: themeColors.navActiveTabBg }],
+    ]
+
+    const getIconColor = (tabPath: string) =>
+        isActiveTab(tabPath) ? themeColors.navIconActive : themeColors.navIconInactive
+
     const getIconName = (baseName: string, tabPath: string): any =>
         isActiveTab(tabPath) ? baseName : `${baseName}-outline`
 
     const renderTabsByRole = () => {
         switch (role) {
-            // 🐾 Usuario normal
             case 20:
                 return (
                     <>
@@ -41,7 +54,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("home")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("requests")}
                             onPress={() => navigate("/(home)/(requests)/requestList")}
@@ -52,7 +64,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("requests")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("profile")}
                             onPress={() => navigate("/(home)/my-profile")}
@@ -65,8 +76,6 @@ export default function BottomNavbar() {
                         </Pressable>
                     </>
                 )
-
-            // 🏠 Refugios / Dadores
             case 21:
             case 22:
                 return (
@@ -81,7 +90,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("home")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("dashboard")}
                             onPress={() => navigate("/(shelter)/dashboard")}
@@ -92,14 +100,12 @@ export default function BottomNavbar() {
                                 color={getIconColor("dashboard")}
                             />
                         </Pressable>
-
                         <Pressable
-                            style={styles.addBtn}
+                            style={[styles.addBtn, { backgroundColor: themeColors.navAddButton }]}
                             onPress={() => navigate("/(shelter)/AddPetScreen")}
                         >
                             <Ionicons name="add" size={28} color="#fff" />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("requests")}
                             onPress={() => navigate("/(shelter)/requests/requestList")}
@@ -110,7 +116,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("requests")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("profile")}
                             onPress={() => navigate("/(shelter)/my-profile")}
@@ -123,8 +128,6 @@ export default function BottomNavbar() {
                         </Pressable>
                     </>
                 )
-
-            // 👨‍💻 Admin
             case 19:
                 return (
                     <>
@@ -138,7 +141,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("dashboard")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("users")}
                             onPress={() => navigate("/(users)")}
@@ -149,7 +151,6 @@ export default function BottomNavbar() {
                                 color={getIconColor("users")}
                             />
                         </Pressable>
-
                         <Pressable
                             style={getTabStyle("profile")}
                             onPress={() => navigate("/(home)/my-profile")}
@@ -162,23 +163,33 @@ export default function BottomNavbar() {
                         </Pressable>
                     </>
                 )
-
             default:
                 return null
         }
     }
 
-    return <View style={[styles.navbar, { height: height * 0.08 }]}>{renderTabsByRole()}</View>
+    return (
+        <View
+            style={[
+                styles.navbar,
+                {
+                    height: height * 0.08,
+                    backgroundColor: themeColors.navBackground,
+                    borderTopColor: themeColors.navBackground,
+                },
+            ]}
+        >
+            {renderTabsByRole()}
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
-        backgroundColor: Colors.yellow,
         alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 12,
-        borderTopColor: "#ddd",
         borderTopWidth: 1,
         zIndex: 1000,
         elevation: 1000,
@@ -192,14 +203,12 @@ const styles = StyleSheet.create({
         marginHorizontal: 4,
     },
     tabActive: {
-        backgroundColor: "#FEF3C7",
         transform: [{ scale: 1.05 }],
     },
     addBtn: {
         width: 56,
         height: 56,
         borderRadius: 100,
-        backgroundColor: "#9C27B0",
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
