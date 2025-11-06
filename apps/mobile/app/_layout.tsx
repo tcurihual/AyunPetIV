@@ -28,10 +28,6 @@ import { ThemeProvider, useTheme } from "../context/ThemeContext"
 
 export { ErrorBoundary } from "expo-router"
 
-export const unstable_settings = {
-    initialRouteName: "(home)",
-}
-
 function LoadingHandlerBridge({ children }: { children: React.ReactNode }) {
     const { showLoading, hideLoading } = useLoading()
 
@@ -46,54 +42,54 @@ function RootLayoutNav() {
     const { theme } = useTheme()
 
     return (
-        <LoadingProvider>
-            <AlertProvider>
-                <ModalProvider>
-                    <AuthProvider>
+        <AuthProvider>
+            <LoadingProvider>
+                <AlertProvider>
+                    <ModalProvider>
                         <QuestionProvider>
                             <PostFormProvider>
                                 <PostResponsesProvider>
                                     <MessageProvider>
-                                        <ReportProvider>
-                                            <AdoptionRequestProvider>
-                                                <PublicationProvider>
-                                                    <LoadingHandlerBridge>
-                                                        <NavThemeProvider
-                                                            value={
-                                                                theme === "dark"
-                                                                    ? DarkTheme
-                                                                    : DefaultTheme
-                                                            }
+                                        {/* <ReportProvider> */}
+                                        <AdoptionRequestProvider>
+                                            <PublicationProvider>
+                                                <LoadingHandlerBridge>
+                                                    <NavThemeProvider
+                                                        value={
+                                                            theme === "dark"
+                                                                ? DarkTheme
+                                                                : DefaultTheme
+                                                        }
+                                                    >
+                                                        <Stack
+                                                            screenOptions={{
+                                                                headerShown: false,
+                                                            }}
                                                         >
-                                                            <Stack
-                                                                screenOptions={{
-                                                                    headerShown: false,
-                                                                }}
-                                                            >
-                                                                <Stack.Screen name="index" />
-                                                                <Stack.Screen name="(auth)" />
-                                                                <Stack.Screen name="(home)" />
-                                                                <Stack.Screen name="(shelter)" />
-                                                                <Stack.Screen name="+not-found" />
-                                                            </Stack>
+                                                            <Stack.Screen name="index" />
+                                                            <Stack.Screen name="(auth)" />
+                                                            <Stack.Screen name="(home)" />
+                                                            <Stack.Screen name="(shelter)" />
+                                                            <Stack.Screen name="+not-found" />
+                                                        </Stack>
 
-                                                            <ModalHost />
-                                                            <Alert />
-                                                            <AuthRedirect />
-                                                            <StatusBar style="auto" />
-                                                        </NavThemeProvider>
-                                                    </LoadingHandlerBridge>
-                                                </PublicationProvider>
-                                            </AdoptionRequestProvider>
-                                        </ReportProvider>
+                                                        <ModalHost />
+                                                        <Alert />
+                                                        <AuthRedirect />
+                                                        <StatusBar style="auto" />
+                                                    </NavThemeProvider>
+                                                </LoadingHandlerBridge>
+                                            </PublicationProvider>
+                                        </AdoptionRequestProvider>
+                                        {/* </ReportProvider> */}
                                     </MessageProvider>
                                 </PostResponsesProvider>
                             </PostFormProvider>
                         </QuestionProvider>
-                    </AuthProvider>
-                </ModalProvider>
-            </AlertProvider>
-        </LoadingProvider>
+                    </ModalProvider>
+                </AlertProvider>
+            </LoadingProvider>
+        </AuthProvider>
     )
 }
 

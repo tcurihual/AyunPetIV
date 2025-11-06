@@ -1,6 +1,7 @@
 import React from "react"
 import { View, StyleSheet, Modal } from "react-native"
 import LottieView from "lottie-react-native"
+import { useAuthContext } from "@/context/AuthContext"
 
 type Props = {
     visible: boolean
@@ -8,7 +9,8 @@ type Props = {
 
 export default function Loading({ visible }: Props) {
     if (!visible) return null
-
+    const { status } = useAuthContext()
+    console.log(status)
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.container}>
