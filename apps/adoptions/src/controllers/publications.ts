@@ -48,7 +48,23 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
 
         let query = supabase
             .from("post")
-            .select("*, pet:pet_id(*)", { count: "exact" })
+            .select(
+                `
+        *,
+        pet:pet_id (
+            id,
+            name,
+            species,
+            gender,
+            size,
+            sterilized,
+            adopted,
+            age_years,
+            age_months
+        )
+    `,
+                { count: "exact" }
+            )
             .order("id", { ascending: true })
 
         if (ownerId !== undefined) query = query.eq("creator_id", ownerId)
@@ -112,9 +128,31 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
         const id = parseId(req.params.id)
         const { data, error } = await supabase
             .from("post")
-            .select("*, pet:pet_id(*)")
+            .select(
+                `
+      id,
+      creator_id,
+      pet_id,
+      title,
+      description,
+      status,
+      created_at,
+      updated_at,
+      pet:pet_id (
+          id,
+          name,
+          species,
+          gender,
+          size,
+          sterilized,
+          adopted,
+          age_years,
+          age_months
+      )
+  `
+            )
             .eq("id", id)
-            .single()
+            .maybeSingle()
 
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 

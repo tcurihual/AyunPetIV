@@ -85,15 +85,29 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     const buildPublicationItem = React.useCallback((post: any, pet: any): PublicationItem => {
         const postImages: string[] = Array.isArray(post?.images) ? post.images : []
         const petImages: string[] = Array.isArray(pet?.images) ? pet.images : []
-
         const imageUri =
             postImages[0] || petImages[0] || "https://placehold.co/400x400?text=Mascota"
+
+        // Obtener edad combinada desde age_years y age_months
+        const years = Number(pet?.age_years ?? 0)
+        const months = Number(pet?.age_months ?? 0)
+
+        const ageText =
+            years > 0 && months > 0
+                ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
+                      months === 1 ? "mes" : "meses"
+                  }`
+                : years > 0
+                ? `${years} ${years === 1 ? "año" : "años"}`
+                : months > 0
+                ? `${months} ${months === 1 ? "mes" : "meses"}`
+                : "Desconocida"
 
         return {
             id: String(post?.id ?? ""),
             name: pet?.name || "Sin nombre",
             gender: pet?.gender ?? "",
-            age: typeof pet?.age === "number" ? `${pet.age} años` : "",
+            age: ageText,
             publisher: "Usuario",
             description: post?.description ?? "",
             image: { uri: imageUri },
@@ -114,6 +128,10 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         }
     }, [status])
 
+    /**
+     * GET: Obtener todas las publicaciones disponibles
+     * Permite a todos los usuarios listar mascotas disponibles para adopción
+     */
     /**
      * GET: Obtener todas las publicaciones disponibles
      * Permite a todos los usuarios listar mascotas disponibles para adopción
@@ -146,7 +164,8 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                             name: string | null
                             species: string
                             gender: string
-                            age: number
+                            age_years?: number | null
+                            age_months?: number | null
                             size: string
                             sterilized: boolean
                             adopted: boolean
@@ -164,27 +183,43 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
 
             // Transformar los datos de la API para el frontend
             const transformedPublications: PublicationItem[] = response.data.data.items.map(
-                (item) => ({
-                    id: String(item.post.id),
-                    name: item.pet.name || "Sin nombre",
-                    gender: item.pet.gender,
-                    age: `${item.pet.age} años`,
-                    publisher: "Usuario", // Por ahora no viene info del creador en la respuesta
-                    description: item.post.description,
-                    image:
-                        item.post.images && item.post.images.length > 0
-                            ? { uri: toMediaUrl(item.post.images[0]) }
-                            : item.pet.images && item.pet.images.length > 0
-                            ? { uri: toMediaUrl(item.pet.images[0]) }
-                            : { uri: "https://placehold.co/400x400?text=Mascota" },
-                    species: item.pet.species,
-                    size: item.pet.size,
-                    sterilized: item.pet.sterilized,
-                    status: item.post.status,
-                    postId: item.post.id,
-                    petId: item.pet.id,
-                    creatorId: item.post.creator_id,
-                })
+                (item) => {
+                    const years = Number(item.pet.age_years ?? 0)
+                    const months = Number(item.pet.age_months ?? 0)
+
+                    const age =
+                        years > 0 && months > 0
+                            ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
+                                  months === 1 ? "mes" : "meses"
+                              }`
+                            : years > 0
+                            ? `${years} ${years === 1 ? "año" : "años"}`
+                            : months > 0
+                            ? `${months} ${months === 1 ? "mes" : "meses"}`
+                            : "Desconocida"
+
+                    return {
+                        id: String(item.post.id),
+                        name: item.pet.name || "Sin nombre",
+                        gender: item.pet.gender,
+                        age,
+                        publisher: "Usuario", // Por ahora no viene info del creador en la respuesta
+                        description: item.post.description,
+                        image:
+                            item.post.images && item.post.images.length > 0
+                                ? { uri: toMediaUrl(item.post.images[0]) }
+                                : item.pet.images && item.pet.images.length > 0
+                                ? { uri: toMediaUrl(item.pet.images[0]) }
+                                : { uri: "https://placehold.co/400x400?text=Mascota" },
+                        species: item.pet.species,
+                        size: item.pet.size,
+                        sterilized: item.pet.sterilized,
+                        status: item.post.status,
+                        postId: item.post.id,
+                        petId: item.pet.id,
+                        creatorId: item.post.creator_id,
+                    }
+                }
             )
 
             setPublications(transformedPublications)
@@ -218,24 +253,57 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 }>(`/v1/adoptions/publications/${numericId}`)
 
                 const { post, pet } = response.data.data || {}
-                if (!post || !pet) {
-                    return null
+                if (!post || !pet) return null
+
+                // 🔹 Normalizar edad igual que en getPublications()
+                const years = Number(pet.age_years ?? 0)
+                const months = Number(pet.age_months ?? 0)
+
+                const age =
+                    years > 0 && months > 0
+                        ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
+                              months === 1 ? "mes" : "meses"
+                          }`
+                        : years > 0
+                        ? `${years} ${years === 1 ? "año" : "años"}`
+                        : months > 0
+                        ? `${months} ${months === 1 ? "mes" : "meses"}`
+                        : "Desconocida"
+
+                const mapped: PublicationItem = {
+                    id: String(post.id),
+                    name: pet.name || "Sin nombre",
+                    gender: pet.gender,
+                    age,
+                    publisher: "Usuario",
+                    description: post.description,
+                    image:
+                        post.images && post.images.length > 0
+                            ? { uri: toMediaUrl(post.images[0]) }
+                            : pet.images && pet.images.length > 0
+                            ? { uri: toMediaUrl(pet.images[0]) }
+                            : { uri: "https://placehold.co/400x400?text=Mascota" },
+                    species: pet.species,
+                    size: pet.size,
+                    sterilized: pet.sterilized,
+                    status: post.status,
+                    postId: post.id,
+                    petId: pet.id,
+                    creatorId: post.creator_id,
                 }
 
-                const mapped = buildPublicationItem(post, pet)
                 setPublications((prev) => {
-                    const hasPublication = prev.some(
-                        (pub) => Number(pub.postId ?? pub.id) === numericId
-                    )
-                    return hasPublication ? prev : [...prev, mapped]
+                    const exists = prev.some((pub) => Number(pub.postId ?? pub.id) === numericId)
+                    return exists ? prev : [...prev, mapped]
                 })
+
                 return mapped
             } catch (e: any) {
                 console.error("Error al obtener publicación por postId:", e)
                 return null
             }
         },
-        [buildPublicationItem, publications]
+        [publications]
     )
 
     /**
