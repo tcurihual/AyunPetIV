@@ -266,62 +266,31 @@ Prefijo para acceder a cualquier endpoint de este microservicio: `api/adoptions`
 
 Método: <span style="color:yellow">POST</span>\
 Endpoint: `/posts`\
-Middleware: `validateToken`, `verifyRole(20, 21)`\
-
-Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes.\
-
-Request Body:
-
-```json
-{
-    "pet": {
-        "species": "dog",
-        "name": "pepe",
-        "gender": "male",
-        "age": 2,
-        "size": "medium",
-        "sterilized": true
-    },
-    "post": {
-        "title": "Doy en adopción a pepe",
-        "description": "pepe es un perro muy juguetón y amigable"
-    }
-}
-```
-
-Código de respuesta: `201`
-Markdown
-
-### Microservicio Adoptions
-
-Prefijo para acceder a cualquier endpoint de este microservicio: `api/adoptions`
-
-#### Create Post
-
-Método: <span style="color:yellow">POST</span>\
-Endpoint: `/posts`\
 Middleware: `validateToken`, `verifyRole(20, 21)`
 
-Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes.
+Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes. **OBLIGATORIO**: Se debe enviar al menos una imagen de la mascota en formato multipart/form-data.
 
-Request Body:
+Request (multipart/form-data):
+
+**Campos de texto:**
 
 ```json
 {
-    "pet": {
-        "species": "dog",
-        "name": "pepe",
-        "gender": "male",
-        "age": 2,
-        "size": "medium",
-        "sterilized": true
-    },
-    "post": {
-        "title": "Doy en adopción a pepe",
-        "description": "pepe es un perro muy juguetón"
-    }
+    "title": "Doy en adopción a pepe",
+    "description": "pepe es un perro muy juguetón",
+    "species": "dog",
+    "name": "pepe",
+    "gender": "male",
+    "age_years": 2,
+    "age_months": 0,
+    "size": "medium",
+    "sterilized": true
 }
 ```
+
+**Archivos:**
+
+-   `files`: Al menos 1 imagen de la mascota (campo obligatorio)
 
 Código de respuesta: `201`\
 Response Body:
@@ -331,33 +300,44 @@ Response Body:
     "status": 201,
     "message": "Publicación creada con éxito",
     "type": "success",
-    "values": {
+    "data": {
         "post": {
             "id": 1,
-            "creatorid": 1,
-            "petid": 1,
+            "creator_id": 1,
+            "pet_id": 1,
             "title": "Doy en adopción a pepe",
             "description": "pepe es un perro muy juguetón",
             "status": "active",
-            "createdat": "timestamp",
-            "updatedat": "timestamp"
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
         },
         "pet": {
             "id": 1,
-            "ownerid": 1,
+            "owner_id": 1,
             "species": "dog",
             "name": "pepe",
             "gender": "male",
-            "age": 2,
+            "age_years": 2,
+            "age_months": 0,
             "size": "medium",
             "sterilized": true,
             "adopted": false,
-            "createdat": "timestamp",
-            "updatedat": "timestamp"
-        }
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+        },
+        "images": ["https://media.ayunpet.com/uploads/publications/1/imagen1.jpg"]
     }
 }
 ```
+
+**Posibles errores:**
+
+-   `400`: "Se debe proporcionar al menos una imagen de la mascota" (si no se envían archivos)
+-   `400`: "Payload inválido" (si faltan campos requeridos)
+-   `401`: "No autenticado"
+-   `403`: "No autorizado para crear publicaciones para otro usuario" (si se intenta crear para otro usuario sin ser admin)
+
+````
 
 #### Create Adoption Request
 
@@ -373,7 +353,7 @@ Request Body:
     "postid": 123,
     "message": "Hola, estoy muy interesado en adoptar a pepe"
 }
-```
+````
 
 Código de respuesta: `201`\
 Response Body:

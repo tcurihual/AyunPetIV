@@ -27,7 +27,7 @@ export const PublicationBodySchema = PostSchema.pick({
 
 export const CreatePublicationBodySchema = z.object({
     ...PublicationBodySchema.shape,
-    files: z.array(z.string()),
+    files: z.array(z.string()).min(1, "Se debe proporcionar al menos una imagen"),
 })
 
 export const UpdatePublicationBodySchema = z.object({
