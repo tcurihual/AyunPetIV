@@ -62,6 +62,7 @@ const AddPetScreen = () => {
             size: "Small",
             age: 0,
             sterilized: false,
+            description: "",
         } as PetFormInput,
         mode: "onTouched",
     })
@@ -147,8 +148,9 @@ const AddPetScreen = () => {
                 },
                 post: {
                     title: `${data.name} en adopción`,
-                    // El backend requiere description no vacío. Generamos una descripción por defecto.
-                    description: `${data.name} está buscando un nuevo hogar. Publicado desde la app.`,
+                    description:
+                        data.description ||
+                        `${data.name} está buscando un nuevo hogar. Publicado desde la app.`,
                 },
                 images: imageAsset,
             }
@@ -196,7 +198,7 @@ const AddPetScreen = () => {
             await addLocalPet(petLocal)
 
             Alert.alert("OK", "Mascota publicada correctamente")
-            router.push("/")
+            router.push("/(shelter)/publication/all-publications")
         } catch (e: any) {
             console.error(e)
             Alert.alert("Error", e?.message ?? "No se pudo publicar la mascota")
@@ -351,6 +353,30 @@ const AddPetScreen = () => {
                                 </Text>
                             )}
 
+                            <Text style={styles.label}>Descripción</Text>
+                            <Controller
+                                control={control}
+                                name="description"
+                                render={({ field: { onChange, value, onBlur } }) => (
+                                    <TextInput
+                                        style={[styles.input, styles.textArea]}
+                                        value={String(value ?? "")}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        placeholder="Describe a la mascota, su personalidad, comportamiento..."
+                                        multiline
+                                        numberOfLines={6}
+                                        textAlignVertical="top"
+                                        maxLength={500}
+                                    />
+                                )}
+                            />
+                            {errors.description && (
+                                <Text style={styles.errorText}>
+                                    {String(errors.description.message)}
+                                </Text>
+                            )}
+
                             <QuestionSelector
                                 selectedIds={selectedQuestionIds}
                                 onSelectionChange={setSelectedQuestionIds}
@@ -469,6 +495,11 @@ const getResponsiveStyles = (width: number, height: number) => {
             borderWidth: 1,
             borderColor: "#A47CF3",
             color: "#222",
+        },
+        textArea: {
+            height: 120,
+            paddingTop: 12,
+            textAlignVertical: "top",
         },
         pickerWrapper: {
             marginBottom: 15,

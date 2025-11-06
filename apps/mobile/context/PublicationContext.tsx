@@ -35,6 +35,7 @@ interface UpdatePublicationPayload {
         description?: string
         status?: string
     }
+    images?: ImagePicker.ImagePickerAsset[]
 }
 
 export interface PublicationItem {
@@ -260,7 +261,27 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             if (data.pet?.sterilized !== undefined) payload.sterilized = data.pet.sterilized
             if (data.pet?.name !== undefined) payload.name = data.pet.name
 
-            const response = await http.patch(`/v1/adoptions/publications/${id}`, payload)
+            let response
+            if (data.images && data.images.length > 0) {
+                const form = new FormData()
+                Object.entries(payload).forEach(([k, v]) => {
+                    if (v !== undefined && v !== null) form.append(k, String(v))
+                })
+                data.images.forEach((a, idx) => {
+                    const file = {
+                        uri: (a as any).uri,
+                        name: (a as any).fileName ?? `photo-${Date.now()}-${idx}.jpg`,
+                        type: (a as any).mimeType ?? "image/jpeg",
+                    }
+                    form.append("files", file as any)
+                })
+                response = await http.patch(`/v1/adoptions/publications/${id}`, form, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                })
+            } else {
+                response = await http.patch(`/v1/adoptions/publications/${id}`, payload)
+            }
+
             await getPublications()
             return response.data.data.post
         } catch (e: any) {

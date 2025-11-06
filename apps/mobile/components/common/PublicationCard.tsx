@@ -1,9 +1,10 @@
 import React from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import { useRouter } from "expo-router"
+import { useRouter, usePathname } from "expo-router"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import { Pet } from "@/interfaces/pet"
 import { Colors } from "@/constants/Colors"
+import { useAuthContext } from "@/context/AuthContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 interface PublicationCardProps {
@@ -12,14 +13,35 @@ interface PublicationCardProps {
 
 const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
     const router = useRouter()
+    const pathname = usePathname()
+    const { user } = useAuthContext()
 
     const scale = useSharedValue(1)
 
     const handleViewDetails = () => {
+        console.log(
+            "🔵 PublicationCard: Clicked, pet.id:",
+            pet.id,
+            "pathname:",
+            pathname,
+            "user role:",
+            user?.role
+        )
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
         setTimeout(() => {
+            const isShelter = user?.role === 21 || user?.role === 22
+            const route = isShelter ? "/(shelter)/publication/[id]" : "/(home)/publication/[id]"
+
+            console.log(
+                "🔵 PublicationCard: isShelter:",
+                isShelter,
+                "Navigating to:",
+                route,
+                "with id:",
+                pet.id
+            )
             router.push({
-                pathname: "/(home)/publication/[id]",
+                pathname: route as any,
                 params: { id: String(pet.id) },
             })
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
