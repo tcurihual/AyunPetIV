@@ -240,6 +240,19 @@ export default function RegisterScreen() {
                         <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
                             <Text style={styles.secondaryButtonText}>Volver</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => router.push("/(auth)/verify-email")}>
+                            <Text
+                                style={{
+                                    color: "#7c3aed",
+                                    textDecorationLine: "underline",
+                                    textAlign: "center",
+                                    marginTop: 10,
+                                }}
+                            >
+                                ¿Ya tienes cuenta y no la has validado?
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>

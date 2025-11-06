@@ -1,27 +1,33 @@
 import React, { useState } from "react"
-import { Text, StyleSheet, TouchableOpacity } from "react-native"
-import { useRouter } from "expo-router"
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native"
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
+import { z } from "zod"
 
 import { http } from "@/services/http"
 import Input from "@ui/Input"
 import { useAlert } from "@/context/AlertContext"
-import { z } from "zod"
+import BackButton from "@/components/common/BackButton"
+import { Colors } from "@/constants/Colors"
+
+const { width } = Dimensions.get("window")
 
 const schema = z.object({
-    email: z.email("Correo inválido"),
+    email: z.string().email("Correo inválido"),
     code: z.string().min(4, "Código inválido"),
 })
 
 export default function VerifyEmailScreen() {
     const router = useRouter()
     const { showAlert } = useAlert()
+    const { from, email: emailParam } = useLocalSearchParams<{ from?: string; email?: string }>()
     const [loading, setLoading] = useState(false)
+
     const { control, handleSubmit } = useForm({
         resolver: zodResolver(schema),
-        defaultValues: { email: "", code: "" },
+        defaultValues: { email: emailParam || "", code: "" },
     })
 
     const handleVerify = async (values: any) => {
@@ -30,11 +36,13 @@ export default function VerifyEmailScreen() {
             const res = await http.post("/v1/auth/validate-code", values)
             if (res.data?.type === "success") {
                 showAlert("¡Correo verificado correctamente!", "success")
-                router.replace("/(auth)/login")
+                setTimeout(() => {
+                    router.replace("/(auth)/(login)/")
+                }, 1500)
             }
         } catch (err: any) {
             const msg = err.response?.data?.message || "Error al verificar el código"
-            showAlert("error", msg)
+            showAlert(msg, "error")
         } finally {
             setLoading(false)
         }
@@ -46,17 +54,40 @@ export default function VerifyEmailScreen() {
             showAlert("Correo reenviado correctamente", "success")
         } catch (err: any) {
             const msg = err.response?.data?.message || "No se pudo reenviar el correo"
-            showAlert("error", msg)
+            showAlert(msg, "error")
         }
     }
 
     return (
         <KeyboardAwareScrollView contentContainerStyle={styles.container}>
+            {from === "login" && (
+                <View style={styles.backContainer}>
+                    <BackButton
+                        floating={false}
+                        style={{
+                            backgroundColor: Colors.light.card,
+                            borderRadius: width * 0.06,
+                            padding: width * 0.02,
+                            elevation: 3,
+                        }}
+                    />
+                </View>
+            )}
+
             <Text style={styles.title}>Verificación de correo</Text>
             <Text style={styles.subtitle}>Ingresa el código que recibiste en tu correo</Text>
 
             <Input name="email" control={control} label="Correo" placeholder="tuemail@gmail.com" />
-            <Input name="code" control={control} label="Código" placeholder="1234" />
+            <Input
+                name="code"
+                control={control}
+                label="Código"
+                placeholder="1234"
+                inputProps={{
+                    keyboardType: "numeric",
+                    maxLength: 6,
+                }}
+            />
 
             <TouchableOpacity
                 style={[styles.button, loading && { opacity: 0.6 }]}
@@ -80,16 +111,24 @@ const styles = StyleSheet.create({
         padding: 24,
         backgroundColor: "#FFFFFF",
     },
+    backContainer: {
+        position: "absolute",
+        top: 40,
+        left: 20,
+        zIndex: 10,
+    },
     title: {
         fontSize: 24,
         fontWeight: "bold",
         color: "#FAD02E",
         marginBottom: 8,
+        textAlign: "center",
     },
     subtitle: {
         fontSize: 16,
         color: "#A1A1A1",
         marginBottom: 24,
+        textAlign: "center",
     },
     button: {
         backgroundColor: "#FAD02E",
