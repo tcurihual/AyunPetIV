@@ -79,6 +79,9 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         if (error) throw new AppError(500, error.message)
 
         const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
+        const creatorIds = [
+            ...new Set((data ?? []).map((row: any) => row.creator_id).filter(Boolean)),
+        ]
 
         // Usar únicamente el entityType "publications" para las imágenes
         const headers = req.user
@@ -89,8 +92,36 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
             : undefined
         const postImages = await getMultipleEntityImages("publications", postIds, headers)
 
+        // Obtener información de los creadores
+        const creatorsMap: Record<
+            string,
+            { id: number; name: string; profilePhoto: string | null }
+        > = {}
+        if (creatorIds.length > 0) {
+            const { data: creators } = await supabase
+                .from("users")
+                .select("id, name")
+                .in("id", creatorIds)
+
+            if (creators) {
+                // foto de perfil
+                const userPhotos = await getMultipleEntityImages("user", creatorIds, headers)
+
+                creators.forEach((creator: any) => {
+                    const photos = userPhotos[String(creator.id)] || []
+                    creatorsMap[String(creator.id)] = {
+                        id: creator.id,
+                        name: creator.name,
+                        profilePhoto: photos.length > 0 ? photos[0] : null,
+                    }
+                })
+            }
+        }
+
         const items = (data ?? []).map((row: any) => {
             const pImages = postImages[String(row.id)] || []
+            const creator = creatorsMap[String(row.creator_id)] || null
+
             return {
                 post: {
                     id: row.id,
@@ -107,6 +138,7 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
                     ...(row.pet as Pet["Row"]),
                     images: pImages, // también exponer las imágenes de la publicación en la mascota
                 } as Pet["Row"] & { images: string[] },
+                creator: creator,
             }
         })
 
@@ -166,6 +198,25 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
         // pasar headers para que el servicio media permita la consulta
         const postImages = await getEntityImages("publications", data.id, headers)
 
+        // Obtener información del creador
+        let creator: { id: number; name: string; profilePhoto: string | null } | null = null
+        if (data.creator_id) {
+            const { data: creatorData } = await supabase
+                .from("users")
+                .select("id, name")
+                .eq("id", data.creator_id)
+                .single()
+
+            if (creatorData) {
+                const userPhotos = await getEntityImages("user", data.creator_id, headers)
+                creator = {
+                    id: creatorData.id,
+                    name: creatorData.name,
+                    profilePhoto: userPhotos.length > 0 ? userPhotos[0] : null,
+                }
+            }
+        }
+
         const payload = {
             post: {
                 id: data.id,
@@ -182,6 +233,7 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
                 ...(data.pet as Pet["Row"]),
                 images: postImages, // también exponer las imágenes de la publicación en la mascota
             } as Pet["Row"] & { images: string[] },
+            creator: creator,
         }
 
         return AppResponse(res, 200, "Publicación", payload)

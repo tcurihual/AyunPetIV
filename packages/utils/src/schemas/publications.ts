@@ -12,6 +12,12 @@ export const PetWithImagesSchema = z.object({
     images: z.array(z.string()).default([]),
 })
 
+export const CreatorSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    profilePhoto: z.string().nullable(),
+})
+
 export const PublicationBodySchema = PostSchema.pick({
     title: true,
     description: true,
@@ -67,6 +73,7 @@ export const PublicationsWithImagesResponseSchema = createApiResponseSchema(
             z.object({
                 post: PostWithImagesSchema,
                 pet: PetWithImagesSchema,
+                creator: CreatorSchema.nullable(),
             })
         ),
         total: z.number(),
@@ -77,5 +84,9 @@ export const PublicationsWithImagesResponseSchema = createApiResponseSchema(
 )
 
 export const PublicationByIdWithImagesResponseSchema = createApiResponseSchema(
-    z.object({ post: PostWithImagesSchema, pet: PetWithImagesSchema })
+    z.object({
+        post: PostWithImagesSchema,
+        pet: PetWithImagesSchema,
+        creator: CreatorSchema.nullable(),
+    })
 )
