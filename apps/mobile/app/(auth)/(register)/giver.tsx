@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import {
     View,
     TouchableOpacity,
@@ -29,6 +29,7 @@ import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
 import { FileInfo } from "@/services/http"
 import { Checkbox } from "@/components/ui/Checkbox"
+import { authService } from "@/services/auth"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
     { title: "Nombre", fields: ["name"] },
@@ -50,12 +51,18 @@ export default function RegisterScreen() {
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
 
+    // Referencias para almacenar los valores previos de RUT y email
+    const previousRut = useRef<string>("")
+    const previousEmail = useRef<string>("")
+
     const {
         control,
         handleSubmit,
         trigger,
         getValues,
         setValue,
+        setError,
+        clearErrors,
         formState: { isSubmitting },
     } = useForm<GiverRegisterFormType>({
         resolver: zodResolver(GiverRegisterFormSchema),
@@ -71,9 +78,86 @@ export default function RegisterScreen() {
         },
     })
 
+    /**
+     * Valida si el RUT ya existe en la base de datos
+     */
+    const validateRut = async (rut: string): Promise<boolean> => {
+        // Si el RUT es el mismo que el anterior, no validar de nuevo
+        if (rut === previousRut.current) {
+            return true
+        }
+
+        try {
+            const isAvailable = await authService.checkUserExists({ rut })
+
+            if (!isAvailable) {
+                setError("rut", {
+                    type: "manual",
+                    message: "Este RUT ya está registrado",
+                })
+                return false
+            }
+
+            // Limpiar el error si el RUT está disponible
+            clearErrors("rut")
+            previousRut.current = rut
+            return true
+        } catch (error: any) {
+            console.error("Error validando RUT:", error)
+            // En caso de error de red u otro, permitir continuar
+            return true
+        }
+    }
+
+    /**
+     * Valida si el email ya existe en la base de datos
+     */
+    const validateEmail = async (email: string): Promise<boolean> => {
+        // Si el email es el mismo que el anterior, no validar de nuevo
+        if (email === previousEmail.current) {
+            return true
+        }
+
+        try {
+            const isAvailable = await authService.checkUserExists({ email })
+
+            if (!isAvailable) {
+                setError("email", {
+                    type: "manual",
+                    message: "Este correo ya está registrado",
+                })
+                return false
+            }
+
+            // Limpiar el error si el email está disponible
+            clearErrors("email")
+            previousEmail.current = email
+            return true
+        } catch (error: any) {
+            console.error("Error validando email:", error)
+            // En caso de error de red u otro, permitir continuar
+            return true
+        }
+    }
+
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
+
+        // Validar RUT en el paso 1 (después de validaciones de react-hook-form)
+        if (step === 1) {
+            const rut = getValues("rut")
+            const rutIsValid = await validateRut(rut)
+            if (!rutIsValid) return
+        }
+
+        // Validar email en el paso 3 (después de validaciones de react-hook-form)
+        if (step === 3) {
+            const email = getValues("email")
+            const emailIsValid = await validateEmail(email)
+            if (!emailIsValid) return
+        }
+
         if (step < steps.length - 1) setStep((s) => s + 1)
     }
 
@@ -84,6 +168,15 @@ export default function RegisterScreen() {
 
     const onSubmit = async (data: GiverRegisterFormType) => {
         try {
+            // Validar RUT y email antes de enviar el registro
+            const rutIsValid = await validateRut(data.rut)
+            const emailIsValid = await validateEmail(data.email)
+
+            if (!rutIsValid || !emailIsValid) {
+                // No continuar si alguno ya está registrado
+                return
+            }
+
             await withLoading(async () => {
                 const phoneWithPrefix = `+569${data.phone}`
 
@@ -207,6 +300,16 @@ export default function RegisterScreen() {
                             control={control}
                             label="RUT"
                             placeholder="12.345.678-9"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentRut = getValues("rut")
+                                    if (text !== currentRut && text !== previousRut.current) {
+                                        clearErrors("rut")
+                                        previousRut.current = ""
+                                    }
+                                },
+                            }}
                         />
                     </>
                 )
@@ -241,6 +344,16 @@ export default function RegisterScreen() {
                             label="Correo electrónico"
                             placeholder="correo@dominio.com"
                             type="email"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentEmail = getValues("email")
+                                    if (text !== currentEmail && text !== previousEmail.current) {
+                                        clearErrors("email")
+                                        previousEmail.current = ""
+                                    }
+                                },
+                            }}
                         />
                         <Input<GiverRegisterFormType>
                             key="phone"

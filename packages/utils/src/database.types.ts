@@ -503,6 +503,8 @@ export type Database = {
                     id: number
                     name: string
                     password: string
+                    push_token: string | null
+                    push_token_updated_at: string | null
                     role: number | null
                     rut: string
                     updated_at: string | null
@@ -516,6 +518,8 @@ export type Database = {
                     id?: number
                     name: string
                     password: string
+                    push_token?: string | null
+                    push_token_updated_at?: string | null
                     role?: number | null
                     rut: string
                     updated_at?: string | null
@@ -529,6 +533,8 @@ export type Database = {
                     id?: number
                     name?: string
                     password?: string
+                    push_token?: string | null
+                    push_token_updated_at?: string | null
                     role?: number | null
                     rut?: string
                     updated_at?: string | null

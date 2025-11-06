@@ -26,6 +26,9 @@ export default function Input<T extends FieldValues>({
     const [show, setShow] = useState(false)
     const isPassword = type === "password"
 
+    // Extraer onChangeText de inputProps si existe
+    const { onChangeText: externalOnChangeText, ...restInputProps } = inputProps || {}
+
     const keyboardType: TextInputProps["keyboardType"] =
         type === "email" ? "email-address" :
         type === "number" ? "number-pad" : "default"
@@ -50,18 +53,24 @@ export default function Input<T extends FieldValues>({
                             placeholderTextColor="#A0A0A0"
                             value={(value as string | number | undefined)?.toString() ?? ""}
                             onChangeText={(txt) => {
+                                // Primero ejecutar el handler interno
                                 if (type === "number") {
                                 const cleaned = txt.replace(/[^\d]/g, "")
                                 onChange(cleaned)
                                 } else {
                                 onChange(txt)
                                 }
+                                
+                                // Luego ejecutar el handler externo si existe
+                                if (externalOnChangeText) {
+                                    externalOnChangeText(txt)
+                                }
                             }}
                             onBlur={onBlur}
                             secureTextEntry={isPassword && !show}
                             keyboardType={keyboardType}
                             autoCapitalize={autoCapitalize}
-                            {...inputProps}
+                            {...restInputProps}
                         />
 
                         {isPassword && (
