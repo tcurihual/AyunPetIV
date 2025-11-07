@@ -11,46 +11,49 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Modal,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as DocumentPicker from "expo-document-picker"
 import * as ImagePicker from "expo-image-picker"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
 import { useLoading } from "@/context/LoadingContext"
+import { useTheme } from "@/context/ThemeContext"
+import { Colors } from "@/constants/Colors"
 
 import Input from "@ui/Input"
-
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
 import { FileInfo } from "@/services/http"
-import { Checkbox } from "@/components/ui/Checkbox"
 import { authService } from "@/services/auth"
 
-const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
+const steps = [
     { title: "Nombre y Foto", fields: ["name", "profileImage"] },
     { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
     { title: "Datos de Contacto", fields: ["email", "phone"] },
-    { title: "Subida de Archivos", fields: ["files"] },
+    { title: "Información adicional", fields: ["address", "description", "files"] },
 ]
 
 export default function RegisterScreen() {
     const router = useRouter()
     const { width, height } = useWindowDimensions()
-    const styles = useThemeStyles(width, height)
+    const { theme } = useTheme()
+    const colors = Colors[theme]
+    const styles = useThemeStyles(width, height, colors)
+
     const [step, setStep] = useState(0)
     const [pendingFiles, setPendingFiles] = useState<FileInfo[]>([])
-    const [acceptedTerms, setAcceptedTerms] = useState(false)
+    const [showTypeModal, setShowTypeModal] = useState(true)
+    const [giverType, setGiverType] = useState<"giver" | "shelter" | null>(null)
 
     const { signUp, status } = useAuthContext()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-
     const previousRut = useRef<string>("")
     const previousEmail = useRef<string>("")
 
@@ -59,7 +62,6 @@ export default function RegisterScreen() {
         handleSubmit,
         trigger,
         getValues,
-        setValue,
         setError,
         clearErrors,
         formState: { isSubmitting },
@@ -73,12 +75,14 @@ export default function RegisterScreen() {
             verifyPassword: "",
             email: "",
             phone: "",
+            address: "",
+            description: "",
             files: [],
             profileImage: undefined,
         },
     })
 
-    const validateRut = async (rut: string): Promise<boolean> => {
+    const validateRut = async (rut: string) => {
         if (rut === previousRut.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ rut })
@@ -89,13 +93,12 @@ export default function RegisterScreen() {
             clearErrors("rut")
             previousRut.current = rut
             return true
-        } catch (error: any) {
-            console.error("Error validando RUT:", error)
+        } catch {
             return true
         }
     }
 
-    const validateEmail = async (email: string): Promise<boolean> => {
+    const validateEmail = async (email: string) => {
         if (email === previousEmail.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ email })
@@ -106,8 +109,7 @@ export default function RegisterScreen() {
             clearErrors("email")
             previousEmail.current = email
             return true
-        } catch (error: any) {
-            console.error("Error validando email:", error)
+        } catch {
             return true
         }
     }
@@ -115,19 +117,14 @@ export default function RegisterScreen() {
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
-
         if (step === 1) {
-            const rut = getValues("rut")
-            const rutIsValid = await validateRut(rut)
+            const rutIsValid = await validateRut(getValues("rut"))
             if (!rutIsValid) return
         }
-
         if (step === 3) {
-            const email = getValues("email")
-            const emailIsValid = await validateEmail(email)
+            const emailIsValid = await validateEmail(getValues("email"))
             if (!emailIsValid) return
         }
-
         if (step < steps.length - 1) setStep((s) => s + 1)
     }
 
@@ -137,6 +134,7 @@ export default function RegisterScreen() {
     }
 
     const onSubmit = async (data: GiverRegisterFormType) => {
+        if (!giverType) return
         try {
             const rutIsValid = await validateRut(data.rut)
             const emailIsValid = await validateEmail(data.email)
@@ -151,24 +149,22 @@ export default function RegisterScreen() {
                         password: data.password,
                         rut: data.rut,
                         phone: phoneWithPrefix,
-                        address: "",
-                        description: "",
+                        address: data.address || "",
+                        description: data.description || "",
                         profileImage: data.profileImage,
                         documents: pendingFiles.length > 0 ? pendingFiles : undefined,
                     },
-                    "giver"
+                    giverType
                 )
 
                 const message = result.requiresEmailVerification
-                    ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
+                    ? "Registro exitoso. Verifica tu correo electrónico."
                     : "Registro exitoso. Tu cuenta será validada por un administrador."
 
                 showAlert(message, "success")
-
                 setTimeout(() => router.replace("/(auth)/login"), 2000)
             })
         } catch (e: any) {
-            console.error("Error en registro de dador:", e)
             const msg =
                 e?.response?.data?.error ||
                 e?.message ||
@@ -177,92 +173,98 @@ export default function RegisterScreen() {
         }
     }
 
-    const handleSelectProfileImage = async () => {
-        try {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-            if (status !== "granted") {
-                showAlert("Necesitamos permisos de galería para continuar", "error")
-                return
-            }
-            Alert.alert("Seleccionar Foto", "¿Cómo deseas obtener tu foto de perfil?", [
-                { text: "Cancelar", style: "cancel" },
-                { text: "Tomar Foto", onPress: () => takeProfilePicture() },
-                { text: "Elegir de Galería", onPress: () => pickFromGallery() },
-            ])
-        } catch {
-            showAlert("Error al acceder a las fotos", "error")
-        }
-    }
-
-    const takeProfilePicture = async () => {
-        try {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync()
-            if (status !== "granted") {
-                showAlert("Necesitamos permisos de cámara para continuar", "error")
-                return
-            }
-            const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8,
-            })
-            if (!result.canceled && result.assets) {
-                const asset = result.assets[0]
-                setValue("profileImage", {
-                    uri: asset.uri,
-                    name: `perfil_dador_${Date.now()}.jpg`,
-                    type: "image/jpeg",
-                })
-            }
-        } catch {
-            showAlert("Error al tomar la foto", "error")
-        }
-    }
-
-    const pickFromGallery = async () => {
-        try {
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8,
-            })
-            if (!result.canceled && result.assets) {
-                const asset = result.assets[0]
-                setValue("profileImage", {
-                    uri: asset.uri,
-                    name: `perfil_dador_${Date.now()}.jpg`,
-                    type: "image/jpeg",
-                })
-            }
-        } catch {
-            showAlert("Error al seleccionar la foto", "error")
-        }
-    }
-
-    const removeProfileImage = () => setValue("profileImage", undefined)
-
     const disabled = isSubmitting || status === "loading"
 
     const renderFields = () => {
         switch (step) {
             case 0:
                 return (
+                    <Input<GiverRegisterFormType>
+                        key="name"
+                        name="name"
+                        control={control}
+                        label={giverType === "shelter" ? "Nombre de fundación" : "Nombre completo"}
+                        placeholder={
+                            giverType === "shelter"
+                                ? "Ej: Fundación Patitas Felices"
+                                : "Ej: Juan Pérez"
+                        }
+                    />
+                )
+            case 1:
+                return (
+                    <Input<GiverRegisterFormType>
+                        key="rut"
+                        name="rut"
+                        control={control}
+                        label="RUT"
+                        placeholder="12.345.678-9"
+                    />
+                )
+            case 2:
+                return (
                     <>
                         <Input<GiverRegisterFormType>
-                            key="name"
-                            name="name"
+                            key="password"
+                            name="password"
                             control={control}
-                            label="Nombre completo"
-                            placeholder="Juan Pérez"
+                            label="Contraseña"
+                            placeholder="••••••••"
+                            type="password"
                         />
-                        <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
-                            <Text style={styles.phoneLabel}>Foto de Perfil (Opcional)</Text>
-                            <Text style={styles.profileHelperText}>
-                                Agrega una foto de perfil para personalizar tu cuenta
-                            </Text>
-                        </View>
+                        <Input<GiverRegisterFormType>
+                            key="verifyPassword"
+                            name="verifyPassword"
+                            control={control}
+                            label="Repetir contraseña"
+                            placeholder="••••••••"
+                            type="password"
+                        />
+                    </>
+                )
+            case 3:
+                return (
+                    <>
+                        <Input<GiverRegisterFormType>
+                            key="email"
+                            name="email"
+                            control={control}
+                            label="Correo electrónico"
+                            placeholder="correo@dominio.com"
+                            type="email"
+                        />
+                        <Input<GiverRegisterFormType>
+                            key="phone"
+                            name="phone"
+                            control={control}
+                            label="Teléfono"
+                            placeholder="12345678"
+                        />
+                    </>
+                )
+            case 4:
+                return (
+                    <>
+                        {giverType === "shelter" && (
+                            <Input<GiverRegisterFormType>
+                                key="address"
+                                name="address"
+                                control={control}
+                                label="Dirección"
+                                placeholder="Calle Ejemplo 123, Ciudad"
+                            />
+                        )}
+                        <Input<GiverRegisterFormType>
+                            key="description"
+                            name="description"
+                            control={control}
+                            label="Descripción"
+                            placeholder={
+                                giverType === "giver"
+                                    ? "Cuéntanos un poco sobre ti..."
+                                    : "Describe la misión o propósito de tu fundación"
+                            }
+                        />
                     </>
                 )
             default:
@@ -272,41 +274,102 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-            >
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    <View style={styles.container}>
-                        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                            <Ionicons name="arrow-back" size={28} color="black" />
+            <StatusBar backgroundColor={colors.tint} barStyle="dark-content" />
+            <Modal visible={showTypeModal} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>¿Qué tipo de dador eres?</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setGiverType("giver")
+                                setShowTypeModal(false)
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Dador Individual</Text>
                         </TouchableOpacity>
-                        <View style={styles.header}>
-                            <Text style={styles.headerTitle}>Registro</Text>
-                            <Image
-                                source={require("@images/ayun-pet.png")}
-                                style={styles.logo}
-                                resizeMode="contain"
-                            />
-                            <View style={styles.semiCircle} />
-                        </View>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setGiverType("shelter")
+                                setShowTypeModal(false)
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Fundación</Text>
+                        </TouchableOpacity>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                </View>
+            </Modal>
+
+            {!showTypeModal && (
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                        <View style={styles.container}>
+                            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                                <Ionicons name="arrow-back" size={28} color={colors.text} />
+                            </TouchableOpacity>
+
+                            <View style={styles.header}>
+                                <Text style={styles.headerTitle}>Registro</Text>
+                                <Image
+                                    source={require("@images/ayun-pet.png")}
+                                    style={styles.logo}
+                                    resizeMode="contain"
+                                />
+                                <View style={styles.semiCircle} />
+                            </View>
+
+                            <View style={styles.stepIndicator}>
+                                <View style={styles.stepCircleContainer}>
+                                    <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
+                                </View>
+                                <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                            </View>
+
+                            <View style={styles.formContent}>
+                                {renderFields()}
+
+                                {step < steps.length - 1 ? (
+                                    <TouchableOpacity
+                                        style={styles.button}
+                                        onPress={onNext}
+                                        disabled={disabled}
+                                    >
+                                        <Text style={styles.buttonText}>Continuar</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <TouchableOpacity
+                                        style={styles.button}
+                                        onPress={handleSubmit(onSubmit)}
+                                        disabled={disabled}
+                                    >
+                                        <Text style={styles.buttonText}>
+                                            {disabled ? "Creando..." : "Crear Cuenta"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
+                                    <Text style={styles.secondaryButtonText}>Volver</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            )}
         </>
     )
 }
 
-const useThemeStyles = (width: number, height: number) => {
-    const isSmallScreen = width < 350
-    const headerHeight = Math.max(height * 0.25, 180)
-    const logoSize = Math.min(width * 0.4, 150)
-    return StyleSheet.create({
-        scrollContainer: { flexGrow: 1, backgroundColor: "#fff" },
+const useThemeStyles = (width: number, height: number, colors: any) =>
+    StyleSheet.create({
+        scrollContainer: { flexGrow: 1, backgroundColor: colors.background },
         container: {
             flex: 1,
-            backgroundColor: "#fff",
+            backgroundColor: colors.background,
             alignItems: "center",
             paddingHorizontal: width * 0.05,
             minHeight: height,
@@ -316,48 +379,126 @@ const useThemeStyles = (width: number, height: number) => {
             top: height * 0.05,
             left: width * 0.05,
             zIndex: 10,
-            backgroundColor: "rgba(255,255,255,0.2)",
             borderRadius: 20,
             padding: 8,
         },
         header: {
-            backgroundColor: "#FFD24C",
+            backgroundColor: colors.tint,
             width: "112%",
-            height: headerHeight,
+            height: Math.max(height * 0.25, 180),
             alignItems: "center",
-            justifyContent: "flex-start",
+            justifyContent: "center",
             borderBottomLeftRadius: 25,
             borderBottomRightRadius: 25,
-            paddingTop: 20,
-            marginBottom: 0,
-            position: "relative",
         },
         headerTitle: {
-            fontSize: isSmallScreen ? 18 : 22,
+            fontSize: 22,
             fontWeight: "bold",
-            color: "#222",
+            color: colors.text,
             marginTop: height * 0.06,
-            textAlign: "center",
         },
-        logo: { width: logoSize, height: logoSize * 0.85, top: 20, zIndex: 1 },
+        logo: {
+            width: Math.min(width * 0.4, 150),
+            height: Math.min(width * 0.4, 150) * 0.85,
+            top: 20,
+        },
         semiCircle: {
             position: "absolute",
-            bottom: Math.max(-logoSize * 0.27, -40),
-            width: Math.max(logoSize * 1.2, 100),
-            height: Math.max(logoSize * 0.7, 70),
-            backgroundColor: "#fff",
-            borderTopLeftRadius: Math.max(logoSize * 0.6, 50),
-            borderTopRightRadius: Math.max(logoSize * 0.6, 50),
+            bottom: -40,
+            width: 120,
+            height: 80,
+            backgroundColor: colors.background,
+            borderTopLeftRadius: 60,
+            borderTopRightRadius: 60,
             alignSelf: "center",
-            zIndex: 0,
         },
-        phoneLabel: { fontSize: 16, fontWeight: "500", color: "#333", marginBottom: 5 },
-        profileHelperText: {
-            fontSize: 12,
-            color: "#666",
-            marginBottom: 15,
+        stepIndicator: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 40,
+            marginBottom: 30,
+            width: "100%",
+        },
+        stepCircleContainer: {
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: colors.card,
+            justifyContent: "center",
+            alignItems: "center",
+            borderWidth: 2,
+            borderColor: Colors.purple,
+            marginRight: 15,
+            elevation: 5,
+        },
+        stepCircle: {
+            fontSize: 16,
+            color: Colors.purple,
+            fontWeight: "bold",
+        },
+        stepTitle: { fontSize: 22, fontWeight: "bold", color: colors.text },
+        formContent: { width: "100%", maxWidth: 350, paddingHorizontal: 20 },
+        button: {
+            width: "100%",
+            height: 50,
+            backgroundColor: colors.tint,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 20,
+            elevation: 3,
+        },
+        buttonText: { color: colors.text, fontWeight: "600", fontSize: 16 },
+        secondaryButton: {
+            width: "100%",
+            height: 50,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 15,
+            marginBottom: 30,
+            borderWidth: 2,
+            borderColor: colors.tint,
+            backgroundColor: colors.card,
+        },
+        secondaryButtonText: {
+            color: colors.tint,
+            fontWeight: "600",
+            fontSize: 16,
+        },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        modalContainer: {
+            backgroundColor: colors.card,
+            borderRadius: 20,
+            padding: 25,
+            width: "80%",
+            alignItems: "center",
+            elevation: 10,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: "bold",
+            color: colors.text,
+            marginBottom: 20,
             textAlign: "center",
-            fontStyle: "italic",
+        },
+        modalButton: {
+            backgroundColor: colors.tint,
+            borderRadius: 12,
+            paddingVertical: 12,
+            width: "100%",
+            marginVertical: 8,
+            alignItems: "center",
+        },
+        modalButtonText: {
+            color: colors.text,
+            fontWeight: "600",
+            fontSize: 16,
         },
     })
-}
