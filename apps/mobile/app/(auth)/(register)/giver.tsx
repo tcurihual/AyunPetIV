@@ -11,22 +11,22 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Modal,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { Controller, useForm } from "react-hook-form"
-import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as DocumentPicker from "expo-document-picker"
 import * as DocumentPicker from "expo-document-picker"
 import * as ImagePicker from "expo-image-picker"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
 import { useLoading } from "@/context/LoadingContext"
+import { useTheme } from "@/context/ThemeContext"
+import { Colors } from "@/constants/Colors"
 
 import Input from "@ui/Input"
-
 
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
@@ -35,27 +35,30 @@ import { Checkbox } from "@/components/ui/Checkbox"
 import { authService } from "@/services/auth"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
-const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
     { title: "Nombre y Foto", fields: ["name", "profileImage"] },
     { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
     { title: "Datos de Contacto", fields: ["email", "phone"] },
-    { title: "Subida de Archivos", fields: ["files"] },
     { title: "Subida de Archivos", fields: ["files"] },
 ]
 
 export default function RegisterScreen() {
     const router = useRouter()
     const { width, height } = useWindowDimensions()
-    const styles = useThemeStyles(width, height)
+    const { theme } = useTheme()
+    const colors = Colors[theme]
+    const styles = useThemeStyles(width, height, colors)
+
     const [step, setStep] = useState(0)
     const [pendingFiles, setPendingFiles] = useState<FileInfo[]>([])
+    const [showTypeModal, setShowTypeModal] = useState(true)
+    const [giverType, setGiverType] = useState<"giver" | "shelter" | null>(null)
+
     const [acceptedTerms, setAcceptedTerms] = useState(false)
 
     const { signUp, status } = useAuthContext()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-
 
     const previousRut = useRef<string>("")
     const previousEmail = useRef<string>("")
@@ -65,7 +68,6 @@ export default function RegisterScreen() {
         handleSubmit,
         trigger,
         getValues,
-        setValue,
         setValue,
         setError,
         clearErrors,
@@ -127,13 +129,10 @@ export default function RegisterScreen() {
             return true
         } catch (error: any) {
             console.error("Error validando RUT:", error)
-        } catch (error: any) {
-            console.error("Error validando RUT:", error)
             return true
         }
     }
 
-    const validateEmail = async (email: string): Promise<boolean> => {
     const validateEmail = async (email: string): Promise<boolean> => {
         if (email === previousEmail.current) return true
         try {
@@ -145,8 +144,6 @@ export default function RegisterScreen() {
             clearErrors("email")
             previousEmail.current = email
             return true
-        } catch (error: any) {
-            console.error("Error validando email:", error)
         } catch (error: any) {
             console.error("Error validando email:", error)
             return true
@@ -175,8 +172,6 @@ export default function RegisterScreen() {
                         phone: phoneWithPrefix,
                         address: "",
                         description: "",
-                        address: "",
-                        description: "",
                         profileImage: data.profileImage,
                         documents: pendingFiles.length > 0 ? pendingFiles : undefined,
                     },
@@ -185,13 +180,12 @@ export default function RegisterScreen() {
 
                 const message = result.requiresEmailVerification
                     ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
-                    ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
                     : "Registro exitoso. Tu cuenta será validada por un administrador."
 
                 showAlert(message, "success")
 
                 setTimeout(() => {
-                    router.replace("/(auth)/login")
+                    router.replace("/(auth)/(login)/")
                 }, 2000)
             })
         } catch (e: any) {
@@ -416,11 +410,20 @@ export default function RegisterScreen() {
                 return (
                     <>
                         <Input<GiverRegisterFormType>
-                            key="name"
-                            name="name"
+                            key="password"
+                            name="password"
                             control={control}
-                            label="Nombre completo"
-                            placeholder="Juan Pérez"
+                            label="Contraseña"
+                            placeholder="••••••••"
+                            type="password"
+                        />
+                        <Input<GiverRegisterFormType>
+                            key="verifyPassword"
+                            name="verifyPassword"
+                            control={control}
+                            label="Repetir contraseña"
+                            placeholder="••••••••"
+                            type="password"
                         />
                     </>
                 )
@@ -803,7 +806,6 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             left: width * 0.05,
             zIndex: 10,
             backgroundColor: "rgba(255,255,255,0.2)",
-            backgroundColor: "rgba(255,255,255,0.2)",
             borderRadius: 20,
             padding: 8,
         },
@@ -811,15 +813,10 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             backgroundColor: "#FFD24C",
             width: "112%",
             height: headerHeight,
-            height: headerHeight,
             alignItems: "center",
-            justifyContent: "flex-start",
             justifyContent: "flex-start",
             borderBottomLeftRadius: 25,
             borderBottomRightRadius: 25,
-            paddingTop: 20,
-            marginBottom: 0,
-            position: "relative",
             paddingTop: 20,
             marginBottom: 0,
             position: "relative",
@@ -827,11 +824,9 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
 
         headerTitle: {
             fontSize: isSmallScreen ? 18 : 22,
-            fontSize: isSmallScreen ? 18 : 22,
             fontWeight: "bold",
             color: "#222",
             marginTop: height * 0.06,
-            textAlign: "center",
             textAlign: "center",
         },
         logo: {
@@ -845,7 +840,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             bottom: Math.max(-logoSize * 0.27, -40),
             width: Math.max(logoSize * 1.2, 100),
             height: Math.max(logoSize * 0.7, 70),
-            backgroundColor: colors.background,
+            backgroundColor: "#fff",
             borderTopLeftRadius: Math.max(logoSize * 0.6, 50),
             borderTopRightRadius: Math.max(logoSize * 0.6, 50),
             alignSelf: "center",
@@ -1044,6 +1039,19 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             marginBottom: 20,
             textAlign: "center",
             fontStyle: "italic",
+        },
+        modalButton: {
+            backgroundColor: colors.tint,
+            borderRadius: 12,
+            paddingVertical: 12,
+            width: "100%",
+            marginVertical: 8,
+            alignItems: "center",
+        },
+        modalButtonText: {
+            color: colors.text,
+            fontWeight: "600",
+            fontSize: 16,
         },
     })
 }
