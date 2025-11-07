@@ -375,3 +375,155 @@ export const validateGiverAccount = async (req: Request, res: Response) => {
         return AppResponse(res, 500, "Error interno del servidor", null)
     }
 }
+
+export const rejectGiverRequest = async (req: Request, res: Response) => {
+    const { userId } = req.params
+
+    if (!userId || isNaN(Number(userId))) {
+        return AppResponse(res, 400, "ID de usuario inválido", null)
+    }
+
+    try {
+        // 1️⃣ Buscar usuario
+        const { data: user, error: findError } = await supabase
+            .from("users")
+            .select("id,email,name,validated,role,rut")
+            .eq("id", Number(userId))
+            .single()
+
+        if (findError || !user) {
+            return AppResponse(res, 404, "Usuario no encontrado", null)
+        }
+
+        if (user.validated === true) {
+            return AppResponse(res, 400, "La cuenta ya está validada", null)
+        }
+
+        // 2️⃣ Restaurar acceso (validated: true) pero NO cambiar el rol
+        const { error: updateError } = await supabase
+            .from("users")
+            .update({ validated: true })
+            .eq("id", Number(userId))
+
+        if (updateError) {
+            return AppResponse(res, 500, "Error al rechazar la solicitud", null)
+        }
+
+        console.log(`❌ Solicitud rechazada para usuario ${userId}, acceso restaurado`)
+
+        // 3️⃣ Intentar eliminar documentos del servidor Media (opcional)
+        try {
+            const token = jwt.sign(
+                {
+                    sub: user.id,
+                    email: user.email,
+                    role: 19, // Admin token para eliminar
+                    aud: "media",
+                    purpose: "account-request",
+                },
+                JWT_SECRET,
+                { expiresIn: "5m" }
+            )
+
+            const deleteUrl = `${MEDIA_URL}/uploads/account-request/${encodeURIComponent(user.rut)}`
+
+            await axios.delete(deleteUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "x-user-id": String(user.id),
+                    "x-user-role": "19",
+                },
+                timeout: 10000,
+            })
+
+            console.log(`🗑️ Documentos eliminados del servidor Media para usuario ${userId}`)
+        } catch (mediaError: any) {
+            console.error("⚠️ Error al eliminar documentos de Media:", mediaError.message)
+            // No bloqueamos el rechazo si falla la eliminación
+        }
+
+        // 4️⃣ Enviar correo de notificación
+        try {
+            const html = `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>Solicitud rechazada - Ayün Pet</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin:0; padding:0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0; background-color:#f4f4f4;">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0"
+                                    style="background-color:#ffffff; border-radius:10px; overflow:hidden;
+                                    box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                                    <tr>
+                                        <td style="background-color:#ff6b6b; padding:40px 30px; text-align:center;">
+                                            <h1 style="margin:0; color:#fff; font-size:28px;">
+                                                📋 Solicitud No Aprobada
+                                            </h1>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:40px 30px; text-align:center;">
+                                            <p style="font-size:16px; color:#333; line-height:1.6;">
+                                                Hola <strong>${user.name}</strong>,
+                                            </p>
+                                            <p style="font-size:16px; color:#555; line-height:1.6;">
+                                                Lamentamos informarte que tu solicitud para convertirte en 
+                                                <strong>dador de adopción</strong> en <strong>Ayün Pet</strong> 
+                                                no ha sido aprobada en esta ocasión.
+                                            </p>
+                                            <div style="background-color:#f8f9fa; border-left:4px solid #ff6b6b; 
+                                                        padding:15px; margin:20px 0; text-align:left;">
+                                                <p style="margin:0; font-size:14px; color:#666;">
+                                                    <strong>💡 ¿Qué significa esto?</strong><br/>
+                                                    Tu cuenta sigue activa y puedes continuar usando Ayün Pet 
+                                                    como adoptante. Si deseas volver a solicitar ser dador, 
+                                                    puedes hacerlo nuevamente con la documentación actualizada.
+                                                </p>
+                                            </div>
+                                            <p style="font-size:14px; color:#777;">
+                                                Si tienes dudas, puedes contactarnos respondiendo este correo.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#f8f9fa; text-align:center; padding:15px;
+                                            font-size:12px; color:#666;">
+                                            © 2025 Ayün Pet — Todos los derechos reservados.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `
+
+            await sendEmail({
+                to: user.email,
+                subject: "Solicitud de dador no aprobada - Ayün Pet",
+                html,
+            })
+
+            console.log(`📧 Correo de rechazo enviado correctamente a ${user.email}`)
+        } catch (emailError) {
+            console.error("❌ Error al enviar correo de rechazo:", emailError)
+        }
+
+        // 5️⃣ Respuesta final
+        return AppResponse(res, 200, "Solicitud rechazada, acceso restaurado", {
+            id: user.id,
+            email: user.email,
+            validated: true,
+            role: user.role, // Se mantiene en 20
+        })
+    } catch (error) {
+        console.error("❌ Error en rejectGiverRequest:", error)
+        return AppResponse(res, 500, "Error interno del servidor", null)
+    }
+}

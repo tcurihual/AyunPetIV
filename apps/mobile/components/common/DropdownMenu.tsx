@@ -159,6 +159,19 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                             </Text>
                         </TouchableOpacity>
 
+                        {/* Opción para solicitar ser dador - solo visible para usuarios normales (rol 20) */}
+                        {user?.role === 20 && (
+                            <TouchableOpacity
+                                style={styles.item}
+                                onPress={() => handleNavigate("/(home)/request-giver")}
+                            >
+                                <Ionicons name="paw-outline" size={22} color={themeColors.text} />
+                                <Text style={[styles.text, { color: themeColors.text }]}>
+                                    Ser Dador de Mascotas
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
                         {/* --- 8. EL NUEVO BOTÓN DE MODO OSCURO --- */}
                         <View style={[styles.item, styles.switchItem]}>
                             <Ionicons
