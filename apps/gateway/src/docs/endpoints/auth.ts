@@ -10,6 +10,7 @@ import {
     ForgotPasswordRequestSchema,
     ResetPasswordRequestSchema,
 } from "@repo/utils"
+import { z } from "zod"
 
 export function registerAuthPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -263,6 +264,69 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
             },
             500: {
                 description: "Error al actualizar la contraseña",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "post",
+        path: "/v1/auth/check-user-exists",
+        tags: ["Auth"],
+        summary: "Verificar disponibilidad de email o RUT",
+        description:
+            "Endpoint que verifica si un email o RUT ya existe en la base de datos. " +
+            "Permite validar de forma individual cada campo antes del registro. " +
+            "Se debe enviar únicamente email o rut, pero no es obligatorio enviar ambos. " +
+            "Si el campo ya existe, retorna un error 409; si está disponible, retorna 200.",
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            email: z.string().email().optional(),
+                            rut: z.string().optional(),
+                        }),
+                        examples: {
+                            conEmail: {
+                                summary: "Validar solo email",
+                                value: {
+                                    email: "usuario@ejemplo.com",
+                                },
+                            },
+                            conRut: {
+                                summary: "Validar solo RUT",
+                                value: {
+                                    rut: "12.345.678-9",
+                                },
+                            },
+                            conAmbos: {
+                                summary: "Validar ambos campos (opcional)",
+                                value: {
+                                    email: "usuario@ejemplo.com",
+                                    rut: "12.345.678-9",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses: {
+            200: {
+                description: "Email o RUT disponibles para registro",
+                content: { "application/json": { schema: BaseResponseSchema } },
+            },
+            400: {
+                description: "No se proporcionó email ni RUT",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            409: {
+                description: "El email o RUT ya están registrados",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error al verificar la existencia del usuario",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },

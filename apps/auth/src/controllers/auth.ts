@@ -15,7 +15,7 @@ import {
 
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
-import { sendAccountRequestDocuments } from "../middleware/mediaProxy"
+import { sendAccountRequestDocuments, sendProfilePicture } from "../middleware/mediaProxy"
 
 type Variation = "user" | "giver" | "shelter"
 
@@ -117,10 +117,29 @@ export const register = async (
 
     if (insertError) throw new AppError(500, insertError.message)
 
+    // --- MANEJO DE ARCHIVOS ---
+    // Obtenemos los archivos según el tipo de campo
+    const filesArray = req.files as { [fieldname: string]: Express.Multer.File[] } | Express.Multer.File[] | undefined
+    
+    // Extraer documentos (para givers) e imagen de perfil (opcional para todos)
+    let documents: Express.Multer.File[] = []
+    let profileImage: Express.Multer.File | null = null
+
+    if (filesArray) {
+        // Si es un objeto con campos nombrados
+        if (!Array.isArray(filesArray)) {
+            documents = filesArray['documents'] || []
+            const imageArray = filesArray['image'] || []
+            profileImage = imageArray.length > 0 ? imageArray[0] : null
+        } else {
+            // Si es un array simple (caso antiguo)
+            documents = filesArray
+        }
+    }
+
     // --- SOLO PARA GIVER: exigir documentos y reenviar a MEDIA
     if (variation === "giver") {
-        const files = (req.files ?? []) as Express.Multer.File[]
-        if (!files?.length) {
+        if (!documents.length) {
             throw new AppError(400, "El dador debe adjuntar documentos en 'documents'")
         }
 
@@ -132,7 +151,7 @@ export const register = async (
                     rut: inserted.rut,
                     roleId: inserted.role!,
                 },
-                files: files.map((f: Express.Multer.File) => ({
+                files: documents.map((f: Express.Multer.File) => ({
                     buffer: f.buffer,
                     originalname: f.originalname,
                     mimetype: f.mimetype,
@@ -142,6 +161,28 @@ export const register = async (
             const msg = getErrorMessage(e)
             console.error("❌ Error enviando account-request a MEDIA:", msg)
             throw new AppError(502, "No fue posible registrar documentos en Media")
+        }
+    }
+
+    // --- OPCIONAL: Subir foto de perfil si se proporciona
+    if (profileImage) {
+        try {
+            await sendProfilePicture({
+                user: {
+                    id: inserted.id,
+                    email: inserted.email,
+                    roleId: inserted.role!,
+                },
+                file: {
+                    buffer: profileImage.buffer,
+                    originalname: profileImage.originalname,
+                    mimetype: profileImage.mimetype,
+                },
+            })
+        } catch (e: unknown) {
+            const msg = getErrorMessage(e)
+            console.error("⚠️ Error procesando foto de perfil:", msg)
+            // No bloqueamos el registro por error en foto de perfil
         }
     }
 
@@ -751,5 +792,77 @@ export const validateVerificationCodeMobile = async (req: Request, res: Response
         return AppResponse(res, 200, "Correo verificado correctamente ✅", {})
     } catch {
         throw new AppError(500, "Error al validar el código de verificación")
+    }
+}
+
+export const checkUserExists = async (req: Request, res: Response) => {
+    const { email, rut } = req.body
+
+    if (!email && !rut) {
+        throw new AppError(400, "Debe proporcionar email o rut")
+    }
+
+    let query = supabase.from("users").select("id")
+
+    if (email && rut) {
+        query = query.or(`email.eq.${email},rut.eq.${rut}`)
+    } else if (email) {
+        query = query.eq("email", email)
+    } else if (rut) {
+        query = query.eq("rut", rut)
+    }
+
+    const { data, error } = await query.maybeSingle()
+
+    if (error) {
+        throw new AppError(500, "Error al verificar la existencia del usuario")
+    }
+
+    if (data) {
+        if (email && rut) {
+            throw new AppError(409, "El email o RUT ya están registrados")
+        } else if (email) {
+            throw new AppError(409, "El email ya está registrado")
+        } else {
+            throw new AppError(409, "El RUT ya está registrado")
+        }
+    }
+
+    return AppResponse(res, 200, "El email o RUT están disponibles", {
+        available: true,
+    })
+}
+
+export const savePushToken = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?.id
+        const { pushToken } = req.body
+
+        if (!userId) {
+            throw new AppError(401, "Usuario no autenticado")
+        }
+
+        if (!pushToken) {
+            throw new AppError(400, "Token push es requerido")
+        }
+
+        const { error } = await supabase
+            .from("users")
+            .update({
+                push_token: pushToken,
+                push_token_updated_at: new Date().toISOString(),
+            })
+            .eq("id", userId)
+
+        if (error) {
+            console.error("Error guardando push token:", error)
+            throw new AppError(500, "Error al guardar token push")
+        }
+
+        console.log(`✅ Push token guardado para usuario ${userId}`)
+        return AppResponse(res, 200, "Token push guardado exitosamente", {})
+    } catch (error) {
+        const message = getErrorMessage(error)
+        throw new AppError(500, `Error al procesar token push: ${message}`)
     }
 }

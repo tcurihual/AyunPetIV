@@ -25,8 +25,8 @@ import { Pet } from "@/interfaces/pet"
 import { toMediaUrl } from "@/utils/mediaUrl"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { useAuthContext } from "@/context/AuthContext"
 import type { PublicationItem } from "@/context/PublicationContext"
-import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -54,6 +54,7 @@ const mockComments: Comment[] = [
 export default function PublicationDetail() {
     const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
+    const { user } = useAuthContext()
     const [comments, setComments] = useState<Comment[]>(mockComments)
     const [showReportModal, setShowReportModal] = useState(false)
     const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
@@ -93,29 +94,11 @@ export default function PublicationDetail() {
         )
     }, [id, publications])
 
-    const formatAge = (age?: string | number | null) => {
-        // Si viene vacío o indefinido
-        if (!age || age === "undefined" || age === "null") return "Desconocida"
-
-        // Si viene como cadena no numérica
-        if (typeof age === "string") {
-            const numericAge = Number(age)
-            if (isNaN(numericAge)) {
-                // si la cadena no es número (ej: "Cachorro"), devuélvela tal cual
-                return age.trim().length > 0 ? age : "Desconocida"
-            }
-            age = numericAge
-        }
-
-        // A esta altura, age es número
-        if (typeof age === "number") {
-            if (age <= 0) return "Cachorro"
-            if (age === 1) return "1 año"
-            if (age > 1) return `${age} años`
-        }
-
-        return "Desconocida"
-    }
+    // Verificar si el usuario actual es el dueño de la publicación
+    const isOwner = useMemo(() => {
+        if (!user?.id || !publicationFromContext?.creatorId) return false
+        return Number(user.id) === Number(publicationFromContext.creatorId)
+    }, [user?.id, publicationFromContext?.creatorId])
 
     const mapPublicationToPet = React.useCallback((pub: PublicationItem): Pet => {
         const imageSource =
@@ -125,36 +108,14 @@ export default function PublicationDetail() {
                 ? { uri: (pub.image as any).uri }
                 : pub.image || { uri: "https://placehold.co/800x600?text=Mascota" }
 
-        // 🔹 Extraer años y meses si existen (ya sea en PublicationItem o si vienen del backend)
-        const years =
-            Number((pub as any).age_years ?? 0) ||
-            (typeof pub.age === "string" && pub.age.includes("año") ? parseInt(pub.age) : 0)
-        const months =
-            Number((pub as any).age_months ?? 0) ||
-            (typeof pub.age === "string" && pub.age.includes("mes") ? parseInt(pub.age) : 0)
-
-        // 🔹 Construir texto de edad consistente
-        const totalAge =
-            years > 0 && months > 0
-                ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
-                      months === 1 ? "mes" : "meses"
-                  }`
-                : years > 0
-                ? `${years} ${years === 1 ? "año" : "años"}`
-                : months > 0
-                ? `${months} ${months === 1 ? "mes" : "meses"}`
-                : "Desconocida"
-
         return {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
-            age: totalAge,
+            age: pub.age ?? "",
             publisher: pub.publisher ?? "Usuario",
-            publisherPhoto: pub.publisherPhoto ?? null,
             description: pub.description ?? "",
             image: imageSource,
-            type: pub.type ?? pub.species ?? "",
         }
     }, [])
 
@@ -162,11 +123,16 @@ export default function PublicationDetail() {
         let alive = true
         ;(async () => {
             try {
+                console.log("📱 [id].tsx: Loading publication, id:", id)
                 setLoading(true)
 
-                if (!id) return
+                if (!id) {
+                    console.log("📱 [id].tsx: No id provided")
+                    return
+                }
 
                 if (isLocalId(id)) {
+                    console.log("📱 [id].tsx: Loading local pet")
                     const locals = await getLocalPets()
                     const raw = locals.find((p) => `local-${p.id}` === id)
                     if (raw) {
@@ -177,11 +143,10 @@ export default function PublicationDetail() {
                             id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida", // 👈 corregido
+                            age: `${raw.ageYears} años`,
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
-                            type: raw.type || raw.species || "",
                         }
                         if (alive) setPet(petObj)
                     } else if (alive) {
@@ -189,26 +154,36 @@ export default function PublicationDetail() {
                     }
                 } else {
                     const numericId = Number(id)
+                    console.log("📱 [id].tsx: Loading remote publication, numericId:", numericId)
                     if (!Number.isFinite(numericId)) {
+                        console.log("📱 [id].tsx: Invalid numericId")
                         if (alive) setPet(null)
                         return
                     }
 
+                    console.log("📱 [id].tsx: Checking context for publication")
                     const source =
                         publicationFromContext || (await getPublicationByPostId(numericId))
+                    console.log("📱 [id].tsx: Source found:", !!source)
                     if (!alive) return
 
                     if (source) {
-                        setPet(mapPublicationToPet(source))
+                        const mappedPet = mapPublicationToPet(source)
+                        console.log("📱 [id].tsx: Mapped pet:", mappedPet)
+                        setPet(mappedPet)
                     } else {
+                        console.log("📱 [id].tsx: No source found, setting null")
                         setPet(null)
                     }
                 }
             } catch (e) {
-                console.error("Error loading publication detail:", e)
+                console.error("❌ [id].tsx: Error loading publication detail:", e)
                 if (alive) setPet(null)
             } finally {
-                if (alive) setLoading(false)
+                if (alive) {
+                    console.log("📱 [id].tsx: Setting loading to false")
+                    setLoading(false)
+                }
             }
         })()
         return () => {
@@ -306,6 +281,22 @@ export default function PublicationDetail() {
         }
     }
 
+    const handleEditPublication = () => {
+        if (!publicationFromContext?.postId) {
+            console.error("No postId available for editing")
+            Alert.alert("Error", "No se puede editar esta publicación")
+            return
+        }
+        console.log("🔵 Navigating to edit with postId:", publicationFromContext.postId)
+        router.push({
+            pathname: "/(shelter)/publication/edit-publication" as any,
+            params: {
+                postId: String(publicationFromContext.postId),
+                petId: String(publicationFromContext.petId),
+            },
+        })
+    }
+
     if (loading) {
         return (
             <View style={styles.center}>
@@ -350,20 +341,10 @@ export default function PublicationDetail() {
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
                                     <Text style={styles.infoLabel}>
-                                        Especie:{" "}
-                                        <Text style={styles.infoValue}>
-                                            {translateSpeciesToSpanish((pet as any).type || "")}
-                                        </Text>
+                                        Género: <Text style={styles.infoValue}>{pet.gender}</Text>
                                     </Text>
                                     <Text style={styles.infoLabel}>
-                                        Género:{" "}
-                                        <Text style={styles.infoValue}>
-                                            {translateGenderToSpanish(pet.gender || "")}
-                                        </Text>
-                                    </Text>
-                                    <Text style={styles.infoLabel}>
-                                        Edad:{" "}
-                                        <Text style={styles.infoValue}>{formatAge(pet.age)}</Text>
+                                        Edad: <Text style={styles.infoValue}>{pet.age}</Text>
                                     </Text>
                                 </View>
                                 <View style={styles.infoColumn}>
@@ -426,27 +407,51 @@ export default function PublicationDetail() {
                             </View>
 
                             <View style={styles.buttonContainer}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.sendRequestButton,
-                                        !canSendRequest && styles.sendRequestButtonDisabled,
-                                    ]}
-                                    onPress={handleOpenRequestModal}
-                                    disabled={!canSendRequest}
-                                >
-                                    <Text style={styles.sendRequestButtonText}>
-                                        Enviar Solicitud
-                                    </Text>
-                                </TouchableOpacity>
+                                {isOwner ? (
+                                    <>
+                                        <TouchableOpacity
+                                            style={styles.editButton}
+                                            onPress={handleEditPublication}
+                                        >
+                                            <Text style={styles.editButtonText}>
+                                                ✏️ Editar Publicación
+                                            </Text>
+                                        </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={styles.reportButton}
-                                    onPress={handleReportPublication}
-                                >
-                                    <Text style={styles.reportButtonText}>
-                                        Reportar Publicación
-                                    </Text>
-                                </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={styles.reportButton}
+                                            onPress={handleReportPublication}
+                                        >
+                                            <Text style={styles.reportButtonText}>
+                                                Reportar Publicación
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </>
+                                ) : (
+                                    <>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.sendRequestButton,
+                                                !canSendRequest && styles.sendRequestButtonDisabled,
+                                            ]}
+                                            onPress={handleOpenRequestModal}
+                                            disabled={!canSendRequest}
+                                        >
+                                            <Text style={styles.sendRequestButtonText}>
+                                                Enviar Solicitud
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={styles.reportButton}
+                                            onPress={handleReportPublication}
+                                        >
+                                            <Text style={styles.reportButtonText}>
+                                                Reportar Publicación
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </>
+                                )}
                             </View>
                         </View>
                     </View>
@@ -551,31 +556,6 @@ const styles = StyleSheet.create({
     infoColumn: { flex: 1 },
     infoLabel: { fontSize: 14, color: "#222", marginBottom: 8, fontWeight: "500" },
     infoValue: { fontWeight: "normal", color: "#666" },
-    publisherRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginTop: 4,
-    },
-    publisherAvatar: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: "#ddd",
-    },
-    publisherAvatarPlaceholder: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: "#FFD700",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    publisherAvatarText: {
-        fontSize: 12,
-        fontWeight: "bold",
-        color: "#222",
-    },
     publisherName: { fontSize: 14, color: "#666", fontWeight: "400" },
     descriptionContainer: { marginTop: 12, marginBottom: 24 },
     descriptionLabel: { fontSize: 14, fontWeight: "500", color: "#222", marginBottom: 4 },
@@ -608,6 +588,21 @@ const styles = StyleSheet.create({
     },
     commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
     buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
+    editButton: {
+        backgroundColor: "#7c3aed",
+        borderRadius: 8,
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+        marginBottom: 10,
+    },
+    editButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
     sendRequestButton: {
         backgroundColor: "#FFD700",
         borderRadius: 8,

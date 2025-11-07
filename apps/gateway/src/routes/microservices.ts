@@ -18,9 +18,15 @@ msRouter.use(
         },
         proxyTimeout: 10000, // Aumentar timeout
         on: {
-            proxyReq: (proxyReq, req) => {
+            proxyReq: (proxyReq: ClientRequest, req: Request) => {
                 console.log(`🌐 [GATEWAY] Proxying ${req.method} ${req.url} to ${AUTH_URL}`)
                 console.log(`🌐 [GATEWAY] Target URL: ${proxyReq.path}`)
+                
+                // Pasar user-id para rutas autenticadas
+                if (req.user) {
+                    proxyReq.setHeader("x-user-id", req.user.id)
+                    proxyReq.setHeader("x-user-role", req.user.role!!)
+                }
             },
             proxyRes: (proxyRes, req) => {
                 console.log(`🌐 [GATEWAY] Response from auth service: ${proxyRes.statusCode}`)

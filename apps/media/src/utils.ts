@@ -1,7 +1,7 @@
 import path from "path"
 import fs from "fs/promises"
 
-export const PUBLIC_ENTITIES = ["users", "news","publications"]
+export const PUBLIC_ENTITIES = ["users", "news", "publications", "profile_picture"]
 
 export const UPLOADS_BASE = path.join(__dirname, "..", "uploads")
 
