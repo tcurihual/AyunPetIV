@@ -68,14 +68,6 @@ export const GiverRegisterFormSchema = z
             .array(z.string())
             .min(1, "Debes subir al menos un archivo (imagen o PDF)")
             .or(z.string().min(1, "Debes subir al menos un archivo (imagen o PDF)")),
-        address: z
-            .string()
-            .max(200, "La dirección no puede tener más de 200 caracteres")
-            .optional(),
-        description: z
-            .string()
-            .max(500, "La descripción no puede tener más de 500 caracteres")
-            .optional(),
         profileImage: z
             .object({
                 uri: z.string(),
@@ -114,6 +106,10 @@ export const PetFormSchema = z.object({
         .max(40, "Revisa la edad (máx 40)"),
     size: z.enum(["Small", "Medium", "Large"]),
     sterilized: z.boolean(),
+    description: z
+        .string("Debes ingresar una descripción")
+        .min(10, "La descripción debe tener al menos 10 caracteres")
+        .max(500, "La descripción es muy larga (máximo 500 caracteres)"),
 })
 
 export const MessageFormSchema = z.object({
