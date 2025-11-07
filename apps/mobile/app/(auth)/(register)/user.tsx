@@ -226,7 +226,6 @@ export default function RegisterScreen() {
     }
 
     const removeProfileImage = () => setValue("profileImage", undefined)
-
     const disabled = isSubmitting || status === "loading"
 
     const renderFields = () => {
@@ -272,6 +271,7 @@ export default function RegisterScreen() {
                     <TouchableOpacity style={styles.backButton} onPress={onBack}>
                         <Ionicons name="arrow-back" size={28} color="black" />
                     </TouchableOpacity>
+
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>Datos de Registro</Text>
                         <Image
@@ -280,6 +280,54 @@ export default function RegisterScreen() {
                             resizeMode="contain"
                         />
                         <View style={styles.semiCircle} />
+                    </View>
+
+                    <View style={styles.stepIndicator}>
+                        <View style={styles.stepCircleContainer}>
+                            <Text style={styles.stepCircle}>{`${step + 1}/4`}</Text>
+                        </View>
+                        <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                    </View>
+
+                    <View style={styles.formContent}>
+                        {renderFields()}
+
+                        {step < steps.length - 1 ? (
+                            <TouchableOpacity
+                                style={[styles.button]}
+                                onPress={onNext}
+                                disabled={disabled}
+                            >
+                                <Text style={styles.buttonText}>Continuar</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity
+                                style={[styles.button]}
+                                onPress={handleSubmit(onSubmit)}
+                                disabled={disabled}
+                            >
+                                <Text style={styles.buttonText}>
+                                    {disabled ? "Creando..." : "Crear Cuenta"}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
+                            <Text style={styles.secondaryButtonText}>Volver</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => router.push("/(auth)/verify-email")}>
+                            <Text
+                                style={{
+                                    color: "#7c3aed",
+                                    textDecorationLine: "underline",
+                                    textAlign: "center",
+                                    marginTop: 10,
+                                }}
+                            >
+                                ¿Ya tienes cuenta y no la has validado?
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -338,6 +386,71 @@ const useThemeStyles = (width: number, height: number) => {
             borderTopRightRadius: Math.max(logoSize * 0.6, 50),
             alignSelf: "center",
             zIndex: 0,
+        },
+        stepIndicator: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 40,
+            marginBottom: 30,
+            width: "100%",
+            paddingHorizontal: 10,
+        },
+        stepCircleContainer: {
+            width: isSmallScreen ? 40 : 50,
+            height: isSmallScreen ? 40 : 50,
+            borderRadius: isSmallScreen ? 20 : 25,
+            backgroundColor: "#fff",
+            justifyContent: "center",
+            alignItems: "center",
+            borderWidth: 2,
+            borderColor: "#A47CF3",
+            marginRight: isSmallScreen ? 10 : 15,
+            elevation: 5,
+        },
+        stepCircle: {
+            fontSize: isSmallScreen ? 14 : 16,
+            color: "#A47CF3",
+            fontWeight: "bold",
+            textAlign: "center",
+        },
+        stepTitle: {
+            fontSize: isSmallScreen ? 18 : 22,
+            fontWeight: "bold",
+            color: "#222",
+        },
+        formContent: {
+            width: "100%",
+            maxWidth: 350,
+            paddingHorizontal: 20,
+        },
+        button: {
+            width: "100%",
+            height: Math.max(height * 0.06, 50),
+            backgroundColor: "#FFD24C",
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 20,
+            elevation: 3,
+        },
+        buttonText: { color: "#222", fontWeight: "600", fontSize: 16 },
+        secondaryButton: {
+            width: "100%",
+            height: Math.max(height * 0.06, 50),
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 15,
+            marginBottom: 30,
+            borderWidth: 2,
+            borderColor: "#FFD24C",
+            backgroundColor: "#fff",
+        },
+        secondaryButtonText: {
+            color: "#FFD24C",
+            fontWeight: "600",
+            fontSize: 16,
         },
     })
 }
