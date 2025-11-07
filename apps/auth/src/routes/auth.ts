@@ -16,7 +16,15 @@ import { verifyAuth } from "../middleware/verifyAuth"
 const router = Router()
 
 router.post("/login", login)
-router.post("/register/:variation", uploadMemory.array("documents", 10), register)
+// Acepta múltiples campos: "documents" (hasta 10 archivos) e "image" (1 archivo para foto de perfil)
+router.post(
+    "/register/:variation",
+    uploadMemory.fields([
+        { name: "documents", maxCount: 10 },
+        { name: "image", maxCount: 1 }
+    ]),
+    register
+)
 router.post("/verify-email", verifyEmail)
 router.post("/forgot-password", forgotPassword)
 router.post("/reset-password", resetPassword)

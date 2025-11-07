@@ -26,6 +26,13 @@ export const RegisterFormSchema = z
             .string()
             .length(8, "El número teléfonico debe tener 8 dígitos")
             .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
@@ -68,6 +75,13 @@ export const GiverRegisterFormSchema = z
         description: z
             .string()
             .max(500, "La descripción no puede tener más de 500 caracteres")
+            .optional(),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
             .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {

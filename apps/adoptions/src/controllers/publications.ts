@@ -538,9 +538,54 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
 
         // Subir nuevas imágenes si existen
         let uploadedImages: any[] = []
+        let allImages: string[] = []
         try {
             const files = req.files as Express.Multer.File[] | undefined
             if (files && files.length > 0) {
+                // Si se va a cambiar la imagen en editar, primero se elimina la anterior
+                try {
+                    //    console.log(`🗑️ Obteniendo imágenes antiguas de la publicación ${id}`)
+                    const getResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                        headers: {
+                            "x-user-id": String(req.user?.id ?? 0),
+                            "x-user-role": String(req.user?.role ?? ""),
+                        },
+                    })
+
+                    const existingImages = getResponse.data.data || []
+
+                    if (existingImages.length > 0) {
+                        // Extraer solo los nombres de archivo de las URLs
+                        const fileNames = existingImages.map((url: string) => {
+                            const parts = url.split("/")
+                            return parts[parts.length - 1]
+                        })
+
+                        console.log(
+                            `🗑️ Eliminando ${fileNames.length} imágenes antiguas:`,
+                            fileNames
+                        )
+
+                        await axios.delete(`${MEDIA_URL}/uploads/publications/${id}`, {
+                            headers: {
+                                "x-user-id": String(req.user?.id ?? 0),
+                                "x-user-role": String(req.user?.role ?? ""),
+                            },
+                            data: {
+                                fileNamesArray: fileNames,
+                            },
+                        })
+                        console.log("✅ Imágenes antiguas eliminadas")
+                    } else {
+                        console.log("ℹ️ No hay imágenes antiguas para eliminar")
+                    }
+                } catch (deleteError: any) {
+                    console.warn(
+                        "⚠️ No se pudieron eliminar imágenes antiguas:",
+                        deleteError?.message
+                    )
+                }
+
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
 
@@ -564,27 +609,42 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
                 )
 
                 uploadedImages = mediaResponse.data.data || []
+                allImages = normalizeMediaUrls(uploadedImages)
+            } else {
+                // Si no se subieron archivos, obtener las imágenes existentes
+                try {
+                    const mediaResponse = await axios.get(
+                        `${MEDIA_URL}/uploads/publications/${id}`,
+                        {
+                            headers: {
+                                "x-user-id": String(req.user?.id ?? 0),
+                                "x-user-role": String(req.user?.role ?? ""),
+                            },
+                        }
+                    )
+                    allImages = normalizeMediaUrls(mediaResponse.data.data || [])
+                } catch (err) {
+                    // continuar si no hay imágenes
+                    allImages = []
+                }
             }
         } catch (mediaError: any) {
             console.error(
                 "❌ Error al subir nuevas imágenes de la publicación:",
                 mediaError?.message
             )
-            // No revertimos la actualización, solo registramos
-        }
-
-        // Obtener todas las imágenes actuales
-        let allImages: string[] = []
-        try {
-            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
-                headers: {
-                    "x-user-id": String(req.user?.id ?? 0),
-                    "x-user-role": String(req.user?.role ?? ""),
-                },
-            })
-            allImages = normalizeMediaUrls(mediaResponse.data.data || [])
-        } catch (err) {
-            // continuar si no hay imágenes
+            // Si falla la subida, intentar obtener las imágenes existentes
+            try {
+                const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                    headers: {
+                        "x-user-id": String(req.user?.id ?? 0),
+                        "x-user-role": String(req.user?.role ?? ""),
+                    },
+                })
+                allImages = normalizeMediaUrls(mediaResponse.data.data || [])
+            } catch (err) {
+                allImages = []
+            }
         }
 
         return AppResponse(res, 200, "Publicación actualizada", {

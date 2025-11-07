@@ -69,6 +69,7 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     async function getQuestions(params?: GetParams) {
         if (!user) {
             const msg = "Usuario no autenticado"
+            console.error("❌ QuestionContext: No user found")
             setError(msg)
             setLoading(false)
             return

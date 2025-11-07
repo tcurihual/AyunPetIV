@@ -8,25 +8,28 @@ import {
     ScrollView,
     StatusBar,
     useWindowDimensions,
+    Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import * as ImagePicker from "expo-image-picker"
 
 import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
 import { useLoading } from "@/context/LoadingContext"
-
 import { RegisterFormType } from "@/utils/types"
 import { RegisterFormSchema } from "@/utils/schemas"
 import Input from "@ui/Input"
+import { Checkbox } from "@/components/ui/Checkbox"
 import { authService } from "@/services/auth"
 
 const steps: { title: string; fields: (keyof RegisterFormType)[] }[] = [
     { title: "Nombre y RUT", fields: ["name", "rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
     { title: "Datos de Contacto", fields: ["email", "phone"] },
+    { title: "Foto de Perfil (Opcional)", fields: ["profileImage"] },
 ]
 
 export default function RegisterScreen() {
@@ -34,12 +37,11 @@ export default function RegisterScreen() {
     const { width, height } = useWindowDimensions()
     const styles = useThemeStyles(width, height)
     const [step, setStep] = useState(0)
+    const [acceptedTerms, setAcceptedTerms] = useState(false)
 
     const { signUp, status } = useAuthContext()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-
-    // Referencias para almacenar los valores previos de RUT y email
     const previousRut = useRef<string>("")
     const previousEmail = useRef<string>("")
 
@@ -62,67 +64,38 @@ export default function RegisterScreen() {
             verifyPassword: "",
             email: "",
             phone: "",
+            profileImage: undefined,
         },
     })
 
-    /**
-     * Valida si el RUT ya existe en la base de datos
-     */
     const validateRut = async (rut: string): Promise<boolean> => {
-        // Si el RUT es el mismo que el anterior, no validar de nuevo
-        if (rut === previousRut.current) {
-            return true
-        }
-
+        if (rut === previousRut.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ rut })
-
             if (!isAvailable) {
-                setError("rut", {
-                    type: "manual",
-                    message: "Este RUT ya está registrado",
-                })
+                setError("rut", { type: "manual", message: "Este RUT ya está registrado" })
                 return false
             }
-
-            // Limpiar el error si el RUT está disponible
             clearErrors("rut")
             previousRut.current = rut
             return true
-        } catch (error: any) {
-            console.error("Error validando RUT:", error)
-            // En caso de error de red u otro, permitir continuar
+        } catch {
             return true
         }
     }
 
-    /**
-     * Valida si el email ya existe en la base de datos
-     */
     const validateEmail = async (email: string): Promise<boolean> => {
-        // Si el email es el mismo que el anterior, no validar de nuevo
-        if (email === previousEmail.current) {
-            return true
-        }
-
+        if (email === previousEmail.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ email })
-
             if (!isAvailable) {
-                setError("email", {
-                    type: "manual",
-                    message: "Este correo ya está registrado",
-                })
+                setError("email", { type: "manual", message: "Este correo ya está registrado" })
                 return false
             }
-
-            // Limpiar el error si el email está disponible
             clearErrors("email")
             previousEmail.current = email
             return true
-        } catch (error: any) {
-            console.error("Error validando email:", error)
-            // En caso de error de red u otro, permitir continuar
+        } catch {
             return true
         }
     }
@@ -130,21 +103,14 @@ export default function RegisterScreen() {
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
-
-        // Validar RUT en el paso 0 (después de validaciones de react-hook-form)
         if (step === 0) {
-            const rut = getValues("rut")
-            const rutIsValid = await validateRut(rut)
+            const rutIsValid = await validateRut(getValues("rut"))
             if (!rutIsValid) return
         }
-
-        // Validar email en el paso 2 (después de validaciones de react-hook-form)
         if (step === 2) {
-            const email = getValues("email")
-            const emailIsValid = await validateEmail(email)
+            const emailIsValid = await validateEmail(getValues("email"))
             if (!emailIsValid) return
         }
-
         if (step < steps.length - 1) setStep((s) => s + 1)
     }
 
@@ -155,18 +121,12 @@ export default function RegisterScreen() {
 
     const onSubmit = async (data: RegisterFormType) => {
         try {
-            // Validar RUT y email antes de enviar el registro
             const rutIsValid = await validateRut(data.rut)
             const emailIsValid = await validateEmail(data.email)
-
-            if (!rutIsValid || !emailIsValid) {
-                // No continuar si alguno ya está registrado
-                return
-            }
+            if (!rutIsValid || !emailIsValid) return
 
             await withLoading(async () => {
                 const phoneWithPrefix = `+569${data.phone}`
-
                 const result = await signUp(
                     {
                         name: data.name,
@@ -176,14 +136,13 @@ export default function RegisterScreen() {
                         phone: phoneWithPrefix,
                         address: "",
                         description: "",
+                        profileImage: data.profileImage,
                     },
                     "user"
                 )
-
                 const message = result.requiresEmailVerification
                     ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
                     : "Registro exitoso. Tu cuenta será validada por un administrador."
-
                 showAlert(message, "success")
                 setTimeout(() => {
                     router.replace({
@@ -193,7 +152,6 @@ export default function RegisterScreen() {
                 }, 2000)
             })
         } catch (e: any) {
-            // TODO: Console.error, no es relevante en despliegue, corroborar correcto funcionamiento y eliminar
             console.error("Error en registro:", e)
             const msg =
                 e?.response?.data?.error ||
@@ -203,6 +161,71 @@ export default function RegisterScreen() {
         }
     }
 
+    const handleSelectProfileImage = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de galería para continuar", "error")
+                return
+            }
+            Alert.alert("Seleccionar Foto", "¿Cómo deseas obtener tu foto de perfil?", [
+                { text: "Cancelar", style: "cancel" },
+                { text: "Tomar Foto", onPress: () => takeProfilePicture() },
+                { text: "Elegir de Galería", onPress: () => pickFromGallery() },
+            ])
+        } catch {
+            showAlert("Error al acceder a las fotos", "error")
+        }
+    }
+
+    const takeProfilePicture = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de cámara para continuar", "error")
+                return
+            }
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch {
+            showAlert("Error al tomar la foto", "error")
+        }
+    }
+
+    const pickFromGallery = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch {
+            showAlert("Error al seleccionar la foto", "error")
+        }
+    }
+
+    const removeProfileImage = () => setValue("profileImage", undefined)
     const disabled = isSubmitting || status === "loading"
 
     const renderFields = () => {
@@ -225,7 +248,6 @@ export default function RegisterScreen() {
                             placeholder="12.345.678-9"
                             inputProps={{
                                 onChangeText: (text: string) => {
-                                    // Limpiar el error cuando el usuario cambia el valor
                                     const currentRut = getValues("rut")
                                     if (text !== currentRut && text !== previousRut.current) {
                                         clearErrors("rut")
@@ -236,68 +258,8 @@ export default function RegisterScreen() {
                         />
                     </>
                 )
-            case 1:
-                return (
-                    <>
-                        <Input<RegisterFormType>
-                            key="password"
-                            name="password"
-                            control={control}
-                            label="Contraseña"
-                            placeholder="••••••••"
-                            type="password"
-                        />
-                        <Input<RegisterFormType>
-                            key="verifyPassword"
-                            name="verifyPassword"
-                            control={control}
-                            label="Repetir contraseña"
-                            placeholder="••••••••"
-                            type="password"
-                        />
-                    </>
-                )
-            case 2:
             default:
-                return (
-                    <>
-                        <Input<RegisterFormType>
-                            key="email"
-                            name="email"
-                            control={control}
-                            label="Correo electrónico"
-                            placeholder="correo@dominio.com"
-                            type="email"
-                            inputProps={{
-                                onChangeText: (text: string) => {
-                                    // Limpiar el error cuando el usuario cambia el valor
-                                    const currentEmail = getValues("email")
-                                    if (text !== currentEmail && text !== previousEmail.current) {
-                                        clearErrors("email")
-                                        previousEmail.current = ""
-                                    }
-                                },
-                            }}
-                        />
-                        <View style={styles.phoneInputContainer}>
-                            <Text style={styles.phoneLabel}>Teléfono</Text>
-                            <Text style={styles.phoneHelperText}>
-                                Ingrese solo los 8 dígitos después del +56 9
-                            </Text>
-                            <Input<RegisterFormType>
-                                key="phone"
-                                name="phone"
-                                control={control}
-                                label=""
-                                placeholder="Ej: 12345678"
-                                inputProps={{
-                                    keyboardType: "phone-pad",
-                                    maxLength: 8,
-                                }}
-                            />
-                        </View>
-                    </>
-                )
+                return null
         }
     }
 
@@ -322,7 +284,7 @@ export default function RegisterScreen() {
 
                     <View style={styles.stepIndicator}>
                         <View style={styles.stepCircleContainer}>
-                            <Text style={styles.stepCircle}>{`${step + 1}/3`}</Text>
+                            <Text style={styles.stepCircle}>{`${step + 1}/4`}</Text>
                         </View>
                         <Text style={styles.stepTitle}>{steps[step].title}</Text>
                     </View>
@@ -353,6 +315,19 @@ export default function RegisterScreen() {
                         <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
                             <Text style={styles.secondaryButtonText}>Volver</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => router.push("/(auth)/verify-email")}>
+                            <Text
+                                style={{
+                                    color: "#7c3aed",
+                                    textDecorationLine: "underline",
+                                    textAlign: "center",
+                                    marginTop: 10,
+                                }}
+                            >
+                                ¿Ya tienes cuenta y no la has validado?
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -364,13 +339,8 @@ const useThemeStyles = (width: number, height: number) => {
     const isSmallScreen = width < 350
     const headerHeight = Math.max(height * 0.25, 180)
     const logoSize = Math.min(width * 0.4, 150)
-    const circleSize = Math.min(width * 0.15, 60)
-
     return StyleSheet.create({
-        scrollContainer: {
-            flexGrow: 1,
-            backgroundColor: "#fff",
-        },
+        scrollContainer: { flexGrow: 1, backgroundColor: "#fff" },
         container: {
             flex: 1,
             backgroundColor: "#fff",
@@ -405,12 +375,7 @@ const useThemeStyles = (width: number, height: number) => {
             marginTop: height * 0.06,
             textAlign: "center",
         },
-        logo: {
-            width: logoSize,
-            height: logoSize * 0.85,
-            top: 20,
-            zIndex: 1,
-        },
+        logo: { width: logoSize, height: logoSize * 0.85, top: 20, zIndex: 1 },
         semiCircle: {
             position: "absolute",
             bottom: Math.max(-logoSize * 0.27, -40),
@@ -441,7 +406,6 @@ const useThemeStyles = (width: number, height: number) => {
             borderWidth: 2,
             borderColor: "#A47CF3",
             marginRight: isSmallScreen ? 10 : 15,
-            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
             elevation: 5,
         },
         stepCircle: {
@@ -460,34 +424,6 @@ const useThemeStyles = (width: number, height: number) => {
             maxWidth: 350,
             paddingHorizontal: 20,
         },
-        phoneInputContainer: {
-            width: "100%",
-            marginBottom: 15,
-        },
-        phoneLabel: {
-            fontSize: 16,
-            fontWeight: "500",
-            color: "#333",
-            marginBottom: 5,
-        },
-        phoneHelperText: {
-            fontSize: 12,
-            color: "#666",
-            marginBottom: 8,
-            fontStyle: "italic",
-        },
-        input: {
-            width: "100%",
-            height: Math.max(height * 0.06, 45),
-            backgroundColor: "#fff",
-            borderRadius: 12,
-            paddingHorizontal: 15,
-            marginBottom: 15,
-            fontSize: 16,
-            borderWidth: 1,
-            borderColor: "#A47CF3",
-            color: "#222",
-        },
         button: {
             width: "100%",
             height: Math.max(height * 0.06, 50),
@@ -497,13 +433,8 @@ const useThemeStyles = (width: number, height: number) => {
             justifyContent: "center",
             marginTop: 20,
             elevation: 3,
-            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
         },
-        buttonText: {
-            color: "#222",
-            fontWeight: "600",
-            fontSize: 16,
-        },
+        buttonText: { color: "#222", fontWeight: "600", fontSize: 16 },
         secondaryButton: {
             width: "100%",
             height: Math.max(height * 0.06, 50),

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react"
+import React, { useState, useRef } from "react"
 import {
     View,
     TouchableOpacity,
@@ -15,9 +15,8 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as DocumentPicker from "expo-document-picker"
 import * as ImagePicker from "expo-image-picker"
 
 import { useAuthContext } from "@/context/AuthContext"
@@ -27,14 +26,13 @@ import { useTheme } from "@/context/ThemeContext"
 import { Colors } from "@/constants/Colors"
 
 import Input from "@ui/Input"
-
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
 import { FileInfo } from "@/services/http"
 import { authService } from "@/services/auth"
 
-const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
-    { title: "Nombre", fields: ["name"] },
+const steps = [
+    { title: "Nombre y Foto", fields: ["name", "profileImage"] },
     { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
     { title: "Datos de Contacto", fields: ["email", "phone"] },
@@ -56,7 +54,6 @@ export default function RegisterScreen() {
     const { signUp, status } = useAuthContext()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
-
     const previousRut = useRef<string>("")
     const previousEmail = useRef<string>("")
 
@@ -81,11 +78,11 @@ export default function RegisterScreen() {
             address: "",
             description: "",
             files: [],
+            profileImage: undefined,
         },
     })
 
-    // --- Validaciones ---
-    const validateRut = async (rut: string): Promise<boolean> => {
+    const validateRut = async (rut: string) => {
         if (rut === previousRut.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ rut })
@@ -101,7 +98,7 @@ export default function RegisterScreen() {
         }
     }
 
-    const validateEmail = async (email: string): Promise<boolean> => {
+    const validateEmail = async (email: string) => {
         if (email === previousEmail.current) return true
         try {
             const isAvailable = await authService.checkUserExists({ email })
@@ -120,19 +117,14 @@ export default function RegisterScreen() {
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
-
         if (step === 1) {
-            const rut = getValues("rut")
-            const rutIsValid = await validateRut(rut)
+            const rutIsValid = await validateRut(getValues("rut"))
             if (!rutIsValid) return
         }
-
         if (step === 3) {
-            const email = getValues("email")
-            const emailIsValid = await validateEmail(email)
+            const emailIsValid = await validateEmail(getValues("email"))
             if (!emailIsValid) return
         }
-
         if (step < steps.length - 1) setStep((s) => s + 1)
     }
 
@@ -159,13 +151,11 @@ export default function RegisterScreen() {
                         phone: phoneWithPrefix,
                         address: data.address || "",
                         description: data.description || "",
+                        profileImage: data.profileImage,
+                        documents: pendingFiles.length > 0 ? pendingFiles : undefined,
                     },
                     giverType
                 )
-
-                if (pendingFiles.length > 0) {
-                    console.log("Archivos pendientes:", pendingFiles.length)
-                }
 
                 const message = result.requiresEmailVerification
                     ? "Registro exitoso. Verifica tu correo electrónico."
@@ -185,7 +175,6 @@ export default function RegisterScreen() {
 
     const disabled = isSubmitting || status === "loading"
 
-    // --- Renderizado de campos dinámicos ---
     const renderFields = () => {
         switch (step) {
             case 0:
@@ -265,19 +254,17 @@ export default function RegisterScreen() {
                                 placeholder="Calle Ejemplo 123, Ciudad"
                             />
                         )}
-                        {(giverType === "giver" || giverType === "shelter") && (
-                            <Input<GiverRegisterFormType>
-                                key="description"
-                                name="description"
-                                control={control}
-                                label="Descripción"
-                                placeholder={
-                                    giverType === "giver"
-                                        ? "Cuéntanos un poco sobre ti..."
-                                        : "Describe la misión o propósito de tu fundación"
-                                }
-                            />
-                        )}
+                        <Input<GiverRegisterFormType>
+                            key="description"
+                            name="description"
+                            control={control}
+                            label="Descripción"
+                            placeholder={
+                                giverType === "giver"
+                                    ? "Cuéntanos un poco sobre ti..."
+                                    : "Describe la misión o propósito de tu fundación"
+                            }
+                        />
                     </>
                 )
             default:
@@ -288,7 +275,6 @@ export default function RegisterScreen() {
     return (
         <>
             <StatusBar backgroundColor={colors.tint} barStyle="dark-content" />
-            {/* --- Modal previo --- */}
             <Modal visible={showTypeModal} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
@@ -348,7 +334,7 @@ export default function RegisterScreen() {
 
                                 {step < steps.length - 1 ? (
                                     <TouchableOpacity
-                                        style={[styles.button]}
+                                        style={styles.button}
                                         onPress={onNext}
                                         disabled={disabled}
                                     >
@@ -356,7 +342,7 @@ export default function RegisterScreen() {
                                     </TouchableOpacity>
                                 ) : (
                                     <TouchableOpacity
-                                        style={[styles.button]}
+                                        style={styles.button}
                                         onPress={handleSubmit(onSubmit)}
                                         disabled={disabled}
                                     >
@@ -481,7 +467,6 @@ const useThemeStyles = (width: number, height: number, colors: any) =>
             fontWeight: "600",
             fontSize: 16,
         },
-        // --- Modal ---
         modalOverlay: {
             flex: 1,
             backgroundColor: "rgba(0,0,0,0.5)",

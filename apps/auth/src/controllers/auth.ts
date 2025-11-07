@@ -15,7 +15,7 @@ import {
 
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
-import { sendAccountRequestDocuments } from "../middleware/mediaProxy"
+import { sendAccountRequestDocuments, sendProfilePicture } from "../middleware/mediaProxy"
 
 type Variation = "user" | "giver" | "shelter"
 
@@ -117,10 +117,29 @@ export const register = async (
 
     if (insertError) throw new AppError(500, insertError.message)
 
+    // --- MANEJO DE ARCHIVOS ---
+    // Obtenemos los archivos según el tipo de campo
+    const filesArray = req.files as { [fieldname: string]: Express.Multer.File[] } | Express.Multer.File[] | undefined
+    
+    // Extraer documentos (para givers) e imagen de perfil (opcional para todos)
+    let documents: Express.Multer.File[] = []
+    let profileImage: Express.Multer.File | null = null
+
+    if (filesArray) {
+        // Si es un objeto con campos nombrados
+        if (!Array.isArray(filesArray)) {
+            documents = filesArray['documents'] || []
+            const imageArray = filesArray['image'] || []
+            profileImage = imageArray.length > 0 ? imageArray[0] : null
+        } else {
+            // Si es un array simple (caso antiguo)
+            documents = filesArray
+        }
+    }
+
     // --- SOLO PARA GIVER: exigir documentos y reenviar a MEDIA
     if (variation === "giver") {
-        const files = (req.files ?? []) as Express.Multer.File[]
-        if (!files?.length) {
+        if (!documents.length) {
             throw new AppError(400, "El dador debe adjuntar documentos en 'documents'")
         }
 
@@ -132,7 +151,7 @@ export const register = async (
                     rut: inserted.rut,
                     roleId: inserted.role!,
                 },
-                files: files.map((f: Express.Multer.File) => ({
+                files: documents.map((f: Express.Multer.File) => ({
                     buffer: f.buffer,
                     originalname: f.originalname,
                     mimetype: f.mimetype,
@@ -142,6 +161,28 @@ export const register = async (
             const msg = getErrorMessage(e)
             console.error("❌ Error enviando account-request a MEDIA:", msg)
             throw new AppError(502, "No fue posible registrar documentos en Media")
+        }
+    }
+
+    // --- OPCIONAL: Subir foto de perfil si se proporciona
+    if (profileImage) {
+        try {
+            await sendProfilePicture({
+                user: {
+                    id: inserted.id,
+                    email: inserted.email,
+                    roleId: inserted.role!,
+                },
+                file: {
+                    buffer: profileImage.buffer,
+                    originalname: profileImage.originalname,
+                    mimetype: profileImage.mimetype,
+                },
+            })
+        } catch (e: unknown) {
+            const msg = getErrorMessage(e)
+            console.error("⚠️ Error procesando foto de perfil:", msg)
+            // No bloqueamos el registro por error en foto de perfil
         }
     }
 

@@ -33,15 +33,12 @@ export default function LoginScreen() {
         mode: "onTouched",
     })
 
-    useEffect(() => {
-        if (user) {
-            return router.replace("/remembered")
-        }
-    }, [])
-
+    // 🔹 Redirección controlada por estado global
     useEffect(() => {
         if (status === "authenticated" && user) {
             router.replace("/check-role")
+        } else if (status === "unauthenticated" && user) {
+            router.replace("/remembered")
         }
     }, [status, user])
 
@@ -49,23 +46,52 @@ export default function LoginScreen() {
         try {
             await withLoading(async () => {
                 await signIn(data)
-                await new Promise((r) => setTimeout(r, 700))
-                showAlert("Inicio de sesión exitoso. Redirigiendo…", "success")
-                router.replace("/check-role")
+                showAlert("Inicio de sesión exitoso.", "success")
             })
         } catch (e: any) {
-            if (e?.code === "UNVERIFIED_ACCOUNT") {
+            const errorText =
+                e?.response?.data?.message ||
+                e?.response?.data?.error ||
+                e?.message ||
+                e?.toString() ||
+                ""
+
+            console.log("🧩 Error al iniciar sesión:", errorText)
+
+            const lower = errorText.toString().toLowerCase()
+
+            if (
+                lower.includes("no ha validado") ||
+                lower.includes("no validado") ||
+                lower.includes("verifica tu correo") ||
+                lower.includes("revisa tu email") ||
+                lower.includes("correo") 
+            ) {
                 showAlert(
-                    "Tu cuenta aún no ha sido validada. Por favor revisa tu correo para completarlo.",
+                    "Tu cuenta aún no ha sido validada. Serás redirigido a la vista de verificación.",
                     "error"
                 )
+
+                setTimeout(() => {
+                    try {
+                        router.navigate({
+                            pathname: "/(auth)/verify-email",
+                            params: { email: data.email },
+                        })
+                    } catch (err) {
+                        console.log("⚠️ Error redirigiendo a verify-email:", err)
+                    }
+                }, 1500)
+
                 return
             }
-
             const msg =
-                typeof e?.message === "string"
+                typeof e?.response?.data?.message === "string"
+                    ? e.response.data.message
+                    : typeof e?.message === "string"
                     ? e.message
                     : "Error al iniciar sesión. Inténtalo de nuevo."
+
             showAlert(msg, "error")
         }
     }
@@ -76,8 +102,8 @@ export default function LoginScreen() {
         <KeyboardAwareScrollView
             style={styles.container}
             contentContainerStyle={styles.scrollContainer}
-            enableOnAndroid={true}
-            enableAutomaticScroll={true}
+            enableOnAndroid
+            enableAutomaticScroll
             keyboardShouldPersistTaps="handled"
         >
             <Image source={require("@images/image.png")} style={styles.logo} resizeMode="contain" />
@@ -112,6 +138,11 @@ export default function LoginScreen() {
                 <Text style={styles.forgotPassword}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
+            {/* 🔹 Acceso manual a validación de correo */}
+            <TouchableOpacity onPress={() => router.push("/(auth)/verify-email?from=login")}>
+                <Text style={styles.forgotPassword}>¿Aún no validas tu cuenta?</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
                 style={[styles.buttonPrimary, styles.buttonSecondary]}
                 onPress={() => openModal(<ChooseRegisterModalContent />)}
@@ -139,7 +170,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     buttonPrimary: {
-        backgroundColor: `${Colors.yellow}`,
+        backgroundColor: Colors.yellow,
         borderRadius: 16,
         paddingVertical: 15,
         paddingHorizontal: 30,
@@ -159,5 +190,11 @@ const styles = StyleSheet.create({
         marginTop: 15,
         color: "#7c3aed",
         textDecorationLine: "underline",
+    },
+    verifyEmailText: {
+        color: "#7c3aed",
+        textDecorationLine: "underline",
+        textAlign: "center",
+        marginTop: 10,
     },
 })
