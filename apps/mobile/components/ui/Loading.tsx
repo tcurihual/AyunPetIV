@@ -8,7 +8,6 @@ type Props = {
 
 export default function Loading({ visible }: Props) {
     if (!visible) return null
-
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.container}>

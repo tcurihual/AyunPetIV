@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { StyleSheet } from "react-native"
+import { StyleSheet, useColorScheme } from "react-native"
 import { Slot, usePathname, Redirect } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
@@ -13,15 +13,21 @@ import { useAuthContext } from "@/context/AuthContext"
 export default function ShelterLayout() {
     const pathname = usePathname()
     const [menuVisible, setMenuVisible] = useState(false)
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
     // const { user } = useAuthContext()
 
     // if (!user) return <Redirect href="/(auth)/login" />
 
-    const showBackButton = pathname !== "/(shelter)" && pathname !== "/(shelter)/"
+    const showBackButton =
+        pathname !== "/(shelter)" &&
+        pathname !== "/(shelter)/" &&
+        pathname !== "/" &&
+        !pathname.endsWith("/(shelter)")
     let backButtonStyle = {}
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: themeColors.navBackground }]}>
             <StatusBar style="inverted" />
 
             <Header onMenuPress={() => setMenuVisible(true)} />
@@ -39,7 +45,6 @@ export default function ShelterLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.yellow,
         opacity: 1,
     },
 })

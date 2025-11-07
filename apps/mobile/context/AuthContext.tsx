@@ -211,6 +211,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setAuthToken(null)
         setTokenState(null)
         setUser(null)
+        
+        // Limpiar el estado del push token guardado
+        try {
+            const { clearPushTokenSaved } = await import('@/services/pushTokenService');
+            await clearPushTokenSaved();
+        } catch (error) {
+            console.error('Error al limpiar push token:', error);
+        }
     }
 
     const value = useMemo(

@@ -794,3 +794,75 @@ export const validateVerificationCodeMobile = async (req: Request, res: Response
         throw new AppError(500, "Error al validar el código de verificación")
     }
 }
+
+export const checkUserExists = async (req: Request, res: Response) => {
+    const { email, rut } = req.body
+
+    if (!email && !rut) {
+        throw new AppError(400, "Debe proporcionar email o rut")
+    }
+
+    let query = supabase.from("users").select("id")
+
+    if (email && rut) {
+        query = query.or(`email.eq.${email},rut.eq.${rut}`)
+    } else if (email) {
+        query = query.eq("email", email)
+    } else if (rut) {
+        query = query.eq("rut", rut)
+    }
+
+    const { data, error } = await query.maybeSingle()
+
+    if (error) {
+        throw new AppError(500, "Error al verificar la existencia del usuario")
+    }
+
+    if (data) {
+        if (email && rut) {
+            throw new AppError(409, "El email o RUT ya están registrados")
+        } else if (email) {
+            throw new AppError(409, "El email ya está registrado")
+        } else {
+            throw new AppError(409, "El RUT ya está registrado")
+        }
+    }
+
+    return AppResponse(res, 200, "El email o RUT están disponibles", {
+        available: true,
+    })
+}
+
+export const savePushToken = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?.id
+        const { pushToken } = req.body
+
+        if (!userId) {
+            throw new AppError(401, "Usuario no autenticado")
+        }
+
+        if (!pushToken) {
+            throw new AppError(400, "Token push es requerido")
+        }
+
+        const { error } = await supabase
+            .from("users")
+            .update({
+                push_token: pushToken,
+                push_token_updated_at: new Date().toISOString(),
+            })
+            .eq("id", userId)
+
+        if (error) {
+            console.error("Error guardando push token:", error)
+            throw new AppError(500, "Error al guardar token push")
+        }
+
+        console.log(`✅ Push token guardado para usuario ${userId}`)
+        return AppResponse(res, 200, "Token push guardado exitosamente", {})
+    } catch (error) {
+        const message = getErrorMessage(error)
+        throw new AppError(500, `Error al procesar token push: ${message}`)
+    }
+}
