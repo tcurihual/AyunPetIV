@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
     View,
     Text,
@@ -24,6 +24,36 @@ export default function MyProfileScreen() {
     const { user, signOut } = useAuthContext()
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
+    const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
+
+    // Placeholder local para foto de perfil
+    const placeholderImage = require("@images/pp_placeholder.png")
+
+    // Cargar foto de perfil
+    useEffect(() => {
+        const loadProfilePicture = async () => {
+            if (user?.id) {
+                const url = await userService.getProfilePicture(user.id)
+                setProfilePictureUrl(url)
+            }
+        }
+        
+        loadProfilePicture()
+    }, [user?.id])
+
+    // Determinar qué imagen mostrar
+    const getAvatarSource = () => {
+        // Si hay foto de perfil del servidor, usar esa
+        if (profilePictureUrl) {
+            return { uri: profilePictureUrl }
+        }
+        // Si hay avatar en el contexto y no es la URL de randomuser, usar esa
+        if (user?.avatar && !user.avatar.includes("randomuser.me")) {
+            return { uri: user.avatar }
+        }
+        // Sino, usar el placeholder local
+        return placeholderImage
+    }
 
     const userData = {
         id: user?.id || "1",
@@ -32,7 +62,6 @@ export default function MyProfileScreen() {
         rut: user?.rut || "No especificado",
         address: user?.address || "No especificada",
         description: user?.description || "Descripción no disponible",
-        avatarUrl: user?.avatar || "https://randomuser.me/api/portraits/women/44.jpg",
     }
 
     const {
@@ -118,7 +147,7 @@ export default function MyProfileScreen() {
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.profileCard}>
-                <Image source={{ uri: userData.avatarUrl }} style={styles.profileImage} />
+                <Image source={getAvatarSource()} style={styles.profileImage} />
 
                 <Text style={styles.userName}>{userData.name}</Text>
 

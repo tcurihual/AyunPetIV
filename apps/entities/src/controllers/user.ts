@@ -285,7 +285,78 @@ export const deleteMe = async (req: AuthenticatedRequest, res: Response) => {
  * base de datos (ON DELETE CASCADE) para evitar dobles borrados.
  */
 const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
-    // Obtener ids de publicaciones del usuario y sus mascotas asociadas
+    const headers = {
+        "x-user-id": String(req.user?.id ?? 0),
+        "x-user-role": String(req.user?.role ?? ""),
+    }
+
+    // 1. Obtener datos del usuario para acceder a su RUT (necesario para giver)
+    const { data: userData } = await supabase
+        .from("users")
+        .select("rut, role")
+        .eq("id", userId)
+        .single()
+
+    // 2. Si es un usuario giver (shelter, role=21 o 22), eliminar documentos de account-request
+    const isGiver = userData && (userData.role === 21 || userData.role === 22) && userData.rut
+    if (isGiver) {
+        try {
+            // Obtener lista de archivos del giver
+            const { data: filesData } = await axios.get(
+                `${MEDIA_URL}/uploads/account-request/${userData.rut}`,
+                { headers }
+            )
+            const files = Array.isArray(filesData) ? filesData : 
+                         Array.isArray((filesData as any)?.data) ? (filesData as any).data : []
+            
+            // Extraer nombres de archivos de las URLs
+            const fileNames = files
+                .map((url: string) => url.split("/").pop() || "")
+                .filter(Boolean)
+            
+            // Eliminar archivos si existen
+            if (fileNames.length > 0) {
+                await axios.delete(
+                    `${MEDIA_URL}/uploads/account-request/${userData.rut}`,
+                    {
+                        data: { fileNamesArray: fileNames },
+                        headers: { "Content-Type": "application/json", ...headers },
+                    }
+                )
+            }
+        } catch (err: any) {
+            console.error("Warning: error al eliminar documentos de giver:", err?.message)
+        }
+    }
+
+    // 3. Eliminar foto de perfil si existe
+    try {
+        const { data: profilePicData } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_picture/${userId}`,
+            { headers }
+        )
+        const profilePics = Array.isArray(profilePicData?.data) ? profilePicData.data : []
+        
+        if (profilePics.length > 0) {
+            const picNames = profilePics
+                .map((url: string) => url.split("/").pop() || "")
+                .filter(Boolean)
+            
+            if (picNames.length > 0) {
+                await axios.delete(
+                    `${MEDIA_URL}/uploads/profile_picture/${userId}`,
+                    {
+                        data: { fileNamesArray: picNames },
+                        headers: { "Content-Type": "application/json", ...headers },
+                    }
+                )
+            }
+        }
+    } catch (err: any) {
+        console.error("Warning: error al eliminar foto de perfil:", err?.message)
+    }
+
+    // 4. Obtener ids de publicaciones del usuario y sus mascotas asociadas
     const { data: posts } = await supabase
         .from("post")
         .select("id, pet_id")
@@ -299,10 +370,6 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
         if (pid) petIdSet.add(pid)
     }
     // Intentar eliminar imágenes asociadas a cada publicación (no es transactional)
-    const headers = {
-        "x-user-id": String(req.user?.id ?? 0),
-        "x-user-role": String(req.user?.role ?? ""),
-    }
 
     for (const p of postRows) {
         const postId = Number((p as any).id)

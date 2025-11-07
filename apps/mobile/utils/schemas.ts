@@ -26,6 +26,13 @@ export const RegisterFormSchema = z
             .string()
             .length(8, "El número teléfonico debe tener 8 dígitos")
             .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
@@ -61,6 +68,13 @@ export const GiverRegisterFormSchema = z
             .array(z.string())
             .min(1, "Debes subir al menos un archivo (imagen o PDF)")
             .or(z.string().min(1, "Debes subir al menos un archivo (imagen o PDF)")),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
