@@ -48,7 +48,23 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
 
         let query = supabase
             .from("post")
-            .select("*, pet:pet_id(*)", { count: "exact" })
+            .select(
+                `
+        *,
+        pet:pet_id (
+            id,
+            name,
+            species,
+            gender,
+            size,
+            sterilized,
+            adopted,
+            age_years,
+            age_months
+        )
+    `,
+                { count: "exact" }
+            )
             .order("id", { ascending: true })
 
         if (ownerId !== undefined) query = query.eq("creator_id", ownerId)
@@ -63,6 +79,9 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
         if (error) throw new AppError(500, error.message)
 
         const postIds = (data ?? []).map((row: any) => row.id).filter(Boolean)
+        const creatorIds = [
+            ...new Set((data ?? []).map((row: any) => row.creator_id).filter(Boolean)),
+        ]
 
         // Usar únicamente el entityType "publications" para las imágenes
         const headers = req.user
@@ -73,8 +92,36 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
             : undefined
         const postImages = await getMultipleEntityImages("publications", postIds, headers)
 
+        // Obtener información de los creadores
+        const creatorsMap: Record<
+            string,
+            { id: number; name: string; profilePhoto: string | null }
+        > = {}
+        if (creatorIds.length > 0) {
+            const { data: creators } = await supabase
+                .from("users")
+                .select("id, name")
+                .in("id", creatorIds)
+
+            if (creators) {
+                // foto de perfil
+                const userPhotos = await getMultipleEntityImages("user", creatorIds, headers)
+
+                creators.forEach((creator: any) => {
+                    const photos = userPhotos[String(creator.id)] || []
+                    creatorsMap[String(creator.id)] = {
+                        id: creator.id,
+                        name: creator.name,
+                        profilePhoto: photos.length > 0 ? photos[0] : null,
+                    }
+                })
+            }
+        }
+
         const items = (data ?? []).map((row: any) => {
             const pImages = postImages[String(row.id)] || []
+            const creator = creatorsMap[String(row.creator_id)] || null
+
             return {
                 post: {
                     id: row.id,
@@ -91,6 +138,7 @@ export const listPublications = async (req: AuthenticatedRequest, res: Response)
                     ...(row.pet as Pet["Row"]),
                     images: pImages, // también exponer las imágenes de la publicación en la mascota
                 } as Pet["Row"] & { images: string[] },
+                creator: creator,
             }
         })
 
@@ -112,9 +160,31 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
         const id = parseId(req.params.id)
         const { data, error } = await supabase
             .from("post")
-            .select("*, pet:pet_id(*)")
+            .select(
+                `
+      id,
+      creator_id,
+      pet_id,
+      title,
+      description,
+      status,
+      created_at,
+      updated_at,
+      pet:pet_id (
+          id,
+          name,
+          species,
+          gender,
+          size,
+          sterilized,
+          adopted,
+          age_years,
+          age_months
+      )
+  `
+            )
             .eq("id", id)
-            .single()
+            .maybeSingle()
 
         if (error || !data) throw new AppError(404, "Publicación no encontrada")
 
@@ -127,6 +197,25 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
             : undefined
         // pasar headers para que el servicio media permita la consulta
         const postImages = await getEntityImages("publications", data.id, headers)
+
+        // Obtener información del creador
+        let creator: { id: number; name: string; profilePhoto: string | null } | null = null
+        if (data.creator_id) {
+            const { data: creatorData } = await supabase
+                .from("users")
+                .select("id, name")
+                .eq("id", data.creator_id)
+                .single()
+
+            if (creatorData) {
+                const userPhotos = await getEntityImages("user", data.creator_id, headers)
+                creator = {
+                    id: creatorData.id,
+                    name: creatorData.name,
+                    profilePhoto: userPhotos.length > 0 ? userPhotos[0] : null,
+                }
+            }
+        }
 
         const payload = {
             post: {
@@ -144,6 +233,7 @@ export const getPublicationById = async (req: AuthenticatedRequest, res: Respons
                 ...(data.pet as Pet["Row"]),
                 images: postImages, // también exponer las imágenes de la publicación en la mascota
             } as Pet["Row"] & { images: string[] },
+            creator: creator,
         }
 
         return AppResponse(res, 200, "Publicación", payload)
@@ -233,6 +323,13 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
             throw new AppError(404, "Usuario propietario (owner) no encontrado")
         }
 
+        // Validar que se hayan enviado archivos (imágenes obligatorias)
+        const files = req.files as Express.Multer.File[] | undefined
+
+        if (!files || files.length === 0) {
+            throw new AppError(400, "Se debe proporcionar al menos una imagen de la mascota")
+        }
+
         const petInsert: Pet["Insert"] = {
             owner_id: ownerIdFinal,
             name: name ?? null,
@@ -271,7 +368,7 @@ export const createPublication = async (req: AuthenticatedRequest, res: Response
 
         let uploadedImages: any[] = []
         try {
-            const files = req.files as Express.Multer.File[] | undefined
+            // Los archivos ya fueron validados antes, así que siempre hay files aquí
             if (files && files.length > 0) {
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
@@ -441,9 +538,54 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
 
         // Subir nuevas imágenes si existen
         let uploadedImages: any[] = []
+        let allImages: string[] = []
         try {
             const files = req.files as Express.Multer.File[] | undefined
             if (files && files.length > 0) {
+                // Si se va a cambiar la imagen en editar, primero se elimina la anterior
+                try {
+                    //    console.log(`🗑️ Obteniendo imágenes antiguas de la publicación ${id}`)
+                    const getResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                        headers: {
+                            "x-user-id": String(req.user?.id ?? 0),
+                            "x-user-role": String(req.user?.role ?? ""),
+                        },
+                    })
+
+                    const existingImages = getResponse.data.data || []
+
+                    if (existingImages.length > 0) {
+                        // Extraer solo los nombres de archivo de las URLs
+                        const fileNames = existingImages.map((url: string) => {
+                            const parts = url.split("/")
+                            return parts[parts.length - 1]
+                        })
+
+                        console.log(
+                            `🗑️ Eliminando ${fileNames.length} imágenes antiguas:`,
+                            fileNames
+                        )
+
+                        await axios.delete(`${MEDIA_URL}/uploads/publications/${id}`, {
+                            headers: {
+                                "x-user-id": String(req.user?.id ?? 0),
+                                "x-user-role": String(req.user?.role ?? ""),
+                            },
+                            data: {
+                                fileNamesArray: fileNames,
+                            },
+                        })
+                        console.log("✅ Imágenes antiguas eliminadas")
+                    } else {
+                        console.log("ℹ️ No hay imágenes antiguas para eliminar")
+                    }
+                } catch (deleteError: any) {
+                    console.warn(
+                        "⚠️ No se pudieron eliminar imágenes antiguas:",
+                        deleteError?.message
+                    )
+                }
+
                 const FormDataNode = (await import("form-data")).default
                 const formData = new FormDataNode()
 
@@ -467,27 +609,42 @@ export const updatePublication = async (req: AuthenticatedRequest, res: Response
                 )
 
                 uploadedImages = mediaResponse.data.data || []
+                allImages = normalizeMediaUrls(uploadedImages)
+            } else {
+                // Si no se subieron archivos, obtener las imágenes existentes
+                try {
+                    const mediaResponse = await axios.get(
+                        `${MEDIA_URL}/uploads/publications/${id}`,
+                        {
+                            headers: {
+                                "x-user-id": String(req.user?.id ?? 0),
+                                "x-user-role": String(req.user?.role ?? ""),
+                            },
+                        }
+                    )
+                    allImages = normalizeMediaUrls(mediaResponse.data.data || [])
+                } catch (err) {
+                    // continuar si no hay imágenes
+                    allImages = []
+                }
             }
         } catch (mediaError: any) {
             console.error(
                 "❌ Error al subir nuevas imágenes de la publicación:",
                 mediaError?.message
             )
-            // No revertimos la actualización, solo registramos
-        }
-
-        // Obtener todas las imágenes actuales
-        let allImages: string[] = []
-        try {
-            const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
-                headers: {
-                    "x-user-id": String(req.user?.id ?? 0),
-                    "x-user-role": String(req.user?.role ?? ""),
-                },
-            })
-            allImages = normalizeMediaUrls(mediaResponse.data.data || [])
-        } catch (err) {
-            // continuar si no hay imágenes
+            // Si falla la subida, intentar obtener las imágenes existentes
+            try {
+                const mediaResponse = await axios.get(`${MEDIA_URL}/uploads/publications/${id}`, {
+                    headers: {
+                        "x-user-id": String(req.user?.id ?? 0),
+                        "x-user-role": String(req.user?.role ?? ""),
+                    },
+                })
+                allImages = normalizeMediaUrls(mediaResponse.data.data || [])
+            } catch (err) {
+                allImages = []
+            }
         }
 
         return AppResponse(res, 200, "Publicación actualizada", {

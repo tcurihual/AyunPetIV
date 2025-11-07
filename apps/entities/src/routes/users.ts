@@ -23,17 +23,17 @@ const usersRouter = Router()
 
 usersRouter.get(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
     asyncHandler((req, res) => getMe(req as any, res))
 )
 usersRouter.patch(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
     asyncHandler((req, res) => patchMe(req as any, res))
 )
 usersRouter.delete(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
     asyncHandler((req, res) => deleteMe(req as any, res))
 )
 

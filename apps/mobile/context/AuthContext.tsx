@@ -45,6 +45,16 @@ interface RegisterPayload {
     address?: string
     description?: string
     variation?: "user" | "giver" | "shelter"
+    profileImage?: {
+        uri: string
+        name: string
+        type: string
+    }
+    documents?: Array<{
+        uri: string
+        name: string
+        type: string
+    }>
 }
 
 type Status = "loading" | "authenticated" | "unauthenticated"
@@ -201,6 +211,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setAuthToken(null)
         setTokenState(null)
         setUser(null)
+        
+        // Limpiar el estado del push token guardado
+        try {
+            const { clearPushTokenSaved } = await import('@/services/pushTokenService');
+            await clearPushTokenSaved();
+        } catch (error) {
+            console.error('Error al limpiar push token:', error);
+        }
     }
 
     const value = useMemo(

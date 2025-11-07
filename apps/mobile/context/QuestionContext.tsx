@@ -69,7 +69,7 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
     async function getQuestions(params?: GetParams) {
         if (!user) {
             const msg = "Usuario no autenticado"
-            console.error("❌ QuestionContext.getQuestions: No user found")
+            console.error("❌ QuestionContext: No user found")
             setError(msg)
             setLoading(false)
             return
@@ -101,8 +101,6 @@ export const QuestionProvider: React.FC<React.PropsWithChildren> = ({ children }
             setQuestions(items)
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Error al obtener preguntas"
-            console.error("❌ QuestionContext: Error fetching questions:", e)
-            console.error("❌ QuestionContext: Error details:", e?.response?.data)
             setError(msg)
             throw e
         } finally {
