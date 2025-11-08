@@ -24,6 +24,24 @@ export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
     return AppResponse(res, 200, "Mensajes obtenidos correctamente", data)
 }
 
+export const getMessagesByPostId = async (req: AuthenticatedRequest, res: Response) => {
+    const { post_id } = req.params
+
+    if (!post_id) {
+        throw new AppError(400, "El parámetro post_id es requerido")
+    }
+
+    const { data, error } = await supabase
+        .from("message")
+        .select("*")
+        .eq("post_id", Number(post_id))
+        .order("created_at", { ascending: false })
+
+    if (error) throw new AppError(400, "Error al obtener mensajes por post_id", { error })
+
+    return AppResponse(res, 200, "Mensajes obtenidos correctamente", data)
+}
+
 export const createMessage = async (req: AuthenticatedRequest, res: Response) => {
     const { creatorId, postId, description, status } = req.body
 

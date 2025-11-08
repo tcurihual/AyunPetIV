@@ -90,6 +90,58 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
     })
 
     registry.registerPath({
+        method: "get",
+        path: "/v1/adoptions/messages/post/{post_id}",
+        tags: ["Messages"],
+        summary: "Listar mensajes por post_id",
+        description:
+            "Obtiene todos los mensajes asociados a una publicación específica. " +
+            "Los mensajes se ordenan por fecha de creación de forma descendente (más recientes primero). " +
+            "Este endpoint es útil para mostrar todos los comentarios o mensajes de una publicación de adopción.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "post_id",
+                in: "path",
+                required: true,
+                description: "ID numérico de la publicación para obtener sus mensajes",
+                schema: { type: "integer", example: 12 },
+            },
+        ],
+        responses: {
+            200: {
+                description: "Lista de mensajes obtenida correctamente",
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                type: { type: "string", example: "success" },
+                                message: {
+                                    type: "string",
+                                    example: "Mensajes obtenidos correctamente",
+                                },
+                                data: {
+                                    type: "array",
+                                    items: { $ref: "#/components/schemas/MessageInsertSchema" },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            400: {
+                description: "Error en parámetros o al obtener mensajes",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
         method: "post",
         path: "/v1/adoptions/messages",
         tags: ["Messages"],
