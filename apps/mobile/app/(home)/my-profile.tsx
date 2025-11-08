@@ -105,7 +105,7 @@ export default function MyProfileScreen() {
                 style: "destructive",
                 onPress: async () => {
                     try {
-                        await signOut()
+                        await signOut(true)
                     } catch (error) {
                         console.error("Error al cerrar sesión:", error)
                         Alert.alert("Error", "No se pudo cerrar la sesión")
@@ -113,35 +113,6 @@ export default function MyProfileScreen() {
                 },
             },
         ])
-    }
-
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            "Eliminar cuenta",
-            "¿Estás seguro? Esta acción eliminará permanentemente tu cuenta y todos tus datos.",
-            [
-                { text: "Cancelar", style: "cancel" },
-                {
-                    text: "Eliminar",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            // Llamar al servicio para eliminar la cuenta
-                            await userService.deleteMe()
-                            // Luego cerrar sesión y redirigir a login
-                            await signOut()
-                            router.replace("/(auth)/login")
-                        } catch (error) {
-                            console.error("Error al eliminar cuenta:", error)
-                            Alert.alert(
-                                "Error",
-                                "No se pudo eliminar la cuenta. Intenta nuevamente más tarde."
-                            )
-                        }
-                    },
-                },
-            ]
-        )
     }
 
     return (
@@ -178,10 +149,6 @@ export default function MyProfileScreen() {
 
                     <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                         <Text style={styles.editButtonText}>Editar Perfil</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-                        <Text style={styles.deleteButtonText}>Eliminar Cuenta</Text>
                     </TouchableOpacity>
                 </View>
             </View>

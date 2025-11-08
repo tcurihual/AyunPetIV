@@ -28,7 +28,7 @@ export default function SettingsScreen() {
                         try {
                             setIsDeleting(true)
                             await userService.deleteMe()
-                            await signOut()
+                            await signOut(true)
                             router.replace("/(auth)/login")
                         } catch (error) {
                             console.error("Error al eliminar cuenta:", error)
@@ -80,7 +80,7 @@ export default function SettingsScreen() {
                     Cuenta
                 </Text>
 
-                <TouchableOpacity style={styles.item} onPress={async () => await signOut()}>
+                <TouchableOpacity style={styles.item} onPress={async () => await signOut(true)}>
                     <Ionicons name="log-out-outline" size={22} color="red" />
                     <Text style={[styles.text, { color: "red" }]}>Cerrar sesión</Text>
                 </TouchableOpacity>
