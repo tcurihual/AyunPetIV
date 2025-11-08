@@ -53,7 +53,6 @@ export default function RegisterScreen() {
     const [pendingFiles, setPendingFiles] = useState<FileInfo[]>([])
     const [showTypeModal, setShowTypeModal] = useState(true)
     const [giverType, setGiverType] = useState<"giver" | "shelter" | null>(null)
-
     const [acceptedTerms, setAcceptedTerms] = useState(false)
 
     const { signUp, status } = useAuthContext()
@@ -760,20 +759,57 @@ export default function RegisterScreen() {
                                         <Text style={styles.buttonText}>Continuar</Text>
                                     </TouchableOpacity>
                                 ) : (
-                                    <TouchableOpacity
-                                        style={[styles.button]}
-                                        onPress={handleSubmit(onSubmit)}
-                                        disabled={disabled}
-                                    >
-                                        <Text style={styles.buttonText}>
-                                            {disabled ? "Creando..." : "Crear Cuenta"}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
+                                    <View style={{ width: "100%", marginTop: 15 }}>
+                                        <View style={{ marginBottom: 10 }}>
+                                            <Checkbox
+                                                label="He leído y acepto los Términos y Condiciones"
+                                                checked={acceptedTerms}
+                                                onPress={() => setAcceptedTerms(!acceptedTerms)}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    router.push("/(legal)/terms-and-conditions")
+                                                }
+                                            >
+                                                <Text
+                                                    style={{
+                                                        color: "#007AFF",
+                                                        fontSize: 14,
+                                                        textDecorationLine: "underline",
+                                                        marginTop: 4,
+                                                    }}
+                                                >
+                                                    Ver Términos y Condiciones
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
 
-                                <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-                                    <Text style={styles.secondaryButtonText}>Volver</Text>
-                                </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.button,
+                                                (!acceptedTerms || disabled) && {
+                                                    backgroundColor: "#F2E4A2",
+                                                },
+                                            ]}
+                                            onPress={() => {
+                                                if (!acceptedTerms) return
+                                                handleSubmit(onSubmit)()
+                                            }}
+                                            disabled={disabled}
+                                        >
+                                            <Text style={styles.buttonText}>
+                                                {disabled ? "Creando..." : "Crear Cuenta"}
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={styles.secondaryButton}
+                                            onPress={onBack}
+                                        >
+                                            <Text style={styles.secondaryButtonText}>Volver</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
                         </View>
                     </ScrollView>
