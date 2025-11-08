@@ -206,10 +206,15 @@ export default function RequestDetail() {
     const handleDelete = async () => {
         try {
             const resp = await deleteAdoptionRequest(request.id)
-            // prefer server-sent message when available
             const serverMessage = resp?.data?.values?.message || resp?.data?.message
             await refreshRequests()
-            router.replace("/(home)/(requests)")
+
+            if (router.canGoBack()) {
+                router.back()
+            } else {
+                router.replace("/(home)/(requests)")
+            }
+            
             if (serverMessage) {
                 Alert.alert("Operación completada", serverMessage)
             }
