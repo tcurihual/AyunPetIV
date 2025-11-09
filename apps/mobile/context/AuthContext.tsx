@@ -74,6 +74,7 @@ interface AuthContextType {
         variation?: "user" | "giver" | "shelter"
     ) => Promise<SignUpResult>
     signOut: (partial?: boolean) => Promise<void>
+    updateUser: (userData: Partial<User>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -211,14 +212,22 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         setAuthToken(null)
         setTokenState(null)
         setUser(null)
-        
+
         // Limpiar el estado del push token guardado
         try {
-            const { clearPushTokenSaved } = await import('@/services/pushTokenService');
-            await clearPushTokenSaved();
+            const { clearPushTokenSaved } = await import("@/services/pushTokenService")
+            await clearPushTokenSaved()
         } catch (error) {
-            console.error('Error al limpiar push token:', error);
+            console.error("Error al limpiar push token:", error)
         }
+    }
+
+    async function updateUser(userData: Partial<User>) {
+        if (!user) return
+
+        const updatedUser = { ...user, ...userData }
+        setUser(updatedUser)
+        await saveUser(updatedUser)
     }
 
     const value = useMemo(
@@ -229,8 +238,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             signIn,
             signUp,
             signOut,
+            updateUser,
         }),
-        [status, user, token]
+        [status, user, token, signIn, signUp, signOut, updateUser]
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -21,7 +21,7 @@ import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
 
 export default function MyProfileScreen() {
-    const { user, signOut } = useAuthContext()
+    const { user, signOut, updateUser } = useAuthContext()
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
@@ -37,7 +37,7 @@ export default function MyProfileScreen() {
                 setProfilePictureUrl(url)
             }
         }
-        
+
         loadProfilePicture()
     }, [user?.id])
 
@@ -74,7 +74,7 @@ export default function MyProfileScreen() {
         defaultValues: {
             id: userData.id,
             name: userData.name,
-            email: userData.email,
+            // El email no se incluye en el formulario para evitar su modificación
             address: userData.address || "",
             description: userData.description || "",
         },
@@ -83,12 +83,32 @@ export default function MyProfileScreen() {
     const onSubmit = async (data: UserProfileData) => {
         try {
             console.log("Datos a actualizar:", data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+
+            // Llamar al API para actualizar el perfil
+            const response = await userService.updateProfile({
+                name: data.name,
+                address: data.address,
+                description: data.description,
+            })
+
+            console.log("Respuesta del servidor:", response)
+
+            // Actualizar el contexto con los nuevos datos
+            await updateUser({
+                name: data.name,
+                address: data.address,
+                description: data.description,
+            })
 
             Alert.alert("Éxito", "Perfil actualizado correctamente")
             setIsEditing(false)
-        } catch (error) {
-            Alert.alert("Error", "No se pudo actualizar el perfil")
+        } catch (error: any) {
+            console.error("Error al actualizar perfil:", error)
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                "No se pudo actualizar el perfil"
+            Alert.alert("Error", errorMessage)
         }
     }
 
@@ -178,13 +198,14 @@ export default function MyProfileScreen() {
                                 placeholder="Ingresa tu nombre completo"
                             />
 
-                            <Input
-                                name="email"
-                                control={control}
-                                label="Correo electrónico"
-                                placeholder="correo@ejemplo.com"
-                                type="email"
-                            />
+                            {/* Campo de email en modo solo lectura - no editable */}
+                            <View style={styles.readOnlyField}>
+                                <Text style={styles.readOnlyLabel}>Correo electrónico</Text>
+                                <Text style={styles.readOnlyValue}>{userData.email}</Text>
+                                <Text style={styles.readOnlyHelper}>
+                                    El correo electrónico no puede ser modificado
+                                </Text>
+                            </View>
 
                             <Input
                                 name="address"
@@ -385,5 +406,30 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#fff",
+    },
+    readOnlyField: {
+        marginBottom: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#e0e0e0",
+    },
+    readOnlyLabel: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#666",
+        marginBottom: 6,
+    },
+    readOnlyValue: {
+        fontSize: 16,
+        color: "#333",
+        marginBottom: 4,
+    },
+    readOnlyHelper: {
+        fontSize: 12,
+        color: "#999",
+        fontStyle: "italic",
     },
 })
