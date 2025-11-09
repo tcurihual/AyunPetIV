@@ -28,7 +28,7 @@ const normalizeMediaUrls = (list: any[] | undefined) => {
     })
 }
 
-const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
+const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21, GIVER: 22 } as const
 type RoleType = keyof typeof ROLES
 const roleIdFromType = (rt: RoleType) => ROLES[rt]
 const isValidRoleId = (rid: number | null | undefined) =>
@@ -306,23 +306,21 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
                 `${MEDIA_URL}/uploads/account-request/${userData.rut}`,
                 { headers }
             )
-            const files = Array.isArray(filesData) ? filesData : 
-                         Array.isArray((filesData as any)?.data) ? (filesData as any).data : []
-            
+            const files = Array.isArray(filesData)
+                ? filesData
+                : Array.isArray((filesData as any)?.data)
+                ? (filesData as any).data
+                : []
+
             // Extraer nombres de archivos de las URLs
-            const fileNames = files
-                .map((url: string) => url.split("/").pop() || "")
-                .filter(Boolean)
-            
+            const fileNames = files.map((url: string) => url.split("/").pop() || "").filter(Boolean)
+
             // Eliminar archivos si existen
             if (fileNames.length > 0) {
-                await axios.delete(
-                    `${MEDIA_URL}/uploads/account-request/${userData.rut}`,
-                    {
-                        data: { fileNamesArray: fileNames },
-                        headers: { "Content-Type": "application/json", ...headers },
-                    }
-                )
+                await axios.delete(`${MEDIA_URL}/uploads/account-request/${userData.rut}`, {
+                    data: { fileNamesArray: fileNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
             }
         } catch (err: any) {
             console.error("Warning: error al eliminar documentos de giver:", err?.message)
@@ -336,20 +334,17 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
             { headers }
         )
         const profilePics = Array.isArray(profilePicData?.data) ? profilePicData.data : []
-        
+
         if (profilePics.length > 0) {
             const picNames = profilePics
                 .map((url: string) => url.split("/").pop() || "")
                 .filter(Boolean)
-            
+
             if (picNames.length > 0) {
-                await axios.delete(
-                    `${MEDIA_URL}/uploads/profile_picture/${userId}`,
-                    {
-                        data: { fileNamesArray: picNames },
-                        headers: { "Content-Type": "application/json", ...headers },
-                    }
-                )
+                await axios.delete(`${MEDIA_URL}/uploads/profile_picture/${userId}`, {
+                    data: { fileNamesArray: picNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
             }
         }
     } catch (err: any) {

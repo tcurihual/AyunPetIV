@@ -95,11 +95,10 @@ export const AdoptionRequestSchema = z.object({
 
 export const AdoptionHistorySchema = z.object({
     id: z.number(),
-    petid: z.number(),
+    pet_id: z.number(),
     from_owner_id: z.number(),
     to_owner_id: z.number(),
-    postid: z.number(),
-    createdat: z.string(),
+    created_at: z.string(),
 })
 
 export const ReportFormSchema = ReportSchema.omit({
@@ -163,12 +162,12 @@ export const ValidateGiverAccountDataSchema = UserSchema.pick({
 
 export const CreateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
     id: true,
-    createdat: true,
+    created_at: true,
 })
 
 export const UpdateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
     id: true,
-    createdat: true,
+    created_at: true,
 }).partial()
 
 // ===== VERIFICATION CODE SCHEMAS =====
@@ -194,37 +193,19 @@ export const ValidateVerificationCodeRequestSchema = VerificationCodeSchema.pick
     user_id: true,
 })
 
-// ============================================
-// Esquemas extendidos con imágenes para comunicación entre microservicios
-// ============================================
-
-/**
- * Esquema de Post extendido con imágenes obtenidas desde el microservicio de Media
- */
-// export const PostWithImagesSchema = PostSchema.extend({
-//     images: z
-//         .array(z.string())
-//         .describe("URLs de imágenes del post obtenidas desde el microservicio de Media"),
-// })
-
-/**
- * Esquema de Pet extendido con imágenes obtenidas desde el microservicio de Media
- */
-// export const PetWithImagesSchema = PetSchema.extend({
-//     images: z
-//         .array(z.string())
-//         .describe("URLs de imágenes de la mascota obtenidas desde el microservicio de Media"),
-// })
-
-/**
- * Esquema de User extendido con imágenes obtenidas desde el microservicio de Media
- */
 export const UserWithImagesSchema = UserSchema.omit({ password: true }).extend({
     images: z
         .array(z.string())
         .describe(
             "URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"
         ),
+})
+
+export const UpdateUserSchema = UserSchema.pick({
+    email: true,
+    name: true,
+    address: true,
+    description: true,
 })
 
 /**
