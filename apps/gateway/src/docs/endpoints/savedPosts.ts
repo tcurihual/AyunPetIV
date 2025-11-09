@@ -55,7 +55,7 @@ const CheckSavedStatusSchema = z.object({
     saved_post_id: z.number().nullable().describe("ID del registro guardado si existe"),
 })
 
-export function savedPostsDocs(registry: OpenAPIRegistry) {
+export function registerSavedPostsDocs(registry: OpenAPIRegistry) {
     registry.register("SavedPost", SavedPostSchema)
     registry.register("SavedPostList", SavedPostListSchema)
     registry.register("SavePostRequest", SavePostRequestSchema)
@@ -68,7 +68,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         description:
             "Obtener lista de publicaciones guardadas por el usuario autenticado. Soporta paginación mediante query params: page (defecto: 1) y pageSize (defecto: 10, máximo: 50)",
         summary: "Listar publicaciones guardadas",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -116,7 +116,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         path: "/v1/adoptions/saved-posts/{id}",
         summary: "Obtener publicación guardada por ID",
         description: "Obtiene una publicación guardada específica por su ID.",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -153,7 +153,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         path: "/v1/adoptions/saved-posts/check/{postId}",
         summary: "Verificar estado de publicación guardada",
         description: "Verifica si una publicación específica está guardada por el usuario.",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -184,11 +184,22 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         path: "/v1/adoptions/saved-posts",
         summary: "Guardar publicación",
         description: "Guarda una publicación para el usuario autenticado.",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         request: { body: { content: { "application/json": { schema: SavePostRequestSchema } } } },
         responses: {
-            201: { description: "Guardada exitosamente" },
+            201: {
+                description: "Guardada exitosamente",
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            success: z.boolean(),
+                            message: z.string(),
+                            data: SavedPostSchema.pick({ id: true, post_id: true, user_id: true }),
+                        }),
+                    },
+                },
+            },
             400: {
                 description: "Datos inválidos",
                 content: { "application/json": { schema: ErrorValuesSchema } },
@@ -214,7 +225,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         path: "/v1/adoptions/saved-posts/{id}",
         summary: "Eliminar publicación guardada por ID",
         description: "Elimina una publicación guardada por su ID.",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -248,7 +259,7 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
         path: "/v1/adoptions/saved-posts/post/{postId}",
         summary: "Eliminar publicación guardada por post ID",
         description: "Elimina una publicación guardada según el ID de la publicación original.",
-        tags: ["Saved Posts"],
+        tags: ["SavedPosts"],
         security: [{ bearerAuth: [] }],
         parameters: [
             {
@@ -263,202 +274,6 @@ export function savedPostsDocs(registry: OpenAPIRegistry) {
             200: { description: "Eliminada exitosamente" },
             401: {
                 description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            404: {
-                description: "No encontrada",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-}
-
-// === Posts públicos ===
-export function postsDocs(registry: OpenAPIRegistry) {
-    const PostSchema = z.object({
-        id: z.number(),
-        title: z.string(),
-        description: z.string().nullable(),
-        status: z.string(),
-        creator_id: z.number().nullable(),
-        pet_id: z.number().nullable(),
-    })
-
-    registry.register("Post", PostSchema)
-
-    // GET /v1/adoptions/posts
-    registry.registerPath({
-        method: "get",
-        path: "/v1/adoptions/posts",
-        summary: "Listar publicaciones públicas",
-        description:
-            "Obtiene lista de publicaciones activas. Soporta paginación y filtros básicos.",
-        tags: ["Publicaciones"],
-        parameters: [
-            {
-                name: "page",
-                in: "query",
-                required: false,
-                description: "Número de la página a obtener",
-                schema: { type: "integer", default: 1, minimum: 1 },
-            },
-            {
-                name: "pageSize",
-                in: "query",
-                required: false,
-                description: "Cantidad de publicaciones por página",
-                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
-            },
-        ],
-        responses: {
-            200: {
-                description: "Lista obtenida exitosamente",
-                content: {
-                    "application/json": {
-                        schema: z.object({
-                            success: z.boolean(),
-                            message: z.string(),
-                            data: z.object({ items: z.array(PostSchema), total: z.number() }),
-                        }),
-                    },
-                },
-            },
-            500: {
-                description: "Error interno del servidor",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    // GET /v1/adoptions/posts/{id}
-    registry.registerPath({
-        method: "get",
-        path: "/v1/adoptions/posts/{id}",
-        summary: "Obtener publicación por ID",
-        description: "Obtiene una publicación específica por su ID.",
-        tags: ["Publicaciones"],
-        parameters: [
-            {
-                name: "id",
-                in: "path",
-                required: true,
-                description: "ID de la publicación",
-                schema: { type: "integer", example: 55 },
-            },
-        ],
-        responses: {
-            200: { description: "Publicación obtenida exitosamente" },
-            404: {
-                description: "No encontrada",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            500: {
-                description: "Error interno",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    // POST /v1/adoptions/posts
-    registry.registerPath({
-        method: "post",
-        path: "/v1/adoptions/posts",
-        summary: "Crear publicación",
-        description: "Crea una nueva publicación (requiere autenticación).",
-        tags: ["Publicaciones"],
-        security: [{ bearerAuth: [] }],
-        request: {
-            body: {
-                content: {
-                    "application/json": {
-                        schema: PostSchema.pick({ title: true, description: true, pet_id: true }),
-                    },
-                },
-            },
-        },
-        responses: {
-            201: { description: "Publicación creada" },
-            400: {
-                description: "Datos inválidos",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            401: {
-                description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            500: {
-                description: "Error interno",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    // PUT /v1/adoptions/posts/{id}
-    registry.registerPath({
-        method: "put",
-        path: "/v1/adoptions/posts/{id}",
-        summary: "Actualizar publicación",
-        description: "Actualiza una publicación existente.",
-        tags: ["Publicaciones"],
-        security: [{ bearerAuth: [] }],
-        parameters: [
-            {
-                name: "id",
-                in: "path",
-                required: true,
-                description: "ID de la publicación a actualizar",
-                schema: { type: "integer", example: 55 },
-            },
-        ],
-        request: {
-            body: { content: { "application/json": { schema: PostSchema.partial() } } },
-        },
-        responses: {
-            200: { description: "Actualizada" },
-            400: {
-                description: "Datos inválidos",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            401: {
-                description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            403: {
-                description: "No autorizado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            404: {
-                description: "No encontrada",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    // DELETE /v1/adoptions/posts/{id}
-    registry.registerPath({
-        method: "delete",
-        path: "/v1/adoptions/posts/{id}",
-        summary: "Eliminar publicación",
-        description: "Elimina una publicación por su ID.",
-        tags: ["Publicaciones"],
-        security: [{ bearerAuth: [] }],
-        parameters: [
-            {
-                name: "id",
-                in: "path",
-                required: true,
-                description: "ID de la publicación a eliminar",
-                schema: { type: "integer", example: 55 },
-            },
-        ],
-        responses: {
-            200: { description: "Eliminada exitosamente" },
-            401: {
-                description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            403: {
-                description: "No autorizado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
             404: {

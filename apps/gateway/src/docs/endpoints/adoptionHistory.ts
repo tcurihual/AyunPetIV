@@ -9,7 +9,6 @@ import {
     UpdateAdoptionHistoryRequestSchema,
     UpdateAdoptionHistoryResponseSchema,
 } from "@repo/utils"
-import { z } from "zod"
 
 export function registerAdoptionHistoryPaths(registry: OpenAPIRegistry) {
     registry.registerPath({

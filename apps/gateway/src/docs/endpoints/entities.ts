@@ -5,8 +5,6 @@ import {
     GiverRequestResponseSchema,
     ErrorValuesSchema,
     ValidateGiverAccountResponseSchema,
-    UsersWithImagesResponseSchema,
-    UserByIdWithImagesResponseSchema,
     AdoptionRequestsWithImagesResponseSchema,
     AdoptionRequestByIdWithImagesResponseSchema,
     CreateVerificationCodeRequestSchema,
@@ -16,6 +14,8 @@ import {
 } from "@repo/utils"
 import { registerAdoptionHistoryPaths } from "./adoptionHistory"
 import { registerUsersPaths } from "./users"
+import { registerSavedPostsDocs } from "./savedPosts"
+import { registerQuestionsDocs } from "./questions"
 
 const FormResponseSchema = z.object({
     id: z.number(),
@@ -409,7 +409,11 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
             body: {
                 content: {
                     "application/json": {
-                        schema: FormResponseSchema.omit({ id: true, created_at: true }),
+                        schema: FormResponseSchema.omit({
+                            id: true,
+                            created_at: true,
+                            updated_at: true,
+                        }),
                     },
                 },
             },
@@ -575,6 +579,7 @@ export function registerAllEntitiesDocs(registry: OpenAPIRegistry) {
     registerAdoptionRequestsPaths(registry)
     registerVerificationCodesPaths(registry)
     registerFormResponsesPaths(registry)
-
+    registerSavedPostsDocs(registry)
     registerAdoptionHistoryPaths(registry)
+    registerQuestionsDocs(registry)
 }

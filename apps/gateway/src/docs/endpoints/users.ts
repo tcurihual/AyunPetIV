@@ -1,14 +1,7 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import {
-    AdoptionHistoryByIdResponseSchema,
-    AdoptionHistoryResponseSchema,
     BaseResponseSchema,
-    CreateAdoptionHistoryRequestSchema,
-    CreateAdoptionHistoryResponseSchema,
-    DeleteAdoptionHistoryResponseSchema,
     ErrorValuesSchema,
-    UpdateAdoptionHistoryRequestSchema,
-    UpdateAdoptionHistoryResponseSchema,
     UpdateUserSchema,
     UserByIdWithImagesResponseSchema,
     UserSchema,
@@ -211,6 +204,7 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
                                 password: { type: "string" },
                                 address: { type: "string" },
                                 description: { type: "string" },
+                                role: { type: "number" },
                                 roleType: {
                                     type: "string",
                                     enum: ["ADMIN", "USER", "SHELTER", "GIVER"],
