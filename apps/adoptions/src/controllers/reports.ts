@@ -25,13 +25,13 @@ export const getReports = async (req: AuthenticatedRequest, res: Response) => {
 }
 export const createReport = async (req: AuthenticatedRequest, res: Response) => {
     const supabase = createSupabaseClient()
-    const { userId, postId, description, resolved } = req.body
+    const { userId, postId, description } = req.body
 
     const insertData = {
         user_id: userId,
         post_id: postId,
         description,
-        resolved: resolved ?? false,
+        resolved: false,
     }
 
     const { data, error } = await supabase.from("report").insert(insertData).select().single()

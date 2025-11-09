@@ -10,8 +10,9 @@ import { registerAllEntitiesDocs } from "./endpoints/entities"
 
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
-import { savedPostsDocs, postsDocs } from "./endpoints/savedPosts"
 import { PublicationRegistryPaths } from "./endpoints/publications"
+import { registerPostFormDocs } from "./endpoints/postForm"
+import { NewsRegistryPaths } from "./endpoints/news"
 
 export function buildOpenApi() {
     const registry = new OpenAPIRegistry()
@@ -40,12 +41,14 @@ export function buildOpenApi() {
     // Messages endpoints
     registerMessagesDocs(registry)
 
+    registerPostFormDocs(registry)
     // Saved Posts y Public Posts
     // savedPostsDocs(registry)
     // postsDocs(registry)
 
     // Publications
     PublicationRegistryPaths(registry)
+    NewsRegistryPaths(registry)
 
     const generator = new OpenApiGeneratorV3(registry.definitions)
 

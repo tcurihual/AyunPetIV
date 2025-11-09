@@ -55,7 +55,7 @@ usersRouter.get(
 
 usersRouter.patch(
     "/:id",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN),
     asyncHandler((req, res) => updateUser(req as any, res))
 )
 

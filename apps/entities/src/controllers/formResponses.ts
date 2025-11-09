@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import { supabase } from "../index"
+import { AuthenticatedRequest } from "@repo/utils"
 
 const TABLE = "form_response"
 
@@ -30,7 +31,7 @@ export async function list(req: Request, res: Response) {
  * POST /form-responses
  * Crea una nueva respuesta de formulario.
  */
-export async function create(req: Request, res: Response) {
+export async function create(req: AuthenticatedRequest, res: Response) {
     const { id_post_form, answer } = req.body
 
     if (!id_post_form || !answer) {
@@ -40,7 +41,7 @@ export async function create(req: Request, res: Response) {
         })
     }
 
-    const id_user = (req as any).user?.id
+    const id_user = req.user?.id
 
     if (!id_user) {
         return res.status(401).json({

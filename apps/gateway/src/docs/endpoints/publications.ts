@@ -1,12 +1,10 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import {
-    CreatePublicationBodySchema,
     CreatePublicationResponseSchema,
     DeletePublicationResponseSchema,
     ErrorValuesSchema,
     PublicationByIdWithImagesResponseSchema,
     PublicationsWithImagesResponseSchema,
-    UpdatePublicationBodySchema,
     UpdatePublicationResponseSchema,
 } from "@repo/utils"
 

@@ -2,6 +2,8 @@ import { UserReponseDTO } from "./auth"
 import {
     AdoptionHistorySchema,
     ReportFormSchema,
+    ReportSchema,
+    UserWithImagesSchema,
     ValidateGiverAccountDataSchema,
     VerificationCodeSchema,
 } from "./entities"
@@ -30,7 +32,7 @@ export const LoginResponseSchema = createApiResponseSchema(
     })
 )
 
-export const ReportResponseSchema = createApiResponseSchema(ReportFormSchema)
+export const ReportResponseSchema = createApiResponseSchema(ReportSchema)
 
 const userResponseGiverDTO = UserReponseDTO.omit({
     created_at: true,
@@ -49,18 +51,12 @@ export const GiverRequestResponseSchema = createApiResponseSchema(
 
 export const AdoptionHistoryResponseSchema = createApiResponseSchema(
     z.object({
-        type: z.literal("success"),
-        message: z.string(),
-        data: z.array(
-            z.object({
-                id: z.number(),
-                petid: z.number(),
-                from_owner_id: z.number(),
-                to_owner_id: z.number(),
-                post_id: z.number(),
-                created_at: z.string(),
-            })
-        ),
+        id: z.number(),
+        petid: z.number(),
+        from_owner_id: z.number(),
+        to_owner_id: z.number(),
+        post_id: z.number(),
+        created_at: z.string(),
     })
 )
 export const ValidateGiverAccountResponseSchema = createApiResponseSchema(
@@ -101,3 +97,5 @@ export const ValidateCodeResponseSchema = createApiResponseSchema(
         status: z.enum(["pendiente", "aprobado", "denegado", "completada"]),
     })
 )
+
+export const UserWithImagesResponseSchema = createApiResponseSchema(UserWithImagesSchema)
