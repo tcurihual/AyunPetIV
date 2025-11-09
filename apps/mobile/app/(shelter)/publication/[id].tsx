@@ -25,6 +25,7 @@ import { Pet } from "@/interfaces/pet"
 import { toMediaUrl } from "@/utils/mediaUrl"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { useMessageContext } from "@/context/MessageContext"
 import { useAuthContext } from "@/context/AuthContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 
@@ -34,35 +35,25 @@ const { width, height } = Dimensions.get("window")
 
 const isLocalId = (id: string) => id.startsWith("local-")
 
-const mockComments: Comment[] = [
-    {
-        id: "1",
-        ownerName: "María González",
-        ownerAvatar:
-            "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        createdAt: "2024-01-15T10:30:00Z",
-        text: "¡Qué hermoso! Me encantaría adoptarlo. ¿Está disponible aún?",
-    },
-    {
-        id: "2",
-        ownerName: "Carlos Ruiz",
-        createdAt: "2024-01-14T15:45:00Z",
-        text: "Se ve muy tierno. ¿Es bueno con otros perros?",
-    },
-]
-
 export default function PublicationDetail() {
     const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
-    const { user } = useAuthContext()
-    const [comments, setComments] = useState<Comment[]>(mockComments)
     const [showReportModal, setShowReportModal] = useState(false)
-    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+    const [reportingCommentId, setReportingCommentId] = useState<string | number | null>(null)
     const [reportType, setReportType] = useState<"comment" | "publication">("comment")
     const [loading, setLoading] = useState(true)
     const [pet, setPet] = useState<Pet | null>(null)
     const { publications, getPublicationByPostId } = usePublicationContext()
     const { createAdoptionRequest } = useAdoptionRequestContext()
+    const { user } = useAuthContext()
+    const {
+        messages,
+        loading: messagesLoading,
+        getMessagesByPostId,
+        createMessage,
+        updateMessage,
+        deleteMessage,
+    } = useMessageContext()
 
     const {
         control,
@@ -72,7 +63,7 @@ export default function PublicationDetail() {
     } = useForm<MessageFormData>({
         resolver: zodResolver(MessageFormSchema),
         defaultValues: {
-            creatorId: 1, // Mock user ID
+            creatorId: Number(user?.id) || 0,
             postId: Number(String(id).replace("local-", "")) || 0,
             description: "",
         },
@@ -191,22 +182,69 @@ export default function PublicationDetail() {
         }
     }, [id, getPublicationByPostId, mapPublicationToPet, publicationFromContext])
 
+    // Load messages when publication id changes
+    useEffect(() => {
+        const numericId = Number(String(id).replace("local-", ""))
+        if (!Number.isFinite(numericId) || isLocalId(id)) return
+
+        console.log("🔄 Loading messages for post_id:", numericId)
+        getMessagesByPostId(numericId)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id])
+
+    // Convert MessageWithCreator[] to Comment[] for UI
+    const comments = useMemo(() => {
+        return messages.map((msg) => ({
+            id: String(msg.id),
+            ownerName: msg.creator?.name || "Usuario desconocido",
+            ownerAvatar: msg.creator?.profilePhoto || null,
+            text: msg.description,
+            createdAt: msg.created_at,
+            ownerId: msg.creator_id,
+        }))
+    }, [messages])
+
     const onSubmitComment = async (data: MessageFormData) => {
         try {
-            const newComment: Comment = {
-                id: String(comments.length + 1),
-                ownerName: "Usuario Actual",
-                createdAt: new Date().toISOString(),
-                text: data.description,
+            const numericId = Number(String(id).replace("local-", ""))
+            if (!Number.isFinite(numericId)) {
+                Alert.alert("Error", "ID de publicación inválido")
+                return
             }
-            setComments((prev) => [...prev, newComment])
+
+            await createMessage({
+                ...data,
+                postId: numericId,
+            })
+
             reset()
         } catch (error) {
             console.error("Error adding comment:", error)
+            Alert.alert("Error", "No se pudo agregar el comentario")
         }
     }
 
-    const handleReport = (commentId: string) => {
+    const handleEditComment = async (commentId: string | number, newText: string) => {
+        try {
+            await updateMessage(Number(commentId), {
+                description: newText,
+            })
+        } catch (error) {
+            console.error("Error editing comment:", error)
+            Alert.alert("Error", "No se pudo editar el comentario")
+        }
+    }
+
+    const handleDeleteComment = async (commentId: string | number) => {
+        try {
+            await deleteMessage(Number(commentId))
+        } catch (error) {
+            console.error("Error deleting comment:", error)
+            Alert.alert("Error", "No se pudo eliminar el comentario")
+        }
+    }
+
+    const handleReport = (commentId: string | number) => {
         setReportingCommentId(commentId)
         setReportType("comment")
         setShowReportModal(true)
@@ -393,6 +431,10 @@ export default function PublicationDetail() {
                                             <CommentCard
                                                 key={comment.id}
                                                 comment={comment}
+                                                currentUserId={Number(user?.id)}
+                                                isAdmin={user?.role?.toString() === "19"}
+                                                onEdit={handleEditComment}
+                                                onDelete={handleDeleteComment}
                                                 onReport={handleReport}
                                             />
                                         ))}

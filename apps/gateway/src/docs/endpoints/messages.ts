@@ -90,6 +90,97 @@ export function registerMessagesDocs(registry: OpenAPIRegistry) {
     })
 
     registry.registerPath({
+        method: "get",
+        path: "/v1/adoptions/messages/post/{post_id}",
+        tags: ["Messages"],
+        summary: "Listar mensajes por post_id",
+        description:
+            "Obtiene todos los mensajes asociados a una publicación específica con información del usuario que comentó. " +
+            "Los mensajes incluyen el nombre y foto de perfil de cada usuario que realizó el comentario. " +
+            "Los mensajes se ordenan por fecha de creación de forma descendente (más recientes primero). " +
+            "Este endpoint es útil para mostrar todos los comentarios o mensajes de una publicación de adopción.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "post_id",
+                in: "path",
+                required: true,
+                description: "ID numérico de la publicación para obtener sus mensajes",
+                schema: { type: "integer", example: 12 },
+            },
+        ],
+        responses: {
+            200: {
+                description: "Lista de mensajes obtenida correctamente con información de usuarios",
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                type: { type: "string", example: "success" },
+                                message: {
+                                    type: "string",
+                                    example: "Mensajes obtenidos correctamente",
+                                },
+                                data: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            id: { type: "integer", example: 45 },
+                                            creator_id: { type: "integer", example: 4 },
+                                            post_id: { type: "integer", example: 12 },
+                                            description: {
+                                                type: "string",
+                                                example: "Estoy interesado en adoptar",
+                                            },
+                                            status: { type: "string", example: "active" },
+                                            created_at: {
+                                                type: "string",
+                                                format: "date-time",
+                                                example: "2025-11-08T15:30:00.000Z",
+                                            },
+                                            updated_at: {
+                                                type: "string",
+                                                format: "date-time",
+                                                example: "2025-11-08T15:30:00.000Z",
+                                            },
+                                            creator: {
+                                                type: "object",
+                                                nullable: true,
+                                                properties: {
+                                                    id: { type: "integer", example: 4 },
+                                                    name: { type: "string", example: "Juan Pérez" },
+                                                    profilePhoto: {
+                                                        type: "string",
+                                                        nullable: true,
+                                                        example:
+                                                            "http://localhost:3000/v1/media/uploads/profile_picture/4/foto.jpg",
+                                                    },
+                                                },
+                                                description:
+                                                    "Información del usuario que creó el mensaje, incluyendo su nombre y foto de perfil",
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            400: {
+                description: "Error en parámetros o al obtener mensajes",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado - Token JWT requerido",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
         method: "post",
         path: "/v1/adoptions/messages",
         tags: ["Messages"],

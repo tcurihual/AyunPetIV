@@ -25,6 +25,8 @@ import { Pet } from "@/interfaces/pet"
 import { toMediaUrl } from "@/utils/mediaUrl"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { useMessageContext } from "@/context/MessageContext"
+import { useAuthContext } from "@/context/AuthContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
@@ -34,34 +36,25 @@ const { width, height } = Dimensions.get("window")
 
 const isLocalId = (id: string) => id.startsWith("local-")
 
-const mockComments: Comment[] = [
-    {
-        id: "1",
-        ownerName: "María González",
-        ownerAvatar:
-            "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        createdAt: "2024-01-15T10:30:00Z",
-        text: "¡Qué hermoso! Me encantaría adoptarlo. ¿Está disponible aún?",
-    },
-    {
-        id: "2",
-        ownerName: "Carlos Ruiz",
-        createdAt: "2024-01-14T15:45:00Z",
-        text: "Se ve muy tierno. ¿Es bueno con otros perros?",
-    },
-]
-
 export default function PublicationDetail() {
     const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
-    const [comments, setComments] = useState<Comment[]>(mockComments)
     const [showReportModal, setShowReportModal] = useState(false)
-    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+    const [reportingCommentId, setReportingCommentId] = useState<string | number | null>(null)
     const [reportType, setReportType] = useState<"comment" | "publication">("comment")
     const [loading, setLoading] = useState(true)
     const [pet, setPet] = useState<Pet | null>(null)
     const { publications, getPublicationByPostId } = usePublicationContext()
     const { createAdoptionRequest } = useAdoptionRequestContext()
+    const { user } = useAuthContext()
+    const {
+        messages,
+        loading: messagesLoading,
+        getMessagesByPostId,
+        createMessage,
+        updateMessage,
+        deleteMessage,
+    } = useMessageContext()
 
     const {
         control,
@@ -71,7 +64,7 @@ export default function PublicationDetail() {
     } = useForm<MessageFormData>({
         resolver: zodResolver(MessageFormSchema),
         defaultValues: {
-            creatorId: 1, // Mock user ID
+            creatorId: Number(user?.id) || 0,
             postId: Number(String(id).replace("local-", "")) || 0,
             description: "",
         },
@@ -151,10 +144,8 @@ export default function PublicationDetail() {
             gender: pub.gender ?? "",
             age: totalAge,
             publisher: pub.publisher ?? "Usuario",
-            publisherPhoto: pub.publisherPhoto ?? null,
             description: pub.description ?? "",
             image: imageSource,
-            type: pub.type ?? pub.species ?? "",
         }
     }, [])
 
@@ -181,7 +172,6 @@ export default function PublicationDetail() {
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
-                            type: raw.type || raw.species || "",
                         }
                         if (alive) setPet(petObj)
                     } else if (alive) {
@@ -216,22 +206,66 @@ export default function PublicationDetail() {
         }
     }, [id, getPublicationByPostId, mapPublicationToPet, publicationFromContext])
 
+    // Cargar mensajes cuando se carga la publicación
+    useEffect(() => {
+        if (!id || isLocalId(id)) return
+        const numericId = Number(id)
+        if (Number.isFinite(numericId)) {
+            getMessagesByPostId(numericId)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]) // Solo depende de id, no de getMessagesByPostId
+
+    // Convertir mensajes del backend al formato Comment para el componente
+    const comments: Comment[] = useMemo(() => {
+        return messages.map((msg) => ({
+            id: msg.id,
+            ownerName: msg.creator?.name || "Usuario desconocido",
+            ownerAvatar: msg.creator?.profilePhoto || null,
+            createdAt: msg.created_at,
+            text: msg.description,
+            ownerId: msg.creator_id,
+        }))
+    }, [messages])
+
     const onSubmitComment = async (data: MessageFormData) => {
         try {
-            const newComment: Comment = {
-                id: String(comments.length + 1),
-                ownerName: "Usuario Actual",
-                createdAt: new Date().toISOString(),
-                text: data.description,
+            if (!user) {
+                Alert.alert("Error", "Debes iniciar sesión para comentar")
+                return
             }
-            setComments((prev) => [...prev, newComment])
+
+            await createMessage({
+                creatorId: Number(user.id),
+                postId: data.postId,
+                description: data.description,
+            })
+
             reset()
+            Alert.alert("Éxito", "Comentario agregado correctamente")
         } catch (error) {
             console.error("Error adding comment:", error)
+            Alert.alert("Error", "No se pudo agregar el comentario")
         }
     }
 
-    const handleReport = (commentId: string) => {
+    const handleEditComment = async (commentId: string | number, newText: string) => {
+        try {
+            await updateMessage(Number(commentId), { description: newText })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const handleDeleteComment = async (commentId: string | number) => {
+        try {
+            await deleteMessage(Number(commentId))
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const handleReport = (commentId: string | number) => {
         setReportingCommentId(commentId)
         setReportType("comment")
         setShowReportModal(true)
@@ -412,9 +446,20 @@ export default function PublicationDetail() {
                                             <CommentCard
                                                 key={comment.id}
                                                 comment={comment}
+                                                currentUserId={user ? Number(user.id) : undefined}
+                                                isAdmin={user?.role?.toString() === "19"}
+                                                onEdit={handleEditComment}
+                                                onDelete={handleDeleteComment}
                                                 onReport={handleReport}
                                             />
                                         ))}
+                                    </View>
+                                ) : messagesLoading ? (
+                                    <View style={styles.commentsPlaceholder}>
+                                        <ActivityIndicator size="small" color="#7c3aed" />
+                                        <Text style={styles.commentsPlaceholderText}>
+                                            Cargando comentarios...
+                                        </Text>
                                     </View>
                                 ) : (
                                     <View style={styles.commentsPlaceholder}>
