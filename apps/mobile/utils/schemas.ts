@@ -170,10 +170,7 @@ export const UserProfileSchema = z.object({
         .min(2, "El nombre debe tener al menos 2 caracteres")
         .max(50, "El nombre no puede tener más de 50 caracteres")
         .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo puede contener letras y espacios"),
-    email: z
-        .string("Email es obligatorio")
-        .email("Debe ser un email válido")
-        .max(100, "El email no puede tener más de 100 caracteres"),
+    // El email no se incluye en el schema de edición para que no pueda ser modificado
     address: z.string().max(200, "La dirección no puede tener más de 200 caracteres").optional(),
     description: z
         .string()
