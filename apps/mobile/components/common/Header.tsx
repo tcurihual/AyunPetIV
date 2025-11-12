@@ -14,7 +14,6 @@ import { useAuthContext } from "@/context/AuthContext"
 import { Colors } from "@/constants/Colors" // 2. Importar { Colors }
 import BackButton from "@common/BackButton"
 import { userService } from "@/services/user"
-import { getProfilePictureUrl } from "@/utils/profilePicture"
 
 const { width } = Dimensions.get("window")
 
@@ -34,17 +33,29 @@ export default function Header({ onMenuPress }: HeaderProps) {
 
     // Placeholder local para foto de perfil
     const placeholderImage = require("@images/pp_placeholder.png")
-    
+
     // Cargar foto de perfil cuando el usuario cambie
     useEffect(() => {
+        let mounted = true
+
         const loadProfilePicture = async () => {
-            if (user?.id) {
+            if (!user?.id) return
+            try {
                 const url = await userService.getProfilePicture(user.id)
-                setProfilePictureUrl(url)
+
+                // 🔒 Evitar actualizar si el valor no cambió o el componente ya se desmontó
+                if (!mounted) return
+                setProfilePictureUrl((prev) => (prev === url ? prev : url))
+            } catch (error) {
+                console.log(`No profile picture found for user ${user?.id}`)
+                if (mounted) setProfilePictureUrl(null)
             }
         }
-        
+
         loadProfilePicture()
+        return () => {
+            mounted = false
+        }
     }, [user?.id])
 
     // Determinar qué imagen mostrar
@@ -160,7 +171,6 @@ const styles = StyleSheet.create({
         height: width * 0.12,
         borderRadius: (width * 0.12) / 2,
         overflow: "hidden",
-        // backgroundColor: "#e60000ff", // <-- Quitado (fallback rojo)
         alignItems: "center",
         justifyContent: "center",
     },
