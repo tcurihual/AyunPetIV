@@ -69,7 +69,10 @@ build_apk() {
 
   echo "✅ APK generado en: $GENERATED_APK"
 
-  send_apk_ssh "$GENERATED_APK"
+  NEW_APK_NAME="ayunpet.apk"
+  mv "$GENERATED_APK" "$NEW_APK_NAME"
+
+  send_apk_ssh "$NEW_APK_NAME"
 }
 
 send_apk_ssh() {
