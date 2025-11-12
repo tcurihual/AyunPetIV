@@ -27,6 +27,7 @@ import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { useMessageContext } from "@/context/MessageContext"
 import { useAuthContext } from "@/context/AuthContext"
+import { useReportContext } from "@/context/ReportContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
@@ -47,6 +48,7 @@ export default function PublicationDetail() {
     const { publications, getPublicationByPostId } = usePublicationContext()
     const { createAdoptionRequest } = useAdoptionRequestContext()
     const { user } = useAuthContext()
+    const { createReport, loading: reportLoading } = useReportContext()
     const {
         messages,
         loading: messagesLoading,
@@ -278,19 +280,58 @@ export default function PublicationDetail() {
 
     const handleSubmitReport = async (description: string) => {
         try {
-            if (reportType === "comment") {
-                console.log("Reporting comment:", reportingCommentId, "Reason:", description)
+            if (reportType === "publication") {
+                // Reportar publicación
+                if (!id || isLocalId(id)) {
+                    Alert.alert("Error", "No se puede reportar una publicación local")
+                    return
+                }
+
+                const postId = Number(id)
+                if (!Number.isFinite(postId)) {
+                    Alert.alert("Error", "ID de publicación inválido")
+                    return
+                }
+
+                // Usar el contexto para crear el reporte de publicación
+                await createReport({
+                    postid: postId,
+                    description: description,
+                })
+
+                Alert.alert(
+                    "Reporte enviado",
+                    "Tu reporte de publicación ha sido enviado correctamente. Será revisado por los administradores."
+                )
             } else {
-                console.log("Reporting publication:", id, "Reason:", description)
+                // Reportar comentario
+                if (!reportingCommentId) {
+                    Alert.alert("Error", "No se pudo identificar el comentario a reportar")
+                    return
+                }
+
+                const messageId = Number(reportingCommentId)
+                if (!Number.isFinite(messageId)) {
+                    Alert.alert("Error", "ID de comentario inválido")
+                    return
+                }
+
+                // Usar el contexto para crear el reporte de comentario
+                await createReport({
+                    messageid: messageId,
+                    description: description,
+                })
+
+                Alert.alert(
+                    "Reporte enviado",
+                    "Tu reporte de comentario ha sido enviado correctamente. Será revisado por los administradores."
+                )
             }
-            alert(
-                `Reporte de ${
-                    reportType === "comment" ? "comentario" : "publicación"
-                } enviado correctamente`
-            )
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending report:", error)
-            alert("Error al enviar el reporte")
+            const errorMessage =
+                error?.response?.data?.message || error?.message || "Error al enviar el reporte"
+            Alert.alert("Error", errorMessage)
         } finally {
             setShowReportModal(false)
             setReportingCommentId(null)
