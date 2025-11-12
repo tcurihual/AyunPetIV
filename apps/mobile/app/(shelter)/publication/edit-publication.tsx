@@ -17,6 +17,7 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import * as ImagePicker from "expo-image-picker"
+import { Colors } from "@/constants/Colors"
 
 type PetFormData = {
     name: string
@@ -183,7 +184,7 @@ export default function EditPublication() {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7c3aed" />
+                <ActivityIndicator size="large" color={Colors.secondary} />
                 <Text style={styles.loadingText}>Cargando publicación...</Text>
             </View>
         )
@@ -256,14 +257,14 @@ export default function EditPublication() {
                                     <Ionicons
                                         name="male-female"
                                         size={18}
-                                        color="#FFD24C"
+                                        color="Colors.primary"
                                         style={styles.dropdownIcon}
                                     />
                                     <Text style={styles.dropdownText}>
                                         {formData.gender === "male" ? "Macho" : "Hembra"}
                                     </Text>
                                 </View>
-                                <Ionicons name="chevron-down" size={20} color="#FFD24C" />
+                                <Ionicons name="chevron-down" size={20} color="Colors.primary" />
                             </TouchableOpacity>
                         </View>
 
@@ -291,14 +292,14 @@ export default function EditPublication() {
                                     <Ionicons
                                         name="paw"
                                         size={18}
-                                        color="#FFD24C"
+                                        color="Colors.primary"
                                         style={styles.dropdownIcon}
                                     />
                                     <Text style={styles.dropdownText}>
                                         {formData.species === "dog" ? "Perro" : "Gato"}
                                     </Text>
                                 </View>
-                                <Ionicons name="chevron-down" size={20} color="#FFD24C" />
+                                <Ionicons name="chevron-down" size={20} color="Colors.primary" />
                             </TouchableOpacity>
                         </View>
 
@@ -312,7 +313,7 @@ export default function EditPublication() {
                                     <Ionicons
                                         name="resize"
                                         size={18}
-                                        color="#FFD24C"
+                                        color="Colors.primary"
                                         style={styles.dropdownIcon}
                                     />
                                     <Text style={styles.dropdownText}>
@@ -323,7 +324,7 @@ export default function EditPublication() {
                                             : "Grande"}
                                     </Text>
                                 </View>
-                                <Ionicons name="chevron-down" size={20} color="#FFD24C" />
+                                <Ionicons name="chevron-down" size={20} color="Colors.primary" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -445,7 +446,7 @@ export default function EditPublication() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: Colors.light.background,
     },
     content: {
         flex: 1,
@@ -463,18 +464,18 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderRadius: 20,
-        backgroundColor: "#e0e0e0",
+        backgroundColor: Colors.light.background,
     },
     placeholderImage: {
         width: 180,
         height: 180,
         borderRadius: 20,
-        backgroundColor: "#e0e0e0",
+        backgroundColor: Colors.light.background,
         justifyContent: "center",
         alignItems: "center",
     },
     changePhotoButton: {
-        backgroundColor: "#FFD24C",
+        backgroundColor: Colors.primary,
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 8,
@@ -516,16 +517,16 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: "#e0e0e0",
+        borderColor: Colors.light.background,
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: Colors.light.background,
         color: "#333",
     },
     dropdown: {
         borderWidth: 2,
-        borderColor: "#FFD24C",
+        borderColor: Colors.primary,
         borderRadius: 12,
         padding: 14,
         backgroundColor: "#fff",
@@ -554,7 +555,7 @@ const styles = StyleSheet.create({
     },
     dropdownArrow: {
         fontSize: 18,
-        color: "#FFD24C",
+        color: Colors.primary,
         fontWeight: "bold",
     },
     statusButton: {
@@ -573,16 +574,16 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     statusActive: {
-        backgroundColor: "#FFB347",
-        borderColor: "#FF9800",
+        backgroundColor: Colors.light.warning,
+        borderColor: Colors.light.warning,
     },
     statusInactive: {
-        backgroundColor: "#e0e0e0",
+        backgroundColor: Colors.light.background,
         borderColor: "#bdbdbd",
     },
     statusClosed: {
         backgroundColor: "#ffcdd2",
-        borderColor: "#d32f2f",
+        borderColor: Colors.danger,
     },
     statusText: {
         fontSize: 16,
@@ -595,14 +596,14 @@ const styles = StyleSheet.create({
         color: "#666",
     },
     statusTextClosed: {
-        color: "#d32f2f",
+        color: Colors.danger,
     },
     textArea: {
         height: 120,
         textAlignVertical: "top",
     },
     saveButton: {
-        backgroundColor: "#FFD24C",
+        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: "center",
@@ -658,7 +659,7 @@ const styles = StyleSheet.create({
     },
     modalCancelText: {
         fontSize: 16,
-        color: "#FFD24C",
+        color: Colors.primary,
         textAlign: "center",
         fontWeight: "600",
     },

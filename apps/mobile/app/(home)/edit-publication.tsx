@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { Pet, getPetById, updatePet, getPetImage } from "@/services/petAsyncStorage"
+import { Colors } from "@/constants/Colors"
 
 type PetFormData = {
     name: string
@@ -180,12 +181,12 @@ export default function EditPublication() {
                                     <Ionicons
                                         name="male-female"
                                         size={18}
-                                        color="#007AFF"
+                                        color={Colors.secondary}
                                         style={styles.dropdownIcon}
                                     />
                                     <Text style={styles.dropdownText}>{formData.gender}</Text>
                                 </View>
-                                <Ionicons name="chevron-down" size={20} color="#007AFF" />
+                                <Ionicons name="chevron-down" size={20} color={Colors.secondary} />
                             </TouchableOpacity>
                         </View>
 
@@ -213,12 +214,12 @@ export default function EditPublication() {
                                     <Ionicons
                                         name="paw"
                                         size={18}
-                                        color="#007AFF"
+                                        color={Colors.secondary}
                                         style={styles.dropdownIcon}
                                     />
                                     <Text style={styles.dropdownText}>{formData.species}</Text>
                                 </View>
-                                <Ionicons name="chevron-down" size={20} color="#007AFF" />
+                                <Ionicons name="chevron-down" size={20} color={Colors.secondary} />
                             </TouchableOpacity>
                         </View>
 
@@ -259,7 +260,7 @@ export default function EditPublication() {
                                             ? "#000"
                                             : formData.status === "inactivo"
                                             ? "#666"
-                                            : "#d32f2f"
+                                            : Colors.danger
                                     }
                                 />
                             </TouchableOpacity>
@@ -383,7 +384,7 @@ export default function EditPublication() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: Colors.light.background,
     },
     content: {
         flex: 1,
@@ -401,10 +402,10 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderRadius: 20,
-        backgroundColor: "#e0e0e0",
+        backgroundColor: Colors.light.background,
     },
     changePhotoButton: {
-        backgroundColor: "#FFD24C",
+        backgroundColor: Colors.primary,
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 8,
@@ -443,16 +444,16 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: "#e0e0e0",
+        borderColor: Colors.light.background,
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: Colors.light.background,
         color: "#333",
     },
     dropdown: {
         borderWidth: 2,
-        borderColor: "#FFD24C",
+        borderColor: Colors.primary,
         borderRadius: 12,
         padding: 14,
         backgroundColor: "#fff",
@@ -481,7 +482,7 @@ const styles = StyleSheet.create({
     },
     dropdownArrow: {
         fontSize: 18,
-        color: "#FFD24C",
+        color: Colors.primary,
         fontWeight: "bold",
     },
     statusButton: {
@@ -500,16 +501,16 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     statusActive: {
-        backgroundColor: "#FFB347",
-        borderColor: "#FF9800",
+        backgroundColor: Colors.light.warning,
+        borderColor: Colors.light.warning,
     },
     statusInactive: {
-        backgroundColor: "#e0e0e0",
+        backgroundColor: Colors.light.background,
         borderColor: "#bdbdbd",
     },
     statusClosed: {
         backgroundColor: "#ffcdd2",
-        borderColor: "#d32f2f",
+        borderColor: Colors.danger,
     },
     statusText: {
         fontSize: 16,
@@ -522,14 +523,14 @@ const styles = StyleSheet.create({
         color: "#666",
     },
     statusTextClosed: {
-        color: "#d32f2f",
+        color: Colors.danger,
     },
     textArea: {
         height: 120,
         textAlignVertical: "top",
     },
     saveButton: {
-        backgroundColor: "#FFD24C",
+        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: "center",
@@ -585,7 +586,7 @@ const styles = StyleSheet.create({
     },
     modalCancelText: {
         fontSize: 16,
-        color: "#007AFF",
+        color: Colors.secondary,
         textAlign: "center",
         fontWeight: "600",
     },

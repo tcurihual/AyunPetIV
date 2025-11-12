@@ -26,6 +26,7 @@ import Input from "@ui/Input"
 import { authService } from "@/services/auth"
 import { FileInfo } from "@/services/http"
 import { Checkbox } from "@/components/ui/Checkbox"
+import {Colors} from "@/constants/Colors"
 
 const steps: { title: string; fields: (keyof RegisterFormType)[] }[] = [
     { title: "Nombre y RUT", fields: ["name", "rut"] },
@@ -435,7 +436,7 @@ export default function RegisterScreen() {
                                     style={styles.removeImageButton}
                                     onPress={removeProfileImage}
                                 >
-                                    <Ionicons name="close-circle" size={32} color="#ff4444" />
+                                    <Ionicons name="close-circle" size={32} color={Colors.danger}/>
                                 </TouchableOpacity>
                             </View>
                         ) : (
@@ -443,7 +444,7 @@ export default function RegisterScreen() {
                                 style={styles.uploadButton}
                                 onPress={handleSelectProfileImage}
                             >
-                                <Ionicons name="camera-outline" size={48} color="#A47CF3" />
+                                <Ionicons name="camera-outline" size={48} color={Colors.secondary} />
                                 <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
                             </TouchableOpacity>
                         )}
@@ -456,7 +457,7 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
+            <StatusBar backgroundColor="Colors.primary" barStyle="dark-content" />
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.container}>
                     <TouchableOpacity style={styles.backButton} onPress={onBack}>
@@ -501,7 +502,7 @@ export default function RegisterScreen() {
                                     >
                                         <Text
                                             style={{
-                                                color: "#007AFF",
+                                                color: Colors.secondary,
                                                 fontSize: 14,
                                                 textDecorationLine: "underline",
                                                 marginTop: 4,
@@ -516,7 +517,7 @@ export default function RegisterScreen() {
                                     style={[
                                         styles.button,
                                         (!acceptedTerms || disabled) && {
-                                            backgroundColor: "#F2E4A2",
+                                            backgroundColor: Colors.primary,
                                         },
                                     ]}
                                     onPress={() => {
@@ -570,7 +571,7 @@ const useThemeStyles = (width: number, height: number) => {
             padding: 8,
         },
         header: {
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             width: "112%",
             height: headerHeight,
             alignItems: "center",
@@ -621,14 +622,14 @@ const useThemeStyles = (width: number, height: number) => {
             justifyContent: "center",
             alignItems: "center",
             borderWidth: 2,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             marginRight: isSmallScreen ? 10 : 15,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
             elevation: 5,
         },
         stepCircle: {
             fontSize: isSmallScreen ? 14 : 16,
-            color: "#A47CF3",
+            color: Colors.secondary,
             fontWeight: "bold",
             textAlign: "center",
         },
@@ -667,13 +668,13 @@ const useThemeStyles = (width: number, height: number) => {
             marginBottom: 15,
             fontSize: 16,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
         },
         button: {
             width: "100%",
             height: Math.max(height * 0.06, 50),
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
@@ -695,11 +696,11 @@ const useThemeStyles = (width: number, height: number) => {
             marginTop: 15,
             marginBottom: 30,
             borderWidth: 2,
-            borderColor: "#FFD24C",
+            borderColor: Colors.primary,
             backgroundColor: "#fff",
         },
         secondaryButtonText: {
-            color: "#FFD24C",
+            color: Colors.primary,
             fontWeight: "600",
             fontSize: 16,
         },
@@ -714,9 +715,9 @@ const useThemeStyles = (width: number, height: number) => {
             width: Math.min(width * 0.5, 200),
             height: Math.min(width * 0.5, 200),
             borderRadius: Math.min(width * 0.25, 100),
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
             borderWidth: 2,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             borderStyle: "dashed",
             justifyContent: "center",
             alignItems: "center",
@@ -725,7 +726,7 @@ const useThemeStyles = (width: number, height: number) => {
         uploadButtonText: {
             marginTop: 10,
             fontSize: 14,
-            color: "#A47CF3",
+            color: Colors.secondary,
             fontWeight: "600",
         },
         imagePreviewContainer: {
@@ -737,7 +738,7 @@ const useThemeStyles = (width: number, height: number) => {
             height: Math.min(width * 0.5, 200),
             borderRadius: Math.min(width * 0.25, 100),
             borderWidth: 3,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
         },
         removeImageButton: {
             position: "absolute",

@@ -10,13 +10,14 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
+import { Colors } from "@/constants/Colors"
 
 export default function TermsAndConditions() {
     const router = useRouter()
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+            <StatusBar backgroundColor={Colors.light.textSecondary} barStyle="dark-content" />
 
             <View style={styles.container}>
                 {/* 🔙 Botón para volver atrás */}
@@ -124,12 +125,12 @@ export default function TermsAndConditions() {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
         paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
         paddingHorizontal: 16,
         paddingBottom: 10,
     },
@@ -144,13 +145,13 @@ const styles = StyleSheet.create({
     },
     backButton: {
         fontSize: 24,
-        color: "#007AFF",
+        color: Colors.secondary,
     },
     title: {
         flex: 1,
         fontSize: 18,
         fontWeight: "700",
-        color: "#007AFF",
+        color: Colors.secondary,
         textAlign: "center",
     },
     scroll: {
@@ -159,12 +160,12 @@ const styles = StyleSheet.create({
     },
     paragraph: {
         fontSize: 14,
-        color: "#222222",
+        color: Colors.dark.text,
         lineHeight: 22,
         marginBottom: 10,
     },
     bold: {
         fontWeight: "bold",
-        color: "#222222",
+        color: Colors.dark.text,
     },
 })

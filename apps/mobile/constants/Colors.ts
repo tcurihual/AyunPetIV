@@ -3,65 +3,83 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-const tintColorLight = "#f7c316ff" // 1. Color Mostaza (Brand)
-const tintColorDark = "#f7c316ff" // El brand suele ser el mismo
+/**
+ * 🎨 Archivo centralizado de colores - Ayün Pet
+ * Define la paleta de colores oficiales para ambos temas (light / dark)
+ */
 
-// --- Tus colores de marca ---
-const brandPurple = "#9C27B0"
-const brandLightYellow = "#FEF3C7"
-const brandGray = "#666"
+const brandYellow = "#F9C53D"   // Amarillo oficial (color de marca)
+const brandPurple = "#9B6DD7"   // Púrpura oficial
+const brandRed = "#E74C3C"      // Rojo (errores / alertas)
+const brandGray = "#666666"     // Gris base para texto secundario
 
 export const Colors = {
-    light: {
-        text: "#000",
-        background: "#F2F2F2",
-        card: "#FFFFFF",
-        tint: tintColorLight,
+  light: {
+    text: "#000000",
+    textSecondary: brandGray,
+    background: "#F2F2F2",
+    card: "#FFFFFF",
+    border: "#E5E7EB",
+    disabled: "#E0E0E0",
+    shadow: "#000000",
 
-        // Colores de Navbar
-        navBackground: tintColorLight,
-        navIconActive: brandPurple,
-        navIconInactive: brandGray,
-        navActiveTabBg: brandLightYellow,
-        navAddButton: brandPurple,
+    // 👇 Clave: incluir tint dentro del tema
+    tint: brandYellow,
 
-        primary: "#A47CF3",       // El violeta de los bordes
-        textSecondary: "#666",    // Texto gris (ej. "Seleccionar Foto")
-        textMuted: "#333",        // Texto gris oscuro (ej. "Nombre", "Edad")
-        textInverted: "#222",     // Texto sobre fondos de color (ej. header, botón)
-        danger: "#e74c3c",        // Para mensajes de error
-        disabled: "#E0E0E0",      // Fondo de botón deshabilitado
-        shadow: "#000",
-        border: "#e5e7eb",
+    // Principales
+    primary: brandYellow,
+    secondary: brandPurple,
+    success: "#4CAF50",
+    danger: brandRed,
+    warning: "#FB8C00",
 
-        tabIconDefault: "#ccc",
-        tabIconSelected: tintColorLight,
-    },
-    dark: {
-        text: "#fff",
-        background: "#121212",
-        card: "#1E1E1E",
-        tint: tintColorDark,
+    // Navbar y Tabs
+    navBackground: brandYellow,
+    navIconActive: brandPurple,
+    navIconInactive: brandGray,
+    navActiveTabBg: "#FEF3C7",
+    navAddButton: brandPurple,
 
-        // Colores de Navbar
-        navBackground: tintColorDark,
-        navIconActive: brandPurple,
-        navIconInactive: "#888",
-        navActiveTabBg: "#333",
-        navAddButton: brandPurple,
+    tabIconDefault: "#CCCCCC",
+    tabIconSelected: brandYellow,
+  },
 
-        textSecondary: "#ddd",
-        border: "#333",
-        danger: "#ff5252",
-        shadow: "#000",
-        primary: "#A47CF3",
-        textMuted: "#bbb",
-        textInverted: "#ffffff",
-        disabled: "#444",
+  dark: {
+    text: "#FFFFFF",
+    textSecondary: "#DDDDDD",
+    background: "#121212",
+    card: "#1E1E1E",
+    border: "#333333",
+    disabled: "#444444",
+    shadow: "#000000",
 
-        tabIconDefault: "#888",
-        tabIconSelected: tintColorDark,
-    },
-    yellow: "#F9C53D",
-    purple: "#9B6DD7",
+    // 👇 Igual que en modo claro
+    tint: brandYellow,
+
+    // Principales
+    primary: brandYellow,
+    secondary: brandPurple,
+    success: "#4CAF50",
+    danger: "#FF5252",
+    warning: "#FB8C00",
+
+    // Navbar y Tabs
+    navBackground: brandYellow,
+    navIconActive: brandPurple,
+    navIconInactive: "#888888",
+    navActiveTabBg: "#333333",
+    navAddButton: brandPurple,
+
+    tabIconDefault: "#888888",
+    tabIconSelected: brandYellow,
+  },
+
+  // 👇 Accesos rápidos (para uso directo sin depender del tema)
+  primary: brandYellow,
+  secondary: brandPurple,
+  yellow: brandYellow,
+  purple: brandPurple,
+  danger: brandRed,
+  gray: brandGray,
 }
+

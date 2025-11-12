@@ -29,6 +29,7 @@ import { useMessageContext } from "@/context/MessageContext"
 import { useAuthContext } from "@/context/AuthContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
+import { Colors } from "@/constants/Colors"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -456,7 +457,7 @@ export default function PublicationDetail() {
                                     </View>
                                 ) : messagesLoading ? (
                                     <View style={styles.commentsPlaceholder}>
-                                        <ActivityIndicator size="small" color="#7c3aed" />
+                                        <ActivityIndicator size="small" color={Colors.secondary}/>
                                         <Text style={styles.commentsPlaceholderText}>
                                             Cargando comentarios...
                                         </Text>
@@ -574,7 +575,7 @@ const styles = StyleSheet.create({
     screenContainer: { flex: 1, backgroundColor: "#fff", padding: 16 },
     container: {
         flex: 1,
-        backgroundColor: "#EFEFEF",
+        backgroundColor: Colors.light.background,
         borderRadius: 16,
         overflow: "hidden",
         shadowColor: "#000",
@@ -612,7 +613,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: "#FFD700",
+        backgroundColor:Colors.primary,
         alignItems: "center",
         justifyContent: "center",
     },
@@ -634,7 +635,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     commentButton: {
-        backgroundColor: "#7c3aed",
+        backgroundColor: Colors.secondary,
         borderRadius: 8,
         paddingVertical: 12,
         paddingHorizontal: 20,
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
     commentButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
     commentsList: { gap: 12 },
     commentsPlaceholder: {
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.light.background,
         borderRadius: 8,
         padding: 20,
         alignItems: "center",
@@ -654,7 +655,7 @@ const styles = StyleSheet.create({
     commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
     buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
     sendRequestButton: {
-        backgroundColor: "#FFD700",
+        backgroundColor: Colors.primary,
         borderRadius: 8,
         paddingVertical: 15,
         paddingHorizontal: 30,
@@ -670,7 +671,7 @@ const styles = StyleSheet.create({
     sendRequestButtonText: { fontSize: 16, fontWeight: "600", color: "#000" },
     reportButton: {
         backgroundColor: "transparent",
-        borderColor: "#ff4444",
+        borderColor: Colors.danger,
         borderWidth: 1,
         borderRadius: 8,
         paddingVertical: 12,
@@ -679,7 +680,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginTop: 10,
     },
-    reportButtonText: { fontSize: 14, fontWeight: "500", color: "#ff4444" },
+    reportButtonText: { fontSize: 14, fontWeight: "500", color: Colors.danger },
     center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
     empty: { color: "#333" },
     gray: { color: "#6b7280", marginTop: 8 },
@@ -712,13 +713,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#333",
     },
-    modalError: { color: "#C0392B", marginTop: 8 },
+    modalError: { color: Colors.danger, marginTop: 8 },
     modalActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
     modalCancelButton: {
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 8,
-        backgroundColor: "#E5E7EB",
+        backgroundColor: Colors.light.border,
         marginRight: 12,
     },
     modalCancelText: { color: "#333", fontWeight: "600" },
@@ -726,7 +727,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 18,
         borderRadius: 8,
-        backgroundColor: "#7c3aed",
+        backgroundColor: Colors.secondary,
     },
     modalConfirmButtonDisabled: { opacity: 0.7 },
     modalConfirmText: { color: "#fff", fontWeight: "700" },

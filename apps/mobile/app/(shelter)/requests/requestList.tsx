@@ -15,6 +15,7 @@ import RequestCard, { RequestStatus } from "@/components/common/RequestCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { usePublicationContext } from "@/context/PublicationContext"
+import {Colors} from "@/constants/Colors"
 
 export default function ShelterRequests() {
     const router = useRouter()
@@ -205,7 +206,7 @@ export default function ShelterRequests() {
             />
             {error && (
                 <View style={{ padding: 12 }}>
-                    <Text style={{ color: "#C0392B" }}>{error}</Text>
+                    <Text style={{ color: Colors.danger }}>{error}</Text>
                 </View>
             )}
         </SafeAreaView>
@@ -213,7 +214,7 @@ export default function ShelterRequests() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F2F2F2" },
-    h1: { fontSize: 22, fontWeight: "900", color: "#1C1C1C" },
+    container: { flex: 1, backgroundColor: Colors.light.background },
+    h1: { fontSize: 22, fontWeight: "900", color: Colors.light.text },
     sub: { color: "#6B6B6B" },
 })

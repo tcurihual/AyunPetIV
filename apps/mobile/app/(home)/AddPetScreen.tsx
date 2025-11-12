@@ -350,7 +350,11 @@ const AddPetScreen = () => {
                             />
 
                             <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                                <Ionicons name="camera-outline" size={20} color="#A47CF3" />
+                                <Ionicons
+                                    name="camera-outline"
+                                    size={20}
+                                    color={Colors.secondary}
+                                />
                                 <Text style={styles.photoButtonText}>Seleccionar Foto</Text>
                             </TouchableOpacity>
 
