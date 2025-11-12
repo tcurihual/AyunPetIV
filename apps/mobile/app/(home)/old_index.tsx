@@ -1,6 +1,7 @@
 import React from "react"
 import { View, Text, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
+import {Colors} from "../../constants/Colors"
 
 export default function Home() {
     const router = useRouter()
@@ -33,7 +34,7 @@ export default function Home() {
                 <TouchableOpacity
                     style={{
                         marginTop: 12,
-                        backgroundColor: "#F9C80E",
+                        backgroundColor: Colors.primary,
                         paddingVertical: 10,
                         paddingHorizontal: 20,
                         borderRadius: 8,
@@ -48,7 +49,7 @@ export default function Home() {
                 <TouchableOpacity
                     style={{
                         marginTop: 12,
-                        backgroundColor: "#F7C948",
+                        backgroundColor: Colors.primary,
                         paddingVertical: 10,
                         paddingHorizontal: 20,
                         borderRadius: 8,

@@ -19,6 +19,7 @@ import Input from "@/components/ui/Input"
 import { useAuthContext } from "@/context/AuthContext"
 import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
+import { Colors } from "../../constants/Colors"
 
 export default function MyProfileScreen() {
     const { user, signOut, updateUser } = useAuthContext()
@@ -258,7 +259,7 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: Colors.light.background,
         padding: 20,
     },
     profileCard: {
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
     },
     editButton: {
         width: "30%",
-        backgroundColor: "#F9C80E",
+        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         width: "30%",
-        backgroundColor: "#c0392b",
+        backgroundColor: Colors.danger,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         flex: 1,
-        backgroundColor: "#007AFF",
+        backgroundColor: Colors.secondary,
         borderRadius: 12,
         paddingVertical: 15,
         alignItems: "center",
@@ -411,10 +412,10 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         paddingVertical: 12,
         paddingHorizontal: 16,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: Colors.light.background,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#e0e0e0",
+        borderColor: Colors.light.background,
     },
     readOnlyLabel: {
         fontSize: 14,

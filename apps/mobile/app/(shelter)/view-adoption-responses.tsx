@@ -101,7 +101,7 @@ export default function ViewAdoptionResponses() {
     if (isNaN(postId)) {
         return (
             <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color="#FF3B30" />
+                <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
                 <Text style={styles.errorText}>ID de publicación inválido</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                     <Text style={styles.backButtonText}>Volver</Text>
@@ -113,7 +113,7 @@ export default function ViewAdoptionResponses() {
     if (user?.role !== 21) {
         return (
             <View style={styles.errorContainer}>
-                <Ionicons name="lock-closed-outline" size={48} color="#DC2626" />
+                <Ionicons name="lock-closed-outline" size={48} color={Colors.danger} />
                 <Text style={styles.errorText}>Solo los dadores pueden ver las respuestas</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                     <Text style={styles.backButtonText}>Volver</Text>
@@ -135,7 +135,7 @@ export default function ViewAdoptionResponses() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backIconButton}>
-                    <Ionicons name="arrow-back" size={24} color="#1C1C1C" />
+                    <Ionicons name="arrow-back" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Respuestas del formulario</Text>
                 <View style={{ width: 24 }} />
@@ -163,7 +163,7 @@ export default function ViewAdoptionResponses() {
 
                 {postFormItems.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="document-text-outline" size={64} color="#9CA3AF" />
+                        <Ionicons name="document-text-outline" size={64} color={Colors.light.textSecondary} />
                         <Text style={styles.emptyTitle}>No hay formulario configurado</Text>
                         <Text style={styles.emptyText}>
                             Esta publicación no tiene preguntas asociadas
@@ -171,7 +171,7 @@ export default function ViewAdoptionResponses() {
                     </View>
                 ) : groupedResponses.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="chatbubbles-outline" size={64} color="#9CA3AF" />
+                        <Ionicons name="chatbubbles-outline" size={64} color={Colors.light.textSecondary} />
                         <Text style={styles.emptyTitle}>Sin respuestas</Text>
                         <Text style={styles.emptyText}>
                             {requesterId
@@ -188,7 +188,7 @@ export default function ViewAdoptionResponses() {
                                         <Ionicons
                                             name={getTypeIcon(item.questionType)}
                                             size={20}
-                                            color="#1C1C1C"
+                                            color={Colors.dark.text}
                                         />
                                     </View>
                                     <Text style={styles.questionText}>{item.questionContent}</Text>
@@ -203,7 +203,7 @@ export default function ViewAdoptionResponses() {
 
                                 {item.respondedBy && (
                                     <View style={styles.metaInfo}>
-                                        <Ionicons name="person-outline" size={14} color="#6B7280" />
+                                        <Ionicons name="person-outline" size={14} color={Colors.light.textSecondary} />
                                         <Text style={styles.metaText}>
                                             Usuario ID: {item.respondedBy}
                                         </Text>
@@ -215,7 +215,7 @@ export default function ViewAdoptionResponses() {
                 )}
 
                 <View style={styles.infoBox}>
-                    <Ionicons name="information-circle-outline" size={20} color="#1C1C1C" />
+                    <Ionicons name="information-circle-outline" size={20}color={Colors.dark.text} />
                     <Text style={styles.infoText}>
                         {requesterId
                             ? "Estas son las respuestas de este solicitante específico al formulario que configuraste."
@@ -230,7 +230,7 @@ export default function ViewAdoptionResponses() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
     },
     header: {
         flexDirection: "row",
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         backgroundColor: Colors.yellow,
         borderBottomWidth: 1,
-        borderBottomColor: "#E0D0A0",
+        borderBottomColor: Colors.primary,
     },
     backIconButton: {
         padding: 4,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
     },
     content: {
         flex: 1,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -275,18 +275,18 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         marginBottom: 4,
     },
     petSubtext: {
         fontSize: 14,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
     },
     loadingCard: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FFF9E6",
+        backgroundColor: Colors.light.background,
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -296,14 +296,14 @@ const styles = StyleSheet.create({
     loadingCardText: {
         marginLeft: 12,
         fontSize: 14,
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         fontWeight: "500",
     },
     responsesContainer: {
         paddingHorizontal: 16,
     },
     responseCard: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: "#FFF9E6",
+        backgroundColor: Colors.light.background,
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         lineHeight: 20,
     },
     answerContainer: {
@@ -348,14 +348,14 @@ const styles = StyleSheet.create({
     answerLabel: {
         fontSize: 12,
         fontWeight: "600",
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
         marginBottom: 4,
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
     answerText: {
         fontSize: 16,
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         lineHeight: 22,
     },
     metaInfo: {
@@ -364,17 +364,17 @@ const styles = StyleSheet.create({
         marginTop: 12,
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: "#F5F5F5",
+        borderTopColor: Colors.light.background,
     },
     metaText: {
         fontSize: 12,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
         marginLeft: 4,
     },
     infoBox: {
         flexDirection: "row",
         alignItems: "flex-start",
-        backgroundColor: "#FFF9E6",
+        backgroundColor: Colors.light.background,
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     infoText: {
         flex: 1,
         fontSize: 13,
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         marginLeft: 12,
         lineHeight: 18,
     },
@@ -396,13 +396,13 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
         marginTop: 16,
         marginBottom: 8,
     },
     emptyText: {
         fontSize: 14,
-        color: "#9CA3AF",
+        color: Colors.light.textSecondary,
         textAlign: "center",
         lineHeight: 20,
     },
@@ -410,25 +410,25 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
     },
     errorContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
         padding: 32,
     },
     errorText: {
         marginTop: 16,
         fontSize: 18,
         fontWeight: "600",
-        color: "#DC2626",
+        color: Colors.danger,
         textAlign: "center",
     },
     backButton: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     backButtonText: {
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         fontSize: 16,
         fontWeight: "600",
     },

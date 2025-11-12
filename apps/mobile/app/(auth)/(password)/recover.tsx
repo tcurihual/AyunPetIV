@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 
 import { passwordResetService } from "@/services/passwordReset"
+import {Colors} from "@/constants/Colors"
 
 const { width, height } = Dimensions.get("window")
 
@@ -107,7 +108,7 @@ export default function RecoveryPinScreen() {
             <View style={styles.content}>
                 <View style={styles.row}>
                     <View style={styles.iconCircle}>
-                        <Ionicons name="mail-outline" size={22} color="#A47CF3" />
+                        <Ionicons name="mail-outline" size={22} color= {Colors.secondary} />
                     </View>
                     <Text style={styles.instruction}>
                         Un código de recuperación fue{"\n"}enviado a{" "}
@@ -186,7 +187,7 @@ const useThemeStyles = (width: number, height: number) => {
             padding: 8,
         },
         header: {
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             width: "110%",
             height: headerHeight,
             alignItems: "center",
@@ -256,7 +257,7 @@ const useThemeStyles = (width: number, height: number) => {
             marginBottom: 18,
             fontSize: 15,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
             textAlign: "center",
             letterSpacing: 4,
@@ -264,7 +265,7 @@ const useThemeStyles = (width: number, height: number) => {
         button: {
             width: "80%",
             height: 45,
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
@@ -284,11 +285,11 @@ const useThemeStyles = (width: number, height: number) => {
             justifyContent: "center",
             marginTop: 12,
             borderWidth: 2,
-            borderColor: "#FFD24C",
+            borderColor: Colors.primary,
             backgroundColor: "#fff",
         },
         secondaryButtonText: {
-            color: "#FFD24C",
+            color: Colors.primary,
             fontWeight: "600",
             fontSize: 16,
         },

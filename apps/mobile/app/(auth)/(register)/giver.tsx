@@ -371,7 +371,7 @@ export default function RegisterScreen() {
                                         style={styles.removeImageButton}
                                         onPress={removeProfileImage}
                                     >
-                                        <Ionicons name="close-circle" size={32} color="#ff4444" />
+                                        <Ionicons name="close-circle" size={32} color={Colors.danger} />
                                     </TouchableOpacity>
                                 </View>
                             ) : (
@@ -379,7 +379,7 @@ export default function RegisterScreen() {
                                     style={styles.uploadButton}
                                     onPress={handleSelectProfileImage}
                                 >
-                                    <Ionicons name="camera-outline" size={40} color="#A47CF3" />
+                                    <Ionicons name="camera-outline" size={40} color={Colors.secondary}  />
                                     <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
                                 </TouchableOpacity>
                             )}
@@ -625,7 +625,7 @@ export default function RegisterScreen() {
                                                 style={{
                                                     flexDirection: "row",
                                                     alignItems: "center",
-                                                    backgroundColor: "#f5f5f5",
+                                                    backgroundColor: Colors.light.background,
                                                     padding: 10,
                                                     borderRadius: 8,
                                                     marginBottom: 5,
@@ -672,7 +672,7 @@ export default function RegisterScreen() {
                                                     <Ionicons
                                                         name="close-circle"
                                                         size={18}
-                                                        color="#ff4444"
+                                                        color= {Colors.danger}
                                                     />
                                                 </TouchableOpacity>
                                             </View>
@@ -695,7 +695,7 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
+            <StatusBar backgroundColor= "Colors.primary" barStyle="dark-content" />
             <Modal visible={showTypeModal} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
@@ -776,7 +776,7 @@ export default function RegisterScreen() {
                                             >
                                                 <Text
                                                     style={{
-                                                        color: "#007AFF",
+                                                        color: Colors.secondary,
                                                         fontSize: 14,
                                                         textDecorationLine: "underline",
                                                         marginTop: 4,
@@ -791,7 +791,7 @@ export default function RegisterScreen() {
                                             style={[
                                                 styles.button,
                                                 (!acceptedTerms || disabled) && {
-                                                    backgroundColor: "#F2E4A2",
+                                                    backgroundColor: Colors.primary,
                                                 },
                                             ]}
                                             onPress={() => {
@@ -849,7 +849,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             padding: 8,
         },
         header: {
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.light.background,
             width: "112%",
             height: headerHeight,
             alignItems: "center",
@@ -902,14 +902,14 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             justifyContent: "center",
             alignItems: "center",
             borderWidth: 2,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             marginRight: isSmallScreen ? 10 : 15,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
             elevation: 5,
         },
         stepCircle: {
             fontSize: isSmallScreen ? 14 : 16,
-            color: "#A47CF3",
+            color: Colors.secondary,
             fontWeight: "bold",
             textAlign: "center",
         },
@@ -949,7 +949,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             padding: 12,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: "#ffeaa7",
+            borderColor: Colors.primary,
             lineHeight: 20,
         },
         input: {
@@ -961,13 +961,13 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             marginBottom: 15,
             fontSize: 16,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
         },
         button: {
             width: "100%",
             height: Math.max(height * 0.06, 50),
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
@@ -989,11 +989,11 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             marginTop: 15,
             marginBottom: 30,
             borderWidth: 2,
-            borderColor: "#FFD24C",
+            borderColor: Colors.primary,
             backgroundColor: "#fff",
         },
         secondaryButtonText: {
-            color: "#FFD24C",
+            color: Colors.primary,
             fontWeight: "600",
             fontSize: 16,
         },
@@ -1006,7 +1006,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             backgroundColor: "#fff",
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             gap: 8,
         },
         optionButtonText: {
@@ -1025,9 +1025,9 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             width: Math.min(width * 0.4, 150),
             height: Math.min(width * 0.4, 150),
             borderRadius: Math.min(width * 0.2, 75),
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
             borderWidth: 2,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             borderStyle: "dashed",
             justifyContent: "center",
             alignItems: "center",
@@ -1036,7 +1036,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
         uploadButtonText: {
             marginTop: 8,
             fontSize: 12,
-            color: "#A47CF3",
+            color: Colors.secondary,
             fontWeight: "600",
         },
         imagePreviewContainer: {
@@ -1048,7 +1048,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             height: Math.min(width * 0.4, 150),
             borderRadius: Math.min(width * 0.2, 75),
             borderWidth: 3,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
         },
         removeImageButton: {
             position: "absolute",

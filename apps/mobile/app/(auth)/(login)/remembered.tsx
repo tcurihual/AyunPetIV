@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     },
     forgotPassword: {
         marginTop: 15,
-        color: "#7c3aed",
+        color: Colors.secondary,
         textDecorationLine: "underline",
     },
     title: {

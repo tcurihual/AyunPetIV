@@ -31,8 +31,8 @@ const Welcome = () => {
                 <Text style={styles.titleDesc}>mascotas en un solo lugar!</Text>
                 <View style={styles.iconContainer}>
                     <Ionicons name="paw" size={30} color="#555" style={styles.icon1} />
-                    <Ionicons name="paw" size={40} color="#9B6DD7" style={styles.icon2} />
-                    <Ionicons name="paw" size={30} color="#9B6DD7" style={styles.icon3} />
+                    <Ionicons name="paw" size={40} color= {Colors.secondary} style={styles.icon2} />
+                    <Ionicons name="paw" size={30} color= {Colors.secondary} style={styles.icon3} />
                     <Ionicons name="paw" size={35} color="#555" style={styles.icon4} />
                 </View>
             </View>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     buttonPrimary: {
-        backgroundColor: "#9B6DD7",
+        backgroundColor: Colors.secondary,
         borderRadius: 20,
         paddingVertical: 12,
         paddingHorizontal: 25,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     LoginText: { color: "#eee", fontSize: 16 },
     loginButton: {
         backgroundColor: "rgba(155, 109, 215, 0.15)",
-        borderColor: "#9B6DD7",
+        borderColor: Colors.secondary,
         borderWidth: 1.5,
         borderRadius: 20,
         paddingVertical: 12,

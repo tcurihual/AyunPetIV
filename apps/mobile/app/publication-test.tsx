@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native"
 import { usePublications } from "@/context/PublicationContext"
 import { useAuthContext } from "@/context/AuthContext"
+import { Colors } from "@/constants/Colors"
 
 /**
  * Componente de prueba para demostrar la funcionalidad del contexto de publicaciones
@@ -240,13 +241,13 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     errorText: {
-        color: "#c62828",
+        color: Colors.danger,
         fontSize: 14,
     },
     clearErrorButton: {
         marginTop: 5,
         padding: 5,
-        backgroundColor: "#f44336",
+        backgroundColor: Colors.danger,
         borderRadius: 5,
         alignSelf: "flex-start",
     },
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#ff9800",
     },
     deleteButton: {
-        backgroundColor: "#f44336",
+        backgroundColor: Colors.danger,
     },
     buttonText: {
         color: "white",

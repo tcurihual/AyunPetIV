@@ -15,6 +15,7 @@ import MyPublicationCard from "@/components/common/MyPublicationCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { getPetsByOwner, getPetImage } from "@/services/petAsyncStorage"
 import { toMediaUrl } from "@/utils/mediaUrl"
+import {Colors} from "@/constants/Colors"
 
 const { width } = Dimensions.get("window")
 
@@ -162,13 +163,13 @@ export default function MyPublications() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F5F5F5" },
+    container: { flex: 1, backgroundColor: Colors.light.background },
     header: {
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 20,
         paddingVertical: 15,
-        backgroundColor: "#F9C80E",
+        backgroundColor: Colors.primary,
     },
     headerTitle: { fontSize: 18, fontWeight: "600", color: "#000" },
     subtitle: { fontSize: 14, color: "#666", paddingHorizontal: 20, paddingVertical: 15 },
@@ -180,12 +181,12 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     filterButton: {
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.light.disabled,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
     },
-    filterButtonActive: { backgroundColor: "#FBC02D" },
+    filterButtonActive: { backgroundColor: Colors.primary },
     filterText: { fontSize: 14, color: "#666", fontWeight: "500" },
     filterTextActive: { color: "#000", fontWeight: "600" },
     listContainer: { paddingHorizontal: 20, paddingBottom: 20 },

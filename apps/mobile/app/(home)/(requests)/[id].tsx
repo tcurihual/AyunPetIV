@@ -6,6 +6,7 @@ import { http } from "@/services/http"
 import { useAuthContext } from "@/context/AuthContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { Colors } from "@/constants/Colors"
 
 export default function RequestDetail() {
 
@@ -268,7 +269,7 @@ export default function RequestDetail() {
     if (!request) return <View style={{ flex: 1 }} />
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+        <View style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <RequestDetailCard
                 petPhoto={resolvedPetPhoto || "https://placehold.co/400x400?text=Mascota"}
                 petName={resolvedPetName || "Mascota"}
@@ -284,16 +285,16 @@ export default function RequestDetail() {
             {isRequester && (
                 <View style={{ padding: 12, gap: 16 }}>
                     <View style={{ gap: 8 }}>
-                        <Text style={{ fontWeight: "700", color: "#1C1C1C" }}>
+                        <Text style={{ fontWeight: "700", color: Colors.dark.text }}>
                             Mensaje para el cuidador
                         </Text>
                         {!isEditingMessage ? (
                             <View
                                 style={{
-                                    backgroundColor: "#FFFFFF",
+                                    backgroundColor: Colors.light.textSecondary,
                                     borderRadius: 8,
                                     borderWidth: 1,
-                                    borderColor: "#E5E7EB",
+                                    borderColor: Colors.light.border,
                                     padding: 12,
                                 }}
                             >
@@ -309,7 +310,7 @@ export default function RequestDetail() {
                                     style={{
                                         marginTop: 12,
                                         alignSelf: "flex-start",
-                                        backgroundColor: "#2563EB",
+                                        backgroundColor: Colors.secondary,
                                         paddingVertical: 8,
                                         paddingHorizontal: 16,
                                         borderRadius: 8,
@@ -332,20 +333,20 @@ export default function RequestDetail() {
                                     }}
                                     editable={!savingMessage}
                                     style={{
-                                        backgroundColor: "#FFFFFF",
+                                        backgroundColor: Colors.light.textSecondary,
                                         borderRadius: 8,
                                         borderWidth: 1,
-                                        borderColor: "#E5E7EB",
+                                        borderColor: Colors.light.border,
                                         padding: 12,
                                         minHeight: 110,
                                         textAlignVertical: "top",
                                         color: "#1F2933",
                                     }}
                                     placeholder="Agrega un mensaje para el cuidador..."
-                                    placeholderTextColor="#9CA3AF"
+                                    placeholderTextColor={Colors.light.textSecondary}
                                 />
                                 {messageError ? (
-                                    <Text style={{ color: "#C0392B" }}>{messageError}</Text>
+                                    <Text style={{ color: Colors.danger }}>{messageError}</Text>
                                 ) : null}
                                 <View style={{ flexDirection: "row", gap: 10 }}>
                                     <Pressable
@@ -355,8 +356,8 @@ export default function RequestDetail() {
                                             flex: 1,
                                             backgroundColor:
                                                 !messageChanged || savingMessage
-                                                    ? "#D1D5DB"
-                                                    : "#2563EB",
+                                                    ? Colors.light.border
+                                                    : Colors.secondary,
                                             padding: 12,
                                             borderRadius: 8,
                                             alignItems: "center",
@@ -375,7 +376,7 @@ export default function RequestDetail() {
                                         disabled={savingMessage}
                                         style={{
                                             flex: 1,
-                                            backgroundColor: "#E5E7EB",
+                                            backgroundColor: Colors.light.border,
                                             padding: 12,
                                             borderRadius: 8,
                                             alignItems: "center",
@@ -392,7 +393,7 @@ export default function RequestDetail() {
                     <Pressable
                         onPress={handleDelete}
                         style={{
-                            backgroundColor: "#C0392B",
+                            backgroundColor: Colors.danger,
                             padding: 12,
                             borderRadius: 8,
                             alignItems: "center",
