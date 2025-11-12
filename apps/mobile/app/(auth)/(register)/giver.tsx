@@ -353,6 +353,11 @@ export default function RegisterScreen() {
                                 giverType === "shelter" ? "Nombre de fundación" : "Nombre completo"
                             }
                             placeholder="Juan Pérez"
+                            helperText={
+                                giverType === "shelter"
+                                    ? "Nombre legal o comercial de tu fundación"
+                                    : "Ingresa tu nombre y apellido"
+                            }
                         />
 
                         <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
@@ -395,6 +400,7 @@ export default function RegisterScreen() {
                             control={control}
                             label="RUT"
                             placeholder="12.345.678-9"
+                            helperText="Ingresa tu RUT con puntos y guión (ej: 12.345.678-9)"
                             inputProps={{
                                 onChangeText: (text: string) => {
                                     // Limpiar el error cuando el usuario cambia el valor
@@ -416,7 +422,8 @@ export default function RegisterScreen() {
                             name="password"
                             control={control}
                             label="Contraseña"
-                            placeholder="••••••••"
+                            placeholder="Ingresa tu contraseña"
+                            helperText="Mínimo 8 caracteres. Debe incluir mayúsculas, minúsculas y números"
                             type="password"
                         />
                         <Input<GiverRegisterFormType>
@@ -424,7 +431,8 @@ export default function RegisterScreen() {
                             name="verifyPassword"
                             control={control}
                             label="Repetir contraseña"
-                            placeholder="••••••••"
+                            placeholder="Repite tu contraseña"
+                            helperText="Ingresa la misma contraseña para confirmar"
                             type="password"
                         />
                     </>
@@ -437,7 +445,8 @@ export default function RegisterScreen() {
                             name="email"
                             control={control}
                             label="Correo electrónico"
-                            placeholder="correo@dominio.com"
+                            placeholder="correo@ejemplo.com"
+                            helperText="Usaremos este correo para enviarte información importante"
                             type="email"
                             inputProps={{
                                 onChangeText: (text: string) => {
@@ -456,6 +465,7 @@ export default function RegisterScreen() {
                             control={control}
                             label="Teléfono"
                             placeholder="12345678"
+                            helperText="Ingresa solo 8 dígitos (sin +56 9)"
                         />
                     </>
                 )
