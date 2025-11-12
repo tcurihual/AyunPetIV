@@ -1,79 +1,58 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
+import React, { createContext, useContext, useMemo, useState } from "react"
 import { http } from "@/services/http"
 import { useAuthContext } from "./AuthContext"
+import { getUser } from "@/utils/storage"
 import { Report } from "@/utils/types"
+import type { User } from "./AuthContext"
 
 interface CreateReportPayload {
-    postid: number
+    postid?: number
+    messageid?: number
     description: string
 }
 
 interface ReportContextType {
-    reports: Report[]
     loading: boolean
     error: string | null
-    getReports: () => Promise<void>
     createReport: (data: CreateReportPayload) => Promise<Report>
-    refreshReports: () => Promise<void>
 }
 
 const ReportContext = createContext<ReportContextType | null>(null)
 
 export const ReportProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-    const [reports, setReports] = useState<Report[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
-    const { user, status } = useAuthContext()
-
-    // Obtener automáticamente los reportes cuando el usuario está autenticado
-    useEffect(() => {
-        if (status === "authenticated" && user) {
-            getReports()
-        }
-    }, [status, user])
-
-    /**
-     * GET: Obtener reportes del usuario autenticado
-     * Lista todos los reportes creados por el usuario
-     */
-    async function getReports() {
-        if (!user) {
-            setError("Usuario no autenticado")
-            return
-        }
-
-        setLoading(true)
-        setError(null)
-
-        try {
-            const response = await http.get<{
-                status: number
-                message: string
-                type: string
-                values: {
-                    reports: Report[]
-                }
-            }>("/v1/reports")
-
-            if (response.data.values) {
-                setReports(response.data.values.reports || [])
-            }
-        } catch (e: any) {
-            const errorMessage = e?.response?.data?.message || "Error al obtener reportes"
-            setError(errorMessage)
-            console.error("Error fetching reports:", e)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const { user } = useAuthContext()
 
     /**
      * POST: Crear un nuevo reporte
-     * Permite a cualquier usuario autenticado reportar una publicación
+     * Permite a cualquier usuario autenticado reportar una publicación o mensaje
+     * 
+     * NOTA: El GET de reportes (listar todos) es solo para administradores,
+     * por lo que NO se debe llamar automáticamente en el contexto.
+     * Los reportes se gestionan desde el panel de administración.
      */
     async function createReport(data: CreateReportPayload): Promise<Report> {
-        if (!user) {
-            throw new Error("Usuario no autenticado")
+        // Intentar obtener usuario del contexto, si no está disponible, del storage
+        let currentUser = user
+        
+        if (!currentUser || !currentUser.id) {
+            currentUser = await getUser<User>()
+        }
+        
+        if (!currentUser || !currentUser.id) {
+            const errorMsg = "Debes iniciar sesión para reportar"
+            setError(errorMsg)
+            throw new Error(errorMsg)
+        }
+
+        // Validar que tenga postid o messageid, pero no ambos
+        if (!data.postid && !data.messageid) {
+            throw new Error("Se requiere postid o messageid para crear un reporte")
+        }
+
+        if (data.postid && data.messageid) {
+            throw new Error("No se puede reportar una publicación y un mensaje al mismo tiempo")
         }
 
         setLoading(true)
@@ -81,22 +60,18 @@ export const ReportProvider: React.FC<React.PropsWithChildren> = ({ children }) 
 
         try {
             const response = await http.post<{
-                status: number
                 message: string
                 type: string
-                values: {
-                    report: Report
-                }
-            }>("/v1/reports", {
-                postid: data.postid,
+                data: Report
+            }>("/v1/adoptions/reports", {
+                userId: Number(currentUser.id),
+                postId: data.postid,
+                messageId: data.messageid,
                 description: data.description,
             })
 
-            const newReport = response.data.values.report
-
-            // Actualizar el estado local con el nuevo reporte
-            setReports((prev) => [newReport, ...prev])
-
+            const newReport = response.data.data
+            setError(null)
             return newReport
         } catch (e: any) {
             const errorMessage = e?.response?.data?.message || "Error al crear reporte"
@@ -108,23 +83,13 @@ export const ReportProvider: React.FC<React.PropsWithChildren> = ({ children }) 
         }
     }
 
-    /**
-     * Refrescar reportes (útil para pull-to-refresh)
-     */
-    async function refreshReports(): Promise<void> {
-        await getReports()
-    }
-
     const value = useMemo(
         () => ({
-            reports,
             loading,
             error,
-            getReports,
             createReport,
-            refreshReports,
         }),
-        [reports, loading, error]
+        [loading, error]
     )
 
     return <ReportContext.Provider value={value}>{children}</ReportContext.Provider>

@@ -28,6 +28,16 @@ const normalizeMediaUrls = (list: any[] | undefined) => {
     })
 }
 
+async function getProfilePicture(userId: number): Promise<string | null> {
+    try {
+        const response = await axios.get(`${MEDIA_URL}/uploads/profile_picture/${userId}`)
+        const files = response.data?.data as string[]
+        return files?.[0] ?? null
+    } catch {
+        return null
+    }
+}
+
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21, GIVER: 22 } as const
 type RoleType = keyof typeof ROLES
 const roleIdFromType = (rt: RoleType) => ROLES[rt]
@@ -50,7 +60,8 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
 
-    return AppResponse(res, 200, "OK", data as User["Row"])
+    const picture = await getProfilePicture(data.id)
+    return AppResponse(res, 200, "OK", { ...data, profile_picture: picture } as User["Row"])
 }
 
 export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
@@ -116,8 +127,15 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
         const { data, error, count } = await query.order("id", { ascending: true }).range(from, to)
         if (error) throw new AppError(500, error.message)
 
+        const usersWithImages = await Promise.all(
+            (data ?? []).map(async (user) => ({
+                ...user,
+                profile_picture: await getProfilePicture(user.id),
+            }))
+        )
+
         return AppResponse(res, 200, "Listado de usuarios", {
-            items: data ?? [],
+            items: usersWithImages,
             total: count ?? 0,
             page,
             pageSize,
@@ -134,7 +152,8 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
     if (!isAdmin(req) && !isSelf(req, id)) throw new AppError(403, "No autorizado")
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
-    return AppResponse(res, 200, "Usuario", data as User["Row"])
+    const picture = await getProfilePicture(Number(id))
+    return AppResponse(res, 200, "Usuario", { ...data, profile_picture: picture } as User["Row"])
 }
 
 export const createUser = async (req: AuthenticatedRequest, res: Response) => {

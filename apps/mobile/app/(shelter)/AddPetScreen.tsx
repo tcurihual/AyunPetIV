@@ -388,7 +388,7 @@ const AddPetScreen = () => {
                                 style={[styles.photoButton, { flex: 1, marginLeft: 6 }]}
                                 onPress={pickImage}
                             >
-                                <Ionicons name="image-outline" size={20} color="#A47CF3" />
+                                <Ionicons name="image-outline" size={20} color={Colors.secondary} />
                                 <Text style={styles.photoButtonText}>Galería</Text>
                             </TouchableOpacity>
 
@@ -432,11 +432,11 @@ const getResponsiveStyles = (width: number, height: number) => {
     return StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
         },
         scrollContainer: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
         },
         cardWrapper: {
             padding: containerPadding,
@@ -493,7 +493,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             marginBottom: 15,
             fontSize: fontSize,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
         },
         textArea: {
@@ -504,7 +504,7 @@ const getResponsiveStyles = (width: number, height: number) => {
         pickerWrapper: {
             marginBottom: 15,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             backgroundColor: "#fff",
             borderRadius: 12,
             overflow: "hidden",
@@ -517,7 +517,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             paddingVertical: 5,
         },
         errorText: {
-            color: "#e74c3c",
+            color: Colors.danger,
             fontSize: isSmallScreen ? 11 : 12,
             marginBottom: 8,
             marginTop: -10,
@@ -531,7 +531,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             backgroundColor: "#fff",
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             gap: 8,
             marginBottom: 20,
         },
@@ -564,7 +564,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             shadowRadius: 4,
         },
         submitButtonDisabled: {
-            backgroundColor: "#E0E0E0",
+            backgroundColor: Colors.light.disabled,
         },
         submitButtonText: {
             color: "#222",

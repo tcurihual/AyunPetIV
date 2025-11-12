@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     categoryButtonActive: {
-        backgroundColor: "#FFD700",
+        backgroundColor: Colors.primary,
     },
     categoryEmoji: { fontSize: 16, lineHeight: 18 },
     categoryIcon: { width: 16, height: 16, resizeMode: "contain" },

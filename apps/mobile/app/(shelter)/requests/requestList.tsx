@@ -15,6 +15,7 @@ import RequestCard, { RequestStatus } from "@/components/common/RequestCard"
 import { useAuthContext } from "@/context/AuthContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { usePublicationContext } from "@/context/PublicationContext"
+import {Colors} from "@/constants/Colors"
 
 export default function ShelterRequests() {
     const router = useRouter()
@@ -47,7 +48,8 @@ export default function ShelterRequests() {
                     it.pet?.name
                 )
                 const hasImage = !!(
-                    (it.postImages && it.postImages[0]) || (it.petImages && it.petImages[0])
+                    (it.postImages && it.postImages[0]) ||
+                    (it.petImages && it.petImages[0])
                 )
 
                 if ((hasName && hasImage) || resolved[postId]) continue
@@ -61,8 +63,7 @@ export default function ShelterRequests() {
                             [postId]: { name: pub.name, imageUri: (pub.image as any)?.uri },
                         }))
                     }
-                } catch (e) {
-                }
+                } catch (e) {}
             }
         }
 
@@ -118,7 +119,9 @@ export default function ShelterRequests() {
 
     if (loading && (!adoptionRequests || adoptionRequests.length === 0)) {
         return (
-            <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+            <SafeAreaView
+                style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+            >
                 <ActivityIndicator size="large" />
             </SafeAreaView>
         )
@@ -136,25 +139,9 @@ export default function ShelterRequests() {
                             Total: {adoptionRequests?.length ?? 0}
                         </Text>
                         <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
-                            Última carga: {lastLoaded ? new Date(lastLoaded).toLocaleTimeString() : "-"}
+                            Última carga:{" "}
+                            {lastLoaded ? new Date(lastLoaded).toLocaleTimeString() : "-"}
                         </Text>
-                        <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
-                            <Pressable
-                                onPress={async () => {
-                                    await getAdoptionRequests()
-                                    setLastLoaded(Date.now())
-                                }}
-                                style={{ padding: 8, backgroundColor: "#E5E7EB", borderRadius: 8 }}
-                            >
-                                <Text>Refrescar</Text>
-                            </Pressable>
-                            <Pressable
-                                onPress={handleManualRefresh}
-                                style={{ padding: 8, backgroundColor: "#E5E7EB", borderRadius: 8 }}
-                            >
-                                <Text>Pull-refresh</Text>
-                            </Pressable>
-                        </View>
                     </View>
                 }
                 data={adoptionRequests ?? []}
@@ -219,7 +206,7 @@ export default function ShelterRequests() {
             />
             {error && (
                 <View style={{ padding: 12 }}>
-                    <Text style={{ color: "#C0392B" }}>{error}</Text>
+                    <Text style={{ color: Colors.danger }}>{error}</Text>
                 </View>
             )}
         </SafeAreaView>
@@ -227,7 +214,7 @@ export default function ShelterRequests() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F2F2F2" },
-    h1: { fontSize: 22, fontWeight: "900", color: "#1C1C1C" },
+    container: { flex: 1, backgroundColor: Colors.light.background },
+    h1: { fontSize: 22, fontWeight: "900", color: Colors.light.text },
     sub: { color: "#6B6B6B" },
 })

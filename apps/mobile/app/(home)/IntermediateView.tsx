@@ -12,10 +12,11 @@ import {
 import { useRouter } from "expo-router"
 import { setPrefsDone } from "@/utils/storage"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Colors } from "@/constants/Colors"
 
 const { width } = Dimensions.get("window")
-const YELLOW = "#FFD24C"
-const PURPLE = "#A47CF3"
+const YELLOW = Colors.primary
+const PURPLE = Colors.secondary
 
 type PetType = "dog" | "cat" | "both"
 type GenderPref = "any" | "male" | "female"

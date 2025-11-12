@@ -4,6 +4,7 @@ import { useRouter } from "expo-router"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from "expo-file-system"
+import { Colors } from "@/constants/Colors"
 
 type Captured = { uri: string; saved?: boolean }
 
@@ -48,7 +49,7 @@ export default function CameraScreen() {
                 <TouchableOpacity
                     onPress={requestCamPerm}
                     style={{
-                        backgroundColor: "#111827",
+                        backgroundColor: "Colors.light.shadow",
                         paddingHorizontal: 16,
                         paddingVertical: 10,
                         borderRadius: 8,
@@ -164,7 +165,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={toggleFlash}
                                 style={{
-                                    backgroundColor: "#111827",
+                                    backgroundColor: "Colors.light.shadow",
                                     paddingVertical: 10,
                                     paddingHorizontal: 16,
                                     borderRadius: 999,
@@ -178,7 +179,7 @@ export default function CameraScreen() {
                                 onPress={takePhoto}
                                 disabled={taking}
                                 style={{
-                                    backgroundColor: taking ? "#6b7280" : "#f59e0b",
+                                    backgroundColor: taking ? "#6b7280" : Colors.light.warning,
                                     paddingVertical: 10,
                                     paddingHorizontal: 24,
                                     borderRadius: 999,
@@ -194,7 +195,7 @@ export default function CameraScreen() {
                                 onPress={() => (photos.length ? setPreviewIdx(0) : null)}
                                 disabled={!photos.length}
                                 style={{
-                                    backgroundColor: photos.length ? "#111827" : "#374151",
+                                    backgroundColor: photos.length ? "Colors.light.shadow" : "#374151",
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 999,
@@ -207,7 +208,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={doneAndBack}
                                 style={{
-                                    backgroundColor: "#10b981",
+                                    backgroundColor: Colors.light.success,
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 999,
@@ -238,7 +239,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={() => setPreviewIdx((i) => (i! > 0 ? i! - 1 : i))}
                                 style={{
-                                    backgroundColor: "#111827",
+                                    backgroundColor: "Colors.light.shadow",
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 8,
@@ -250,7 +251,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={() => setPreviewIdx(null)}
                                 style={{
-                                    backgroundColor: "#111827",
+                                    backgroundColor: "Colors.light.shadow",
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 8,
@@ -264,7 +265,7 @@ export default function CameraScreen() {
                                     setPreviewIdx((i) => (i! < photos.length - 1 ? i! + 1 : i))
                                 }
                                 style={{
-                                    backgroundColor: "#111827",
+                                    backgroundColor: "Colors.light.shadow",
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 8,
@@ -290,7 +291,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={saveAll}
                                 style={{
-                                    backgroundColor: "#3b82f6",
+                                    backgroundColor: Colors.secondary,
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 8,
@@ -302,7 +303,7 @@ export default function CameraScreen() {
                             <TouchableOpacity
                                 onPress={doneAndBack}
                                 style={{
-                                    backgroundColor: "#10b981",
+                                    backgroundColor: Colors.light.success,
                                     paddingVertical: 8,
                                     paddingHorizontal: 16,
                                     borderRadius: 8,

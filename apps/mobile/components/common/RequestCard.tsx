@@ -10,6 +10,7 @@ export interface RequestCardProps {
     date: string
     status: RequestStatus | "Aceptada"
     onPress?: () => void
+    isOwnRequest?: boolean // true si el usuario actual es el solicitante
 }
 
 const statusStyles: Record<RequestStatus, { bg: string; fg: string }> = {
@@ -26,13 +27,14 @@ export default function RequestCard({
     date,
     status,
     onPress,
+    isOwnRequest = false,
 }: RequestCardProps) {
     const normalizedKey =
-        status === "Aceptada"
-            ? ("Aprobada" as RequestStatus)
-            : (status as RequestStatus)
+        status === "Aceptada" ? ("Aprobada" as RequestStatus) : (status as RequestStatus)
     const st = statusStyles[normalizedKey] ?? statusStyles.Pendiente
     const displayStatus = status
+
+    const requesterText = isOwnRequest ? "ti" : requester
 
     return (
         <View style={styles.card}>
@@ -47,7 +49,7 @@ export default function RequestCard({
 
                 <View style={{ gap: 2, marginTop: 2 }}>
                     <Text style={styles.meta}>
-                        Solicitado por <Text style={styles.metaBold}>{requester}</Text>
+                        Solicitado por <Text style={styles.metaBold}>{requesterText}</Text>
                     </Text>
                     <Text style={styles.meta}>{date}</Text>
                 </View>

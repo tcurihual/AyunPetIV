@@ -130,8 +130,8 @@ export default function ShelterDashboard() {
 
             const solicitudesData = [
                 { text: "Pendientes", value: pendientes, color: "#FFC107" },
-                { text: "Aceptadas", value: aceptadas, color: "#10B981" },
-                { text: "Rechazadas", value: rechazadas, color: "#F44336" },
+                { text: "Aceptadas", value: aceptadas, color: Colors.light.success },
+                { text: "Rechazadas", value: rechazadas, color: Colors.danger },
             ]
 
             const groupedPubs = giverPublications.reduce(
@@ -145,7 +145,7 @@ export default function ShelterDashboard() {
                 {}
             )
 
-            const barChartColors = [Colors.purple, Colors.yellow, tintColor, "#8B5CF6"]
+            const barChartColors = [Colors.purple, Colors.yellow, tintColor, Colors.secondary]
             const publicacionesData = Object.values(groupedPubs).map((d, index) => ({
                 ...d,
                 frontColor: barChartColors[index % barChartColors.length],

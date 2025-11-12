@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         padding: 24,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
     },
     backContainer: {
         position: "absolute",
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: "bold",
-        color: "#FAD02E",
+        color: Colors.primary,
         marginBottom: 8,
         textAlign: "center",
     },
@@ -131,14 +131,14 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     button: {
-        backgroundColor: "#FAD02E",
+        backgroundColor: Colors.primary,
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: "center",
         marginTop: 16,
     },
     buttonText: {
-        color: "#FFFFFF",
+        color: Colors.light.textSecondary,
         fontWeight: "600",
         fontSize: 16,
     },

@@ -93,7 +93,7 @@ export default function AdoptionRequestForm() {
     if (isNaN(postId)) {
         return (
             <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color="#DC2626" />
+                <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
                 <Text style={styles.errorText}>ID de publicación inválido</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                     <Text style={styles.backButtonText}>Volver</Text>
@@ -115,7 +115,7 @@ export default function AdoptionRequestForm() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backIconButton}>
-                    <Ionicons name="arrow-back" size={24} color="#1C1C1C" />
+                    <Ionicons name="arrow-back" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Solicitar adopción</Text>
                 <View style={{ width: 24 }} />
@@ -213,12 +213,12 @@ export default function AdoptionRequestForm() {
                         >
                             {submitting ? (
                                 <>
-                                    <ActivityIndicator size="small" color="#FFFFFF" />
+                                    <ActivityIndicator size="small" color={Colors.light.textSecondary} />
                                     <Text style={styles.submitButtonText}>Enviando...</Text>
                                 </>
                             ) : (
                                 <>
-                                    <Ionicons name="send-outline" size={20} color="#FFFFFF" />
+                                    <Ionicons name="send-outline" size={20} color={Colors.light.textSecondary }/>
                                     <Text style={styles.submitButtonText}>
                                         Enviar solicitud de adopción
                                     </Text>
@@ -235,7 +235,7 @@ export default function AdoptionRequestForm() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
     },
     header: {
         flexDirection: "row",
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         backgroundColor: Colors.yellow,
         borderBottomWidth: 1,
-        borderBottomColor: "#E0D0A0",
+        borderBottomColor: Colors.primary,
     },
     backIconButton: {
         padding: 4,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
     },
     content: {
         flex: 1,
@@ -261,12 +261,12 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFF9E6",
+        backgroundColor: Colors.light.background,
         margin: 16,
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#E0D0A0",
+        borderColor: Colors.primary,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -280,12 +280,12 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         marginBottom: 4,
     },
     petSubtext: {
         fontSize: 14,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
     },
     section: {
         marginHorizontal: 16,
@@ -294,29 +294,29 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         marginBottom: 8,
     },
     sectionDescription: {
         fontSize: 14,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
         marginBottom: 12,
     },
     messageInput: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.light.textSecondary,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#E0D0A0",
+        borderColor: Colors.primary,
         padding: 16,
         fontSize: 15,
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         minHeight: 120,
     },
     footer: {
         padding: 16,
-        backgroundColor: "#FFF9E6",
+        backgroundColor: Colors.light.background,
         borderTopWidth: 1,
-        borderTopColor: "#E0D0A0",
+        borderTopColor: Colors.primary,
     },
     submitButton: {
         flexDirection: "row",
@@ -332,38 +332,38 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     submitButtonDisabled: {
-        backgroundColor: "#E0D0A0",
+        backgroundColor: Colors.primary,
         shadowOpacity: 0,
     },
     submitButtonText: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         marginLeft: 8,
     },
     loadingContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: "#6B7280",
+        color: Colors.light.textSecondary,
     },
     errorContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FFFEF7",
+        backgroundColor: Colors.light.background,
         padding: 32,
     },
     errorText: {
         marginTop: 16,
         fontSize: 18,
         fontWeight: "600",
-        color: "#DC2626",
+        color: Colors.danger,
         textAlign: "center",
     },
     backButton: {
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     backButtonText: {
-        color: "#1C1C1C",
+        color: Colors.dark.text,
         fontSize: 16,
         fontWeight: "600",
     },
