@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter, useSegments } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 
@@ -10,27 +10,24 @@ export default function AuthRedirect() {
 
     useEffect(() => {
         if (status === "loading") return
-        redirected.current = false  
+        if (!user) return
 
         const currentPath = `/${segments.join("/")}`
-        const inPrivateGroup = segments[0] === "(home)" || segments[0] === "(shelter)"
+        const firstSegment = segments[0]
+        const inPrivateGroup = firstSegment === "(home)" || firstSegment === "(shelter)"
+        const isGiverOrShelter = user.role === 21 || user.role === 22
+        const correctGroup = isGiverOrShelter ? "(shelter)" : "(home)"
 
-        if (status === "authenticated" && user) {
-            // Role 21 y 22 son givers/shelter, van a (shelter)
-            // Role 19 y 20 son admin/user, van a (home)
-            const isGiverOrShelter = user.role === 21 || user.role === 22
-            const isInCorrectGroup =
-                (isGiverOrShelter && segments[0] === "(shelter)") ||
-                (!isGiverOrShelter && segments[0] === "(home)")
-
-            if (!isInCorrectGroup && !redirected.current) {
+        // Solo redirigir si está autenticado y en un grupo incorrecto
+        if (status === "authenticated" && inPrivateGroup) {
+            if (firstSegment !== correctGroup && !redirected.current) {
                 redirected.current = true
                 router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
             }
-
             return
         }
 
+        // Si no está autenticado y está en una ruta privada
         if (status === "unauthenticated" && inPrivateGroup) {
             const target = "/(auth)/(login)/"
             if (!redirected.current && currentPath !== target) {
