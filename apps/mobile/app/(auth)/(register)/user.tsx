@@ -162,17 +162,18 @@ export default function RegisterScreen() {
                     "user"
                 )
 
-                const message = result.requiresEmailVerification
-                    ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
-                    : "Registro exitoso. Tu cuenta será validada por un administrador."
+                showAlert("Registro exitoso.", "success")
 
-                showAlert(message, "success")
+                // Redirigir a la pantalla de confirmación
                 setTimeout(() => {
                     router.replace({
-                        pathname: "/(auth)/verify-email",
-                        params: { email: data.email },
+                        pathname: "/(auth)/registration-success" as any,
+                        params: {
+                            type: "user",
+                            email: data.email,
+                        },
                     })
-                }, 2000)
+                }, 1500)
             })
         } catch (e: any) {
             // TODO: Console.error, no es relevante en despliegue, corroborar correcto funcionamiento y eliminar
