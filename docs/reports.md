@@ -24,11 +24,14 @@
 -   ✅ **Endpoint**: `POST /v1/adoptions/reports`
 -   ✅ **Validaciones**:
     -   `userId` requerido y debe existir en `users`
-    -   `postId` requerido o `null` (FK -> `post.id`)
+    -   `postId` o `messageId` requerido (pero no ambos)
+    -   `postId` opcional o `null` (FK -> `post.id`)
+    -   `messageId` opcional o `null` (FK -> `message.id`)
     -   `description` requerido
 -   ✅ **Autenticación**: Token JWT requerido
--   ✅ **Inserción**: Conversión camelCase → snake_case (`userId` → `userid`, `postId` → `postid`)
+-   ✅ **Inserción**: Conversión camelCase → snake_case (`userId` → `userid`, `postId` → `postid`, `messageId` → `messageid`)
 -   ✅ **Manejo de errores**: AppError 400 con detalle Supabase
+-   ✅ **Soporte**: Reportes de publicaciones Y comentarios/mensajes
 
 #### 3. **PUT - Actualizar Reporte**
 

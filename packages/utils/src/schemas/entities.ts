@@ -21,7 +21,8 @@ export const UserSchema = z.object({
 
 export const ReportSchema = z.object({
     id: z.number(),
-    post_id: z.number(),
+    post_id: z.number().nullable(),
+    message_id: z.number().nullable(),
     user_id: z.number(),
     description: z.string(),
     resolved: z.boolean(),
