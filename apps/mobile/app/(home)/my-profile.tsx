@@ -126,7 +126,7 @@ export default function MyProfileScreen() {
                 style: "destructive",
                 onPress: async () => {
                     try {
-                        await signOut(true)
+                        await signOut()
                     } catch (error) {
                         console.error("Error al cerrar sesión:", error)
                         Alert.alert("Error", "No se pudo cerrar la sesión")
@@ -304,36 +304,42 @@ const styles = StyleSheet.create({
     buttonSection: {
         flexDirection: "row",
         width: "100%",
-        marginTop: 30,
-        justifyContent: "space-between",
+        marginTop: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 10,
     },
     signOutButton: {
-        width: "30%",
-        backgroundColor: "#ff4757",
+        flex: 1,
+        backgroundColor: Colors.danger,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
         justifyContent: "center",
+        marginHorizontal: 5,
     },
     signOutButtonText: {
         fontSize: 14,
         fontWeight: "700",
         color: "#fff",
         textAlign: "center",
+        gap: 10,
     },
     editButton: {
-        width: "30%",
+        flex: 1,
         backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
         justifyContent: "center",
+        marginHorizontal: 5,
     },
     editButtonText: {
         fontSize: 14,
         fontWeight: "700",
         color: "#000",
         textAlign: "center",
+        gap: 10,
     },
     deleteButton: {
         width: "30%",

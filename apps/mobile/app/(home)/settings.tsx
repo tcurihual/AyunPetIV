@@ -80,7 +80,27 @@ export default function SettingsScreen() {
                     Cuenta
                 </Text>
 
-                <TouchableOpacity style={styles.item} onPress={async () => await signOut(true)}>
+                <TouchableOpacity
+                    style={styles.item}
+                    onPress={() => {
+                        Alert.alert("Cerrar sesión", "¿Quieres cerrar sesión?", [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                                text: "Cerrar sesión",
+                                style: "destructive",
+                                onPress: async () => {
+                                    try {
+                                        await signOut()
+                                        router.replace("/(auth)/login")
+                                    } catch (error) {
+                                        console.error("Error al cerrar sesión:", error)
+                                        Alert.alert("Error", "No se pudo cerrar la sesión.")
+                                    }
+                                },
+                            },
+                        ])
+                    }}
+                >
                     <Ionicons name="log-out-outline" size={22} color="red" />
                     <Text style={[styles.text, { color: "red" }]}>Cerrar sesión</Text>
                 </TouchableOpacity>
