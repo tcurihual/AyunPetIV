@@ -29,9 +29,10 @@ import { Checkbox } from "@/components/ui/Checkbox"
 import {Colors} from "@/constants/Colors"
 
 const steps: { title: string; fields: (keyof RegisterFormType)[] }[] = [
-    { title: "Nombre y RUT", fields: ["name", "rut"] },
+    { title: "Nombre", fields: ["name"] },
+    { title: "Correo Electrónico", fields: ["email"] },
+    { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
-    { title: "Datos de Contacto", fields: ["email", "phone"] },
     { title: "Foto de Perfil (Opcional)", fields: ["profileImage"] },
 ]
 
@@ -65,11 +66,10 @@ export default function RegisterScreen() {
         mode: "onTouched",
         defaultValues: {
             name: "",
+            email: "",
             rut: "",
             password: "",
             verifyPassword: "",
-            email: "",
-            phone: "",
             profileImage: undefined,
         },
     })
@@ -80,18 +80,18 @@ export default function RegisterScreen() {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
 
-        // Validar RUT en el paso 1 (después de validaciones de react-hook-form)
-        if (step === 0) {
-            const rut = getValues("rut")
-            const rutIsValid = await validateRut(rut)
-            if (!rutIsValid) return
-        }
-
-        // Validar email en el paso 3 (después de validaciones de react-hook-form)
-        if (step === 2) {
+        // Validar email en el paso 1 (después de validaciones de react-hook-form)
+        if (step === 1) {
             const email = getValues("email")
             const emailIsValid = await validateEmail(email)
             if (!emailIsValid) return
+        }
+
+        // Validar RUT en el paso 2 (después de validaciones de react-hook-form)
+        if (step === 2) {
+            const rut = getValues("rut")
+            const rutIsValid = await validateRut(rut)
+            if (!rutIsValid) return
         }
 
         if (step < steps.length - 1) setStep((s) => s + 1)
@@ -147,15 +147,12 @@ export default function RegisterScreen() {
             }
 
             await withLoading(async () => {
-                const phoneWithPrefix = `+569${data.phone}`
-
                 const result = await signUp(
                     {
                         name: data.name,
                         email: data.email,
                         password: data.password,
                         rut: data.rut,
-                        phone: phoneWithPrefix,
                         address: "",
                         description: "",
                         profileImage: data.profileImage,
@@ -339,6 +336,35 @@ export default function RegisterScreen() {
                             placeholder="Juan Pérez"
                             helperText="Ingresa tu nombre y apellido"
                         />
+                    </>
+                )
+            case 1:
+                return (
+                    <>
+                        <Input<RegisterFormType>
+                            key="email"
+                            name="email"
+                            control={control}
+                            label="Correo electrónico"
+                            placeholder="correo@ejemplo.com"
+                            helperText="Usaremos este correo para enviarte información importante"
+                            type="email"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentEmail = getValues("email")
+                                    if (text !== currentEmail && text !== previousEmail.current) {
+                                        clearErrors("email")
+                                        previousEmail.current = ""
+                                    }
+                                },
+                            }}
+                        />
+                    </>
+                )
+            case 2:
+                return (
+                    <>
                         <Input<RegisterFormType>
                             key="rut"
                             name="rut"
@@ -359,7 +385,7 @@ export default function RegisterScreen() {
                         />
                     </>
                 )
-            case 1:
+            case 3:
                 return (
                     <>
                         <Input<RegisterFormType>
@@ -382,43 +408,7 @@ export default function RegisterScreen() {
                         />
                     </>
                 )
-            case 2:
-                return (
-                    <>
-                        <Input<RegisterFormType>
-                            key="email"
-                            name="email"
-                            control={control}
-                            label="Correo electrónico"
-                            placeholder="correo@ejemplo.com"
-                            helperText="Usaremos este correo para enviarte información importante"
-                            type="email"
-                            inputProps={{
-                                onChangeText: (text: string) => {
-                                    // Limpiar el error cuando el usuario cambia el valor
-                                    const currentEmail = getValues("email")
-                                    if (text !== currentEmail && text !== previousEmail.current) {
-                                        clearErrors("email")
-                                        previousEmail.current = ""
-                                    }
-                                },
-                            }}
-                        />
-                        <Input<RegisterFormType>
-                            key="phone"
-                            name="phone"
-                            control={control}
-                            label="Teléfono"
-                            placeholder="12345678"
-                            helperText="Ingresa solo 8 dígitos (sin +56 9)"
-                            inputProps={{
-                                keyboardType: "phone-pad",
-                                maxLength: 8,
-                            }}
-                        />
-                    </>
-                )
-            case 3:
+            case 4:
             default:
                 return (
                     <View style={{ width: "100%", alignItems: "center" }}>
@@ -475,7 +465,7 @@ export default function RegisterScreen() {
                     </View>
                     <View style={styles.stepIndicator}>
                         <View style={styles.stepCircleContainer}>
-                            <Text style={styles.stepCircle}>{`${step + 1}/4`}</Text>
+                            <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
                         </View>
                         <Text style={styles.stepTitle}>{steps[step].title}</Text>
                     </View>{" "}
