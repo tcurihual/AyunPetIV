@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
     error: {
         marginTop: 4,
         marginBottom: 6,
+        paddingBottom: 4,
         color: "#dc2626",
         fontSize: 12,
         fontWeight: "500",

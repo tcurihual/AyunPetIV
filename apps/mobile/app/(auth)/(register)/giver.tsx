@@ -35,10 +35,11 @@ import { Checkbox } from "@/components/ui/Checkbox"
 import { authService } from "@/services/auth"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
-    { title: "Nombre y Foto", fields: ["name", "profileImage"] },
+    { title: "Nombre", fields: ["name"] },
+    { title: "Correo Electrónico", fields: ["email"] },
     { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
-    { title: "Datos de Contacto", fields: ["email", "phone"] },
+    { title: "Foto de Perfil (Opcional)", fields: ["profileImage"] },
     { title: "Subida de Archivos", fields: ["files"] },
 ]
 
@@ -77,11 +78,10 @@ export default function RegisterScreen() {
         mode: "onTouched",
         defaultValues: {
             name: "",
+            email: "",
             rut: "",
             password: "",
             verifyPassword: "",
-            email: "",
-            phone: "",
             files: [],
             profileImage: undefined,
         },
@@ -93,18 +93,18 @@ export default function RegisterScreen() {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
 
-        // Validar RUT en el paso 1 (después de validaciones de react-hook-form)
+        // Validar email en el paso 1 (después de validaciones de react-hook-form)
         if (step === 1) {
-            const rut = getValues("rut")
-            const rutIsValid = await validateRut(rut)
-            if (!rutIsValid) return
-        }
-
-        // Validar email en el paso 3 (después de validaciones de react-hook-form)
-        if (step === 3) {
             const email = getValues("email")
             const emailIsValid = await validateEmail(email)
             if (!emailIsValid) return
+        }
+
+        // Validar RUT en el paso 2 (después de validaciones de react-hook-form)
+        if (step === 2) {
+            const rut = getValues("rut")
+            const rutIsValid = await validateRut(rut)
+            if (!rutIsValid) return
         }
 
         if (step < steps.length - 1) setStep((s) => s + 1)
@@ -160,15 +160,12 @@ export default function RegisterScreen() {
             }
 
             await withLoading(async () => {
-                const phoneWithPrefix = `+569${data.phone}`
-
                 const result = await signUp(
                     {
                         name: data.name,
                         email: data.email,
                         password: data.password,
                         rut: data.rut,
-                        phone: phoneWithPrefix,
                         address: "",
                         description: "",
                         profileImage: data.profileImage,
@@ -359,39 +356,33 @@ export default function RegisterScreen() {
                                     : "Ingresa tu nombre y apellido"
                             }
                         />
-
-                        <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
-                            <Text style={styles.phoneLabel}>Foto de Perfil (Opcional)</Text>
-                            <Text style={styles.profileHelperText}>
-                                Agrega una foto de perfil para personalizar tu cuenta
-                            </Text>
-
-                            {profileImage ? (
-                                <View style={styles.imagePreviewContainer}>
-                                    <Image
-                                        source={{ uri: profileImage.uri }}
-                                        style={styles.profileImagePreview}
-                                    />
-                                    <TouchableOpacity
-                                        style={styles.removeImageButton}
-                                        onPress={removeProfileImage}
-                                    >
-                                        <Ionicons name="close-circle" size={32} color={Colors.danger} />
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <TouchableOpacity
-                                    style={styles.uploadButton}
-                                    onPress={handleSelectProfileImage}
-                                >
-                                    <Ionicons name="camera-outline" size={40} color={Colors.secondary}  />
-                                    <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
                     </>
                 )
             case 1:
+                return (
+                    <>
+                        <Input<GiverRegisterFormType>
+                            key="email"
+                            name="email"
+                            control={control}
+                            label="Correo electrónico"
+                            placeholder="correo@ejemplo.com"
+                            helperText="Usaremos este correo para enviarte información importante"
+                            type="email"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentEmail = getValues("email")
+                                    if (text !== currentEmail && text !== previousEmail.current) {
+                                        clearErrors("email")
+                                        previousEmail.current = ""
+                                    }
+                                },
+                            }}
+                        />
+                    </>
+                )
+            case 2:
                 return (
                     <>
                         <Input<GiverRegisterFormType>
@@ -414,7 +405,7 @@ export default function RegisterScreen() {
                         />
                     </>
                 )
-            case 2:
+            case 3:
                 return (
                     <>
                         <Input<GiverRegisterFormType>
@@ -437,39 +428,39 @@ export default function RegisterScreen() {
                         />
                     </>
                 )
-            case 3:
-                return (
-                    <>
-                        <Input<GiverRegisterFormType>
-                            key="email"
-                            name="email"
-                            control={control}
-                            label="Correo electrónico"
-                            placeholder="correo@ejemplo.com"
-                            helperText="Usaremos este correo para enviarte información importante"
-                            type="email"
-                            inputProps={{
-                                onChangeText: (text: string) => {
-                                    // Limpiar el error cuando el usuario cambia el valor
-                                    const currentEmail = getValues("email")
-                                    if (text !== currentEmail && text !== previousEmail.current) {
-                                        clearErrors("email")
-                                        previousEmail.current = ""
-                                    }
-                                },
-                            }}
-                        />
-                        <Input<GiverRegisterFormType>
-                            key="phone"
-                            name="phone"
-                            control={control}
-                            label="Teléfono"
-                            placeholder="12345678"
-                            helperText="Ingresa solo 8 dígitos (sin +56 9)"
-                        />
-                    </>
-                )
             case 4:
+                return (
+                    <View style={{ width: "100%", alignItems: "center" }}>
+                        <Text style={styles.phoneLabel}>Foto de Perfil (Opcional)</Text>
+                        <Text style={styles.profileHelperText}>
+                            Agrega una foto de perfil para personalizar tu cuenta
+                        </Text>
+
+                        {profileImage ? (
+                            <View style={styles.imagePreviewContainer}>
+                                <Image
+                                    source={{ uri: profileImage.uri }}
+                                    style={styles.profileImagePreview}
+                                />
+                                <TouchableOpacity
+                                    style={styles.removeImageButton}
+                                    onPress={removeProfileImage}
+                                >
+                                    <Ionicons name="close-circle" size={32} color={Colors.danger} />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.uploadButton}
+                                onPress={handleSelectProfileImage}
+                            >
+                                <Ionicons name="camera-outline" size={40} color={Colors.secondary}  />
+                                <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )
+            case 5:
                 return (
                     <Controller
                         control={control}
@@ -755,7 +746,7 @@ export default function RegisterScreen() {
 
                             <View style={styles.stepIndicator}>
                                 <View style={styles.stepCircleContainer}>
-                                    <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
+                                    <Text style={styles.stepCircle}>{`${step + 1}/6`}</Text>
                                 </View>
                                 <Text style={styles.stepTitle}>{steps[step].title}</Text>
                             </View>

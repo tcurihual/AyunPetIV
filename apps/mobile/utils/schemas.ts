@@ -25,7 +25,8 @@ export const RegisterFormSchema = z
         phone: z
             .string()
             .length(8, "El número teléfonico debe tener 8 dígitos")
-            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos")
+            .optional(),
         profileImage: z
             .object({
                 uri: z.string(),
@@ -63,7 +64,8 @@ export const GiverRegisterFormSchema = z
         phone: z
             .string()
             .length(8, "El número de teléfono debe tener 8 dígitos")
-            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos")
+            .optional(),
         files: z
             .array(z.string())
             .min(1, "Debes subir al menos un archivo (imagen o PDF)")
