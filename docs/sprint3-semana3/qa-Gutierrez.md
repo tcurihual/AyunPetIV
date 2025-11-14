@@ -1,0 +1,1 @@
+Al iniciar sesion tanto en modo fundacion y modo ususario normal no carga el formulario de registro
