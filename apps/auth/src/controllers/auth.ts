@@ -176,7 +176,6 @@ export const register = async (
         }
     }
 
-    // --- OPCIONAL: Subir foto de perfil si se proporciona
     if (profileImage) {
         try {
             await sendProfilePicture({
@@ -198,7 +197,6 @@ export const register = async (
         }
     }
 
-    // --- OPCIONAL: Subir mural de perfil si se proporciona  👇 AGREGAR ESTE BLOQUE
     if (muralImage) {
         try {
             await sendProfileMural({
@@ -216,14 +214,12 @@ export const register = async (
         } catch (e: unknown) {
             const msg = getErrorMessage(e)
             console.error("⚠️ Error procesando mural de perfil:", msg)
-            // Igual que con la foto, no bloqueamos el registro
         }
     }
 
     const shouldSendVerificationEmail = variation === "user"
 
     if (shouldSendVerificationEmail && inserted) {
-        // Normalizamos header (puede venir como string | string[] | undefined)
         const platformHeader = req.headers["x-platform"]
         const isMobile = String(platformHeader ?? "").toLowerCase() === "mobile"
 

@@ -10,6 +10,7 @@ import {
     UsersWithImagesResponseSchema,
     UserWithImagesResponseSchema,
 } from "@repo/utils"
+import z from "zod"
 
 export function registerUsersPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -53,6 +54,19 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
                 content: {
                     "application/json": {
                         schema: UpdateUserSchema,
+                        examples: {
+                            sinDocuments: {
+                                summary: "Update",
+                                value: {
+                                    name: "Nuevo nombre",
+                                    email: "nuevoMail@acme.com",
+                                    address: "Nueva dirección",
+                                    description: "Nueva descripción",
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -314,7 +328,7 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
     })
 
     registry.registerPath({
-        method: "put",
+        method: "patch",
         path: "/v1/entities/users",
         tags: ["Users"],
         summary: "Crear un usuario (admin)",
@@ -325,6 +339,22 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
                 content: {
                     "application/json": {
                         schema: UserSchema,
+                        examples: {
+                            sinDocuments: {
+                                summary: "Update",
+                                value: {
+                                    name: "Nuevo nombre",
+                                    email: "nuevoMail@acme.com",
+                                    rut: "nuevoRUT",
+                                    address: "Nueva dirección",
+                                    description: "Nueva descripción",
+                                    validated: true,
+                                    role: 21,
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
+                                },
+                            },
+                        },
                     },
                 },
             },
