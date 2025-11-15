@@ -48,9 +48,10 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         summary: "Registrar un nuevo usuario adoptante en la plataforma",
         description:
-            "Crea un nuevo usuario adoptante, durante el registro," +
+            "Crea un nuevo usuario adoptante, durante el registro" +
             ", se enviará un correo de verificación " +
-            "con un token único para validar su dirección de correo electrónico.",
+            "con un token único para validar su dirección de correo electrónico." +
+            "`image`: corresponde a la imagen de perfil y `mural`: a la del mural, recordar que para la subida de imagenes o documentos  se debe usar `multipart/form-data`",
         request: {
             body: {
                 content: {
@@ -64,6 +65,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     email: "julio@acme.com",
                                     password: "********",
                                     rut: "12.345.678-9",
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                             conDocuments: {
@@ -75,6 +78,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     rut: "12.345.678-9",
                                     description: "Julio el bakan",
                                     address: "Av. Siempre Viva 742",
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                         },
@@ -105,7 +110,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         summary: "Registrar un nuevo usuario dador de adopción en la plataforma",
         description:
             "Crea un nuevo usuario con base en la variación indicada (`giver` o `shelter`). " +
-            "Este tipo de usuario debe ser validado por un `administrador`",
+            "Este tipo de usuario debe ser validado por un `administrador`. " +
+            " `image`: corresponde a la imagen de perfil y `mural`: a la del mural, recordar que para la subida de imagenes o documentos se debe usar `multipart/form-data`",
         parameters: [
             {
                 name: "variation",
@@ -128,7 +134,9 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     email: "patsu@acme.com",
                                     password: "********",
                                     rut: "12.345.678-9",
-                                    documents: ["doc_123", "doc_456"],
+                                    documents: ["<archivo_1>", "<archivo_2>"],
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                             conDocuments: {
@@ -140,7 +148,9 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     rut: "12.345.678-9",
                                     description: "Fundación Patitas Sucias",
                                     address: "Av. Siempre Viva 742",
-                                    documents: ["doc_123", "doc_456"],
+                                    documents: ["<archivo_1>", "<archivo_2>"],
+                                    image: "path/para/imagen/de/perfil",
+                                    mural: "path/para/imagen/de/mural",
                                 },
                             },
                         },

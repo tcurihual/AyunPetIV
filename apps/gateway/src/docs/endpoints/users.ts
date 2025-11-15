@@ -2,13 +2,14 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import {
     BaseResponseSchema,
     ErrorValuesSchema,
+    PublicUserByIdWithImagesResponseSchema,
+    PublicUsersWithImagesResponseSchema,
     UpdateUserSchema,
     UserByIdWithImagesResponseSchema,
     UserSchema,
     UsersWithImagesResponseSchema,
     UserWithImagesResponseSchema,
 } from "@repo/utils"
-import { z } from "zod"
 
 export function registerUsersPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -100,6 +101,82 @@ export function registerUsersPaths(registry: OpenAPIRegistry) {
             },
             403: {
                 description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users/public",
+        tags: ["Users - Public"],
+        summary: "Listar usuarios (público)",
+        description: "Obtiene un listado paginado de usuarios. Accesible publicamente. ",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "page",
+                in: "query",
+                required: false,
+                description: "Número de la página a obtener",
+                schema: { type: "integer", default: 1, minimum: 1 },
+            },
+            {
+                name: "pageSize",
+                in: "query",
+                required: false,
+                description: "Cantidad de usuarios por página",
+                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+            },
+        ],
+        responses: {
+            200: {
+                description: "Usuarios obtenidos exitosamente",
+                content: { "application/json": { schema: PublicUsersWithImagesResponseSchema } },
+            },
+            400: {
+                description: "Error en los parámetros",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            403: {
+                description: "No autorizado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "get",
+        path: "/v1/entities/users/public/{id}",
+        tags: ["Users - Public"],
+        summary: "Obtener usuario por ID",
+        description:
+            "Obtiene la información de un usuario específico con sus imágenes de perfil. Accesible publicamente",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+            {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del usuario",
+                schema: { type: "integer", example: 7 },
+            },
+        ],
+        responses: {
+            200: {
+                description: "Usuario obtenido exitosamente",
+                content: { "application/json": { schema: PublicUserByIdWithImagesResponseSchema } },
+            },
+            404: {
+                description: "Usuario no encontrado",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            401: {
+                description: "No autenticado",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },

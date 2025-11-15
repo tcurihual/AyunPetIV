@@ -3,7 +3,7 @@ import {
     AdoptionHistorySchema,
     ReportFormSchema,
     ReportSchema,
-    UserWithImagesSchema,
+    UserWithImagesPrivateSchema,
     ValidateGiverAccountDataSchema,
     VerificationCodeSchema,
 } from "./entities"
@@ -98,4 +98,4 @@ export const ValidateCodeResponseSchema = createApiResponseSchema(
     })
 )
 
-export const UserWithImagesResponseSchema = createApiResponseSchema(UserWithImagesSchema)
+export const UserWithImagesResponseSchema = createApiResponseSchema(UserWithImagesPrivateSchema)
