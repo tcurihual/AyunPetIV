@@ -12,6 +12,7 @@ import {
     getUsersSafe,
     getUserByIdSafe,
 } from "../controllers/user"
+import { uploadMemory } from "../middleware/uploadMemory"
 
 export const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 
@@ -29,7 +30,11 @@ usersRouter.get(
 )
 usersRouter.patch(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22),
+    uploadMemory.fields([
+        { name: "image", maxCount: 1 },
+        { name: "mural", maxCount: 1 },
+    ]),
     asyncHandler((req, res) => patchMe(req as any, res))
 )
 usersRouter.delete(
@@ -69,6 +74,10 @@ usersRouter.post(
 usersRouter.patch(
     "/:id",
     requireRole(ROLES.ADMIN),
+    uploadMemory.fields([
+        { name: "image", maxCount: 1 },
+        { name: "mural", maxCount: 1 },
+    ]),
     asyncHandler((req, res) => updateUser(req as any, res))
 )
 

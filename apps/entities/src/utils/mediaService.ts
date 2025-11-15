@@ -1,5 +1,6 @@
 import axios from "axios"
-import { MEDIA_URL, MEDIA_PUBLIC_URL } from "@repo/utils"
+import { MEDIA_URL, MEDIA_PUBLIC_URL, AuthenticatedRequest } from "@repo/utils"
+import FormData from "form-data"
 
 /**
  * Obtiene las URLs de imágenes de una entidad desde el microservicio de media
@@ -59,4 +60,94 @@ export const getMultipleEntityImages = async (
         acc[id] = images
         return acc
     }, {} as Record<string, string[]>)
+}
+
+export async function replaceProfilePicture(
+    userId: number,
+    file: Express.Multer.File,
+    req: AuthenticatedRequest
+) {
+    const headersBase = {
+        "x-user-id": String(req.user?.id ?? 0),
+        "x-user-role": String(req.user?.role ?? ""),
+    }
+
+    try {
+        const { data: currentResp } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_picture/${userId}`,
+            { headers: headersBase }
+        )
+
+        const currentFiles = Array.isArray(currentResp?.data) ? currentResp.data : []
+        const fileNames = currentFiles
+            .map((url: string) => url.split("/").pop() || "")
+            .filter(Boolean)
+
+        if (fileNames.length > 0) {
+            await axios.delete(`${MEDIA_URL}/uploads/profile_picture/${userId}`, {
+                data: { fileNamesArray: fileNames },
+                headers: { "Content-Type": "application/json", ...headersBase },
+            })
+        }
+    } catch (err) {
+        console.error("Warning: error al limpiar fotos de perfil previas:", (err as any)?.message)
+    }
+
+    const fd = new FormData()
+    fd.append("files", file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+    })
+
+    await axios.post(`${MEDIA_URL}/internal/profile-picture/${userId}`, fd, {
+        headers: fd.getHeaders(),
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        timeout: 20000,
+    })
+}
+
+export async function replaceProfileMural(
+    userId: number,
+    file: Express.Multer.File,
+    req: AuthenticatedRequest
+) {
+    const headersBase = {
+        "x-user-id": String(req.user?.id ?? 0),
+        "x-user-role": String(req.user?.role ?? ""),
+    }
+
+    try {
+        const { data: currentResp } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_mural/${userId}`,
+            { headers: headersBase }
+        )
+
+        const currentFiles = Array.isArray(currentResp?.data) ? currentResp.data : []
+        const fileNames = currentFiles
+            .map((url: string) => url.split("/").pop() || "")
+            .filter(Boolean)
+
+        if (fileNames.length > 0) {
+            await axios.delete(`${MEDIA_URL}/uploads/profile_mural/${userId}`, {
+                data: { fileNamesArray: fileNames },
+                headers: { "Content-Type": "application/json", ...headersBase },
+            })
+        }
+    } catch (err) {
+        console.error("Warning: error al limpiar fotos de mural previas:", (err as any)?.message)
+    }
+
+    const fd = new FormData()
+    fd.append("files", file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+    })
+
+    await axios.post(`${MEDIA_URL}/internal/profile-mural/${userId}`, fd, {
+        headers: fd.getHeaders(),
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        timeout: 20000,
+    })
 }

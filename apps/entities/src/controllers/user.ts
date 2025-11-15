@@ -10,6 +10,7 @@ import {
 import { supabase } from "../index"
 import axios from "axios"
 import { MEDIA_PUBLIC_URL } from "@repo/utils"
+import { replaceProfileMural, replaceProfilePicture } from "../utils/mediaService"
 
 const normalizeMediaUrls = (list: any[] | undefined) => {
     const arr = Array.isArray(list) ? list : []
@@ -112,7 +113,6 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
     if (!id) throw new AppError(401, "No autenticado")
 
     const patch = req.body as Partial<User["Update"]>
-    // Solo campos propios
     const updatePayload: User["Update"] = {
         email: patch.email,
         name: patch.name,
@@ -135,6 +135,22 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
         if (byEmail) throw new AppError(409, "Email ya registrado")
     }
 
+    const filesArray = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | Express.Multer.File[]
+        | undefined
+
+    let profileImage: Express.Multer.File | null = null
+    let muralImage: Express.Multer.File | null = null
+
+    if (filesArray && !Array.isArray(filesArray)) {
+        const imgArr = filesArray["image"] || []
+        profileImage = imgArr.length > 0 ? imgArr[0] : null
+
+        const muralArr = filesArray["mural"] || []
+        muralImage = muralArr.length > 0 ? muralArr[0] : null
+    }
+
     const { data, error } = await supabase
         .from("users")
         .update(updatePayload)
@@ -143,7 +159,31 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
         .single()
 
     if (error) throw new AppError(500, error.message)
-    return AppResponse(res, 200, "Perfil actualizado", data as User["Row"])
+
+    if (profileImage) {
+        try {
+            await replaceProfilePicture(id, profileImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando foto de perfil", e)
+        }
+    }
+
+    if (muralImage) {
+        try {
+            await replaceProfileMural(id, muralImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando mural de perfil", e)
+        }
+    }
+
+    const picture = await getProfilePicture(id)
+    const mural = await getProfileMural(id)
+
+    return AppResponse(res, 200, "Perfil actualizado", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -328,6 +368,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
 
     const patch = req.body as Partial<User["Update"]> & { roleType?: RoleType }
 
+    // solo admin puede tocar rol / validated
     if (
         !admin &&
         (patch.role !== undefined || patch.validated !== undefined || patch.roleType !== undefined)
@@ -335,6 +376,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         throw new AppError(403, "No autorizado para cambiar rol/validated")
     }
 
+    // validación email único
     if (patch.email) {
         const { data: byEmail } = await supabase
             .from("users")
@@ -344,6 +386,8 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
             .maybeSingle()
         if (byEmail) throw new AppError(409, "Email ya registrado")
     }
+
+    // validación RUT único
     if (patch.rut) {
         const { data: byRut } = await supabase
             .from("users")
@@ -354,15 +398,34 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         if (byRut) throw new AppError(409, "RUT ya registrado")
     }
 
+    // cálculo de role
     let roleField: Pick<User["Update"], "role"> | {} = {}
     if (admin) {
         if (patch.role !== undefined) {
-            if (patch.role !== null && !isValidRoleId(patch.role))
+            if (patch.role !== null && !isValidRoleId(patch.role)) {
                 throw new AppError(400, "role (id) inválido")
+            }
             roleField = { role: patch.role }
         } else if (patch.roleType !== undefined) {
             roleField = { role: roleIdFromType(patch.roleType) }
         }
+    }
+
+    // archivos (image / mural) desde multipart/form-data
+    const filesArray = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | Express.Multer.File[]
+        | undefined
+
+    let profileImage: Express.Multer.File | null = null
+    let muralImage: Express.Multer.File | null = null
+
+    if (filesArray && !Array.isArray(filesArray)) {
+        const imgArr = filesArray["image"] || []
+        profileImage = imgArr.length > 0 ? imgArr[0] : null
+
+        const muralArr = filesArray["mural"] || []
+        muralImage = muralArr.length > 0 ? muralArr[0] : null
     }
 
     const updatePayload: User["Update"] = {
@@ -385,7 +448,31 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         .single()
 
     if (error) throw new AppError(500, error.message)
-    return AppResponse(res, 200, "Actualizado", data as User["Row"])
+
+    if (profileImage) {
+        try {
+            await replaceProfilePicture(id, profileImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando foto de perfil")
+        }
+    }
+
+    if (muralImage) {
+        try {
+            await replaceProfileMural(id, muralImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando mural de perfil")
+        }
+    }
+
+    const picture = await getProfilePicture(id)
+    const mural = await getProfileMural(id)
+
+    return AppResponse(res, 200, "Actualizado", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
@@ -578,4 +665,3 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
     const { error: userDelErr } = await supabase.from("users").delete().eq("id", userId)
     if (userDelErr) throw new AppError(500, `Error al eliminar usuario: ${userDelErr.message}`)
 }
-// 4) Eliminar mensajes creados por el usuario
