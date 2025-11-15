@@ -38,6 +38,16 @@ async function getProfilePicture(userId: number): Promise<string | null> {
     }
 }
 
+async function getProfileMural(userId: number): Promise<string | null> {
+    try {
+        const response = await axios.get(`${MEDIA_URL}/uploads/profile_mural/${userId}`)
+        const files = response.data?.data as string[]
+        return files?.[0] ?? null
+    } catch {
+        return null
+    }
+}
+
 const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21, GIVER: 22 } as const
 type RoleType = keyof typeof ROLES
 const roleIdFromType = (rt: RoleType) => ROLES[rt]
@@ -53,6 +63,34 @@ const parseId = (v: string) => {
     return n
 }
 
+type SafeUser = Omit<
+    User["Row"],
+    | "password"
+    | "rut"
+    | "created_at"
+    | "updated_at"
+    | "push_token"
+    | "push_token_updated_at"
+    | "validated"
+> & {
+    profile_picture: string | null
+    profile_mural: string | null
+}
+
+const sanitizeUser = (user: any): SafeUser => {
+    const {
+        password,
+        rut,
+        created_at,
+        updated_at,
+        push_token,
+        push_token_updated_at,
+        validated,
+        ...rest
+    } = user
+    return rest as SafeUser
+}
+
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     const id = req.user?.id
     if (!id) throw new AppError(401, "No autenticado")
@@ -61,7 +99,12 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
 
     const picture = await getProfilePicture(data.id)
-    return AppResponse(res, 200, "OK", { ...data, profile_picture: picture } as User["Row"])
+    const mural = await getProfileMural(data.id)
+    return AppResponse(res, 200, "OK", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
@@ -107,7 +150,7 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const roleIdParam = req.query.role ? Number(req.query.role) : undefined
         const roleTypeParam = req.query.roleType
-            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter")
+            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter" | "giver")
             : undefined
 
         let query = supabase.from("users").select("*", { count: "exact" })
@@ -131,11 +174,57 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
             (data ?? []).map(async (user) => ({
                 ...user,
                 profile_picture: await getProfilePicture(user.id),
+                profile_mural: await getProfileMural(user.id),
             }))
         )
 
         return AppResponse(res, 200, "Listado de usuarios", {
             items: usersWithImages,
+            total: count ?? 0,
+            page,
+            pageSize,
+            totalPages: Math.ceil((count ?? 0) / pageSize),
+        })
+    } catch (e) {
+        if (e instanceof AppError) throw e
+        throw new AppError(500, "Error al obtener usuarios")
+    }
+}
+
+export const getUsersSafe = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const roleIdParam = req.query.role ? Number(req.query.role) : undefined
+        const roleTypeParam = req.query.roleType
+            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter" | "giver")
+            : undefined
+
+        let query = supabase.from("users").select("*", { count: "exact" })
+
+        if (roleIdParam !== undefined) {
+            query = query.eq("role", roleIdParam)
+        } else if (roleTypeParam) {
+            const rid = roleIdFromType(roleTypeParam.toUpperCase() as RoleType)
+            query = query.eq("role", rid)
+        }
+
+        const page = Math.max(Number(req.query.page ?? 1), 1)
+        const pageSize = Math.min(Math.max(Number(req.query.pageSize ?? 20), 1), 100)
+        const from = (page - 1) * pageSize
+        const to = from + pageSize - 1
+
+        const { data, error, count } = await query.order("id", { ascending: true }).range(from, to)
+        if (error) throw new AppError(500, error.message)
+
+        const usersWithImages = await Promise.all(
+            (data ?? []).map(async (user) => {
+                const profile_picture = await getProfilePicture(user.id)
+                const profile_mural = await getProfileMural(user.id)
+                return sanitizeUser({ ...user, profile_picture, profile_mural })
+            })
+        )
+
+        return AppResponse(res, 200, "Listado de usuarios", {
+            items: usersWithImages as SafeUser[],
             total: count ?? 0,
             page,
             pageSize,
@@ -153,7 +242,29 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
     const picture = await getProfilePicture(Number(id))
-    return AppResponse(res, 200, "Usuario", { ...data, profile_picture: picture } as User["Row"])
+    const mural = await getProfileMural(Number(id))
+    return AppResponse(res, 200, "Usuario", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
+}
+
+export const getUserByIdSafe = async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseId(req.params.id)
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
+    if (error || !data) throw new AppError(404, "Usuario no encontrado")
+
+    const picture = await getProfilePicture(Number(id))
+    const mural = await getProfileMural(Number(id))
+
+    const safeUser = sanitizeUser({
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    })
+
+    return AppResponse(res, 200, "Usuario", safeUser)
 }
 
 export const createUser = async (req: AuthenticatedRequest, res: Response) => {
@@ -368,6 +479,29 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
         }
     } catch (err: any) {
         console.error("Warning: error al eliminar foto de perfil:", err?.message)
+    }
+
+    try {
+        const { data: profileMuralData } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_mural/${userId}`,
+            { headers }
+        )
+        const profileMurals = Array.isArray(profileMuralData?.data) ? profileMuralData.data : []
+
+        if (profileMurals.length > 0) {
+            const muralNames = profileMurals
+                .map((url: string) => url.split("/").pop() || "")
+                .filter(Boolean)
+
+            if (muralNames.length > 0) {
+                await axios.delete(`${MEDIA_URL}/uploads/profile_mural/${userId}`, {
+                    data: { fileNamesArray: muralNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
+            }
+        }
+    } catch (err: any) {
+        console.error("Warning: error al eliminar mural de perfil:", err?.message)
     }
 
     // 4. Obtener ids de publicaciones del usuario y sus mascotas asociadas

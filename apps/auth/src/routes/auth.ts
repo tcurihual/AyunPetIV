@@ -21,7 +21,8 @@ router.post(
     "/register/:variation",
     uploadMemory.fields([
         { name: "documents", maxCount: 10 },
-        { name: "image", maxCount: 1 }
+        { name: "image", maxCount: 1 },
+        { name: "mural", maxCount: 1 },
     ]),
     register
 )

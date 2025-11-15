@@ -49,6 +49,17 @@ router.post(
     postFiles
 )
 
+router.post(
+    "/internal/profile-mural/:userId",
+    (req, _res, next) => {
+        req.params.entityType = "profile_mural"
+        req.params.entityId = req.params.userId
+        next()
+    },
+    publicUpload.array("files", 1),
+    postFiles
+)
+
 // rutas publicas
 router.get("/uploads/:entityType", getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)

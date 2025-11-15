@@ -194,12 +194,20 @@ export const ValidateVerificationCodeRequestSchema = VerificationCodeSchema.pick
     user_id: true,
 })
 
-export const UserWithImagesSchema = UserSchema.omit({ password: true }).extend({
-    images: z
-        .array(z.string())
-        .describe(
-            "URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"
-        ),
+export const UserWithImagesPrivateSchema = UserSchema.omit({ password: true }).extend({
+    profile_picture: z.string(),
+    profile_mural: z.string(),
+})
+
+export const UserWithImagesPublicSchema = UserSchema.omit({
+    password: true,
+    created_at: true,
+    updated_at: true,
+    rut: true,
+    validated: true,
+}).extend({
+    profile_picture: z.string(),
+    profile_mural: z.string(),
 })
 
 export const UpdateUserSchema = UserSchema.pick({
@@ -216,7 +224,7 @@ export const UsersWithImagesResponseSchema = z.object({
     type: z.literal("success"),
     message: z.string(),
     data: z.object({
-        items: z.array(UserWithImagesSchema),
+        items: z.array(UserWithImagesPrivateSchema),
         total: z.number(),
         page: z.number(),
         pageSize: z.number(),
@@ -230,7 +238,28 @@ export const UsersWithImagesResponseSchema = z.object({
 export const UserByIdWithImagesResponseSchema = z.object({
     type: z.literal("success"),
     message: z.string(),
-    data: UserWithImagesSchema,
+    data: UserWithImagesPrivateSchema,
+})
+
+export const PublicUsersWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        items: z.array(UserWithImagesPublicSchema),
+        total: z.number(),
+        page: z.number(),
+        pageSize: z.number(),
+        totalPages: z.number(),
+    }),
+})
+
+/**
+ * Respuesta de un usuario individual con imágenes
+ */
+export const PublicUserByIdWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: UserWithImagesPublicSchema,
 })
 
 /**

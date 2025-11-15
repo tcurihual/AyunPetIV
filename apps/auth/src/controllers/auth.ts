@@ -15,7 +15,11 @@ import {
 
 import { emailTemplate } from "../utils/templates/emailVerificationTemplate"
 import { resetPasswordTemplate } from "../utils/templates/resetPasswordTemplate"
-import { sendAccountRequestDocuments, sendProfilePicture } from "../middleware/mediaProxy"
+import {
+    sendAccountRequestDocuments,
+    sendProfileMural,
+    sendProfilePicture,
+} from "../middleware/mediaProxy"
 
 type Variation = "user" | "giver" | "shelter"
 
@@ -119,18 +123,26 @@ export const register = async (
 
     // --- MANEJO DE ARCHIVOS ---
     // Obtenemos los archivos según el tipo de campo
-    const filesArray = req.files as { [fieldname: string]: Express.Multer.File[] } | Express.Multer.File[] | undefined
-    
+    const filesArray = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | Express.Multer.File[]
+        | undefined
+
     // Extraer documentos (para givers) e imagen de perfil (opcional para todos)
     let documents: Express.Multer.File[] = []
     let profileImage: Express.Multer.File | null = null
+    let muralImage: Express.Multer.File | null = null
 
     if (filesArray) {
         // Si es un objeto con campos nombrados
         if (!Array.isArray(filesArray)) {
-            documents = filesArray['documents'] || []
-            const imageArray = filesArray['image'] || []
+            documents = filesArray["documents"] || []
+
+            const imageArray = filesArray["image"] || []
             profileImage = imageArray.length > 0 ? imageArray[0] : null
+
+            const muralArray = filesArray["mural"] || []
+            muralImage = muralArray.length > 0 ? muralArray[0] : null
         } else {
             // Si es un array simple (caso antiguo)
             documents = filesArray
@@ -183,6 +195,28 @@ export const register = async (
             const msg = getErrorMessage(e)
             console.error("⚠️ Error procesando foto de perfil:", msg)
             // No bloqueamos el registro por error en foto de perfil
+        }
+    }
+
+    // --- OPCIONAL: Subir mural de perfil si se proporciona  👇 AGREGAR ESTE BLOQUE
+    if (muralImage) {
+        try {
+            await sendProfileMural({
+                user: {
+                    id: inserted.id,
+                    email: inserted.email,
+                    roleId: inserted.role!,
+                },
+                file: {
+                    buffer: muralImage.buffer,
+                    originalname: muralImage.originalname,
+                    mimetype: muralImage.mimetype,
+                },
+            })
+        } catch (e: unknown) {
+            const msg = getErrorMessage(e)
+            console.error("⚠️ Error procesando mural de perfil:", msg)
+            // Igual que con la foto, no bloqueamos el registro
         }
     }
 
