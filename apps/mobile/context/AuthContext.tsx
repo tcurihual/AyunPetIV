@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signUp(
         data: RegisterPayload,
         variation: "user" | "giver" | "shelter" = "user"
-    ): Promise<SignUpResult> {
+    ): Promise<SignUpResult & { role: Role }> {
         setStatus("loading")
         try {
             const response = await authService.register(data, variation)
@@ -167,13 +167,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 setStatus("unauthenticated")
             }
 
-            // Los roles giver (22) y shelter (21) no requieren verificación por email
-            // Los roles user (20) sí requieren verificación
+            // Determinar role real
+            const role: Role = variation === "shelter" ? 21 : variation === "giver" ? 22 : 20
+
             const requiresEmailVerification = variation === "user"
 
             return {
                 requiresEmailVerification,
                 variation,
+                role, // <- aquí enviamos el role verdadero
             }
         } catch (e: any) {
             console.error("Error al registrar usuario:", e)
