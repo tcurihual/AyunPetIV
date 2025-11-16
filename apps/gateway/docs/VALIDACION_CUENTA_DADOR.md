@@ -2,13 +2,27 @@
 
 ## 📋 Descripción
 
-Este sistema permite gestionar solicitudes de usuarios que quieren convertirse en dadores de mascotas. Incluye:
+Este sistema permite gestionar solicitudes de usuarios que quieren convertirse en dadores de mascotas. El sistema maneja **dos flujos diferentes**:
+
+### Flujo 1: Registro Inicial (Shelter/Dador)
+- Usuario se registra directamente como **shelter (rol 21)** o **dador (rol 22)**
+- Cuenta creada con `validated=false`
+- Al ser aprobado: `validated` cambia a `true`, rol se mantiene igual
+
+### Flujo 2: Escalamiento de Rol (Adoptante → Dador)
+- Usuario **adoptante (rol 20)** ya validado solicita convertirse en dador
+- Usuario envía documentos pero **mantiene acceso como adoptante** (validated sigue siendo true)
+- Al ser aprobado: `role` cambia de 20 a 22, `validated` se mantiene sin cambios
+- Si es rechazado: Usuario sigue siendo adoptante sin restricciones
+
+**IMPORTANTE:** Los adoptantes (rol 20) con `validated=false` son **registros normales**, NO solicitudes de escalamiento, y no deben aparecer en el listado de solicitudes de giver.
+
+**Funcionalidades incluidas:**
 
 1. **Solicitud de conversión**: Usuarios normales (adoptantes) pueden enviar documentos para solicitar convertirse en dadores
-2. **Listado de solicitudes**: Administradores pueden ver todas las solicitudes pendientes
-3. **Validación de cuentas**: Administradores pueden validar cuentas, lo que actualiza permisos y envía correo de confirmación
-
-Al validar una cuenta, se actualiza el campo `validated` a `true` en la base de datos, se cambia el rol si es necesario, y se envía automáticamente un correo electrónico de confirmación al usuario.
+2. **Listado de solicitudes**: Administradores pueden ver todas las solicitudes pendientes (ambos tipos)
+3. **Validación de cuentas**: Administradores pueden aprobar cuentas, actualizando permisos según el tipo de solicitud
+4. **Rechazo de solicitudes**: Administradores pueden rechazar solicitudes sin afectar el acceso del usuario
 
 ---
 
@@ -21,6 +35,8 @@ POST /v1/entities/giver-request/submit
 ```
 
 **Descripción:** Permite a un usuario normal (rol 20) enviar documentos para solicitar convertirse en dador de adopción.
+
+**⚠️ IMPORTANTE:** El usuario **mantiene su acceso completo como adoptante** mientras la solicitud está pendiente. El campo `validated` **NO cambia** durante el proceso de solicitud. Solo cambia el `role` cuando el admin aprueba la solicitud.
 
 **Autenticación:** Requiere token JWT de usuario normal (rol 20)
 
@@ -56,11 +72,12 @@ fetch("/v1/entities/giver-request/submit", {
 ```json
 {
     "type": "success",
-    "message": "Solicitud enviada exitosamente. Recibirás un correo cuando sea validada.",
+    "message": "Solicitud enviada exitosamente. Podrás seguir usando la app como adoptante mientras la revisamos.",
     "data": {
         "id": 123,
         "email": "usuario@example.com",
-        "status": "pending_validation"
+        "status": "pending_validation",
+        "message": "Recibirás un correo cuando sea validada. Puedes seguir usando la app normalmente."
     }
 }
 ```
@@ -91,8 +108,8 @@ fetch("/v1/entities/giver-request/submit", {
 
 1. ✅ Recibe y valida los documentos
 2. 📤 Envía documentos al microservicio de Media
-3. 🔄 Marca la cuenta como `validated = false`
-4. 📧 Envía correo al usuario notificando que debe esperar la validación
+3. � **El usuario mantiene su estado actual** (validated no cambia)
+4. 📧 Envía correo al usuario notificando que puede seguir usando la app normalmente
 
 ---
 
@@ -102,7 +119,10 @@ fetch("/v1/entities/giver-request/submit", {
 GET /v1/entities/giver-request
 ```
 
-**Descripción:** Obtiene la lista de usuarios con cuentas pendientes de validación (`validated = false`). Incluye tanto usuarios que se registraron directamente como dadores (rol 21) como usuarios normales (rol 20) que enviaron solicitud.
+**Descripción:** Obtiene la lista de solicitudes pendientes de validación. Incluye dos tipos:
+
+1. **Nuevos registros**: Usuarios que se registraron como shelter (rol 21) o dador (rol 22) con `validated=false` y tienen documentos
+2. **Escalamiento**: Usuarios adoptantes (rol 20) validados que solicitan convertirse en dadores y tienen documentos
 
 **Autenticación:** Requiere token JWT de administrador (rol 19)
 
@@ -156,12 +176,23 @@ Authorization: Bearer <admin_token>
 PATCH /v1/entities/giver-request/:userId/validate
 ```
 
-**Descripción:** Valida la cuenta de un dador. Funciona para:
+**Descripción:** Valida una solicitud pendiente. El comportamiento varía según el tipo de solicitud:
 
--   Usuarios que se registraron directamente como giver (rol 21)
--   Usuarios normales (rol 20) que solicitaron convertirse en dadores
+#### Tipo 1: Nuevo registro (shelter/dador)
+- Usuario con rol 21 (shelter) o 22 (dador) y `validated=false`
+- **Acción:** Cambia `validated` de false a true
+- El rol se mantiene sin cambios
 
-Al validar, marca `validated=true`, actualiza el rol a 21 si es necesario, y envía email de confirmación.
+#### Tipo 2: Escalamiento de adoptante a dador
+- Usuario con rol 20 (adoptante) y `validated=true`
+- **Acción:** Cambia `role` de 20 a 22 (adoptante → dador)
+- El campo `validated` se mantiene sin cambios
+
+**IMPORTANTE:** Los adoptantes (rol 20) con `validated=false` son registros normales de usuarios que recién se registraron. NO son solicitudes de escalamiento y NO deben ser validados a través de este endpoint. La validación de adoptantes se hace automáticamente al confirmar su email.
+
+**En todos los casos:**
+- Se eliminan los documentos del servidor Media
+- Se envía correo de confirmación al usuario
 
 **Autenticación:** Requiere token JWT de administrador (rol 19)
 
@@ -184,20 +215,37 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Respuesta Exitosa (200):**
 
+**Para escalamiento de rol (adoptante → dador):**
 ```json
 {
     "type": "success",
-    "message": "Cuenta de dador validada exitosamente",
+    "message": "Solicitud aprobada. Usuario escalado a dador exitosamente.",
     "data": {
-        "userId": 54,
-        "validated": true
+        "id": 54,
+        "email": "usuario@example.com",
+        "previousRole": 20,
+        "newRole": 22
+    }
+}
+```
+
+**Para validación de registro inicial:**
+```json
+{
+    "type": "success",
+    "message": "Cuenta validada exitosamente",
+    "data": {
+        "id": 54,
+        "email": "shelter@example.com",
+        "validated": true,
+        "role": 21
     }
 }
 ```
 
 **Errores:**
 
--   `400` - ID inválido o cuenta ya validada
+-   `400` - ID inválido o sin solicitud pendiente
     ```json
     {
         "type": "error",
@@ -208,7 +256,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     ```json
     {
         "type": "error",
-        "message": "La cuenta ya está validada",
+        "message": "No hay solicitud pendiente para este usuario",
+        "data": null
+    }
+    ```
+    ```json
+    {
+        "type": "error",
+        "message": "Usuario no tiene solicitud pendiente de validación",
         "data": null
     }
     ```
@@ -230,20 +285,29 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 Cuando se valida una cuenta exitosamente, el sistema **automáticamente**:
 
-1. ✅ Actualiza `validated = true` en la base de datos
+1. ✅ Actualiza la base de datos según el tipo de solicitud:
+   - **Escalamiento:** Cambia `role` de 20 a 22
+   - **Registro inicial:** Cambia `validated` a true
 2. 📧 Envía un correo electrónico al usuario con:
-    - Confirmación de validación
+    - Confirmación de validación/aprobación
     - Lista de permisos desbloqueados
-    - Botón para iniciar sesión
+    - Botón para iniciar sesión (o instrucción de reiniciar sesión)
     - Diseño profesional con colores de marca (#FFD24C)
 
 **Importante:** Si el envío del email falla, la validación de la cuenta **se completa igual**. El email es un proceso secundario no-bloqueante.
 
 **Logs en consola:**
 
+Para escalamiento:
 ```
-✅ Cuenta de dador validada: userId=54
-📧 Correo de validación enviado a: shelter@example.com
+✅ Usuario 54 escalado de rol 20 (adoptante) a 22 (dador)
+📧 Correo de aprobación enviado correctamente a: usuario@example.com
+```
+
+Para registro inicial:
+```
+✅ Usuario 54 con rol 21 validado exitosamente
+📧 Correo de aprobación enviado correctamente a: shelter@example.com
 ```
 
 ---
