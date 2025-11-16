@@ -5,37 +5,80 @@ import { useAuthContext } from "@/context/AuthContext"
 export default function AuthRedirect() {
     const router = useRouter()
     const segments = useSegments()
-    const { status, user } = useAuthContext()
+    const { status, user, hasCompletedAuth } = useAuthContext()
     const redirected = useRef(false)
 
     useEffect(() => {
         if (status === "loading") return
-        if (!user) return
 
-        const currentPath = `/${segments.join("/")}`
-        const firstSegment = segments[0]
-        const inPrivateGroup = firstSegment === "(home)" || firstSegment === "(shelter)"
-        const isGiverOrShelter = user.role === 21 || user.role === 22
-        const correctGroup = isGiverOrShelter ? "(shelter)" : "(home)"
+        const root = segments[0] // "(auth)" | "(home)" | etc.
+        const child = segments[1]?.toLowerCase() // "(login)" | "(register)" | "welcome"
+        const sub = segments[2]?.toLowerCase() // "user" | "giver" | etc.
 
-        // Solo redirigir si está autenticado y en un grupo incorrecto
-        if (status === "authenticated" && inPrivateGroup) {
-            if (firstSegment !== correctGroup && !redirected.current) {
+        const isPrivate = root === "(home)" || root === "(shelter)"
+        const isAuthArea = root === "(auth)"
+
+        const isInsideRegister = child === "(register)"
+        const isInsideLogin = child === "(login)"
+        const isWelcome = child === "welcome"
+        const isPassword = child === "(password)"
+        const isVerifyEmail = child === "verify-email"
+        const isRegistrationSuccess = child === "registration-success"
+
+        const allowedBeforeAuth = [
+            "welcome",
+            "(login)",
+            "(register)",
+            "(password)",
+            "verify-email",
+            "registration-success",
+        ]
+
+        const allowUnauth =
+            allowedBeforeAuth.includes(child ?? "") || isInsideRegister || isInsideLogin
+
+        // ============================================================
+        // 1) AUTENTICADO → mandar al grupo correspondiente
+        // ============================================================
+        if (status === "authenticated" && user) {
+            const isGiverOrShelter = user.role === 21 || user.role === 22
+            const correctGroup = isGiverOrShelter ? "(shelter)" : "(home)"
+
+            if (root !== correctGroup && !redirected.current) {
                 redirected.current = true
                 router.replace(isGiverOrShelter ? "/(shelter)" : "/(home)")
             }
             return
         }
 
-        // Si no está autenticado y está en una ruta privada
-        if (status === "unauthenticated" && inPrivateGroup) {
-            const target = "/(auth)/(login)/"
-            if (!redirected.current && currentPath !== target) {
+        // ============================================================
+        // 2) NO AUTENTICADO → lógica welcome
+        // ============================================================
+        if (status === "unauthenticated") {
+            // --- Nunca completó → solo permitir rutas del auth flow
+            if (!hasCompletedAuth) {
+                if (!allowUnauth && !redirected.current) {
+                    redirected.current = true
+                    router.replace("/(auth)/welcome")
+                }
+                return
+            }
+
+            // --- Sí completó → NO debe ver Welcome jamás
+            if (isWelcome && !redirected.current) {
                 redirected.current = true
-                router.replace(target)
+                router.replace("/(auth)/(login)/")
+                return
+            }
+
+            // --- Sí completó → pero sin sesión → bloquear rutas privadas
+            if (isPrivate && !redirected.current) {
+                redirected.current = true
+                router.replace("/(auth)/(login)/")
+                return
             }
         }
-    }, [status, user, segments])
+    }, [status, user, segments, hasCompletedAuth])
 
     return null
 }
