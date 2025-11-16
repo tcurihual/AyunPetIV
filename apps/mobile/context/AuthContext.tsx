@@ -12,6 +12,7 @@ import {
 } from "@/utils/storage"
 import { useRouter } from "expo-router"
 import { DeviceEventEmitter } from "react-native"
+import { saveHasCompletedAuth, clearHasCompletedAuth, getHasCompletedAuth } from "@/utils/storage"
 
 type Role = 19 | 20 | 21 | 22
 
@@ -68,6 +69,7 @@ interface AuthContextType {
     status: Status
     user: User | null
     token: string | null
+    hasCompletedAuth: boolean
     signIn: (data: LoginPayload) => Promise<void>
     signUp: (
         data: RegisterPayload,
@@ -82,15 +84,22 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [status, setStatus] = useState<Status>("loading")
     const [user, setUser] = useState<User | null>(null)
+    const [hasCompletedAuth, setHasCompletedAuthState] = useState<boolean>(false)
     const [token, setTokenState] = useState<string | null>(null)
     const router = useRouter()
 
     useEffect(() => {
         ;(async () => {
             try {
-                const [storedToken, storedUser] = await Promise.all([getToken(), getUser<User>()])
+                const [storedToken, storedUser, completed] = await Promise.all([
+                    getToken(),
+                    getUser<User>(),
+                    getHasCompletedAuth(),
+                ])
 
-                if (!storedUser) throw new Error("No user")
+                setHasCompletedAuthState(completed)
+
+                if (!storedUser) throw new Error("No user stored")
 
                 setUser(storedUser)
 
@@ -146,6 +155,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             }
 
             await afterAuthSuccess(token, userFormatted)
+
+            await saveHasCompletedAuth(true)
+            setHasCompletedAuthState(true)
+
             await savePlainPassword(data.password)
         } catch (e) {
             console.error("Error al iniciar sesión:", e)
@@ -167,9 +180,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 setStatus("unauthenticated")
             }
 
-            // Los roles giver (22) y shelter (21) no requieren verificación por email
-            // Los roles user (20) sí requieren verificación
             const requiresEmailVerification = variation === "user"
+
+            if (variation === "giver" || variation === "shelter") {
+                await saveHasCompletedAuth(true)
+                setHasCompletedAuthState(true)
+            } else {
+                await saveHasCompletedAuth(false)
+                setHasCompletedAuthState(false)
+            }
 
             return {
                 requiresEmailVerification,
@@ -189,6 +208,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signOut(full: boolean = false) {
         if (full) await clearFull()
         else await clearDown()
+
+        if (full) {
+            await clearHasCompletedAuth()
+            setHasCompletedAuthState(false)
+        }
+
         router.replace("/(auth)/(login)/")
         setStatus("unauthenticated")
     }
@@ -209,11 +234,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     async function clearFull() {
         await clearAuth()
+        await clearHasCompletedAuth()
         setAuthToken(null)
         setTokenState(null)
         setUser(null)
 
-        // Limpiar el estado del push token guardado
         try {
             const { clearPushTokenSaved } = await import("@/services/pushTokenService")
             await clearPushTokenSaved()
@@ -235,12 +260,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             status,
             user,
             token,
+            hasCompletedAuth,
             signIn,
             signUp,
             signOut,
             updateUser,
         }),
-        [status, user, token, signIn, signUp, signOut, updateUser]
+        [status, user, token, hasCompletedAuth]
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
