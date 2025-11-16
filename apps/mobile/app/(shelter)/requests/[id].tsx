@@ -275,7 +275,11 @@ export default function ShelterRequestDetail() {
 
     return (
         <ScrollView
-            contentContainerStyle={{ padding: 16, backgroundColor: Colors.light.background, flexGrow: 1 }}
+            contentContainerStyle={{
+                padding: 16,
+                backgroundColor: Colors.light.background,
+                flexGrow: 1,
+            }}
         >
             <RequestDetailCard
                 petPhoto={resolvedPetPhoto || "https://placehold.co/400x400?text=Mascota"}
@@ -290,7 +294,7 @@ export default function ShelterRequestDetail() {
             />
 
             <View style={{ marginTop: 16, gap: 12 }}>
-                <Text style={{ fontWeight: "700", color: Colors.dark.text }}>
+                <Text style={{ fontWeight: "700", color: Colors.light.text }}>
                     Notas sobre la solicitud
                 </Text>
                 <TextInput
@@ -303,7 +307,7 @@ export default function ShelterRequestDetail() {
                     }}
                     editable={!savingMessage}
                     style={{
-                        backgroundColor: Colors.light.textSecondary,
+                        backgroundColor: "#FFFFFF",
                         borderRadius: 8,
                         borderWidth: 1,
                         borderColor: Colors.light.border,
@@ -321,7 +325,9 @@ export default function ShelterRequestDetail() {
                     disabled={savingMessage || editableMessage === message}
                     style={{
                         backgroundColor:
-                            savingMessage || editableMessage === message ? Colors.light.border : Colors.secondary,
+                            savingMessage || editableMessage === message
+                                ? Colors.light.border
+                                : Colors.secondary,
                         padding: 12,
                         borderRadius: 8,
                         alignItems: "center",

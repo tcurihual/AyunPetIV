@@ -163,7 +163,11 @@ export default function ViewAdoptionResponses() {
 
                 {postFormItems.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="document-text-outline" size={64} color={Colors.light.textSecondary} />
+                        <Ionicons
+                            name="document-text-outline"
+                            size={64}
+                            color={Colors.light.textSecondary}
+                        />
                         <Text style={styles.emptyTitle}>No hay formulario configurado</Text>
                         <Text style={styles.emptyText}>
                             Esta publicación no tiene preguntas asociadas
@@ -171,7 +175,11 @@ export default function ViewAdoptionResponses() {
                     </View>
                 ) : groupedResponses.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="chatbubbles-outline" size={64} color={Colors.light.textSecondary} />
+                        <Ionicons
+                            name="chatbubbles-outline"
+                            size={64}
+                            color={Colors.light.textSecondary}
+                        />
                         <Text style={styles.emptyTitle}>Sin respuestas</Text>
                         <Text style={styles.emptyText}>
                             {requesterId
@@ -188,7 +196,7 @@ export default function ViewAdoptionResponses() {
                                         <Ionicons
                                             name={getTypeIcon(item.questionType)}
                                             size={20}
-                                            color={Colors.dark.text}
+                                            color={Colors.light.text}
                                         />
                                     </View>
                                     <Text style={styles.questionText}>{item.questionContent}</Text>
@@ -203,7 +211,11 @@ export default function ViewAdoptionResponses() {
 
                                 {item.respondedBy && (
                                     <View style={styles.metaInfo}>
-                                        <Ionicons name="person-outline" size={14} color={Colors.light.textSecondary} />
+                                        <Ionicons
+                                            name="person-outline"
+                                            size={14}
+                                            color={Colors.light.textSecondary}
+                                        />
                                         <Text style={styles.metaText}>
                                             Usuario ID: {item.respondedBy}
                                         </Text>
@@ -215,7 +227,11 @@ export default function ViewAdoptionResponses() {
                 )}
 
                 <View style={styles.infoBox}>
-                    <Ionicons name="information-circle-outline" size={20}color={Colors.dark.text} />
+                    <Ionicons
+                        name="information-circle-outline"
+                        size={20}
+                        color={Colors.light.text}
+                    />
                     <Text style={styles.infoText}>
                         {requesterId
                             ? "Estas son las respuestas de este solicitante específico al formulario que configuraste."
@@ -248,7 +264,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.dark.text,
+        color: Colors.light.text,
     },
     content: {
         flex: 1,
@@ -256,7 +272,7 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: Colors.light.textSecondary,
+        backgroundColor: "#FFFFFF",
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -275,7 +291,7 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: Colors.dark.text,
+        color: Colors.light.text,
         marginBottom: 4,
     },
     petSubtext: {
@@ -296,14 +312,14 @@ const styles = StyleSheet.create({
     loadingCardText: {
         marginLeft: 12,
         fontSize: 14,
-        color: Colors.dark.text,
+        color: Colors.light.text,
         fontWeight: "500",
     },
     responsesContainer: {
         paddingHorizontal: 16,
     },
     responseCard: {
-        backgroundColor: Colors.light.textSecondary,
+        backgroundColor: "#FFFFFF",
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -335,7 +351,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         fontWeight: "600",
-        color: Colors.dark.text,
+        color: Colors.light.text,
         lineHeight: 20,
     },
     answerContainer: {
@@ -355,7 +371,7 @@ const styles = StyleSheet.create({
     },
     answerText: {
         fontSize: 16,
-        color: Colors.dark.text,
+        color: Colors.light.text,
         lineHeight: 22,
     },
     metaInfo: {
@@ -374,7 +390,7 @@ const styles = StyleSheet.create({
     infoBox: {
         flexDirection: "row",
         alignItems: "flex-start",
-        backgroundColor: Colors.light.background,
+        backgroundColor: Colors.light.card,
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -384,7 +400,7 @@ const styles = StyleSheet.create({
     infoText: {
         flex: 1,
         fontSize: 13,
-        color: Colors.dark.text,
+        color: Colors.light.text,
         marginLeft: 12,
         lineHeight: 18,
     },

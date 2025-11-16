@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: Colors.light.textSecondary,
+        backgroundColor: Colors.light.card,
         paddingHorizontal: 16,
         paddingBottom: 10,
     },
@@ -160,12 +160,12 @@ const styles = StyleSheet.create({
     },
     paragraph: {
         fontSize: 14,
-        color: Colors.dark.text,
+        color: Colors.light.text,
         lineHeight: 22,
         marginBottom: 10,
     },
     bold: {
         fontWeight: "bold",
-        color: Colors.dark.text,
+        color: Colors.light.text,
     },
 })

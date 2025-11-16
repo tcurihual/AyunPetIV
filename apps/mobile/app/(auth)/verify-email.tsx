@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         padding: 24,
-        backgroundColor: Colors.light.textSecondary,
+        backgroundColor: Colors.light.background,
     },
     backContainer: {
         position: "absolute",
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 16,
-        color: "#A1A1A1",
+        color: Colors.light.textSecondary,
         marginBottom: 24,
         textAlign: "center",
     },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     buttonText: {
-        color: Colors.light.textSecondary,
+        color: Colors.light.text,
         fontWeight: "600",
         fontSize: 16,
     },
