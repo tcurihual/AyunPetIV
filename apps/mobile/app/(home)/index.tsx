@@ -221,18 +221,17 @@ export default function Home() {
                         />
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.categoryButton,
-                            { backgroundColor: themeColors.card }, // 12. Color de tarjeta
-                        ]}
-                        onPress={() => router.push("/(home)/my-publications")}
-                    >
-                        <Text style={styles.categoryEmoji}>📋</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
-                            Mis Publicaciones
-                        </Text>
-                    </TouchableOpacity>
+                    {(user?.role === 21 || user?.role === 22) && (
+                        <TouchableOpacity
+                            style={[styles.categoryButton, { backgroundColor: themeColors.card }]}
+                            onPress={() => router.push("/(home)/my-publications")}
+                        >
+                            <Text style={styles.categoryEmoji}>📋</Text>
+                            <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                                Mis Publicaciones
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
 
