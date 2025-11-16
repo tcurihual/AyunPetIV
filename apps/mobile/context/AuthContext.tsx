@@ -30,6 +30,7 @@ export interface User {
     description?: string
     dateOfBirth?: string
     profileComplete?: boolean
+    validated?: boolean
 }
 
 interface LoginPayload {

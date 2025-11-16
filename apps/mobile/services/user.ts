@@ -1,4 +1,4 @@
-import { http } from "./http"
+import { http, FileInfo } from "./http"
 
 export interface UpdateProfileData {
     name?: string
@@ -42,5 +42,30 @@ export const userService = {
             console.log(`No profile picture found for user ${userId}`)
             return null
         }
+    },
+
+    /**
+     * Enviar solicitud para convertirse en dador
+     * Usuario normal (rol 20) envía documentos para solicitar ser dador
+     */
+    submitGiverRequest: async (documents: FileInfo[]) => {
+        const formData = new FormData()
+
+        // Agregar cada documento al FormData
+        documents.forEach((doc) => {
+            formData.append("documents", {
+                uri: doc.uri,
+                name: doc.name,
+                type: doc.type,
+            } as any)
+        })
+
+        const response = await http.post("/v1/entities/giver-request/submit", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        })
+
+        return response.data
     },
 }

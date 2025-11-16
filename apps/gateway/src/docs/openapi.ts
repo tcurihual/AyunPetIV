@@ -7,7 +7,7 @@ import {
     registerAdoptionRequestDocs,
 } from "./endpoints/adoptions"
 import { registerAllEntitiesDocs } from "./endpoints/entities"
-
+import { registerGiverRequestsPaths } from "./endpoints/giverRequests"
 import { registerReportsDocs } from "./endpoints/reports"
 import { registerMessagesDocs } from "./endpoints/messages"
 import { PublicationRegistryPaths } from "./endpoints/publications"
@@ -34,6 +34,9 @@ export function buildOpenApi() {
 
     // Entities
     registerAllEntitiesDocs(registry)
+
+    // Giver Requests endpoints
+    registerGiverRequestsPaths(registry)
 
     // Reports endpoints
     registerReportsDocs(registry)

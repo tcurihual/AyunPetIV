@@ -161,6 +161,11 @@ export const ValidateGiverAccountDataSchema = UserSchema.pick({
     validated: true,
 })
 
+// Schema para solicitud de conversión de usuario a dador
+export const SubmitGiverRequestSchema = z.object({
+    userId: z.number().int().positive(),
+})
+
 export const CreateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
     id: true,
     created_at: true,
