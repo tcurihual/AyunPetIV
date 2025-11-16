@@ -30,6 +30,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { useReportContext } from "@/context/ReportContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { Colors } from "@/constants/Colors"
+import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -106,6 +107,7 @@ export default function PublicationDetail() {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
+            type: (pub as any).type ?? (pub as any).species ?? "", // ⭐ AGREGAR ESTO ⭐
             age: pub.age ?? "",
             publisher: pub.publisher ?? "Usuario",
             description: pub.description ?? "",
@@ -137,11 +139,13 @@ export default function PublicationDetail() {
                             id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: `${raw.ageYears} años`,
+                            type: (raw as any).species ?? (raw as any).type ?? "", // ⭐ AQUI ⭐
+                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida",
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
                         }
+
                         if (alive) setPet(petObj)
                     } else if (alive) {
                         setPet(null)
@@ -421,12 +425,24 @@ export default function PublicationDetail() {
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
                                     <Text style={styles.infoLabel}>
-                                        Género: <Text style={styles.infoValue}>{pet.gender}</Text>
+                                        Especie:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateSpeciesToSpanish((pet as any).type || "")}
+                                        </Text>
                                     </Text>
+
+                                    <Text style={styles.infoLabel}>
+                                        Género:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateGenderToSpanish(pet.gender || "")}
+                                        </Text>
+                                    </Text>
+
                                     <Text style={styles.infoLabel}>
                                         Edad: <Text style={styles.infoValue}>{pet.age}</Text>
                                     </Text>
                                 </View>
+
                                 <View style={styles.infoColumn}>
                                     <Text style={styles.infoLabel}>Publicado por:</Text>
                                     <Text style={styles.publisherName}>{pet.publisher}</Text>

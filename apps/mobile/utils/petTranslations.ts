@@ -64,6 +64,7 @@ export const translateSpeciesToSpanish = (species: string): "Perro" | "Gato" | "
     const normalized = species.trim().toLowerCase()
     if (normalized === "dog") return "Perro"
     if (normalized === "cat") return "Gato"
+    if (normalized === "other") return "Otro"
 
     const translation =
         SpeciesTranslations.toSpanish[species as keyof typeof SpeciesTranslations.toSpanish]

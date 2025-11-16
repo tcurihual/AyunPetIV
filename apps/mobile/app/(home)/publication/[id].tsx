@@ -121,7 +121,6 @@ export default function PublicationDetail() {
                 ? { uri: (pub.image as any).uri }
                 : pub.image || { uri: "https://placehold.co/800x600?text=Mascota" }
 
-        // 🔹 Extraer años y meses si existen (ya sea en PublicationItem o si vienen del backend)
         const years =
             Number((pub as any).age_years ?? 0) ||
             (typeof pub.age === "string" && pub.age.includes("año") ? parseInt(pub.age) : 0)
@@ -129,7 +128,6 @@ export default function PublicationDetail() {
             Number((pub as any).age_months ?? 0) ||
             (typeof pub.age === "string" && pub.age.includes("mes") ? parseInt(pub.age) : 0)
 
-        // 🔹 Construir texto de edad consistente
         const totalAge =
             years > 0 && months > 0
                 ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
@@ -145,6 +143,7 @@ export default function PublicationDetail() {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
+            type: (pub as any).type ?? "", // 👈 AHORA SÍ, SIN ERROR
             age: totalAge,
             publisher: pub.publisher ?? "Usuario",
             description: pub.description ?? "",
@@ -171,11 +170,13 @@ export default function PublicationDetail() {
                             id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida", // 👈 corregido
+                            type: (raw as any).species ?? (raw as any).type ?? "", // ⭐ AQUI ⭐
+                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida",
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
                         }
+
                         if (alive) setPet(petObj)
                     } else if (alive) {
                         setPet(null)
@@ -498,7 +499,7 @@ export default function PublicationDetail() {
                                     </View>
                                 ) : messagesLoading ? (
                                     <View style={styles.commentsPlaceholder}>
-                                        <ActivityIndicator size="small" color={Colors.secondary}/>
+                                        <ActivityIndicator size="small" color={Colors.secondary} />
                                         <Text style={styles.commentsPlaceholderText}>
                                             Cargando comentarios...
                                         </Text>
@@ -654,7 +655,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor:Colors.primary,
+        backgroundColor: Colors.primary,
         alignItems: "center",
         justifyContent: "center",
     },

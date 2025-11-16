@@ -42,6 +42,7 @@ export interface PublicationItem {
     id: string
     name: string
     gender: string
+    type?: string
     age: string
     publisher: string
     publisherPhoto?: string | null
@@ -101,7 +102,8 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             return {
                 id: String(post?.id ?? ""),
                 name: pet?.name || "Sin nombre",
-                gender: pet?.gender ?? "",
+                gender: (pet?.gender ?? "").toLowerCase(), // "male", "female"
+                type: (pet?.species ?? "").toLowerCase(),
                 age: ageText,
                 publisher: creator?.name || "Usuario",
                 publisherPhoto: creator?.profilePhoto || null,
