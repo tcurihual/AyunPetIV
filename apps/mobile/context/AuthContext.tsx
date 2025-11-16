@@ -170,7 +170,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     async function signUp(
         data: RegisterPayload,
         variation: "user" | "giver" | "shelter" = "user"
-    ): Promise<SignUpResult> {
+    ): Promise<SignUpResult & { role: Role }> {
         setStatus("loading")
         try {
             const response = await authService.register(data, variation)
@@ -179,6 +179,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 console.log("Registro exitoso:", response.message)
                 setStatus("unauthenticated")
             }
+
+            const role: Role = variation === "shelter" ? 21 : variation === "giver" ? 22 : 20
 
             const requiresEmailVerification = variation === "user"
 
@@ -193,6 +195,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             return {
                 requiresEmailVerification,
                 variation,
+                role,
             }
         } catch (e: any) {
             console.error("Error al registrar usuario:", e)

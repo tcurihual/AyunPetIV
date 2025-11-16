@@ -27,6 +27,15 @@ export default function rememberedLogin() {
         tryBiometricLogin()
     }, [])
 
+    // 🔹 Redirigir al home correspondiente después de login exitoso
+    useEffect(() => {
+        if (status === "authenticated" && user) {
+            const isGiverOrShelter = user.role === 21 || user.role === 22
+            const targetRoute = isGiverOrShelter ? "/(shelter)" : "/(home)"
+            router.replace(targetRoute)
+        }
+    }, [status, user])
+
     const {
         control,
         handleSubmit,

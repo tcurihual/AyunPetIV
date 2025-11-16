@@ -171,7 +171,7 @@ export default function RegisterScreen() {
                         profileImage: data.profileImage,
                         documents: pendingFiles.length > 0 ? pendingFiles : undefined,
                     },
-                    "giver"
+                    giverType || "giver"
                 )
 
                 showAlert("Registro exitoso.", "success")
@@ -454,7 +454,11 @@ export default function RegisterScreen() {
                                 style={styles.uploadButton}
                                 onPress={handleSelectProfileImage}
                             >
-                                <Ionicons name="camera-outline" size={40} color={Colors.secondary}  />
+                                <Ionicons
+                                    name="camera-outline"
+                                    size={40}
+                                    color={Colors.secondary}
+                                />
                                 <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
                             </TouchableOpacity>
                         )}
@@ -673,7 +677,7 @@ export default function RegisterScreen() {
                                                     <Ionicons
                                                         name="close-circle"
                                                         size={18}
-                                                        color= {Colors.danger}
+                                                        color={Colors.danger}
                                                     />
                                                 </TouchableOpacity>
                                             </View>
@@ -696,7 +700,7 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor= "Colors.primary" barStyle="dark-content" />
+            <StatusBar backgroundColor="Colors.primary" barStyle="dark-content" />
             <Modal visible={showTypeModal} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
