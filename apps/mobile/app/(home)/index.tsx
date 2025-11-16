@@ -35,7 +35,7 @@ const toAbsoluteMediaUrl = (u?: string): string | undefined => {
 export default function Home() {
     const router = useRouter()
     const { user } = useAuthContext()
-    const { petsForHome, loading, error, refreshPublications, clearError } = usePublications()
+    const { petsForHome, loading, loadingMore, hasMore, error, refreshPublications, loadMorePublications, clearError } = usePublications()
 
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
@@ -151,6 +151,25 @@ export default function Home() {
         </View>
     )
 
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            loadMorePublications()
+        }
+    }
+
+    const renderFooter = () => {
+        if (!loadingMore) return null
+        
+        return (
+            <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={themeColors.tint} />
+                <Text style={[styles.footerText, { color: themeColors.text }]}>
+                    Cargando más publicaciones...
+                </Text>
+            </View>
+        )
+    }
+
     if (checking) {
         return (
             <View style={[styles.loader, { backgroundColor: themeColors.background }]}>
@@ -243,6 +262,9 @@ export default function Home() {
                 contentContainerStyle={styles.petsGrid}
                 columnWrapperStyle={styles.row}
                 showsVerticalScrollIndicator={false}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={renderFooter}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -337,6 +359,16 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     loaderText: { marginTop: 8 },
+    footerLoader: {
+        paddingVertical: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    footerText: {
+        marginTop: 8,
+        fontSize: 14,
+        opacity: 0.7,
+    },
     emptyContainer: {
         flex: 1,
         alignItems: "center",

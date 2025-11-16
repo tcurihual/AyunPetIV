@@ -60,9 +60,14 @@ export interface PublicationItem {
 interface PublicationContextType {
     publications: PublicationItem[]
     loading: boolean
+    loadingMore: boolean
     error: string | null
+    currentPage: number
+    totalPages: number
+    hasMore: boolean
     getPublicationByPostId: (postId: number) => Promise<PublicationItem | null>
-    getPublications: () => Promise<void>
+    getPublications: (reset?: boolean) => Promise<void>
+    loadMorePublications: () => Promise<void>
     createPublication: (data: CreatePublicationPayload) => Promise<Post>
     updatePublication: (id: number, data: UpdatePublicationPayload) => Promise<Post>
     deletePublication: (id: number) => Promise<void>
@@ -76,7 +81,11 @@ const PublicationContext = createContext<PublicationContextType | null>(null)
 export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [publications, setPublications] = useState<PublicationItem[]>([])
     const [loading, setLoading] = useState<boolean>(false)
+    const [loadingMore, setLoadingMore] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(1)
+    const [hasMore, setHasMore] = useState<boolean>(true)
     const { user, status } = useAuthContext()
 
     const buildPublicationItem = React.useCallback(
@@ -123,12 +132,21 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
 
     useEffect(() => {
         if (status === "authenticated") {
-            getPublications()
+            getPublications(true)
         }
     }, [status])
 
-    async function getPublications(): Promise<void> {
-        setLoading(true)
+    async function getPublications(reset: boolean = false): Promise<void> {
+        // Si reset es true, volvemos a la página 1, de lo contrario cargamos la página actual
+        const pageToLoad = reset ? 1 : currentPage
+        
+        if (reset) {
+            setLoading(true)
+            setCurrentPage(1)
+        } else {
+            setLoadingMore(true)
+        }
+        
         setError(null)
 
         try {
@@ -141,20 +159,86 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                         pet: any
                         creator: { id: number; name: string; profilePhoto: string | null } | null
                     }>
+                    total: number
+                    page: number
+                    pageSize: number
+                    totalPages: number
                 }
-            }>("/v1/adoptions/publications?status=active")
+            }>(`/v1/adoptions/publications?status=active&page=${pageToLoad}&pageSize=20`)
 
             const transformed: PublicationItem[] = response.data.data.items.map((item) =>
                 buildPublicationItem(item.post, item.pet, item.creator)
             )
 
-            setPublications(transformed)
+            if (reset) {
+                setPublications(transformed)
+            } else {
+                // Agregar las nuevas publicaciones al array existente
+                setPublications(prev => [...prev, ...transformed])
+            }
+            
+            setTotalPages(response.data.data.totalPages)
+            setHasMore(response.data.data.page < response.data.data.totalPages)
+            
         } catch (e: any) {
             console.error("Error al obtener publicaciones:", e)
             setError(e?.response?.data?.message || "Error al cargar las publicaciones")
-            setPublications([])
+            if (reset) {
+                setPublications([])
+            }
         } finally {
-            setLoading(false)
+            if (reset) {
+                setLoading(false)
+            } else {
+                setLoadingMore(false)
+            }
+        }
+    }
+
+    async function loadMorePublications(): Promise<void> {
+        // Si ya estamos cargando o no hay más páginas, no hacer nada
+        if (loadingMore || !hasMore) return
+        
+        const nextPage = currentPage + 1
+        setCurrentPage(nextPage)
+        
+        setLoadingMore(true)
+        setError(null)
+
+        try {
+            const response = await http.get<{
+                status: number
+                message: string
+                data: {
+                    items: Array<{
+                        post: any
+                        pet: any
+                        creator: { id: number; name: string; profilePhoto: string | null } | null
+                    }>
+                    total: number
+                    page: number
+                    pageSize: number
+                    totalPages: number
+                }
+            }>(`/v1/adoptions/publications?status=active&page=${nextPage}&pageSize=20`)
+
+            const transformed: PublicationItem[] = response.data.data.items.map((item) =>
+                buildPublicationItem(item.post, item.pet, item.creator)
+            )
+
+            // Agregar las nuevas publicaciones al array existente
+            setPublications(prev => [...prev, ...transformed])
+            
+            setTotalPages(response.data.data.totalPages)
+            setHasMore(response.data.data.page < response.data.data.totalPages)
+            
+        } catch (e: any) {
+            console.error("Error al cargar más publicaciones:", e)
+            setError(e?.response?.data?.message || "Error al cargar más publicaciones")
+            // Revertir el incremento de página si falla
+            setCurrentPage(prev => prev - 1)
+        } finally {
+            setLoadingMore(false)
         }
     }
 
@@ -232,7 +316,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 response = await http.post("/v1/adoptions/publications", payload)
             }
 
-            await getPublications()
+            await getPublications(true)
             return response.data.data.post
         } catch (e: any) {
             console.error("Error al crear publicación:", e)
@@ -284,7 +368,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 response = await http.patch(`/v1/adoptions/publications/${id}`, payload)
             }
 
-            await getPublications()
+            await getPublications(true)
             return response.data.data.post
         } catch (e: any) {
             console.error("Error al actualizar publicación:", e)
@@ -303,7 +387,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
 
         try {
             await http.delete(`/v1/adoptions/publications/${id}`)
-            await getPublications()
+            await getPublications(true)
         } catch (e: any) {
             console.error("Error al eliminar publicación:", e)
             const msg = e?.response?.data?.message || "Error al eliminar la publicación"
@@ -315,7 +399,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     }
 
     async function refreshPublications(): Promise<void> {
-        await getPublications()
+        await getPublications(true)
     }
 
     function clearError(): void {
@@ -338,9 +422,14 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         () => ({
             publications,
             loading,
+            loadingMore,
             error,
+            currentPage,
+            totalPages,
+            hasMore,
             getPublicationByPostId,
             getPublications,
+            loadMorePublications,
             createPublication,
             updatePublication,
             deletePublication,
@@ -348,7 +437,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             clearError,
             petsForHome,
         }),
-        [publications, loading, error, petsForHome, getPublicationByPostId]
+        [publications, loading, loadingMore, error, currentPage, totalPages, hasMore, petsForHome, getPublicationByPostId]
     )
 
     return <PublicationContext.Provider value={value}>{children}</PublicationContext.Provider>
