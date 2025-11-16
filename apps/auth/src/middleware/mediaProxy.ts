@@ -51,3 +51,55 @@ export async function sendAccountRequestDocuments(params: {
     })
     return res.data
 }
+
+export async function sendProfilePicture(params: {
+    user: { id: number; email: string; roleId: number }
+    file: FileLike
+}) {
+    const fd = new FormData()
+    fd.append("files", params.file.buffer, {
+        filename: params.file.originalname,
+        contentType: params.file.mimetype,
+    })
+
+    // Usar ruta interna que NO requiere autenticación
+    const url = `${MEDIA_URL}/internal/profile-picture/${params.user.id}`
+
+    const headers = {
+        ...fd.getHeaders(),
+    }
+
+    const res = await axios.post(url, fd, {
+        headers,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        timeout: 20000,
+    })
+    return res.data
+}
+
+export async function sendProfileMural(params: {
+    user: { id: number; email: string; roleId: number }
+    file: FileLike
+}) {
+    const fd = new FormData()
+    fd.append("files", params.file.buffer, {
+        filename: params.file.originalname,
+        contentType: params.file.mimetype,
+    })
+
+    // Nueva ruta interna para mural, también sin auth
+    const url = `${MEDIA_URL}/internal/profile-mural/${params.user.id}`
+
+    const headers = {
+        ...fd.getHeaders(),
+    }
+
+    const res = await axios.post(url, fd, {
+        headers,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        timeout: 20000,
+    })
+    return res.data
+}

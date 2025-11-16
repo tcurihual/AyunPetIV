@@ -68,3 +68,31 @@ export async function savePlainPassword(password: string) {
 export async function getPlainPassword() {
     return await SecureStore.getItemAsync("plainPassword")
 }
+
+const HAS_COMPLETED_AUTH_KEY = "@ayun/has_completed_auth"
+
+export async function saveHasCompletedAuth(value: boolean) {
+    try {
+        await AsyncStorage.setItem(HAS_COMPLETED_AUTH_KEY, value ? "true" : "false")
+    } catch (e) {
+        console.error("Error saving hasCompletedAuth", e)
+    }
+}
+
+export async function getHasCompletedAuth(): Promise<boolean> {
+    try {
+        const stored = await AsyncStorage.getItem(HAS_COMPLETED_AUTH_KEY)
+        return stored === "true"
+    } catch (e) {
+        console.error("Error getting hasCompletedAuth", e)
+        return false
+    }
+}
+
+export async function clearHasCompletedAuth() {
+    try {
+        await AsyncStorage.removeItem(HAS_COMPLETED_AUTH_KEY)
+    } catch (e) {
+        console.error("Error clearing hasCompletedAuth", e)
+    }
+}

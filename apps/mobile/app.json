@@ -1,10 +1,10 @@
 {
     "expo": {
-        "name": "expo-monorepo",
-        "slug": "expo-monorepo",
+        "name": "ayunpet",
+        "slug": "ayun-pet",
         "version": "1.0.0",
         "orientation": "portrait",
-        "icon": "./assets/images/icon.png",
+        "icon": "./assets/images/image.png",
         "scheme": "myapp",
         "userInterfaceStyle": "light",
         "newArchEnabled": true,
@@ -19,18 +19,18 @@
         "android": {
             "softwareKeyboardLayoutMode": "pan",
             "adaptiveIcon": {
-                "foregroundImage": "./assets/images/adaptive-icon.png",
+                "foregroundImage": "./assets/images/image.png",
                 "backgroundColor": "#ffffff"
             },
             "permissions": [
                 "CAMERA",
                 "READ_MEDIA_IMAGES",
                 "READ_EXTERNAL_STORAGE",
-                "CAMERA",
-                "READ_MEDIA_IMAGES",
-                "READ_EXTERNAL_STORAGE"
+                "POST_NOTIFICATIONS",
+                "INTERNET",
+                "ACCESS_NETWORK_STATE"
             ],
-            "package": "com.anonymous.expomonorepo"
+            "package": "com.aliwenn.ayunpet"
         },
         "web": {
             "bundler": "metro",
@@ -41,10 +41,21 @@
             "expo-router",
             "expo-font",
             "expo-web-browser",
+            ["expo-secure-store", { "configureAndroidBackup": true }],
             [
-                "expo-secure-store",
+                "expo-notifications",
                 {
-                    "configureAndroidBackup": true
+                    "icon": "./assets/images/image.png",
+                    "color": "#F9C80E",
+                    "sounds": []
+                }
+            ],
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                        "usesCleartextTraffic": true
+                    }
                 }
             ]
         ],
@@ -52,10 +63,13 @@
             "typedRoutes": true
         },
         "extra": {
-            "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000/api",
             "router": {
                 "disableSplashScreen": true
+            },
+            "eas": {
+                "projectId": "eb7c9226-9e5c-4134-9698-9dec4436e685"
             }
-        }
+        },
+        "owner": "aliwenn"
     }
 }

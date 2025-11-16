@@ -34,6 +34,7 @@ import {
 import { Colors } from "@/constants/Colors"
 import { QuestionSelector } from "@/components/common/QuestionSelector"
 import { usePostFormContext } from "@/context/PostFormContext"
+import { Camera } from "expo-camera"
 
 type PetFormInput = z.input<typeof PetFormSchema>
 type PetFormOutput = z.output<typeof PetFormSchema>
@@ -61,23 +62,59 @@ const AddPetScreen = () => {
             size: "Small",
             age: 0,
             sterilized: false,
+            description: "",
         } as PetFormInput,
         mode: "onTouched",
     })
 
     const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (status !== "granted") {
-            Alert.alert("Error", "Se necesita permiso para acceder a la galería.")
-            return
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.9,
-        })
-        if (!result.canceled && result.assets?.length) setPhoto(result.assets[0].uri)
-        else Alert.alert("Sin selección", "No se seleccionó ninguna imagen.")
+        Alert.alert("Seleccionar imagen", "Elige una opción", [
+            {
+                text: "Tomar foto",
+                onPress: async () => {
+                    const { status } = await Camera.requestCameraPermissionsAsync()
+                    if (status !== "granted") {
+                        Alert.alert("Error", "Se necesita permiso para acceder a la cámara.")
+                        return
+                    }
+
+                    const result = await ImagePicker.launchCameraAsync({
+                        allowsEditing: true,
+                        aspect: [1, 1],
+                        quality: 0.9,
+                    })
+
+                    if (!result.canceled && result.assets?.length) {
+                        setPhoto(result.assets[0].uri)
+                    } else {
+                        Alert.alert("Sin captura", "No se tomó ninguna foto.")
+                    }
+                },
+            },
+            {
+                text: "Elegir de galería",
+                onPress: async () => {
+                    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+                    if (status !== "granted") {
+                        Alert.alert("Error", "Se necesita permiso para acceder a la galería.")
+                        return
+                    }
+
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        quality: 0.9,
+                    })
+
+                    if (!result.canceled && result.assets?.length) {
+                        setPhoto(result.assets[0].uri)
+                    } else {
+                        Alert.alert("Sin selección", "No se seleccionó ninguna imagen.")
+                    }
+                },
+            },
+            { text: "Cancelar", style: "cancel" },
+        ])
     }
 
     const onSubmit: SubmitHandler<PetFormInput> = async (raw) => {
@@ -111,8 +148,9 @@ const AddPetScreen = () => {
                 },
                 post: {
                     title: `${data.name} en adopción`,
-                    // El backend requiere description no vacío. Generamos una descripción por defecto.
-                    description: `${data.name} está buscando un nuevo hogar. Publicado desde la app.`,
+                    description:
+                        data.description ||
+                        `${data.name} está buscando un nuevo hogar. Publicado desde la app.`,
                 },
                 images: imageAsset,
             }
@@ -124,23 +162,24 @@ const AddPetScreen = () => {
             // 3) Guardar post_form (asociar preguntas seleccionadas a la publicación)
             if (selectedQuestionIds.length > 0) {
                 try {
-                    //console.log(
-                    //    `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
-                    //)
+                    console.log(
+                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
+                    )
                     for (const questionId of selectedQuestionIds) {
-                        //console.log(`   → Asociando pregunta ${questionId}...`)
+                        console.log(`   → Asociando pregunta ${questionId}...`)
                         await createPostForm({
                             post_id: newPost.id,
                             question_id: questionId,
                         })
-                        //console.log(`   ✅ Pregunta ${questionId} asociada`)
+                        console.log(`   ✅ Pregunta ${questionId} asociada`)
                     }
-                    //console.log(
-                    //    `✅ ${selectedQuestionIds.length} preguntas asociadas a la publicación`
-                    //)
+                    console.log(
+                        `✅ ${selectedQuestionIds.length} preguntas asociadas a la publicación`
+                    )
                 } catch (error) {
                     console.error("⚠️ Error al asociar preguntas:", error)
                     console.error("⚠️ Error completo:", JSON.stringify(error, null, 2))
+                    // No bloqueamos la creación de la publicación si falla esto
                 }
             }
 
@@ -159,7 +198,7 @@ const AddPetScreen = () => {
             await addLocalPet(petLocal)
 
             Alert.alert("OK", "Mascota publicada correctamente")
-            router.push("/")
+            router.push("/(shelter)/publication/all-publications")
         } catch (e: any) {
             console.error(e)
             Alert.alert("Error", e?.message ?? "No se pudo publicar la mascota")
@@ -314,18 +353,47 @@ const AddPetScreen = () => {
                                 </Text>
                             )}
 
+                            <Text style={styles.label}>Descripción</Text>
+                            <Controller
+                                control={control}
+                                name="description"
+                                render={({ field: { onChange, value, onBlur } }) => (
+                                    <TextInput
+                                        style={[styles.input, styles.textArea]}
+                                        value={String(value ?? "")}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        placeholder="Describe a la mascota, su personalidad, comportamiento..."
+                                        multiline
+                                        numberOfLines={6}
+                                        textAlignVertical="top"
+                                        maxLength={500}
+                                    />
+                                )}
+                            />
+                            {errors.description && (
+                                <Text style={styles.errorText}>
+                                    {String(errors.description.message)}
+                                </Text>
+                            )}
+
                             <QuestionSelector
                                 selectedIds={selectedQuestionIds}
                                 onSelectionChange={setSelectedQuestionIds}
                                 disabled={isSubmitting}
                             />
 
-                            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                                <Ionicons name="camera-outline" size={20} color="#A47CF3" />
-                                <Text style={styles.photoButtonText}>Seleccionar Foto</Text>
+
+                            <TouchableOpacity
+                                style={[styles.photoButton, { flex: 1, marginLeft: 6 }]}
+                                onPress={pickImage}
+                            >
+                                <Ionicons name="image-outline" size={20} color={Colors.secondary} />
+                                <Text style={styles.photoButtonText}>Galería</Text>
                             </TouchableOpacity>
 
                             {photo && <Image source={{ uri: photo }} style={styles.image} />}
+
 
                             <TouchableOpacity
                                 style={[
@@ -364,11 +432,11 @@ const getResponsiveStyles = (width: number, height: number) => {
     return StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
         },
         scrollContainer: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: Colors.light.background,
         },
         cardWrapper: {
             padding: containerPadding,
@@ -425,13 +493,18 @@ const getResponsiveStyles = (width: number, height: number) => {
             marginBottom: 15,
             fontSize: fontSize,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
+        },
+        textArea: {
+            height: 120,
+            paddingTop: 12,
+            textAlignVertical: "top",
         },
         pickerWrapper: {
             marginBottom: 15,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             backgroundColor: "#fff",
             borderRadius: 12,
             overflow: "hidden",
@@ -444,7 +517,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             paddingVertical: 5,
         },
         errorText: {
-            color: "#e74c3c",
+            color: Colors.danger,
             fontSize: isSmallScreen ? 11 : 12,
             marginBottom: 8,
             marginTop: -10,
@@ -458,7 +531,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             backgroundColor: "#fff",
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             gap: 8,
             marginBottom: 20,
         },
@@ -491,7 +564,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             shadowRadius: 4,
         },
         submitButtonDisabled: {
-            backgroundColor: "#E0E0E0",
+            backgroundColor: Colors.light.disabled,
         },
         submitButtonText: {
             color: "#222",

@@ -21,7 +21,8 @@ export const UserSchema = z.object({
 
 export const ReportSchema = z.object({
     id: z.number(),
-    post_id: z.number(),
+    post_id: z.number().nullable(),
+    message_id: z.number().nullable(),
     user_id: z.number(),
     description: z.string(),
     resolved: z.boolean(),
@@ -95,11 +96,10 @@ export const AdoptionRequestSchema = z.object({
 
 export const AdoptionHistorySchema = z.object({
     id: z.number(),
-    petid: z.number(),
+    pet_id: z.number(),
     from_owner_id: z.number(),
     to_owner_id: z.number(),
-    postid: z.number(),
-    createdat: z.string(),
+    created_at: z.string(),
 })
 
 export const ReportFormSchema = ReportSchema.omit({
@@ -168,12 +168,12 @@ export const SubmitGiverRequestSchema = z.object({
 
 export const CreateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
     id: true,
-    createdat: true,
+    created_at: true,
 })
 
 export const UpdateAdoptionHistoryRequestSchema = AdoptionHistorySchema.omit({
     id: true,
-    createdat: true,
+    created_at: true,
 }).partial()
 
 // ===== VERIFICATION CODE SCHEMAS =====
@@ -199,37 +199,27 @@ export const ValidateVerificationCodeRequestSchema = VerificationCodeSchema.pick
     user_id: true,
 })
 
-// ============================================
-// Esquemas extendidos con imágenes para comunicación entre microservicios
-// ============================================
+export const UserWithImagesPrivateSchema = UserSchema.omit({ password: true }).extend({
+    profile_picture: z.string(),
+    profile_mural: z.string(),
+})
 
-/**
- * Esquema de Post extendido con imágenes obtenidas desde el microservicio de Media
- */
-// export const PostWithImagesSchema = PostSchema.extend({
-//     images: z
-//         .array(z.string())
-//         .describe("URLs de imágenes del post obtenidas desde el microservicio de Media"),
-// })
+export const UserWithImagesPublicSchema = UserSchema.omit({
+    password: true,
+    created_at: true,
+    updated_at: true,
+    rut: true,
+    validated: true,
+}).extend({
+    profile_picture: z.string(),
+    profile_mural: z.string(),
+})
 
-/**
- * Esquema de Pet extendido con imágenes obtenidas desde el microservicio de Media
- */
-// export const PetWithImagesSchema = PetSchema.extend({
-//     images: z
-//         .array(z.string())
-//         .describe("URLs de imágenes de la mascota obtenidas desde el microservicio de Media"),
-// })
-
-/**
- * Esquema de User extendido con imágenes obtenidas desde el microservicio de Media
- */
-export const UserWithImagesSchema = UserSchema.omit({ password: true }).extend({
-    images: z
-        .array(z.string())
-        .describe(
-            "URLs de imágenes de perfil del usuario obtenidas desde el microservicio de Media"
-        ),
+export const UpdateUserSchema = UserSchema.pick({
+    email: true,
+    name: true,
+    address: true,
+    description: true,
 })
 
 /**
@@ -239,7 +229,7 @@ export const UsersWithImagesResponseSchema = z.object({
     type: z.literal("success"),
     message: z.string(),
     data: z.object({
-        items: z.array(UserWithImagesSchema),
+        items: z.array(UserWithImagesPrivateSchema),
         total: z.number(),
         page: z.number(),
         pageSize: z.number(),
@@ -253,7 +243,28 @@ export const UsersWithImagesResponseSchema = z.object({
 export const UserByIdWithImagesResponseSchema = z.object({
     type: z.literal("success"),
     message: z.string(),
-    data: UserWithImagesSchema,
+    data: UserWithImagesPrivateSchema,
+})
+
+export const PublicUsersWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: z.object({
+        items: z.array(UserWithImagesPublicSchema),
+        total: z.number(),
+        page: z.number(),
+        pageSize: z.number(),
+        totalPages: z.number(),
+    }),
+})
+
+/**
+ * Respuesta de un usuario individual con imágenes
+ */
+export const PublicUserByIdWithImagesResponseSchema = z.object({
+    type: z.literal("success"),
+    message: z.string(),
+    data: UserWithImagesPublicSchema,
 })
 
 /**

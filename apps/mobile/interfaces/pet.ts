@@ -7,4 +7,5 @@ export interface Pet {
     publisher: string
     description: string
     image: ImageSourcePropType
+    type?: string | null
 }

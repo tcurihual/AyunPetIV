@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
     View,
     Text,
@@ -34,9 +34,13 @@ import {
 import { Colors } from "@/constants/Colors"
 import { QuestionSelector } from "@/components/common/QuestionSelector"
 import { usePostFormContext } from "@/context/PostFormContext"
+import { useThemeColor } from "@/hooks/useThemeColor"
+import { useTheme } from "@/context/ThemeContext"
 
 type PetFormInput = z.input<typeof PetFormSchema>
 type PetFormOutput = z.output<typeof PetFormSchema>
+
+const { width, height } = Dimensions.get("window")
 
 const AddPetScreen = () => {
     const router = useRouter()
@@ -44,8 +48,32 @@ const AddPetScreen = () => {
     const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([])
     const { createPublication } = usePublications()
     const { create: createPostForm } = usePostFormContext()
-    const { width, height } = Dimensions.get("window")
-    const styles = getResponsiveStyles(width, height)
+
+    const { theme } = useTheme()
+    console.log("AddPetScreen theme:", theme)
+
+    React.useEffect(() => {
+        console.log("AddPetScreen mounted with theme:", theme)
+    }, [theme])
+
+    const themeColors = {
+        background: useThemeColor({}, "background"),
+        card: useThemeColor({}, "card"),
+        text: useThemeColor({}, "text"),
+        textInverted: useThemeColor({}, "textInverted"),
+        textMuted: useThemeColor({}, "textMuted"),
+        textSecondary: useThemeColor({}, "textSecondary"),
+        primary: useThemeColor({}, "primary"),
+        danger: useThemeColor({}, "danger"),
+        disabled: useThemeColor({}, "disabled"),
+        shadow: useThemeColor({}, "shadow"),
+        brandYellow: Colors.yellow,
+    }
+
+    const styles = useMemo(
+        () => getResponsiveStyles(width, height, themeColors),
+        [width, height, theme]
+    )
 
     const {
         control,
@@ -322,7 +350,11 @@ const AddPetScreen = () => {
                             />
 
                             <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                                <Ionicons name="camera-outline" size={20} color="#A47CF3" />
+                                <Ionicons
+                                    name="camera-outline"
+                                    size={20}
+                                    color={Colors.secondary}
+                                />
                                 <Text style={styles.photoButtonText}>Seleccionar Foto</Text>
                             </TouchableOpacity>
 
@@ -348,7 +380,23 @@ const AddPetScreen = () => {
     )
 }
 
-const getResponsiveStyles = (width: number, height: number) => {
+const getResponsiveStyles = (
+    width: number,
+    height: number,
+    colors: {
+        background: string
+        card: string
+        text: string
+        textInverted: string
+        textMuted: string
+        textSecondary: string
+        primary: string
+        danger: string
+        disabled: string
+        shadow: string
+        brandYellow: string
+    }
+) => {
     const isSmallScreen = width < 350
     const isMediumScreen = width >= 350 && width < 400
     const isTablet = width >= 768
@@ -365,19 +413,19 @@ const getResponsiveStyles = (width: number, height: number) => {
     return StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: colors.background,
         },
         scrollContainer: {
             flex: 1,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: colors.background,
         },
         cardWrapper: {
             padding: containerPadding,
         },
         cardContainer: {
-            backgroundColor: "#fff",
+            backgroundColor: colors.card,
             borderRadius: 16,
-            shadowColor: "#000",
+            shadowColor: colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
             shadowRadius: 4,
@@ -390,18 +438,18 @@ const getResponsiveStyles = (width: number, height: number) => {
             justifyContent: "center",
             paddingVertical: headerPadding,
             paddingHorizontal: 16,
-            backgroundColor: `${Colors.yellow}`,
+            backgroundColor: colors.brandYellow,
             marginTop: 0,
             marginBottom: 0,
         },
         headerTitle: {
             fontSize: titleSize,
             fontWeight: "600",
-            color: "#222",
+            color: colors.textInverted,
             textAlign: "center",
         },
         formContent: {
-            backgroundColor: "#fff",
+            backgroundColor: colors.card,
             paddingHorizontal: formPadding,
             paddingVertical: formPadding,
             borderRadius: 16,
@@ -409,31 +457,31 @@ const getResponsiveStyles = (width: number, height: number) => {
         label: {
             fontSize: fontSize,
             fontWeight: "500",
-            color: "#333",
+            color: colors.textMuted,
             marginBottom: 8,
         },
         labelInline: {
             fontSize: fontSize,
             fontWeight: "500",
-            color: "#333",
+            color: colors.textMuted,
         },
         input: {
             width: "100%",
             height: inputHeight,
-            backgroundColor: "#fff",
+            backgroundColor: colors.card,
             borderRadius: 12,
             paddingHorizontal: 15,
             marginBottom: 15,
             fontSize: fontSize,
             borderWidth: 1,
-            borderColor: "#A47CF3",
-            color: "#222",
+            borderColor: colors.primary,
+            color: colors.textInverted,
         },
         pickerWrapper: {
             marginBottom: 15,
             borderWidth: 1,
-            borderColor: "#A47CF3",
-            backgroundColor: "#fff",
+            borderColor: colors.primary,
+            backgroundColor: colors.card,
             borderRadius: 12,
             overflow: "hidden",
         },
@@ -445,7 +493,7 @@ const getResponsiveStyles = (width: number, height: number) => {
             paddingVertical: 5,
         },
         errorText: {
-            color: "#e74c3c",
+            color: colors.danger,
             fontSize: isSmallScreen ? 11 : 12,
             marginBottom: 8,
             marginTop: -10,
@@ -456,15 +504,15 @@ const getResponsiveStyles = (width: number, height: number) => {
             justifyContent: "center",
             paddingVertical: 12,
             paddingHorizontal: 15,
-            backgroundColor: "#fff",
+            backgroundColor: colors.card,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: colors.primary,
             gap: 8,
             marginBottom: 20,
         },
         photoButtonText: {
-            color: "#666",
+            color: colors.textSecondary,
             fontSize: 14,
             fontWeight: "500",
         },
@@ -479,23 +527,23 @@ const getResponsiveStyles = (width: number, height: number) => {
         submitButton: {
             width: "100%",
             height: buttonHeight,
-            backgroundColor: `${Colors.yellow}`,
+            backgroundColor: colors.brandYellow,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
             marginTop: 20,
             marginBottom: 30,
             elevation: 3,
-            shadowColor: "#000",
+            shadowColor: colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
             shadowRadius: 4,
         },
         submitButtonDisabled: {
-            backgroundColor: "#E0E0E0",
+            backgroundColor: colors.disabled,
         },
         submitButtonText: {
-            color: "#222",
+            color: colors.textInverted,
             fontWeight: "600",
             fontSize: fontSize,
         },

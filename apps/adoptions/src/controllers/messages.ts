@@ -1,6 +1,7 @@
 import type { Response } from "express"
 import { createSupabaseClient, AppResponse, AppError, AuthenticatedRequest } from "@repo/utils"
 import { supabase } from ".."
+import { getEntityImages } from "../utils/mediaService"
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params
@@ -22,6 +23,67 @@ export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) throw new AppError(400, "Error al obtener mensajes", { error })
     return AppResponse(res, 200, "Mensajes obtenidos correctamente", data)
+}
+
+export const getMessagesByPostId = async (req: AuthenticatedRequest, res: Response) => {
+    const { post_id } = req.params
+
+    if (!post_id) {
+        throw new AppError(400, "El parámetro post_id es requerido")
+    }
+
+    const { data, error } = await supabase
+        .from("message")
+        .select("*")
+        .eq("post_id", Number(post_id))
+        .order("created_at", { ascending: false })
+
+    if (error) throw new AppError(400, "Error al obtener mensajes por post_id", { error })
+
+    // Headers para pasar al servicio de media
+    const headers = req.user
+        ? {
+              "x-user-id": String(req.user.id),
+              "x-user-role": String(req.user.role ?? ""),
+          }
+        : undefined
+
+    // Enriquecer cada mensaje con información del usuario creador
+    const messagesWithUserInfo = await Promise.all(
+        data.map(async (message) => {
+            let creator: { id: number; name: string; profilePhoto: string | null } | null = null
+
+            if (message.creator_id) {
+                // Obtener información del usuario
+                const { data: userData } = await supabase
+                    .from("users")
+                    .select("id, name")
+                    .eq("id", message.creator_id)
+                    .single()
+
+                if (userData) {
+                    // Obtener foto de perfil del usuario
+                    const userPhotos = await getEntityImages(
+                        "profile_picture",
+                        message.creator_id,
+                        headers
+                    )
+                    creator = {
+                        id: userData.id,
+                        name: userData.name,
+                        profilePhoto: userPhotos.length > 0 ? userPhotos[0] : null,
+                    }
+                }
+            }
+
+            return {
+                ...message,
+                creator,
+            }
+        })
+    )
+
+    return AppResponse(res, 200, "Mensajes obtenidos correctamente", messagesWithUserInfo)
 }
 
 export const createMessage = async (req: AuthenticatedRequest, res: Response) => {

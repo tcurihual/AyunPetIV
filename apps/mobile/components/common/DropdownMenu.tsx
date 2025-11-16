@@ -65,7 +65,19 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
     const handleNavigate = (path: string) => {
         handleClose(() => {
             requestAnimationFrame(() => {
-                router.navigate(path as any)
+                // Para vistas comunes (settings, about, help), redirigir según el rol
+                const commonViews = ["/settings", "/about", "/help"]
+                const pathSegment = path.split("/").pop() || ""
+
+                if (commonViews.some((view) => pathSegment === view.slice(1))) {
+                    if (user?.role === 21 || user?.role === 22) {
+                        router.navigate(`/(shelter)/${pathSegment}` as any)
+                    } else {
+                        router.navigate(path as any)
+                    }
+                } else {
+                    router.navigate(path as any)
+                }
             })
         })
     }

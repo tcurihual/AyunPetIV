@@ -10,6 +10,7 @@ import {
 import { supabase } from "../index"
 import axios from "axios"
 import { MEDIA_PUBLIC_URL } from "@repo/utils"
+import { replaceProfileMural, replaceProfilePicture } from "../utils/mediaService"
 
 const normalizeMediaUrls = (list: any[] | undefined) => {
     const arr = Array.isArray(list) ? list : []
@@ -28,7 +29,27 @@ const normalizeMediaUrls = (list: any[] | undefined) => {
     })
 }
 
-const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
+async function getProfilePicture(userId: number): Promise<string | null> {
+    try {
+        const response = await axios.get(`${MEDIA_URL}/uploads/profile_picture/${userId}`)
+        const files = response.data?.data as string[]
+        return files?.[0] ?? null
+    } catch {
+        return null
+    }
+}
+
+async function getProfileMural(userId: number): Promise<string | null> {
+    try {
+        const response = await axios.get(`${MEDIA_URL}/uploads/profile_mural/${userId}`)
+        const files = response.data?.data as string[]
+        return files?.[0] ?? null
+    } catch {
+        return null
+    }
+}
+
+const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21, GIVER: 22 } as const
 type RoleType = keyof typeof ROLES
 const roleIdFromType = (rt: RoleType) => ROLES[rt]
 const isValidRoleId = (rid: number | null | undefined) =>
@@ -43,6 +64,34 @@ const parseId = (v: string) => {
     return n
 }
 
+type SafeUser = Omit<
+    User["Row"],
+    | "password"
+    | "rut"
+    | "created_at"
+    | "updated_at"
+    | "push_token"
+    | "push_token_updated_at"
+    | "validated"
+> & {
+    profile_picture: string | null
+    profile_mural: string | null
+}
+
+const sanitizeUser = (user: any): SafeUser => {
+    const {
+        password,
+        rut,
+        created_at,
+        updated_at,
+        push_token,
+        push_token_updated_at,
+        validated,
+        ...rest
+    } = user
+    return rest as SafeUser
+}
+
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     const id = req.user?.id
     if (!id) throw new AppError(401, "No autenticado")
@@ -50,7 +99,13 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
 
-    return AppResponse(res, 200, "OK", data as User["Row"])
+    const picture = await getProfilePicture(data.id)
+    const mural = await getProfileMural(data.id)
+    return AppResponse(res, 200, "OK", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
@@ -58,7 +113,6 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
     if (!id) throw new AppError(401, "No autenticado")
 
     const patch = req.body as Partial<User["Update"]>
-    // Solo campos propios
     const updatePayload: User["Update"] = {
         email: patch.email,
         name: patch.name,
@@ -81,6 +135,22 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
         if (byEmail) throw new AppError(409, "Email ya registrado")
     }
 
+    const filesArray = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | Express.Multer.File[]
+        | undefined
+
+    let profileImage: Express.Multer.File | null = null
+    let muralImage: Express.Multer.File | null = null
+
+    if (filesArray && !Array.isArray(filesArray)) {
+        const imgArr = filesArray["image"] || []
+        profileImage = imgArr.length > 0 ? imgArr[0] : null
+
+        const muralArr = filesArray["mural"] || []
+        muralImage = muralArr.length > 0 ? muralArr[0] : null
+    }
+
     const { data, error } = await supabase
         .from("users")
         .update(updatePayload)
@@ -89,14 +159,38 @@ export const patchMe = async (req: AuthenticatedRequest, res: Response) => {
         .single()
 
     if (error) throw new AppError(500, error.message)
-    return AppResponse(res, 200, "Perfil actualizado", data as User["Row"])
+
+    if (profileImage) {
+        try {
+            await replaceProfilePicture(id, profileImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando foto de perfil", e)
+        }
+    }
+
+    if (muralImage) {
+        try {
+            await replaceProfileMural(id, muralImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando mural de perfil", e)
+        }
+    }
+
+    const picture = await getProfilePicture(id)
+    const mural = await getProfileMural(id)
+
+    return AppResponse(res, 200, "Perfil actualizado", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const roleIdParam = req.query.role ? Number(req.query.role) : undefined
         const roleTypeParam = req.query.roleType
-            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter")
+            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter" | "giver")
             : undefined
 
         let query = supabase.from("users").select("*", { count: "exact" })
@@ -116,8 +210,61 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
         const { data, error, count } = await query.order("id", { ascending: true }).range(from, to)
         if (error) throw new AppError(500, error.message)
 
+        const usersWithImages = await Promise.all(
+            (data ?? []).map(async (user) => ({
+                ...user,
+                profile_picture: await getProfilePicture(user.id),
+                profile_mural: await getProfileMural(user.id),
+            }))
+        )
+
         return AppResponse(res, 200, "Listado de usuarios", {
-            items: data ?? [],
+            items: usersWithImages,
+            total: count ?? 0,
+            page,
+            pageSize,
+            totalPages: Math.ceil((count ?? 0) / pageSize),
+        })
+    } catch (e) {
+        if (e instanceof AppError) throw e
+        throw new AppError(500, "Error al obtener usuarios")
+    }
+}
+
+export const getUsersSafe = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const roleIdParam = req.query.role ? Number(req.query.role) : undefined
+        const roleTypeParam = req.query.roleType
+            ? (String(req.query.roleType).toLowerCase() as "admin" | "user" | "shelter" | "giver")
+            : undefined
+
+        let query = supabase.from("users").select("*", { count: "exact" })
+
+        if (roleIdParam !== undefined) {
+            query = query.eq("role", roleIdParam)
+        } else if (roleTypeParam) {
+            const rid = roleIdFromType(roleTypeParam.toUpperCase() as RoleType)
+            query = query.eq("role", rid)
+        }
+
+        const page = Math.max(Number(req.query.page ?? 1), 1)
+        const pageSize = Math.min(Math.max(Number(req.query.pageSize ?? 20), 1), 100)
+        const from = (page - 1) * pageSize
+        const to = from + pageSize - 1
+
+        const { data, error, count } = await query.order("id", { ascending: true }).range(from, to)
+        if (error) throw new AppError(500, error.message)
+
+        const usersWithImages = await Promise.all(
+            (data ?? []).map(async (user) => {
+                const profile_picture = await getProfilePicture(user.id)
+                const profile_mural = await getProfileMural(user.id)
+                return sanitizeUser({ ...user, profile_picture, profile_mural })
+            })
+        )
+
+        return AppResponse(res, 200, "Listado de usuarios", {
+            items: usersWithImages as SafeUser[],
             total: count ?? 0,
             page,
             pageSize,
@@ -134,7 +281,30 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
     if (!isAdmin(req) && !isSelf(req, id)) throw new AppError(403, "No autorizado")
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
     if (error || !data) throw new AppError(404, "Usuario no encontrado")
-    return AppResponse(res, 200, "Usuario", data as User["Row"])
+    const picture = await getProfilePicture(Number(id))
+    const mural = await getProfileMural(Number(id))
+    return AppResponse(res, 200, "Usuario", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
+}
+
+export const getUserByIdSafe = async (req: AuthenticatedRequest, res: Response) => {
+    const id = parseId(req.params.id)
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
+    if (error || !data) throw new AppError(404, "Usuario no encontrado")
+
+    const picture = await getProfilePicture(Number(id))
+    const mural = await getProfileMural(Number(id))
+
+    const safeUser = sanitizeUser({
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    })
+
+    return AppResponse(res, 200, "Usuario", safeUser)
 }
 
 export const createUser = async (req: AuthenticatedRequest, res: Response) => {
@@ -198,6 +368,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
 
     const patch = req.body as Partial<User["Update"]> & { roleType?: RoleType }
 
+    // solo admin puede tocar rol / validated
     if (
         !admin &&
         (patch.role !== undefined || patch.validated !== undefined || patch.roleType !== undefined)
@@ -205,6 +376,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         throw new AppError(403, "No autorizado para cambiar rol/validated")
     }
 
+    // validación email único
     if (patch.email) {
         const { data: byEmail } = await supabase
             .from("users")
@@ -214,6 +386,8 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
             .maybeSingle()
         if (byEmail) throw new AppError(409, "Email ya registrado")
     }
+
+    // validación RUT único
     if (patch.rut) {
         const { data: byRut } = await supabase
             .from("users")
@@ -224,15 +398,34 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         if (byRut) throw new AppError(409, "RUT ya registrado")
     }
 
+    // cálculo de role
     let roleField: Pick<User["Update"], "role"> | {} = {}
     if (admin) {
         if (patch.role !== undefined) {
-            if (patch.role !== null && !isValidRoleId(patch.role))
+            if (patch.role !== null && !isValidRoleId(patch.role)) {
                 throw new AppError(400, "role (id) inválido")
+            }
             roleField = { role: patch.role }
         } else if (patch.roleType !== undefined) {
             roleField = { role: roleIdFromType(patch.roleType) }
         }
+    }
+
+    // archivos (image / mural) desde multipart/form-data
+    const filesArray = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | Express.Multer.File[]
+        | undefined
+
+    let profileImage: Express.Multer.File | null = null
+    let muralImage: Express.Multer.File | null = null
+
+    if (filesArray && !Array.isArray(filesArray)) {
+        const imgArr = filesArray["image"] || []
+        profileImage = imgArr.length > 0 ? imgArr[0] : null
+
+        const muralArr = filesArray["mural"] || []
+        muralImage = muralArr.length > 0 ? muralArr[0] : null
     }
 
     const updatePayload: User["Update"] = {
@@ -255,7 +448,31 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         .single()
 
     if (error) throw new AppError(500, error.message)
-    return AppResponse(res, 200, "Actualizado", data as User["Row"])
+
+    if (profileImage) {
+        try {
+            await replaceProfilePicture(id, profileImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando foto de perfil")
+        }
+    }
+
+    if (muralImage) {
+        try {
+            await replaceProfileMural(id, muralImage, req)
+        } catch (e) {
+            console.error("⚠️ Error actualizando mural de perfil")
+        }
+    }
+
+    const picture = await getProfilePicture(id)
+    const mural = await getProfileMural(id)
+
+    return AppResponse(res, 200, "Actualizado", {
+        ...data,
+        profile_picture: picture,
+        profile_mural: mural,
+    } as User["Row"])
 }
 
 export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
@@ -285,7 +502,96 @@ export const deleteMe = async (req: AuthenticatedRequest, res: Response) => {
  * base de datos (ON DELETE CASCADE) para evitar dobles borrados.
  */
 const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
-    // Obtener ids de publicaciones del usuario y sus mascotas asociadas
+    const headers = {
+        "x-user-id": String(req.user?.id ?? 0),
+        "x-user-role": String(req.user?.role ?? ""),
+    }
+
+    // 1. Obtener datos del usuario para acceder a su RUT (necesario para giver)
+    const { data: userData } = await supabase
+        .from("users")
+        .select("rut, role")
+        .eq("id", userId)
+        .single()
+
+    // 2. Si es un usuario giver (shelter, role=21 o 22), eliminar documentos de account-request
+    const isGiver = userData && (userData.role === 21 || userData.role === 22) && userData.rut
+    if (isGiver) {
+        try {
+            // Obtener lista de archivos del giver
+            const { data: filesData } = await axios.get(
+                `${MEDIA_URL}/uploads/account-request/${userData.rut}`,
+                { headers }
+            )
+            const files = Array.isArray(filesData)
+                ? filesData
+                : Array.isArray((filesData as any)?.data)
+                ? (filesData as any).data
+                : []
+
+            // Extraer nombres de archivos de las URLs
+            const fileNames = files.map((url: string) => url.split("/").pop() || "").filter(Boolean)
+
+            // Eliminar archivos si existen
+            if (fileNames.length > 0) {
+                await axios.delete(`${MEDIA_URL}/uploads/account-request/${userData.rut}`, {
+                    data: { fileNamesArray: fileNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
+            }
+        } catch (err: any) {
+            console.error("Warning: error al eliminar documentos de giver:", err?.message)
+        }
+    }
+
+    // 3. Eliminar foto de perfil si existe
+    try {
+        const { data: profilePicData } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_picture/${userId}`,
+            { headers }
+        )
+        const profilePics = Array.isArray(profilePicData?.data) ? profilePicData.data : []
+
+        if (profilePics.length > 0) {
+            const picNames = profilePics
+                .map((url: string) => url.split("/").pop() || "")
+                .filter(Boolean)
+
+            if (picNames.length > 0) {
+                await axios.delete(`${MEDIA_URL}/uploads/profile_picture/${userId}`, {
+                    data: { fileNamesArray: picNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
+            }
+        }
+    } catch (err: any) {
+        console.error("Warning: error al eliminar foto de perfil:", err?.message)
+    }
+
+    try {
+        const { data: profileMuralData } = await axios.get(
+            `${MEDIA_URL}/uploads/profile_mural/${userId}`,
+            { headers }
+        )
+        const profileMurals = Array.isArray(profileMuralData?.data) ? profileMuralData.data : []
+
+        if (profileMurals.length > 0) {
+            const muralNames = profileMurals
+                .map((url: string) => url.split("/").pop() || "")
+                .filter(Boolean)
+
+            if (muralNames.length > 0) {
+                await axios.delete(`${MEDIA_URL}/uploads/profile_mural/${userId}`, {
+                    data: { fileNamesArray: muralNames },
+                    headers: { "Content-Type": "application/json", ...headers },
+                })
+            }
+        }
+    } catch (err: any) {
+        console.error("Warning: error al eliminar mural de perfil:", err?.message)
+    }
+
+    // 4. Obtener ids de publicaciones del usuario y sus mascotas asociadas
     const { data: posts } = await supabase
         .from("post")
         .select("id, pet_id")
@@ -299,10 +605,6 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
         if (pid) petIdSet.add(pid)
     }
     // Intentar eliminar imágenes asociadas a cada publicación (no es transactional)
-    const headers = {
-        "x-user-id": String(req.user?.id ?? 0),
-        "x-user-role": String(req.user?.role ?? ""),
-    }
 
     for (const p of postRows) {
         const postId = Number((p as any).id)
@@ -363,4 +665,3 @@ const deleteAccountById = async (userId: number, req: AuthenticatedRequest) => {
     const { error: userDelErr } = await supabase.from("users").delete().eq("id", userId)
     if (userDelErr) throw new AppError(500, `Error al eliminar usuario: ${userDelErr.message}`)
 }
-// 4) Eliminar mensajes creados por el usuario

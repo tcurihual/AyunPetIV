@@ -1,4 +1,3 @@
-// apps/entities/src/routes/users.ts
 import { Router, type Request, type Response, type NextFunction } from "express"
 import { requireRole } from "@repo/utils"
 import {
@@ -10,7 +9,10 @@ import {
     deleteMe,
     getMe,
     patchMe,
+    getUsersSafe,
+    getUserByIdSafe,
 } from "../controllers/user"
+import { uploadMemory } from "../middleware/uploadMemory"
 
 export const ROLES = { ADMIN: 19, USER: 20, SHELTER: 21 } as const
 
@@ -23,29 +25,38 @@ const usersRouter = Router()
 
 usersRouter.get(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
     asyncHandler((req, res) => getMe(req as any, res))
 )
 usersRouter.patch(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22),
+    uploadMemory.fields([
+        { name: "image", maxCount: 1 },
+        { name: "mural", maxCount: 1 },
+    ]),
     asyncHandler((req, res) => patchMe(req as any, res))
 )
 usersRouter.delete(
     "/me",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER, 22), // 22 = otro tipo de giver
     asyncHandler((req, res) => deleteMe(req as any, res))
+)
+
+usersRouter.get(
+    "/public",
+    asyncHandler((req, res) => getUsersSafe(req as any, res))
+)
+
+usersRouter.get(
+    "/public/:id",
+    asyncHandler((req, res) => getUserByIdSafe(req as any, res))
 )
 
 usersRouter.get(
     "/",
     requireRole(ROLES.ADMIN),
     asyncHandler((req, res) => getUsers(req as any, res))
-)
-usersRouter.post(
-    "/",
-    requireRole(ROLES.ADMIN),
-    asyncHandler((req, res) => createUser(req as any, res))
 )
 
 usersRouter.get(
@@ -54,9 +65,19 @@ usersRouter.get(
     asyncHandler((req, res) => getUserById(req as any, res))
 )
 
+usersRouter.post(
+    "/",
+    requireRole(ROLES.ADMIN),
+    asyncHandler((req, res) => createUser(req as any, res))
+)
+
 usersRouter.patch(
     "/:id",
-    requireRole(ROLES.ADMIN, ROLES.USER, ROLES.SHELTER),
+    requireRole(ROLES.ADMIN),
+    uploadMemory.fields([
+        { name: "image", maxCount: 1 },
+        { name: "mural", maxCount: 1 },
+    ]),
     asyncHandler((req, res) => updateUser(req as any, res))
 )
 

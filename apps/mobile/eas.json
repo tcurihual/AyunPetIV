@@ -1,28 +1,19 @@
 {
     "cli": {
-        "appVersionSource": "remote",
-        "promptToConfigurePushNotifications": false
+        "appVersionSource": "remote"
     },
     "build": {
-        "monorepo": {
-            "pnpm": "9.15.4",
-            "cache": {
-                "key": "turbo",
-                "paths": ["../../node_modules/.cache/turbo"]
-            },
-            "env": {
-                "EXPO_USE_FAST_RESOLVER": "true"
-            }
-        },
         "development": {
-            "extends": "monorepo",
             "distribution": "internal",
             "android": {
                 "buildType": "apk"
+            },
+            "env": {
+                "EXPO_USE_FAST_RESOLVER": "true",
+                "EXPO_PUBLIC_API_GATEWAY": "http://ayunpet-api.eastus2.cloudapp.azure.com"
             }
         },
         "production": {
-            "extends": "monorepo",
             "distribution": "store",
             "android": {
                 "buildType": "app-bundle"

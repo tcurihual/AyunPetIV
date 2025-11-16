@@ -16,17 +16,13 @@ msRouter.use(
         pathRewrite: {
             "^/v1/auth": "",
         },
-        proxyTimeout: 10000, // Aumentar timeout
+        proxyTimeout: 10000,
         on: {
-            proxyReq: (proxyReq, req) => {
-                console.log(`🌐 [GATEWAY] Proxying ${req.method} ${req.url} to ${AUTH_URL}`)
-                console.log(`🌐 [GATEWAY] Target URL: ${proxyReq.path}`)
-            },
-            proxyRes: (proxyRes, req) => {
-                console.log(`🌐 [GATEWAY] Response from auth service: ${proxyRes.statusCode}`)
-            },
-            error: (err, req, res) => {
-                console.error(`❌ [GATEWAY] Proxy error for ${req.method} ${req.url}:`, err.message)
+            proxyReq: (proxyReq: ClientRequest, req: Request) => {
+                if (req.user) {
+                    proxyReq.setHeader("x-user-id", req.user.id)
+                    proxyReq.setHeader("x-user-role", req.user.role!!)
+                }
             },
         },
     })

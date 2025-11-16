@@ -16,17 +16,31 @@ export default function BottomNavbar() {
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
 
+    // Debug: descomentar para ver el pathname actual
+    console.log("Current pathname:", pathname)
+
     const isActiveTab = (tabPath: string) => {
-        if (tabPath === "home")
-            return (
-                pathname === "/" ||
-                pathname.startsWith("/(home)") ||
-                pathname.startsWith("/(shelter)")
-            )
+        if (tabPath === "home") {
+            // Para shelter, el home es el index (mis publicaciones)
+            if (role === 21 || role === 22) {
+                return pathname === "/" || pathname === "/(shelter)" || pathname === "/(shelter)/"
+            }
+            // Para usuarios normales
+            return pathname === "/" || pathname.startsWith("/(home)")
+        }
         if (tabPath === "search") return pathname.includes("/search")
-        if (tabPath === "requests") return pathname.includes("/(requests)")
+        if (tabPath === "requests") {
+            return (
+                pathname === "/requestList" ||
+                pathname.includes("/requests") ||
+                pathname.includes("requests") ||
+                pathname.match(/^\/\d+$/) !== null || // Coincide con /[id] (ej: /123)
+                pathname.includes("/view-adoption-responses")
+            )
+        }
         if (tabPath === "profile") return pathname.includes("/my-profile")
-        if (tabPath === "dashboard") return pathname.includes("/(dashboard)")
+        if (tabPath === "dashboard")
+            return pathname.includes("/(dashboard)") || pathname.includes("/dashboard")
         if (tabPath === "users") return pathname.includes("/(users)")
         return false
     }
@@ -56,7 +70,7 @@ export default function BottomNavbar() {
                         </Pressable>
                         <Pressable
                             style={getTabStyle("requests")}
-                            onPress={() => navigate("/(home)/(requests)/requestList")}
+                            onPress={() => navigate("/requestList")}
                         >
                             <Ionicons
                                 name={getIconName("mail", "requests")}

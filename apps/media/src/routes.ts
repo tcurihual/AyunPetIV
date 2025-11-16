@@ -35,6 +35,31 @@ router.get("/uploads/:entityType/:entityId/:filename", (req, res) => {
 router.post("/uploads/account-request/:rut", uploadAccountRequest.array("documents", 10), giverPost)
 router.get("/uploads/account-request", requireRole(19), getGiverFiles)
 
+// 🔒 Ruta INTERNA para que Auth pueda subir fotos de perfil durante registro
+// Esta ruta NO requiere autenticación porque es llamada durante el proceso de registro
+router.post(
+    "/internal/profile-picture/:userId",
+    // Middleware para mapear parámetros ANTES de que multer procese el archivo
+    (req, _res, next) => {
+        req.params.entityType = "profile_picture"
+        req.params.entityId = req.params.userId
+        next()
+    },
+    publicUpload.array("files", 1),
+    postFiles
+)
+
+router.post(
+    "/internal/profile-mural/:userId",
+    (req, _res, next) => {
+        req.params.entityType = "profile_mural"
+        req.params.entityId = req.params.userId
+        next()
+    },
+    publicUpload.array("files", 1),
+    postFiles
+)
+
 // rutas publicas
 router.get("/uploads/:entityType", getFiles)
 router.get("/uploads/:entityType/:entityId", getFilesById)

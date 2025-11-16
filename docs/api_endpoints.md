@@ -166,39 +166,97 @@ Response Body:
 }
 ```
 
-### Microservicio Adoptions
+#### Check User Exists
 
-Prefijo para acceder a cualquier endpoint de este microservicio: `api/adoptions`
+_Proceso para usar el endpoint:_
 
-#### Create Post
+1. Este endpoint se utiliza antes del registro para verificar si un email o RUT ya están registrados
+2. Se envía únicamente el email o el rut (también pueden enviarse ambos)
+3. El backend verifica si existe algún usuario con ese email o RUT
+4. Si existe, retorna error 409. Si no existe, retorna 200
 
 Método: <span style="color:yellow">POST</span>\
-Endpoint: `/posts`\
-Middleware: `validateToken`, `verifyRole(20, 21)`\
-
-Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes.\
-
-Request Body:
+Endpoint: `/check-user-exists`\
+Request Body (opción 1 - solo email):
 
 ```json
 {
-    "pet": {
-        "species": "dog",
-        "name": "pepe",
-        "gender": "male",
-        "age": 2,
-        "size": "medium",
-        "sterilized": true
-    },
-    "post": {
-        "title": "Doy en adopción a pepe",
-        "description": "pepe es un perro muy juguetón y amigable"
+    "email": "usuario@ejemplo.com"
+}
+```
+
+Request Body (opción 2 - solo RUT):
+
+```json
+{
+    "rut": "12.345.678-9"
+}
+```
+
+Request Body (opción 3 - ambos):
+
+```json
+{
+    "email": "usuario@ejemplo.com",
+    "rut": "12.345.678-9"
+}
+```
+
+Código de respuesta exitoso: `200`\
+Response Body (cuando el email/RUT están disponibles):
+
+```json
+{
+    "status": 200,
+    "message": "El email o RUT están disponibles",
+    "type": "success",
+    "data": {
+        "available": true
     }
 }
 ```
 
-Código de respuesta: `201`
-Markdown
+Código de respuesta error: `409`\
+Response Body (cuando el email ya existe):
+
+```json
+{
+    "status": 409,
+    "message": "El email ya está registrado",
+    "type": "error"
+}
+```
+
+Response Body (cuando el RUT ya existe):
+
+```json
+{
+    "status": 409,
+    "message": "El RUT ya está registrado",
+    "type": "error"
+}
+```
+
+Response Body (cuando se envían ambos y alguno existe):
+
+```json
+{
+    "status": 409,
+    "message": "El email o RUT ya están registrados",
+    "type": "error"
+}
+```
+
+Código de respuesta error: `400`\
+Response Body (cuando no se proporciona ni email ni RUT):
+
+```json
+{
+    "status": 400,
+    "message": "Debe proporcionar email o rut",
+    "type": "error"
+}
+```
 
 ### Microservicio Adoptions
 
@@ -210,26 +268,29 @@ Método: <span style="color:yellow">POST</span>\
 Endpoint: `/posts`\
 Middleware: `validateToken`, `verifyRole(20, 21)`
 
-Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes.
+Descripción: Permite a un usuario crear una nueva publicación de adopción. Internamente, crea la mascota y luego la publicación asociada. Si alguna de las dos operaciones falla, se revierte la transacción para no dejar datos inconsistentes. **OBLIGATORIO**: Se debe enviar al menos una imagen de la mascota en formato multipart/form-data.
 
-Request Body:
+Request (multipart/form-data):
+
+**Campos de texto:**
 
 ```json
 {
-    "pet": {
-        "species": "dog",
-        "name": "pepe",
-        "gender": "male",
-        "age": 2,
-        "size": "medium",
-        "sterilized": true
-    },
-    "post": {
-        "title": "Doy en adopción a pepe",
-        "description": "pepe es un perro muy juguetón"
-    }
+    "title": "Doy en adopción a pepe",
+    "description": "pepe es un perro muy juguetón",
+    "species": "dog",
+    "name": "pepe",
+    "gender": "male",
+    "age_years": 2,
+    "age_months": 0,
+    "size": "medium",
+    "sterilized": true
 }
 ```
+
+**Archivos:**
+
+-   `files`: Al menos 1 imagen de la mascota (campo obligatorio)
 
 Código de respuesta: `201`\
 Response Body:
@@ -239,33 +300,44 @@ Response Body:
     "status": 201,
     "message": "Publicación creada con éxito",
     "type": "success",
-    "values": {
+    "data": {
         "post": {
             "id": 1,
-            "creatorid": 1,
-            "petid": 1,
+            "creator_id": 1,
+            "pet_id": 1,
             "title": "Doy en adopción a pepe",
             "description": "pepe es un perro muy juguetón",
             "status": "active",
-            "createdat": "timestamp",
-            "updatedat": "timestamp"
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
         },
         "pet": {
             "id": 1,
-            "ownerid": 1,
+            "owner_id": 1,
             "species": "dog",
             "name": "pepe",
             "gender": "male",
-            "age": 2,
+            "age_years": 2,
+            "age_months": 0,
             "size": "medium",
             "sterilized": true,
             "adopted": false,
-            "createdat": "timestamp",
-            "updatedat": "timestamp"
-        }
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+        },
+        "images": ["https://media.ayunpet.com/uploads/publications/1/imagen1.jpg"]
     }
 }
 ```
+
+**Posibles errores:**
+
+-   `400`: "Se debe proporcionar al menos una imagen de la mascota" (si no se envían archivos)
+-   `400`: "Payload inválido" (si faltan campos requeridos)
+-   `401`: "No autenticado"
+-   `403`: "No autorizado para crear publicaciones para otro usuario" (si se intenta crear para otro usuario sin ser admin)
+
+````
 
 #### Create Adoption Request
 
@@ -281,7 +353,7 @@ Request Body:
     "postid": 123,
     "message": "Hola, estoy muy interesado en adoptar a pepe"
 }
-```
+````
 
 Código de respuesta: `201`\
 Response Body:

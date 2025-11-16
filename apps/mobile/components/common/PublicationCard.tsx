@@ -1,9 +1,11 @@
 import React from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import { useRouter } from "expo-router"
+import { useRouter, usePathname } from "expo-router"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import { Pet } from "@/interfaces/pet"
 import { Colors } from "@/constants/Colors"
+import { useAuthContext } from "@/context/AuthContext"
+import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 
 interface PublicationCardProps {
     pet: Pet
@@ -11,14 +13,35 @@ interface PublicationCardProps {
 
 const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
     const router = useRouter()
+    const pathname = usePathname()
+    const { user } = useAuthContext()
 
     const scale = useSharedValue(1)
 
     const handleViewDetails = () => {
+        console.log(
+            "🔵 PublicationCard: Clicked, pet.id:",
+            pet.id,
+            "pathname:",
+            pathname,
+            "user role:",
+            user?.role
+        )
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
         setTimeout(() => {
+            const isShelter = user?.role === 21 || user?.role === 22
+            const route = isShelter ? "/(shelter)/publication/[id]" : "/(home)/publication/[id]"
+
+            console.log(
+                "🔵 PublicationCard: isShelter:",
+                isShelter,
+                "Navigating to:",
+                route,
+                "with id:",
+                pet.id
+            )
             router.push({
-                pathname: "/(home)/publication/[id]",
+                pathname: route as any,
                 params: { id: String(pet.id) },
             })
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
@@ -39,6 +62,16 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         }
     })
 
+    const formatAge = (age?: string | number) => {
+        if (age === undefined || age === null || age === "" || age === "undefined")
+            return "Desconocida"
+        const numericAge = Number(age)
+        if (isNaN(numericAge)) return String(age)
+        if (numericAge <= 0) return "Cachorro"
+        if (numericAge === 1) return "1 año"
+        return `${numericAge} años`
+    }
+
     return (
         <Animated.View
             style={[styles.card, animatedStyle]}
@@ -53,7 +86,12 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
                 <Animated.Text style={styles.name} sharedTransitionTag={`pet-name-${pet.id}`}>
                     {pet.name}
                 </Animated.Text>
-                <Text style={styles.details}>{`${pet.gender} ${pet.age}`}</Text>
+                <Text style={styles.details}>
+                    {`${translateSpeciesToSpanish(
+                        (pet as any).type || ""
+                    )} • ${translateGenderToSpanish(pet.gender || "")} • ${formatAge(pet.age)}`}
+                </Text>
+
                 <Text style={styles.publisher}>Publicado por: {pet.publisher}</Text>
             </View>
             <TouchableOpacity

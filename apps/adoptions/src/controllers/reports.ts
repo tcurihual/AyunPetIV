@@ -25,13 +25,23 @@ export const getReports = async (req: AuthenticatedRequest, res: Response) => {
 }
 export const createReport = async (req: AuthenticatedRequest, res: Response) => {
     const supabase = createSupabaseClient()
-    const { userId, postId, description, resolved } = req.body
+    const { userId, postId, messageId, description } = req.body
+
+    // Validación: debe tener postId o messageId, pero no ambos
+    if (!postId && !messageId) {
+        throw new AppError(400, "Se requiere postId o messageId para crear un reporte")
+    }
+
+    if (postId && messageId) {
+        throw new AppError(400, "No se puede reportar una publicación y un mensaje al mismo tiempo")
+    }
 
     const insertData = {
         user_id: userId,
-        post_id: postId,
+        post_id: postId || null,
+        message_id: messageId || null,
         description,
-        resolved: resolved ?? false,
+        resolved: false,
     }
 
     const { data, error } = await supabase.from("report").insert(insertData).select().single()

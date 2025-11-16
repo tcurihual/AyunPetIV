@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import {
     View,
     TouchableOpacity,
@@ -13,6 +13,7 @@ import { useRouter, usePathname } from "expo-router"
 import { useAuthContext } from "@/context/AuthContext"
 import { Colors } from "@/constants/Colors" // 2. Importar { Colors }
 import BackButton from "@common/BackButton"
+import { userService } from "@/services/user"
 
 const { width } = Dimensions.get("window")
 
@@ -24,13 +25,52 @@ export default function Header({ onMenuPress }: HeaderProps) {
     const router = useRouter()
     const pathname = usePathname().toLowerCase()
     const { user } = useAuthContext()
+    const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
 
     // 3. Obtener el tema actual
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
 
-    const defaultAvatar = "https://randomuser.me/api/portraits/women/44.jpg"
-    const userAvatar = user?.avatar || defaultAvatar
+    // Placeholder local para foto de perfil
+    const placeholderImage = require("@images/pp_placeholder.png")
+
+    // Cargar foto de perfil cuando el usuario cambie
+    useEffect(() => {
+        let mounted = true
+
+        const loadProfilePicture = async () => {
+            if (!user?.id) return
+            try {
+                const url = await userService.getProfilePicture(user.id)
+
+                // 🔒 Evitar actualizar si el valor no cambió o el componente ya se desmontó
+                if (!mounted) return
+                setProfilePictureUrl((prev) => (prev === url ? prev : url))
+            } catch (error) {
+                console.log(`No profile picture found for user ${user?.id}`)
+                if (mounted) setProfilePictureUrl(null)
+            }
+        }
+
+        loadProfilePicture()
+        return () => {
+            mounted = false
+        }
+    }, [user?.id])
+
+    // Determinar qué imagen mostrar
+    const getUserAvatarSource = () => {
+        // Si hay foto de perfil del servidor, usar esa
+        if (profilePictureUrl) {
+            return { uri: profilePictureUrl }
+        }
+        // Si hay avatar en el contexto y no es la URL de randomuser, usar esa
+        if (user?.avatar && !user.avatar.includes("randomuser.me")) {
+            return { uri: user.avatar }
+        }
+        // Sino, usar el placeholder local
+        return placeholderImage
+    }
 
     const handleProfilePress = () => {
         const target =
@@ -84,7 +124,7 @@ export default function Header({ onMenuPress }: HeaderProps) {
                     style={[styles.profileCircle, { backgroundColor: themeColors.tabIconDefault }]}
                     onPress={handleProfilePress}
                 >
-                    <Image source={{ uri: userAvatar }} style={styles.profileImage} />
+                    <Image source={getUserAvatarSource()} style={styles.profileImage} />
                     {!user && (
                         <View style={styles.noUserIndicator}>
                             <Text style={styles.noUserText}>?</Text>
@@ -131,7 +171,6 @@ const styles = StyleSheet.create({
         height: width * 0.12,
         borderRadius: (width * 0.12) / 2,
         overflow: "hidden",
-        // backgroundColor: "#e60000ff", // <-- Quitado (fallback rojo)
         alignItems: "center",
         justifyContent: "center",
     },

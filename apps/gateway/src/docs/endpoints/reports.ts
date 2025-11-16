@@ -100,8 +100,9 @@ export function registerReportsDocs(registry: OpenAPIRegistry) {
         tags: ["Reports"],
         summary: "Crear un nuevo reporte",
         description:
-            "Permite a los usuarios crear un nuevo reporte sobre una publicación inapropiada o sospechosa. " +
-            "El usuario debe estar autenticado para poder generar un reporte.",
+            "Permite a los usuarios crear un nuevo reporte sobre una publicación o comentario inapropiado o sospechoso. " +
+            "El usuario debe estar autenticado para poder generar un reporte. " +
+            "Debe proporcionar `postId` para reportar una publicación O `messageId` para reportar un comentario, pero no ambos.",
         security: [{ bearerAuth: [] }],
         request: {
             body: {

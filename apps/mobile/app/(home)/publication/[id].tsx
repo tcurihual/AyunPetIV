@@ -25,7 +25,12 @@ import { Pet } from "@/interfaces/pet"
 import { toMediaUrl } from "@/utils/mediaUrl"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
+import { useMessageContext } from "@/context/MessageContext"
+import { useAuthContext } from "@/context/AuthContext"
+import { useReportContext } from "@/context/ReportContext"
 import type { PublicationItem } from "@/context/PublicationContext"
+import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
+import { Colors } from "@/constants/Colors"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -33,34 +38,26 @@ const { width, height } = Dimensions.get("window")
 
 const isLocalId = (id: string) => id.startsWith("local-")
 
-const mockComments: Comment[] = [
-    {
-        id: "1",
-        ownerName: "María González",
-        ownerAvatar:
-            "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        createdAt: "2024-01-15T10:30:00Z",
-        text: "¡Qué hermoso! Me encantaría adoptarlo. ¿Está disponible aún?",
-    },
-    {
-        id: "2",
-        ownerName: "Carlos Ruiz",
-        createdAt: "2024-01-14T15:45:00Z",
-        text: "Se ve muy tierno. ¿Es bueno con otros perros?",
-    },
-]
-
 export default function PublicationDetail() {
     const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
-    const [comments, setComments] = useState<Comment[]>(mockComments)
     const [showReportModal, setShowReportModal] = useState(false)
-    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+    const [reportingCommentId, setReportingCommentId] = useState<string | number | null>(null)
     const [reportType, setReportType] = useState<"comment" | "publication">("comment")
     const [loading, setLoading] = useState(true)
     const [pet, setPet] = useState<Pet | null>(null)
     const { publications, getPublicationByPostId } = usePublicationContext()
     const { createAdoptionRequest } = useAdoptionRequestContext()
+    const { user } = useAuthContext()
+    const { createReport, loading: reportLoading } = useReportContext()
+    const {
+        messages,
+        loading: messagesLoading,
+        getMessagesByPostId,
+        createMessage,
+        updateMessage,
+        deleteMessage,
+    } = useMessageContext()
 
     const {
         control,
@@ -70,7 +67,7 @@ export default function PublicationDetail() {
     } = useForm<MessageFormData>({
         resolver: zodResolver(MessageFormSchema),
         defaultValues: {
-            creatorId: 1, // Mock user ID
+            creatorId: Number(user?.id) || 0,
             postId: Number(String(id).replace("local-", "")) || 0,
             description: "",
         },
@@ -92,6 +89,30 @@ export default function PublicationDetail() {
         )
     }, [id, publications])
 
+    const formatAge = (age?: string | number | null) => {
+        // Si viene vacío o indefinido
+        if (!age || age === "undefined" || age === "null") return "Desconocida"
+
+        // Si viene como cadena no numérica
+        if (typeof age === "string") {
+            const numericAge = Number(age)
+            if (isNaN(numericAge)) {
+                // si la cadena no es número (ej: "Cachorro"), devuélvela tal cual
+                return age.trim().length > 0 ? age : "Desconocida"
+            }
+            age = numericAge
+        }
+
+        // A esta altura, age es número
+        if (typeof age === "number") {
+            if (age <= 0) return "Cachorro"
+            if (age === 1) return "1 año"
+            if (age > 1) return `${age} años`
+        }
+
+        return "Desconocida"
+    }
+
     const mapPublicationToPet = React.useCallback((pub: PublicationItem): Pet => {
         const imageSource =
             typeof pub.image === "string"
@@ -100,11 +121,30 @@ export default function PublicationDetail() {
                 ? { uri: (pub.image as any).uri }
                 : pub.image || { uri: "https://placehold.co/800x600?text=Mascota" }
 
+        const years =
+            Number((pub as any).age_years ?? 0) ||
+            (typeof pub.age === "string" && pub.age.includes("año") ? parseInt(pub.age) : 0)
+        const months =
+            Number((pub as any).age_months ?? 0) ||
+            (typeof pub.age === "string" && pub.age.includes("mes") ? parseInt(pub.age) : 0)
+
+        const totalAge =
+            years > 0 && months > 0
+                ? `${years} ${years === 1 ? "año" : "años"} y ${months} ${
+                      months === 1 ? "mes" : "meses"
+                  }`
+                : years > 0
+                ? `${years} ${years === 1 ? "año" : "años"}`
+                : months > 0
+                ? `${months} ${months === 1 ? "mes" : "meses"}`
+                : "Desconocida"
+
         return {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
-            age: pub.age ?? "",
+            type: (pub as any).type ?? "", // 👈 AHORA SÍ, SIN ERROR
+            age: totalAge,
             publisher: pub.publisher ?? "Usuario",
             description: pub.description ?? "",
             image: imageSource,
@@ -130,11 +170,13 @@ export default function PublicationDetail() {
                             id,
                             name: raw.name,
                             gender: raw.gender,
-                            age: `${raw.ageYears} años`,
+                            type: (raw as any).species ?? (raw as any).type ?? "", // ⭐ AQUI ⭐
+                            age: raw.ageYears ? `${raw.ageYears} años` : "Desconocida",
                             publisher: raw.ownerName || "Yo",
                             description: raw.description ?? "",
                             image: { uri: url },
                         }
+
                         if (alive) setPet(petObj)
                     } else if (alive) {
                         setPet(null)
@@ -168,22 +210,66 @@ export default function PublicationDetail() {
         }
     }, [id, getPublicationByPostId, mapPublicationToPet, publicationFromContext])
 
+    // Cargar mensajes cuando se carga la publicación
+    useEffect(() => {
+        if (!id || isLocalId(id)) return
+        const numericId = Number(id)
+        if (Number.isFinite(numericId)) {
+            getMessagesByPostId(numericId)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]) // Solo depende de id, no de getMessagesByPostId
+
+    // Convertir mensajes del backend al formato Comment para el componente
+    const comments: Comment[] = useMemo(() => {
+        return messages.map((msg) => ({
+            id: msg.id,
+            ownerName: msg.creator?.name || "Usuario desconocido",
+            ownerAvatar: msg.creator?.profilePhoto || null,
+            createdAt: msg.created_at,
+            text: msg.description,
+            ownerId: msg.creator_id,
+        }))
+    }, [messages])
+
     const onSubmitComment = async (data: MessageFormData) => {
         try {
-            const newComment: Comment = {
-                id: String(comments.length + 1),
-                ownerName: "Usuario Actual",
-                createdAt: new Date().toISOString(),
-                text: data.description,
+            if (!user) {
+                Alert.alert("Error", "Debes iniciar sesión para comentar")
+                return
             }
-            setComments((prev) => [...prev, newComment])
+
+            await createMessage({
+                creatorId: Number(user.id),
+                postId: data.postId,
+                description: data.description,
+            })
+
             reset()
+            Alert.alert("Éxito", "Comentario agregado correctamente")
         } catch (error) {
             console.error("Error adding comment:", error)
+            Alert.alert("Error", "No se pudo agregar el comentario")
         }
     }
 
-    const handleReport = (commentId: string) => {
+    const handleEditComment = async (commentId: string | number, newText: string) => {
+        try {
+            await updateMessage(Number(commentId), { description: newText })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const handleDeleteComment = async (commentId: string | number) => {
+        try {
+            await deleteMessage(Number(commentId))
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const handleReport = (commentId: string | number) => {
         setReportingCommentId(commentId)
         setReportType("comment")
         setShowReportModal(true)
@@ -196,19 +282,58 @@ export default function PublicationDetail() {
 
     const handleSubmitReport = async (description: string) => {
         try {
-            if (reportType === "comment") {
-                console.log("Reporting comment:", reportingCommentId, "Reason:", description)
+            if (reportType === "publication") {
+                // Reportar publicación
+                if (!id || isLocalId(id)) {
+                    Alert.alert("Error", "No se puede reportar una publicación local")
+                    return
+                }
+
+                const postId = Number(id)
+                if (!Number.isFinite(postId)) {
+                    Alert.alert("Error", "ID de publicación inválido")
+                    return
+                }
+
+                // Usar el contexto para crear el reporte de publicación
+                await createReport({
+                    postid: postId,
+                    description: description,
+                })
+
+                Alert.alert(
+                    "Reporte enviado",
+                    "Tu reporte de publicación ha sido enviado correctamente. Será revisado por los administradores."
+                )
             } else {
-                console.log("Reporting publication:", id, "Reason:", description)
+                // Reportar comentario
+                if (!reportingCommentId) {
+                    Alert.alert("Error", "No se pudo identificar el comentario a reportar")
+                    return
+                }
+
+                const messageId = Number(reportingCommentId)
+                if (!Number.isFinite(messageId)) {
+                    Alert.alert("Error", "ID de comentario inválido")
+                    return
+                }
+
+                // Usar el contexto para crear el reporte de comentario
+                await createReport({
+                    messageid: messageId,
+                    description: description,
+                })
+
+                Alert.alert(
+                    "Reporte enviado",
+                    "Tu reporte de comentario ha sido enviado correctamente. Será revisado por los administradores."
+                )
             }
-            alert(
-                `Reporte de ${
-                    reportType === "comment" ? "comentario" : "publicación"
-                } enviado correctamente`
-            )
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending report:", error)
-            alert("Error al enviar el reporte")
+            const errorMessage =
+                error?.response?.data?.message || error?.message || "Error al enviar el reporte"
+            Alert.alert("Error", errorMessage)
         } finally {
             setShowReportModal(false)
             setReportingCommentId(null)
@@ -302,10 +427,20 @@ export default function PublicationDetail() {
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
                                     <Text style={styles.infoLabel}>
-                                        Género: <Text style={styles.infoValue}>{pet.gender}</Text>
+                                        Especie:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateSpeciesToSpanish((pet as any).type || "")}
+                                        </Text>
                                     </Text>
                                     <Text style={styles.infoLabel}>
-                                        Edad: <Text style={styles.infoValue}>{pet.age}</Text>
+                                        Género:{" "}
+                                        <Text style={styles.infoValue}>
+                                            {translateGenderToSpanish(pet.gender || "")}
+                                        </Text>
+                                    </Text>
+                                    <Text style={styles.infoLabel}>
+                                        Edad:{" "}
+                                        <Text style={styles.infoValue}>{formatAge(pet.age)}</Text>
                                     </Text>
                                 </View>
                                 <View style={styles.infoColumn}>
@@ -354,9 +489,20 @@ export default function PublicationDetail() {
                                             <CommentCard
                                                 key={comment.id}
                                                 comment={comment}
+                                                currentUserId={user ? Number(user.id) : undefined}
+                                                isAdmin={user?.role?.toString() === "19"}
+                                                onEdit={handleEditComment}
+                                                onDelete={handleDeleteComment}
                                                 onReport={handleReport}
                                             />
                                         ))}
+                                    </View>
+                                ) : messagesLoading ? (
+                                    <View style={styles.commentsPlaceholder}>
+                                        <ActivityIndicator size="small" color={Colors.secondary} />
+                                        <Text style={styles.commentsPlaceholderText}>
+                                            Cargando comentarios...
+                                        </Text>
                                     </View>
                                 ) : (
                                     <View style={styles.commentsPlaceholder}>
@@ -471,7 +617,7 @@ const styles = StyleSheet.create({
     screenContainer: { flex: 1, backgroundColor: "#fff", padding: 16 },
     container: {
         flex: 1,
-        backgroundColor: "#EFEFEF",
+        backgroundColor: Colors.light.background,
         borderRadius: 16,
         overflow: "hidden",
         shadowColor: "#000",
@@ -493,6 +639,31 @@ const styles = StyleSheet.create({
     infoColumn: { flex: 1 },
     infoLabel: { fontSize: 14, color: "#222", marginBottom: 8, fontWeight: "500" },
     infoValue: { fontWeight: "normal", color: "#666" },
+    publisherRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 4,
+    },
+    publisherAvatar: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#ddd",
+    },
+    publisherAvatarPlaceholder: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: Colors.primary,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    publisherAvatarText: {
+        fontSize: 12,
+        fontWeight: "bold",
+        color: "#222",
+    },
     publisherName: { fontSize: 14, color: "#666", fontWeight: "400" },
     descriptionContainer: { marginTop: 12, marginBottom: 24 },
     descriptionLabel: { fontSize: 14, fontWeight: "500", color: "#222", marginBottom: 4 },
@@ -506,7 +677,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     commentButton: {
-        backgroundColor: "#7c3aed",
+        backgroundColor: Colors.secondary,
         borderRadius: 8,
         paddingVertical: 12,
         paddingHorizontal: 20,
@@ -516,7 +687,7 @@ const styles = StyleSheet.create({
     commentButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
     commentsList: { gap: 12 },
     commentsPlaceholder: {
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.light.background,
         borderRadius: 8,
         padding: 20,
         alignItems: "center",
@@ -526,7 +697,7 @@ const styles = StyleSheet.create({
     commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
     buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
     sendRequestButton: {
-        backgroundColor: "#FFD700",
+        backgroundColor: Colors.primary,
         borderRadius: 8,
         paddingVertical: 15,
         paddingHorizontal: 30,
@@ -542,7 +713,7 @@ const styles = StyleSheet.create({
     sendRequestButtonText: { fontSize: 16, fontWeight: "600", color: "#000" },
     reportButton: {
         backgroundColor: "transparent",
-        borderColor: "#ff4444",
+        borderColor: Colors.danger,
         borderWidth: 1,
         borderRadius: 8,
         paddingVertical: 12,
@@ -551,7 +722,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginTop: 10,
     },
-    reportButtonText: { fontSize: 14, fontWeight: "500", color: "#ff4444" },
+    reportButtonText: { fontSize: 14, fontWeight: "500", color: Colors.danger },
     center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
     empty: { color: "#333" },
     gray: { color: "#6b7280", marginTop: 8 },
@@ -584,13 +755,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#333",
     },
-    modalError: { color: "#C0392B", marginTop: 8 },
+    modalError: { color: Colors.danger, marginTop: 8 },
     modalActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
     modalCancelButton: {
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 8,
-        backgroundColor: "#E5E7EB",
+        backgroundColor: Colors.light.border,
         marginRight: 12,
     },
     modalCancelText: { color: "#333", fontWeight: "600" },
@@ -598,7 +769,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 18,
         borderRadius: 8,
-        backgroundColor: "#7c3aed",
+        backgroundColor: Colors.secondary,
     },
     modalConfirmButtonDisabled: { opacity: 0.7 },
     modalConfirmText: { color: "#fff", fontWeight: "700" },

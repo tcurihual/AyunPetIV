@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from "react-native"
 import { Controller, Control, FieldValues, Path, RegisterOptions } from "react-hook-form"
+import { Ionicons } from "@expo/vector-icons"
 
 type InputType = "text" | "email" | "password" | "number"
 
@@ -9,6 +10,7 @@ type Props<T extends FieldValues> = {
     control: Control<T>
     label?: string
     placeholder?: string
+    helperText?: string
     type?: InputType
     rules?: RegisterOptions<T, Path<T>>
     inputProps?: TextInputProps
@@ -19,6 +21,7 @@ export default function Input<T extends FieldValues>({
     control,
     label,
     placeholder,
+    helperText,
     type = "text",
     rules,
     inputProps,
@@ -26,12 +29,13 @@ export default function Input<T extends FieldValues>({
     const [show, setShow] = useState(false)
     const isPassword = type === "password"
 
-    const keyboardType: TextInputProps["keyboardType"] =
-        type === "email" ? "email-address" :
-        type === "number" ? "number-pad" : "default"
+    // Extraer onChangeText de inputProps si existe
+    const { onChangeText: externalOnChangeText, ...restInputProps } = inputProps || {}
 
-    const autoCapitalize: TextInputProps["autoCapitalize"] = 
-        type === "email" ? "none" : "sentences"
+    const keyboardType: TextInputProps["keyboardType"] =
+        type === "email" ? "email-address" : type === "number" ? "number-pad" : "default"
+
+    const autoCapitalize: TextInputProps["autoCapitalize"] = type === "email" ? "none" : "sentences"
 
     return (
         <Controller
@@ -41,6 +45,7 @@ export default function Input<T extends FieldValues>({
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
                     {!!label && <Text style={styles.label}>{label}</Text>}
+                    {!!helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
                     {!!error && <Text style={styles.error}>{String(error.message || "")}</Text>}
 
                     <View style={[styles.inputWrapper, !!error && styles.inputWrapperError]}>
@@ -50,23 +55,36 @@ export default function Input<T extends FieldValues>({
                             placeholderTextColor="#A0A0A0"
                             value={(value as string | number | undefined)?.toString() ?? ""}
                             onChangeText={(txt) => {
+                                // Primero ejecutar el handler interno
                                 if (type === "number") {
-                                const cleaned = txt.replace(/[^\d]/g, "")
-                                onChange(cleaned)
+                                    const cleaned = txt.replace(/[^\d]/g, "")
+                                    onChange(cleaned)
                                 } else {
-                                onChange(txt)
+                                    onChange(txt)
+                                }
+
+                                // Luego ejecutar el handler externo si existe
+                                if (externalOnChangeText) {
+                                    externalOnChangeText(txt)
                                 }
                             }}
                             onBlur={onBlur}
                             secureTextEntry={isPassword && !show}
                             keyboardType={keyboardType}
                             autoCapitalize={autoCapitalize}
-                            {...inputProps}
+                            {...restInputProps}
                         />
 
                         {isPassword && (
-                            <TouchableOpacity onPress={() => setShow((s) => !s)}>
-                                <Text style={styles.toggle}>{show ? "Ocultar" : "Ver"}</Text>
+                            <TouchableOpacity
+                                onPress={() => setShow((s) => !s)}
+                                style={styles.toggleButton}
+                            >
+                                <Ionicons
+                                    name={show ? "eye-off-outline" : "eye-outline"}
+                                    size={22}
+                                    color="#7c3aed"
+                                />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -77,19 +95,45 @@ export default function Input<T extends FieldValues>({
 }
 
 const styles = StyleSheet.create({
-    container: { width: "100%", marginBottom: 12 },
-    label: { marginBottom: 6, fontWeight: "600", color: "#111827" },
+    container: { width: "100%", marginBottom: 18 },
+    label: { marginBottom: 6, fontWeight: "600", fontSize: 16, color: "#111827" },
+    helperText: {
+        marginBottom: 6,
+        fontSize: 12,
+        color: "#6b7280",
+        fontStyle: "italic",
+        lineHeight: 16,
+    },
     inputWrapper: {
         flexDirection: "row",
         alignItems: "center",
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: "#7c3aed",
         borderRadius: 12,
         paddingHorizontal: 12,
+        paddingVertical: 2,
         backgroundColor: "#fff",
+        minHeight: 50,
     },
     inputWrapperError: { borderColor: "#dc2626" },
-    input: { flex: 1, height: 45, fontSize: 16 },
-    toggle: { paddingHorizontal: 6, color: "#7c3aed", fontWeight: "600" },
-    error: { marginTop: 4, color: "#dc2626" },
+    input: {
+        flex: 1,
+        fontSize: 16,
+        paddingVertical: 12,
+        color: "#111827",
+    },
+    toggleButton: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    error: {
+        marginTop: 4,
+        marginBottom: 6,
+        paddingBottom: 4,
+        color: "#dc2626",
+        fontSize: 12,
+        fontWeight: "500",
+    },
 })

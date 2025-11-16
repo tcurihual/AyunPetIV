@@ -17,6 +17,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { Ionicons } from "@expo/vector-icons"
+import { Colors } from "@/constants/Colors"
 
 export default function ShelterRequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -274,7 +275,7 @@ export default function ShelterRequestDetail() {
 
     return (
         <ScrollView
-            contentContainerStyle={{ padding: 16, backgroundColor: "#F2F2F2", flexGrow: 1 }}
+            contentContainerStyle={{ padding: 16, backgroundColor: Colors.light.background, flexGrow: 1 }}
         >
             <RequestDetailCard
                 petPhoto={resolvedPetPhoto || "https://placehold.co/400x400?text=Mascota"}
@@ -289,7 +290,7 @@ export default function ShelterRequestDetail() {
             />
 
             <View style={{ marginTop: 16, gap: 12 }}>
-                <Text style={{ fontWeight: "700", color: "#1C1C1C" }}>
+                <Text style={{ fontWeight: "700", color: Colors.dark.text }}>
                     Notas sobre la solicitud
                 </Text>
                 <TextInput
@@ -302,25 +303,25 @@ export default function ShelterRequestDetail() {
                     }}
                     editable={!savingMessage}
                     style={{
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: Colors.light.textSecondary,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: "#E5E7EB",
+                        borderColor: Colors.light.border,
                         padding: 12,
                         minHeight: 110,
                         textAlignVertical: "top",
                         color: "#1F2933",
                     }}
                     placeholder="Agrega notas internas sobre esta solicitud..."
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={Colors.light.textSecondary}
                 />
-                {messageError ? <Text style={{ color: "#C0392B" }}>{messageError}</Text> : null}
+                {messageError ? <Text style={{ color: Colors.danger }}>{messageError}</Text> : null}
                 <Pressable
                     onPress={handleSaveMessage}
                     disabled={savingMessage || editableMessage === message}
                     style={{
                         backgroundColor:
-                            savingMessage || editableMessage === message ? "#D1D5DB" : "#2563EB",
+                            savingMessage || editableMessage === message ? Colors.light.border : Colors.secondary,
                         padding: 12,
                         borderRadius: 8,
                         alignItems: "center",
@@ -336,9 +337,9 @@ export default function ShelterRequestDetail() {
                     onPress={handleViewFormResponses}
                     style={styles.viewResponsesButton}
                 >
-                    <Ionicons name="clipboard-outline" size={20} color="#007AFF" />
+                    <Ionicons name="clipboard-outline" size={20} color={Colors.secondary} />
                     <Text style={styles.viewResponsesText}>Ver Respuestas del Formulario</Text>
-                    <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
+                    <Ionicons name="chevron-forward-outline" size={20} color={Colors.secondary} />
                 </TouchableOpacity>
             </View>
         </ScrollView>
@@ -354,14 +355,14 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#007AFF",
+        borderColor: Colors.secondary,
         marginTop: 8,
     },
     viewResponsesText: {
         flex: 1,
         fontSize: 15,
         fontWeight: "600",
-        color: "#007AFF",
+        color: Colors.secondary,
         marginLeft: 12,
     },
 })

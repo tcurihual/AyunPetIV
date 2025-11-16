@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import {
     View,
     TouchableOpacity,
@@ -11,6 +11,7 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Modal,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -22,31 +23,45 @@ import * as ImagePicker from "expo-image-picker"
 import { useAuthContext } from "@/context/AuthContext"
 import { useAlert } from "@/context/AlertContext"
 import { useLoading } from "@/context/LoadingContext"
+import { useTheme } from "@/context/ThemeContext"
+import { Colors } from "@/constants/Colors"
 
 import Input from "@ui/Input"
 
 import { GiverRegisterFormType } from "@/utils/types"
 import { GiverRegisterFormSchema } from "@/utils/schemas"
 import { FileInfo } from "@/services/http"
+import { Checkbox } from "@/components/ui/Checkbox"
+import { authService } from "@/services/auth"
 
 const steps: { title: string; fields: (keyof GiverRegisterFormType)[] }[] = [
     { title: "Nombre", fields: ["name"] },
+    { title: "Correo Electrónico", fields: ["email"] },
     { title: "RUT", fields: ["rut"] },
     { title: "Contraseña", fields: ["password", "verifyPassword"] },
-    { title: "Datos de Contacto", fields: ["email", "phone"] },
+    { title: "Foto de Perfil (Opcional)", fields: ["profileImage"] },
     { title: "Subida de Archivos", fields: ["files"] },
 ]
 
 export default function RegisterScreen() {
     const router = useRouter()
     const { width, height } = useWindowDimensions()
-    const styles = useThemeStyles(width, height)
+    const { theme } = useTheme()
+    const colors = Colors[theme]
+    const styles = useThemeStyles(width, height, colors)
+
     const [step, setStep] = useState(0)
     const [pendingFiles, setPendingFiles] = useState<FileInfo[]>([])
+    const [showTypeModal, setShowTypeModal] = useState(true)
+    const [giverType, setGiverType] = useState<"giver" | "shelter" | null>(null)
+    const [acceptedTerms, setAcceptedTerms] = useState(false)
 
     const { signUp, status } = useAuthContext()
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
+
+    const previousRut = useRef<string>("")
+    const previousEmail = useRef<string>("")
 
     const {
         control,
@@ -54,24 +69,44 @@ export default function RegisterScreen() {
         trigger,
         getValues,
         setValue,
+        setError,
+        clearErrors,
+        watch,
         formState: { isSubmitting },
     } = useForm<GiverRegisterFormType>({
         resolver: zodResolver(GiverRegisterFormSchema),
         mode: "onTouched",
         defaultValues: {
             name: "",
+            email: "",
             rut: "",
             password: "",
             verifyPassword: "",
-            email: "",
-            phone: "",
             files: [],
+            profileImage: undefined,
         },
     })
+
+    const profileImage = watch("profileImage")
 
     const onNext = async () => {
         const ok = await trigger(steps[step].fields as any)
         if (!ok) return
+
+        // Validar email en el paso 1 (después de validaciones de react-hook-form)
+        if (step === 1) {
+            const email = getValues("email")
+            const emailIsValid = await validateEmail(email)
+            if (!emailIsValid) return
+        }
+
+        // Validar RUT en el paso 2 (después de validaciones de react-hook-form)
+        if (step === 2) {
+            const rut = getValues("rut")
+            const rutIsValid = await validateRut(rut)
+            if (!rutIsValid) return
+        }
+
         if (step < steps.length - 1) setStep((s) => s + 1)
     }
 
@@ -80,38 +115,77 @@ export default function RegisterScreen() {
         else router.back()
     }
 
+    const validateRut = async (rut: string): Promise<boolean> => {
+        if (rut === previousRut.current) return true
+        try {
+            const isAvailable = await authService.checkUserExists({ rut })
+            if (!isAvailable) {
+                setError("rut", { type: "manual", message: "Este RUT ya está registrado" })
+                return false
+            }
+            clearErrors("rut")
+            previousRut.current = rut
+            return true
+        } catch (error: any) {
+            console.error("Error validando RUT:", error)
+            return true
+        }
+    }
+
+    const validateEmail = async (email: string): Promise<boolean> => {
+        if (email === previousEmail.current) return true
+        try {
+            const isAvailable = await authService.checkUserExists({ email })
+            if (!isAvailable) {
+                setError("email", { type: "manual", message: "Este correo ya está registrado" })
+                return false
+            }
+            clearErrors("email")
+            previousEmail.current = email
+            return true
+        } catch (error: any) {
+            console.error("Error validando email:", error)
+            return true
+        }
+    }
+
     const onSubmit = async (data: GiverRegisterFormType) => {
         try {
-            await withLoading(async () => {
-                const phoneWithPrefix = `+569${data.phone}`
+            const rutIsValid = await validateRut(data.rut)
+            const emailIsValid = await validateEmail(data.email)
 
+            if (!rutIsValid || !emailIsValid) {
+                // No continuar si alguno ya está registrado
+                return
+            }
+
+            await withLoading(async () => {
                 const result = await signUp(
                     {
                         name: data.name,
                         email: data.email,
                         password: data.password,
                         rut: data.rut,
-                        phone: phoneWithPrefix,
                         address: "",
                         description: "",
+                        profileImage: data.profileImage,
+                        documents: pendingFiles.length > 0 ? pendingFiles : undefined,
                     },
-                    "giver"
+                    giverType || "giver"
                 )
 
-                // TODO: console.log no realiza nada, implementar lo que se debe po sacar validación
-                if (pendingFiles.length > 0) {
-                    console.log("Archivos pendientes de subir:", pendingFiles.length)
-                }
+                showAlert("Registro exitoso.", "success")
 
-                const message = result.requiresEmailVerification
-                    ? "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta."
-                    : "Registro exitoso. Tu cuenta será validada por un administrador."
-
-                showAlert(message, "success")
-
+                // Redirigir a la pantalla de confirmación
                 setTimeout(() => {
-                    router.replace("/(auth)/login")
-                }, 2000)
+                    router.replace({
+                        pathname: "/(auth)/registration-success" as any,
+                        params: {
+                            type: giverType || "giver",
+                            email: data.email,
+                        },
+                    })
+                }, 1500)
             })
         } catch (e: any) {
             // TODO: Console.error, no es relevante en despliegue, corroborar correcto funcionamiento y eliminar
@@ -122,6 +196,87 @@ export default function RegisterScreen() {
                 "No se pudo registrar la cuenta. Por favor intenta de nuevo."
             showAlert(msg, "error")
         }
+    }
+
+    const handleSelectProfileImage = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de galería para continuar", "error")
+                return
+            }
+
+            Alert.alert("Seleccionar Foto", "¿Cómo deseas obtener tu foto de perfil?", [
+                {
+                    text: "Cancelar",
+                    style: "cancel",
+                },
+                {
+                    text: "Tomar Foto",
+                    onPress: () => takeProfilePicture(),
+                },
+                {
+                    text: "Elegir de Galería",
+                    onPress: () => pickFromGallery(),
+                },
+            ])
+        } catch (error) {
+            showAlert("Error al acceder a las fotos", "error")
+        }
+    }
+
+    const takeProfilePicture = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync()
+            if (status !== "granted") {
+                showAlert("Necesitamos permisos de cámara para continuar", "error")
+                return
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_dador_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch (error) {
+            showAlert("Error al tomar la foto", "error")
+        }
+    }
+
+    const pickFromGallery = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            })
+
+            if (!result.canceled && result.assets) {
+                const asset = result.assets[0]
+                setValue("profileImage", {
+                    uri: asset.uri,
+                    name: `perfil_dador_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                })
+            }
+        } catch (error) {
+            showAlert("Error al seleccionar la foto", "error")
+        }
+    }
+
+    const removeProfileImage = () => {
+        setValue("profileImage", undefined)
     }
 
     const disabled = isSubmitting || status === "loading"
@@ -191,12 +346,43 @@ export default function RegisterScreen() {
                             key="name"
                             name="name"
                             control={control}
-                            label="Nombre completo"
+                            label={
+                                giverType === "shelter" ? "Nombre de fundación" : "Nombre completo"
+                            }
                             placeholder="Juan Pérez"
+                            helperText={
+                                giverType === "shelter"
+                                    ? "Nombre legal o comercial de tu fundación"
+                                    : "Ingresa tu nombre y apellido"
+                            }
                         />
                     </>
                 )
             case 1:
+                return (
+                    <>
+                        <Input<GiverRegisterFormType>
+                            key="email"
+                            name="email"
+                            control={control}
+                            label="Correo electrónico"
+                            placeholder="correo@ejemplo.com"
+                            helperText="Usaremos este correo para enviarte información importante"
+                            type="email"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentEmail = getValues("email")
+                                    if (text !== currentEmail && text !== previousEmail.current) {
+                                        clearErrors("email")
+                                        previousEmail.current = ""
+                                    }
+                                },
+                            }}
+                        />
+                    </>
+                )
+            case 2:
                 return (
                     <>
                         <Input<GiverRegisterFormType>
@@ -205,27 +391,17 @@ export default function RegisterScreen() {
                             control={control}
                             label="RUT"
                             placeholder="12.345.678-9"
-                        />
-                    </>
-                )
-            case 2:
-                return (
-                    <>
-                        <Input<GiverRegisterFormType>
-                            key="password"
-                            name="password"
-                            control={control}
-                            label="Contraseña"
-                            placeholder="••••••••"
-                            type="password"
-                        />
-                        <Input<GiverRegisterFormType>
-                            key="verifyPassword"
-                            name="verifyPassword"
-                            control={control}
-                            label="Repetir contraseña"
-                            placeholder="••••••••"
-                            type="password"
+                            helperText="Ingresa tu RUT con puntos y guión (ej: 12.345.678-9)"
+                            inputProps={{
+                                onChangeText: (text: string) => {
+                                    // Limpiar el error cuando el usuario cambia el valor
+                                    const currentRut = getValues("rut")
+                                    if (text !== currentRut && text !== previousRut.current) {
+                                        clearErrors("rut")
+                                        previousRut.current = ""
+                                    }
+                                },
+                            }}
                         />
                     </>
                 )
@@ -233,23 +409,62 @@ export default function RegisterScreen() {
                 return (
                     <>
                         <Input<GiverRegisterFormType>
-                            key="email"
-                            name="email"
+                            key="password"
+                            name="password"
                             control={control}
-                            label="Correo electrónico"
-                            placeholder="correo@dominio.com"
-                            type="email"
+                            label="Contraseña"
+                            placeholder="Ingresa tu contraseña"
+                            helperText="Mínimo 8 caracteres. Debe incluir mayúsculas, minúsculas y números"
+                            type="password"
                         />
                         <Input<GiverRegisterFormType>
-                            key="phone"
-                            name="phone"
+                            key="verifyPassword"
+                            name="verifyPassword"
                             control={control}
-                            label="Teléfono"
-                            placeholder="12345678"
+                            label="Repetir contraseña"
+                            placeholder="Repite tu contraseña"
+                            helperText="Ingresa la misma contraseña para confirmar"
+                            type="password"
                         />
                     </>
                 )
             case 4:
+                return (
+                    <View style={{ width: "100%", alignItems: "center" }}>
+                        <Text style={styles.phoneLabel}>Foto de Perfil (Opcional)</Text>
+                        <Text style={styles.profileHelperText}>
+                            Agrega una foto de perfil para personalizar tu cuenta
+                        </Text>
+
+                        {profileImage ? (
+                            <View style={styles.imagePreviewContainer}>
+                                <Image
+                                    source={{ uri: profileImage.uri }}
+                                    style={styles.profileImagePreview}
+                                />
+                                <TouchableOpacity
+                                    style={styles.removeImageButton}
+                                    onPress={removeProfileImage}
+                                >
+                                    <Ionicons name="close-circle" size={32} color={Colors.danger} />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.uploadButton}
+                                onPress={handleSelectProfileImage}
+                            >
+                                <Ionicons
+                                    name="camera-outline"
+                                    size={40}
+                                    color={Colors.secondary}
+                                />
+                                <Text style={styles.uploadButtonText}>Seleccionar Foto</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )
+            case 5:
                 return (
                     <Controller
                         control={control}
@@ -264,7 +479,11 @@ export default function RegisterScreen() {
 
                                 <View style={{ marginBottom: 15 }}>
                                     <View
-                                        style={{ flexDirection: "row", marginBottom: 10, gap: 10 }}
+                                        style={{
+                                            flexDirection: "row",
+                                            marginBottom: 10,
+                                            gap: 10,
+                                        }}
                                     >
                                         <TouchableOpacity
                                             style={[styles.optionButton, { flex: 1 }]}
@@ -411,7 +630,7 @@ export default function RegisterScreen() {
                                                 style={{
                                                     flexDirection: "row",
                                                     alignItems: "center",
-                                                    backgroundColor: "#f5f5f5",
+                                                    backgroundColor: Colors.light.background,
                                                     padding: 10,
                                                     borderRadius: 8,
                                                     marginBottom: 5,
@@ -458,7 +677,7 @@ export default function RegisterScreen() {
                                                     <Ionicons
                                                         name="close-circle"
                                                         size={18}
-                                                        color="#ff4444"
+                                                        color={Colors.danger}
                                                     />
                                                 </TouchableOpacity>
                                             </View>
@@ -481,70 +700,134 @@ export default function RegisterScreen() {
 
     return (
         <>
-            <StatusBar backgroundColor="#FFD24C" barStyle="dark-content" />
-
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-            >
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    <View style={styles.container}>
-                        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                            <Ionicons name="arrow-back" size={28} color="black" />
+            <StatusBar backgroundColor="Colors.primary" barStyle="dark-content" />
+            <Modal visible={showTypeModal} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>¿Qué tipo de dador eres?</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setGiverType("giver")
+                                setShowTypeModal(false)
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Dador Individual</Text>
                         </TouchableOpacity>
-
-                        <View style={styles.header}>
-                            <Text style={styles.headerTitle}>Registro</Text>
-                            <Image
-                                source={require("@images/ayun-pet.png")}
-                                style={styles.logo}
-                                resizeMode="contain"
-                            />
-                            <View style={styles.semiCircle} />
-                        </View>
-
-                        <View style={styles.stepIndicator}>
-                            <View style={styles.stepCircleContainer}>
-                                <Text style={styles.stepCircle}>{`${step + 1}/5`}</Text>
-                            </View>
-                            <Text style={styles.stepTitle}>{steps[step].title}</Text>
-                        </View>
-
-                        <View style={styles.formContent}>
-                            {renderFields()}
-
-                            {step < steps.length - 1 ? (
-                                <TouchableOpacity
-                                    style={[styles.button]}
-                                    onPress={onNext}
-                                    disabled={disabled}
-                                >
-                                    <Text style={styles.buttonText}>Continuar</Text>
-                                </TouchableOpacity>
-                            ) : (
-                                <TouchableOpacity
-                                    style={[styles.button]}
-                                    onPress={handleSubmit(onSubmit)}
-                                    disabled={disabled}
-                                >
-                                    <Text style={styles.buttonText}>
-                                        {disabled ? "Creando..." : "Crear Cuenta"}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-
-                            <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-                                <Text style={styles.secondaryButtonText}>Volver</Text>
-                            </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setGiverType("shelter")
+                                setShowTypeModal(false)
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Fundación</Text>
+                        </TouchableOpacity>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                </View>
+            </Modal>
+
+            {!showTypeModal && (
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                        <View style={styles.container}>
+                            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                                <Ionicons name="arrow-back" size={28} color="black" />
+                            </TouchableOpacity>
+
+                            <View style={styles.header}>
+                                <Text style={styles.headerTitle}>Registro</Text>
+                                <Image
+                                    source={require("@images/ayun-pet.png")}
+                                    style={styles.logo}
+                                    resizeMode="contain"
+                                />
+                                <View style={styles.semiCircle} />
+                            </View>
+
+                            <View style={styles.stepIndicator}>
+                                <View style={styles.stepCircleContainer}>
+                                    <Text style={styles.stepCircle}>{`${step + 1}/6`}</Text>
+                                </View>
+                                <Text style={styles.stepTitle}>{steps[step].title}</Text>
+                            </View>
+
+                            <View style={styles.formContent}>
+                                {renderFields()}
+
+                                {step < steps.length - 1 ? (
+                                    <TouchableOpacity
+                                        style={[styles.button]}
+                                        onPress={onNext}
+                                        disabled={disabled}
+                                    >
+                                        <Text style={styles.buttonText}>Continuar</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={{ width: "100%", marginTop: 15 }}>
+                                        <View style={{ marginBottom: 10 }}>
+                                            <Checkbox
+                                                label="He leído y acepto los Términos y Condiciones"
+                                                checked={acceptedTerms}
+                                                onPress={() => setAcceptedTerms(!acceptedTerms)}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    router.push("/(legal)/terms-and-conditions")
+                                                }
+                                            >
+                                                <Text
+                                                    style={{
+                                                        color: Colors.secondary,
+                                                        fontSize: 14,
+                                                        textDecorationLine: "underline",
+                                                        marginTop: 4,
+                                                    }}
+                                                >
+                                                    Ver Términos y Condiciones
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.button,
+                                                (!acceptedTerms || disabled) && {
+                                                    backgroundColor: Colors.primary,
+                                                },
+                                            ]}
+                                            onPress={() => {
+                                                if (!acceptedTerms) return
+                                                handleSubmit(onSubmit)()
+                                            }}
+                                            disabled={disabled}
+                                        >
+                                            <Text style={styles.buttonText}>
+                                                {disabled ? "Creando..." : "Crear Cuenta"}
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={styles.secondaryButton}
+                                            onPress={onBack}
+                                        >
+                                            <Text style={styles.secondaryButtonText}>Volver</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            )}
         </>
     )
 }
 
-const useThemeStyles = (width: number, height: number) => {
+const useThemeStyles = (width: number, height: number, colors: any) => {
     const isSmallScreen = width < 350
     const headerHeight = Math.max(height * 0.25, 180)
     const logoSize = Math.min(width * 0.4, 150)
@@ -552,7 +835,7 @@ const useThemeStyles = (width: number, height: number) => {
     return StyleSheet.create({
         scrollContainer: {
             flexGrow: 1,
-            backgroundColor: "#fff",
+            backgroundColor: colors.background,
         },
         container: {
             flex: 1,
@@ -571,7 +854,7 @@ const useThemeStyles = (width: number, height: number) => {
             padding: 8,
         },
         header: {
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.light.background,
             width: "112%",
             height: headerHeight,
             alignItems: "center",
@@ -624,21 +907,21 @@ const useThemeStyles = (width: number, height: number) => {
             justifyContent: "center",
             alignItems: "center",
             borderWidth: 2,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             marginRight: isSmallScreen ? 10 : 15,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
             elevation: 5,
         },
         stepCircle: {
             fontSize: isSmallScreen ? 14 : 16,
-            color: "#A47CF3",
+            color: Colors.secondary,
             fontWeight: "bold",
             textAlign: "center",
         },
         stepTitle: {
             fontSize: isSmallScreen ? 18 : 22,
             fontWeight: "bold",
-            color: "#222",
+            color: colors.text,
         },
         formContent: {
             width: "100%",
@@ -671,7 +954,7 @@ const useThemeStyles = (width: number, height: number) => {
             padding: 12,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: "#ffeaa7",
+            borderColor: Colors.primary,
             lineHeight: 20,
         },
         input: {
@@ -683,13 +966,13 @@ const useThemeStyles = (width: number, height: number) => {
             marginBottom: 15,
             fontSize: 16,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             color: "#222",
         },
         button: {
             width: "100%",
             height: Math.max(height * 0.06, 50),
-            backgroundColor: "#FFD24C",
+            backgroundColor: Colors.primary,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
@@ -711,11 +994,11 @@ const useThemeStyles = (width: number, height: number) => {
             marginTop: 15,
             marginBottom: 30,
             borderWidth: 2,
-            borderColor: "#FFD24C",
+            borderColor: Colors.primary,
             backgroundColor: "#fff",
         },
         secondaryButtonText: {
-            color: "#FFD24C",
+            color: Colors.primary,
             fontWeight: "600",
             fontSize: 16,
         },
@@ -728,13 +1011,91 @@ const useThemeStyles = (width: number, height: number) => {
             backgroundColor: "#fff",
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: "#A47CF3",
+            borderColor: Colors.secondary,
             gap: 8,
         },
         optionButtonText: {
             color: "#666",
             fontSize: 14,
             fontWeight: "500",
+        },
+        profileHelperText: {
+            fontSize: 12,
+            color: "#666",
+            marginBottom: 15,
+            textAlign: "center",
+            fontStyle: "italic",
+        },
+        uploadButton: {
+            width: Math.min(width * 0.4, 150),
+            height: Math.min(width * 0.4, 150),
+            borderRadius: Math.min(width * 0.2, 75),
+            backgroundColor: Colors.light.background,
+            borderWidth: 2,
+            borderColor: Colors.secondary,
+            borderStyle: "dashed",
+            justifyContent: "center",
+            alignItems: "center",
+            marginVertical: 15,
+        },
+        uploadButtonText: {
+            marginTop: 8,
+            fontSize: 12,
+            color: Colors.secondary,
+            fontWeight: "600",
+        },
+        imagePreviewContainer: {
+            position: "relative",
+            marginVertical: 15,
+        },
+        profileImagePreview: {
+            width: Math.min(width * 0.4, 150),
+            height: Math.min(width * 0.4, 150),
+            borderRadius: Math.min(width * 0.2, 75),
+            borderWidth: 3,
+            borderColor: Colors.secondary,
+        },
+        removeImageButton: {
+            position: "absolute",
+            top: -5,
+            right: -5,
+            backgroundColor: "#fff",
+            borderRadius: 16,
+        },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        modalContainer: {
+            backgroundColor: colors.card,
+            borderRadius: 20,
+            padding: 25,
+            width: "80%",
+            alignItems: "center",
+            elevation: 10,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: "bold",
+            color: colors.text,
+            marginBottom: 20,
+            textAlign: "center",
+            fontStyle: "italic",
+        },
+        modalButton: {
+            backgroundColor: colors.tint,
+            borderRadius: 12,
+            paddingVertical: 12,
+            width: "100%",
+            marginVertical: 8,
+            alignItems: "center",
+        },
+        modalButtonText: {
+            color: colors.text,
+            fontWeight: "600",
+            fontSize: 16,
         },
     })
 }

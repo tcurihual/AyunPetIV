@@ -25,7 +25,7 @@ router.get("/", getNews)
 router.get("/:id", getNews)
 
 // Create - Solo admin (rol 19) y shelter (rol 21) pueden crear noticias
-router.post("/", requireRole(19, 21), upload.array("files", 10), createNews)
+router.post("/", requireRole(19), upload.array("files", 10), createNews)
 
 // Update - Solo admin (rol 19) y el creador pueden actualizar
 router.put(

@@ -25,7 +25,15 @@ export const RegisterFormSchema = z
         phone: z
             .string()
             .length(8, "El número teléfonico debe tener 8 dígitos")
-            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos")
+            .optional(),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
@@ -56,11 +64,19 @@ export const GiverRegisterFormSchema = z
         phone: z
             .string()
             .length(8, "El número de teléfono debe tener 8 dígitos")
-            .regex(/^\d{8}$/, "El número debe contener solo dígitos"),
+            .regex(/^\d{8}$/, "El número debe contener solo dígitos")
+            .optional(),
         files: z
             .array(z.string())
             .min(1, "Debes subir al menos un archivo (imagen o PDF)")
             .or(z.string().min(1, "Debes subir al menos un archivo (imagen o PDF)")),
+        profileImage: z
+            .object({
+                uri: z.string(),
+                name: z.string(),
+                type: z.string(),
+            })
+            .optional(),
     })
     .refine((data) => data.password === data.verifyPassword, {
         message: "Las contraseñas no coinciden",
@@ -79,17 +95,23 @@ export const PostFormSchema = z.object({
 })
 
 export const PetFormSchema = z.object({
-  ownerId: z.number("Debe ingresar un id valido"),
-  species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
-  name: z.string("Debes ingresar el nombre de tu mascota")
-           .min(3, "El nombre debe tener al menos 3 caracteres"),
-  gender: z.enum(["Male", "Female"]),
-  age: z.coerce.number("Debe ingresar una edad")
-               .int("Debe ser un número entero")
-               .min(0, "La edad no puede ser negativa")
-               .max(40, "Revisa la edad (máx 40)"),
-  size: z.enum(["Small", "Medium", "Large"]),
-  sterilized: z.boolean(),
+    ownerId: z.number("Debe ingresar un id valido"),
+    species: z.enum(["Dog", "Cat"], "Debes seleccionar una especie"),
+    name: z
+        .string("Debes ingresar el nombre de tu mascota")
+        .min(3, "El nombre debe tener al menos 3 caracteres"),
+    gender: z.enum(["Male", "Female"]),
+    age: z.coerce
+        .number("Debe ingresar una edad")
+        .int("Debe ser un número entero")
+        .min(0, "La edad no puede ser negativa")
+        .max(40, "Revisa la edad (máx 40)"),
+    size: z.enum(["Small", "Medium", "Large"]),
+    sterilized: z.boolean(),
+    description: z
+        .string("Debes ingresar una descripción")
+        .min(10, "La descripción debe tener al menos 10 caracteres")
+        .max(500, "La descripción es muy larga (máximo 500 caracteres)"),
 })
 
 export const MessageFormSchema = z.object({
@@ -150,10 +172,7 @@ export const UserProfileSchema = z.object({
         .min(2, "El nombre debe tener al menos 2 caracteres")
         .max(50, "El nombre no puede tener más de 50 caracteres")
         .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo puede contener letras y espacios"),
-    email: z
-        .string("Email es obligatorio")
-        .email("Debe ser un email válido")
-        .max(100, "El email no puede tener más de 100 caracteres"),
+    // El email no se incluye en el schema de edición para que no pueda ser modificado
     address: z.string().max(200, "La dirección no puede tener más de 200 caracteres").optional(),
     description: z
         .string()

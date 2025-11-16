@@ -10,6 +10,7 @@ import {
     ForgotPasswordRequestSchema,
     ResetPasswordRequestSchema,
 } from "@repo/utils"
+import { z } from "zod"
 
 export function registerAuthPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -47,9 +48,10 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         tags: ["Auth"],
         summary: "Registrar un nuevo usuario adoptante en la plataforma",
         description:
-            "Crea un nuevo usuario adoptante, durante el registro," +
+            "Crea un nuevo usuario adoptante, durante el registro" +
             ", se enviará un correo de verificación " +
-            "con un token único para validar su dirección de correo electrónico.",
+            "con un token único para validar su dirección de correo electrónico." +
+            "`image`: corresponde a la imagen de perfil y `mural`: a la del mural, recordar que para la subida de imagenes o documentos  se debe usar `multipart/form-data`",
         request: {
             body: {
                 content: {
@@ -63,6 +65,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     email: "julio@acme.com",
                                     password: "********",
                                     rut: "12.345.678-9",
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                             conDocuments: {
@@ -74,6 +78,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     rut: "12.345.678-9",
                                     description: "Julio el bakan",
                                     address: "Av. Siempre Viva 742",
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                         },
@@ -104,7 +110,8 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
         summary: "Registrar un nuevo usuario dador de adopción en la plataforma",
         description:
             "Crea un nuevo usuario con base en la variación indicada (`giver` o `shelter`). " +
-            "Este tipo de usuario debe ser validado por un `administrador`",
+            "Este tipo de usuario debe ser validado por un `administrador`. " +
+            " `image`: corresponde a la imagen de perfil y `mural`: a la del mural, recordar que para la subida de imagenes o documentos se debe usar `multipart/form-data`",
         parameters: [
             {
                 name: "variation",
@@ -127,7 +134,9 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     email: "patsu@acme.com",
                                     password: "********",
                                     rut: "12.345.678-9",
-                                    documents: ["doc_123", "doc_456"],
+                                    documents: ["<archivo_1>", "<archivo_2>"],
+                                    image: "<archivo_imagen_perfil>",
+                                    mural: "<archivo_imagen_mural>",
                                 },
                             },
                             conDocuments: {
@@ -139,7 +148,9 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
                                     rut: "12.345.678-9",
                                     description: "Fundación Patitas Sucias",
                                     address: "Av. Siempre Viva 742",
-                                    documents: ["doc_123", "doc_456"],
+                                    documents: ["<archivo_1>", "<archivo_2>"],
+                                    image: "path/para/imagen/de/perfil",
+                                    mural: "path/para/imagen/de/mural",
                                 },
                             },
                         },
@@ -263,6 +274,69 @@ export function registerAuthPaths(registry: OpenAPIRegistry) {
             },
             500: {
                 description: "Error al actualizar la contraseña",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+        },
+    })
+
+    registry.registerPath({
+        method: "post",
+        path: "/v1/auth/check-user-exists",
+        tags: ["Auth"],
+        summary: "Verificar disponibilidad de email o RUT",
+        description:
+            "Endpoint que verifica si un email o RUT ya existe en la base de datos. " +
+            "Permite validar de forma individual cada campo antes del registro. " +
+            "Se debe enviar únicamente email o rut, pero no es obligatorio enviar ambos. " +
+            "Si el campo ya existe, retorna un error 409; si está disponible, retorna 200.",
+        request: {
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            email: z.string().email().optional(),
+                            rut: z.string().optional(),
+                        }),
+                        examples: {
+                            conEmail: {
+                                summary: "Validar solo email",
+                                value: {
+                                    email: "usuario@ejemplo.com",
+                                },
+                            },
+                            conRut: {
+                                summary: "Validar solo RUT",
+                                value: {
+                                    rut: "12.345.678-9",
+                                },
+                            },
+                            conAmbos: {
+                                summary: "Validar ambos campos (opcional)",
+                                value: {
+                                    email: "usuario@ejemplo.com",
+                                    rut: "12.345.678-9",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses: {
+            200: {
+                description: "Email o RUT disponibles para registro",
+                content: { "application/json": { schema: BaseResponseSchema } },
+            },
+            400: {
+                description: "No se proporcionó email ni RUT",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            409: {
+                description: "El email o RUT ya están registrados",
+                content: { "application/json": { schema: ErrorValuesSchema } },
+            },
+            500: {
+                description: "Error al verificar la existencia del usuario",
                 content: { "application/json": { schema: ErrorValuesSchema } },
             },
         },

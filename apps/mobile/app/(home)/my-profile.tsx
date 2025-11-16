@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
     View,
     Text,
@@ -19,11 +19,42 @@ import Input from "@/components/ui/Input"
 import { useAuthContext } from "@/context/AuthContext"
 import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
+import { Colors } from "../../constants/Colors"
 
 export default function MyProfileScreen() {
-    const { user, signOut } = useAuthContext()
+    const { user, signOut, updateUser } = useAuthContext()
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
+    const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
+
+    // Placeholder local para foto de perfil
+    const placeholderImage = require("@images/pp_placeholder.png")
+
+    // Cargar foto de perfil
+    useEffect(() => {
+        const loadProfilePicture = async () => {
+            if (user?.id) {
+                const url = await userService.getProfilePicture(user.id)
+                setProfilePictureUrl(url)
+            }
+        }
+
+        loadProfilePicture()
+    }, [user?.id])
+
+    // Determinar qué imagen mostrar
+    const getAvatarSource = () => {
+        // Si hay foto de perfil del servidor, usar esa
+        if (profilePictureUrl) {
+            return { uri: profilePictureUrl }
+        }
+        // Si hay avatar en el contexto y no es la URL de randomuser, usar esa
+        if (user?.avatar && !user.avatar.includes("randomuser.me")) {
+            return { uri: user.avatar }
+        }
+        // Sino, usar el placeholder local
+        return placeholderImage
+    }
 
     const userData = {
         id: user?.id || "1",
@@ -32,7 +63,6 @@ export default function MyProfileScreen() {
         rut: user?.rut || "No especificado",
         address: user?.address || "No especificada",
         description: user?.description || "Descripción no disponible",
-        avatarUrl: user?.avatar || "https://randomuser.me/api/portraits/women/44.jpg",
     }
 
     const {
@@ -45,7 +75,7 @@ export default function MyProfileScreen() {
         defaultValues: {
             id: userData.id,
             name: userData.name,
-            email: userData.email,
+            // El email no se incluye en el formulario para evitar su modificación
             address: userData.address || "",
             description: userData.description || "",
         },
@@ -54,12 +84,32 @@ export default function MyProfileScreen() {
     const onSubmit = async (data: UserProfileData) => {
         try {
             console.log("Datos a actualizar:", data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+
+            // Llamar al API para actualizar el perfil
+            const response = await userService.updateProfile({
+                name: data.name,
+                address: data.address,
+                description: data.description,
+            })
+
+            console.log("Respuesta del servidor:", response)
+
+            // Actualizar el contexto con los nuevos datos
+            await updateUser({
+                name: data.name,
+                address: data.address,
+                description: data.description,
+            })
 
             Alert.alert("Éxito", "Perfil actualizado correctamente")
             setIsEditing(false)
-        } catch (error) {
-            Alert.alert("Error", "No se pudo actualizar el perfil")
+        } catch (error: any) {
+            console.error("Error al actualizar perfil:", error)
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                "No se pudo actualizar el perfil"
+            Alert.alert("Error", errorMessage)
         }
     }
 
@@ -86,39 +136,10 @@ export default function MyProfileScreen() {
         ])
     }
 
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            "Eliminar cuenta",
-            "¿Estás seguro? Esta acción eliminará permanentemente tu cuenta y todos tus datos.",
-            [
-                { text: "Cancelar", style: "cancel" },
-                {
-                    text: "Eliminar",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            // Llamar al servicio para eliminar la cuenta
-                            await userService.deleteMe()
-                            // Luego cerrar sesión y redirigir a login
-                            await signOut()
-                            router.replace("/(auth)/login")
-                        } catch (error) {
-                            console.error("Error al eliminar cuenta:", error)
-                            Alert.alert(
-                                "Error",
-                                "No se pudo eliminar la cuenta. Intenta nuevamente más tarde."
-                            )
-                        }
-                    },
-                },
-            ]
-        )
-    }
-
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.profileCard}>
-                <Image source={{ uri: userData.avatarUrl }} style={styles.profileImage} />
+                <Image source={getAvatarSource()} style={styles.profileImage} />
 
                 <Text style={styles.userName}>{userData.name}</Text>
 
@@ -150,10 +171,6 @@ export default function MyProfileScreen() {
                     <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                         <Text style={styles.editButtonText}>Editar Perfil</Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-                        <Text style={styles.deleteButtonText}>Eliminar Cuenta</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -182,13 +199,14 @@ export default function MyProfileScreen() {
                                 placeholder="Ingresa tu nombre completo"
                             />
 
-                            <Input
-                                name="email"
-                                control={control}
-                                label="Correo electrónico"
-                                placeholder="correo@ejemplo.com"
-                                type="email"
-                            />
+                            {/* Campo de email en modo solo lectura - no editable */}
+                            <View style={styles.readOnlyField}>
+                                <Text style={styles.readOnlyLabel}>Correo electrónico</Text>
+                                <Text style={styles.readOnlyValue}>{userData.email}</Text>
+                                <Text style={styles.readOnlyHelper}>
+                                    El correo electrónico no puede ser modificado
+                                </Text>
+                            </View>
 
                             <Input
                                 name="address"
@@ -241,7 +259,7 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: Colors.light.background,
         padding: 20,
     },
     profileCard: {
@@ -286,40 +304,46 @@ const styles = StyleSheet.create({
     buttonSection: {
         flexDirection: "row",
         width: "100%",
-        marginTop: 30,
-        justifyContent: "space-between",
+        marginTop: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 10,
     },
     signOutButton: {
-        width: "30%",
-        backgroundColor: "#ff4757",
+        flex: 1,
+        backgroundColor: Colors.danger,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
         justifyContent: "center",
+        marginHorizontal: 5,
     },
     signOutButtonText: {
         fontSize: 14,
         fontWeight: "700",
         color: "#fff",
         textAlign: "center",
+        gap: 10,
     },
     editButton: {
-        width: "30%",
-        backgroundColor: "#F9C80E",
+        flex: 1,
+        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
         justifyContent: "center",
+        marginHorizontal: 5,
     },
     editButtonText: {
         fontSize: 14,
         fontWeight: "700",
         color: "#000",
         textAlign: "center",
+        gap: 10,
     },
     deleteButton: {
         width: "30%",
-        backgroundColor: "#c0392b",
+        backgroundColor: Colors.danger,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
@@ -380,7 +404,7 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         flex: 1,
-        backgroundColor: "#007AFF",
+        backgroundColor: Colors.secondary,
         borderRadius: 12,
         paddingVertical: 15,
         alignItems: "center",
@@ -389,5 +413,30 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#fff",
+    },
+    readOnlyField: {
+        marginBottom: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: Colors.light.background,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.light.background,
+    },
+    readOnlyLabel: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#666",
+        marginBottom: 6,
+    },
+    readOnlyValue: {
+        fontSize: 16,
+        color: "#333",
+        marginBottom: 4,
+    },
+    readOnlyHelper: {
+        fontSize: 12,
+        color: "#999",
+        fontStyle: "italic",
     },
 })
