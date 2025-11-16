@@ -639,8 +639,8 @@ export const getAdoptionRequests = async (req: AuthenticatedRequest, res: Respon
             const userRole = req.user?.role
             const userId = req.user?.id
 
-            // Giver: devolver solicitudes relacionadas con sus posts/pets
-            if (userRole === 21) {
+            // Giver/Shelter: devolver solicitudes relacionadas con sus posts/pets
+            if (userRole === 21 || userRole === 22) {
                 // Reutilizar listMyRequests (ya realiza las consultas y responde)
                 return await listMyRequests(req as unknown as Request, res)
             }

@@ -29,8 +29,9 @@ export default function RequestGiverScreen() {
     const { withLoading } = useLoading()
     const [documents, setDocuments] = useState<FileInfo[]>([])
 
-    // Verificar si ya tiene una solicitud pendiente
-    const hasPendingRequest = user?.validated === false
+    // Verificar si ya tiene una solicitud pendiente (si tiene archivos en Media)
+    // Ya no usamos validated=false porque ahora el usuario mantiene acceso
+    const [hasPendingRequest, setHasPendingRequest] = useState(false)
 
     // Función para seleccionar documentos PDF
     const pickDocument = async () => {
@@ -156,16 +157,16 @@ export default function RequestGiverScreen() {
                 await userService.submitGiverRequest(documents)
             })
 
-            // Mostrar alerta de éxito
+            // Mostrar alerta de éxito con instrucciones claras
             showAlert(
-                "¡Solicitud enviada exitosamente! Recibirás un correo de confirmación y te notificaremos cuando sea validada.",
+                "¡Solicitud enviada! Seguirás siendo adoptante hasta que un administrador apruebe tu solicitud. Recibirás un correo cuando sea validada.",
                 "success"
             )
 
             // Esperar un momento para que el usuario vea la alerta antes de volver
             setTimeout(() => {
                 router.back()
-            }, 1500)
+            }, 2000)
         } catch (error: any) {
             console.error("Error al enviar solicitud:", error)
 
@@ -202,8 +203,9 @@ export default function RequestGiverScreen() {
                             Ya tienes una solicitud pendiente de validación.
                         </Text>
                         <Text style={styles.pendingText}>
-                            Nuestro equipo está revisando tus documentos y te notificaremos por
-                            correo electrónico cuando sea validada.
+                            Nuestro equipo está revisando tus documentos. Mientras tanto, puedes
+                            seguir usando la app como adoptante con normalidad. Te notificaremos por
+                            correo electrónico cuando tu solicitud sea procesada.
                         </Text>
                         <View style={styles.pendingInfoBox}>
                             <Ionicons name="mail-outline" size={20} color="#666" />
@@ -231,12 +233,11 @@ export default function RequestGiverScreen() {
                             </Text>
                         </View>
 
-                        <View style={styles.warningCard}>
-                            <Ionicons name="warning-outline" size={24} color="#ff9800" />
-                            <Text style={styles.warningText}>
-                                ⚠️ Importante: Al enviar esta solicitud, no podrás acceder a la
-                                aplicación hasta que tu cuenta sea validada o rechazada por nuestro
-                                equipo.
+                        <View style={styles.successCard}>
+                            <Ionicons name="checkmark-circle-outline" size={24} color="#4CAF50" />
+                            <Text style={styles.successText}>
+                                ✅ Podrás seguir usando la app como adoptante mientras revisamos tu
+                                solicitud. Tu acceso no se verá interrumpido.
                             </Text>
                         </View>
 
@@ -301,7 +302,9 @@ export default function RequestGiverScreen() {
                             <Ionicons name="time-outline" size={20} color="#666" />
                             <Text style={styles.noteText}>
                                 Una vez enviada tu solicitud, nuestro equipo la revisará en 24-48
-                                horas hábiles. Recibirás un correo electrónico cuando sea validada.
+                                horas hábiles. Mientras tanto, podrás seguir usando la app con
+                                normalidad como adoptante. Recibirás un correo cuando tu solicitud
+                                sea aprobada o rechazada.
                             </Text>
                         </View>
                     </>
@@ -494,21 +497,21 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
-    warningCard: {
+    successCard: {
         flexDirection: "row",
-        backgroundColor: "#fff3e0",
+        backgroundColor: "#e8f5e9",
         padding: 16,
         borderRadius: 8,
         marginBottom: 24,
         marginHorizontal: 20,
         borderLeftWidth: 4,
-        borderLeftColor: "#ff9800",
+        borderLeftColor: "#4CAF50",
     },
-    warningText: {
+    successText: {
         flex: 1,
         marginLeft: 12,
         fontSize: 14,
-        color: "#e65100",
+        color: "#2e7d32",
         lineHeight: 20,
         fontWeight: "500",
     },

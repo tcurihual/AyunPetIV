@@ -29,35 +29,35 @@ const upload = multer({
 
 router.get(
     "/",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     asyncHandler((req, res) => listPublications(req as any, res))
 )
 router.get(
     "/pets/:id",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     asyncHandler((req, res) => getPetById(req as any, res))
 )
 router.get(
     "/:id",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     asyncHandler((req, res) => getPublicationById(req as any, res))
 )
 
 router.post(
     "/",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     upload.array("files", 10),
     asyncHandler((req, res) => createPublication(req as any, res))
 )
 router.patch(
     "/:id",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     upload.array("files", 10),
     asyncHandler((req, res) => updatePublication(req as any, res))
 )
 router.delete(
     "/:id",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     asyncHandler((req, res) => deletePublication(req as any, res))
 )
 

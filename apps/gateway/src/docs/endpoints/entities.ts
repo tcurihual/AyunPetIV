@@ -2,9 +2,7 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
 import { z } from "zod"
 
 import {
-    GiverRequestResponseSchema,
     ErrorValuesSchema,
-    ValidateGiverAccountResponseSchema,
     AdoptionRequestsWithImagesResponseSchema,
     AdoptionRequestByIdWithImagesResponseSchema,
     CreateVerificationCodeRequestSchema,
@@ -27,101 +25,7 @@ const FormResponseSchema = z.object({
 })
 
 /* -------------------------------------------------------------------------- */
-/* 🐶 Giver Requests                                                          */
-/* -------------------------------------------------------------------------- */
-export function registerGiverRequestsPaths(registry: OpenAPIRegistry) {
-    registry.registerPath({
-        method: "get",
-        path: "/v1/entities/giverRequests",
-        tags: ["GiverRequests"],
-        summary: "Listar solicitudes de dadores pendientes",
-        description:
-            "Obtiene un listado paginado de organizaciones o solicitudes de dadores pendientes de validación. Requiere permisos de administrador.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-            {
-                name: "page",
-                in: "query",
-                required: false,
-                description: "Número de la página a obtener",
-                schema: { type: "integer", default: 1, minimum: 1 },
-            },
-            {
-                name: "pageSize",
-                in: "query",
-                required: false,
-                description: "Cantidad de solicitudes por página",
-                schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
-            },
-        ],
-        responses: {
-            200: {
-                description: "Organizaciones no validadas obtenidas correctamente",
-                content: { "application/json": { schema: GiverRequestResponseSchema } },
-            },
-            400: {
-                description: "Error al obtener organizaciones",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            401: {
-                description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            403: {
-                description: "No autorizado - Requiere rol de administrador",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-
-    registry.registerPath({
-        method: "patch",
-        path: "/v1/entities/giver-requests/{userId}/validate",
-        tags: ["GiverRequests"],
-        summary: "Validar cuenta de dador de mascotas",
-        description:
-            "Valida la cuenta de un dador, cambia el estado `validated` a `true` y envía un correo electrónico de confirmación. Requiere permisos de administrador.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-            {
-                name: "userId",
-                in: "path",
-                required: true,
-                description: "ID del usuario a validar",
-                schema: { type: "integer", example: 55 },
-            },
-        ],
-        responses: {
-            200: {
-                description: "Cuenta validada exitosamente",
-                content: { "application/json": { schema: ValidateGiverAccountResponseSchema } },
-            },
-            400: {
-                description: "ID inválido o cuenta ya validada",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            401: {
-                description: "No autenticado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            403: {
-                description: "No autorizado - Requiere rol de administrador",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            404: {
-                description: "Usuario no encontrado",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-            500: {
-                description: "Error interno del servidor",
-                content: { "application/json": { schema: ErrorValuesSchema } },
-            },
-        },
-    })
-}
-
-/* -------------------------------------------------------------------------- */
-/* 🐕 Adoption Requests                                                      */
+/*  Adoption Requests                                                      */
 /* -------------------------------------------------------------------------- */
 export function registerAdoptionRequestsPaths(registry: OpenAPIRegistry) {
     registry.registerPath({
@@ -566,7 +470,6 @@ export function registerFormResponsesPaths(registry: OpenAPIRegistry) {
 }
 
 export function registerAllEntitiesDocs(registry: OpenAPIRegistry) {
-    registerGiverRequestsPaths(registry)
     registerUsersPaths(registry)
     registerAdoptionRequestsPaths(registry)
     registerVerificationCodesPaths(registry)
