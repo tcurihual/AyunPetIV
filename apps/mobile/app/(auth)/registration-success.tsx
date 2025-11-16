@@ -18,14 +18,6 @@ export default function RegistrationSuccessScreen() {
     const router = useRouter()
     const { type, email } = useLocalSearchParams<{ type: RegistrationType; email?: string }>()
 
-    useEffect(() => {
-        // Opcional: auto-redirección después de cierto tiempo
-        // const timeout = setTimeout(() => {
-        //     handleContinue()
-        // }, 10000) // 10 segundos
-        // return () => clearTimeout(timeout)
-    }, [])
-
     const getContent = () => {
         switch (type) {
             case "user":

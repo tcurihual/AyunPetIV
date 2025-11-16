@@ -67,7 +67,7 @@ router.get("/uploads/:entityType/:entityId", getFilesById)
 // rutas protegidas - POST y DELETE requieren autenticación
 router.post(
     "/uploads/:entityType/:entityId",
-    requireRole(19, 20, 21),
+    requireRole(19, 20, 21, 22),
     publicUpload.array("files", 10),
     postFiles
 )

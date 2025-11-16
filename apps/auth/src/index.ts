@@ -18,7 +18,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use("/", authRouter)
-app.use("/", mobileRouter)
+app.use("/mobile", mobileRouter)
 
 app.get("/health", (req, res) => {
     res.json({

@@ -14,7 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 
 import { passwordResetService } from "@/services/passwordReset"
-import {Colors} from "@/constants/Colors"
+import { Colors } from "@/constants/Colors"
 
 const { width, height } = Dimensions.get("window")
 
@@ -76,7 +76,7 @@ export default function RecoveryPinScreen() {
                 Alert.alert("¡Contraseña cambiada!", response.message, [
                     {
                         text: "Ir al inicio de sesión",
-                        onPress: () => router.push("/(auth)/login"),
+                        onPress: () => router.push("/(auth)/(login)/"),
                     },
                 ])
             } else {
@@ -108,7 +108,7 @@ export default function RecoveryPinScreen() {
             <View style={styles.content}>
                 <View style={styles.row}>
                     <View style={styles.iconCircle}>
-                        <Ionicons name="mail-outline" size={22} color= {Colors.secondary} />
+                        <Ionicons name="mail-outline" size={22} color={Colors.secondary} />
                     </View>
                     <Text style={styles.instruction}>
                         Un código de recuperación fue{"\n"}enviado a{" "}

@@ -29,7 +29,7 @@ export default function SettingsScreen() {
                             setIsDeleting(true)
                             await userService.deleteMe()
                             await signOut(true)
-                            router.replace("/(auth)/login")
+                            router.replace("/(auth)/(login)/")
                         } catch (error) {
                             console.error("Error al eliminar cuenta:", error)
                             Alert.alert(

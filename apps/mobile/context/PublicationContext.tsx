@@ -139,14 +139,14 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     async function getPublications(reset: boolean = false): Promise<void> {
         // Si reset es true, volvemos a la página 1, de lo contrario cargamos la página actual
         const pageToLoad = reset ? 1 : currentPage
-        
+
         if (reset) {
             setLoading(true)
             setCurrentPage(1)
         } else {
             setLoadingMore(true)
         }
-        
+
         setError(null)
 
         try {
@@ -174,12 +174,11 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 setPublications(transformed)
             } else {
                 // Agregar las nuevas publicaciones al array existente
-                setPublications(prev => [...prev, ...transformed])
+                setPublications((prev) => [...prev, ...transformed])
             }
-            
+
             setTotalPages(response.data.data.totalPages)
             setHasMore(response.data.data.page < response.data.data.totalPages)
-            
         } catch (e: any) {
             console.error("Error al obtener publicaciones:", e)
             setError(e?.response?.data?.message || "Error al cargar las publicaciones")
@@ -198,10 +197,10 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     async function loadMorePublications(): Promise<void> {
         // Si ya estamos cargando o no hay más páginas, no hacer nada
         if (loadingMore || !hasMore) return
-        
+
         const nextPage = currentPage + 1
         setCurrentPage(nextPage)
-        
+
         setLoadingMore(true)
         setError(null)
 
@@ -227,16 +226,15 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             )
 
             // Agregar las nuevas publicaciones al array existente
-            setPublications(prev => [...prev, ...transformed])
-            
+            setPublications((prev) => [...prev, ...transformed])
+
             setTotalPages(response.data.data.totalPages)
             setHasMore(response.data.data.page < response.data.data.totalPages)
-            
         } catch (e: any) {
             console.error("Error al cargar más publicaciones:", e)
             setError(e?.response?.data?.message || "Error al cargar más publicaciones")
             // Revertir el incremento de página si falla
-            setCurrentPage(prev => prev - 1)
+            setCurrentPage((prev) => prev - 1)
         } finally {
             setLoadingMore(false)
         }
@@ -276,7 +274,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
 
     async function createPublication(data: CreatePublicationPayload): Promise<Post> {
         if (!user) throw new Error("Usuario no autenticado")
-        if (user.role !== 20 && user.role !== 21)
+        if (user.role !== 21 && user.role !== 22)
             throw new Error("No tienes permisos para crear publicaciones.")
 
         setLoading(true)
@@ -437,7 +435,17 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             clearError,
             petsForHome,
         }),
-        [publications, loading, loadingMore, error, currentPage, totalPages, hasMore, petsForHome, getPublicationByPostId]
+        [
+            publications,
+            loading,
+            loadingMore,
+            error,
+            currentPage,
+            totalPages,
+            hasMore,
+            petsForHome,
+            getPublicationByPostId,
+        ]
     )
 
     return <PublicationContext.Provider value={value}>{children}</PublicationContext.Provider>

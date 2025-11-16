@@ -102,6 +102,7 @@ export default function ShelterIndex() {
 
         // Filtrar solo mis publicaciones si está activado
         if (showOnlyMine && user?.id) {
+            console.log("ola")
             pets = pets.filter((pet) => Number(pet.creatorId) === Number(user.id))
         }
 

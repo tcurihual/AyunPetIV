@@ -15,7 +15,7 @@ import { Colors } from "@/constants/Colors"
 const { width } = Dimensions.get("window")
 
 const schema = z.object({
-    email: z.string().email("Correo inválido"),
+    email: z.email("Correo inválido"),
     code: z.string().min(4, "Código inválido"),
 })
 
