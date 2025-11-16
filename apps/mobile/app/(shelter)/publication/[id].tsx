@@ -107,6 +107,7 @@ export default function PublicationDetail() {
             id: String(pub.postId ?? pub.id),
             name: pub.name ?? "Sin nombre",
             gender: pub.gender ?? "",
+            type: (pub as any).type ?? (pub as any).species ?? "", // ⭐ AGREGAR ESTO ⭐
             age: pub.age ?? "",
             publisher: pub.publisher ?? "Usuario",
             description: pub.description ?? "",
