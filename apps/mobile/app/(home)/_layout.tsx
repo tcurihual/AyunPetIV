@@ -1,6 +1,6 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { StyleSheet } from "react-native"
-import { Slot } from "expo-router"
+import { Slot, usePathname } from "expo-router"
 import Header from "@common/Header"
 import BottomNavbar from "@common/BottomNavbar"
 import DropdownMenu from "@common/DropdownMenu"
@@ -10,6 +10,12 @@ import { Colors } from "@/constants/Colors"
 
 export default function HomeLayout() {
     const [menuVisible, setMenuVisible] = useState(false)
+    const pathname = usePathname()
+
+    // Cierra el menú en cada navegación
+    useEffect(() => {
+        setMenuVisible(false)
+    }, [pathname])
 
     return (
         <SafeAreaView style={styles.container}>
