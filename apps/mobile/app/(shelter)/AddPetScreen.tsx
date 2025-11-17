@@ -60,7 +60,8 @@ const AddPetScreen = () => {
             species: "Dog",
             gender: "Male",
             size: "Small",
-            age: 0,
+            age_years: 0,
+            age_months: 0,
             sterilized: false,
             description: "",
         } as PetFormInput,
@@ -142,7 +143,8 @@ const AddPetScreen = () => {
                     species: data.species,
                     name: data.name,
                     gender: data.gender,
-                    age: data.age,
+                    age_years: data.age_years,
+                    age_months: data.age_months,
                     size: data.size,
                     sterilized: data.sterilized,
                 },
@@ -196,7 +198,8 @@ const AddPetScreen = () => {
                 ownerName,
                 name: data.name,
                 gender: translateGenderToSpanish(data.gender),
-                ageYears: data.age,
+                ageYears: data.age_years,
+                ageMonths: data.age_months,
                 species: translateSpeciesToSpanish(data.species) ?? "Otro",
                 description: "",
                 imageUrls: [], // las URLs de media se resuelven luego desde el servicio Media cuando se consulten
@@ -259,26 +262,55 @@ const AddPetScreen = () => {
                             )}
 
                             <Text style={styles.label}>Edad</Text>
-                            <Controller
-                                control={control}
-                                name="age"
-                                render={({ field: { onChange, value, onBlur } }) => (
-                                    <TextInput
-                                        style={styles.input}
-                                        value={(value as number) > 0 ? String(value) : ""}
-                                        onChangeText={(txt) => {
-                                            const numericValue = txt.replace(/[^\d]/g, "")
-                                            onChange(numericValue ? parseInt(numericValue, 10) : 0)
-                                        }}
-                                        onBlur={onBlur}
-                                        placeholder="Edad en años (ej: 3)"
-                                        keyboardType="number-pad"
-                                        maxLength={2}
+                            <View style={styles.ageContainer}>
+                                <View style={styles.ageInput}>
+                                    <Text style={styles.ageLabel}>Años</Text>
+                                    <Controller
+                                        control={control}
+                                        name="age_years"
+                                        render={({ field: { onChange, value, onBlur } }) => (
+                                            <TextInput
+                                                style={styles.input}
+                                                value={(value as number) > 0 ? String(value) : ""}
+                                                onChangeText={(txt) => {
+                                                    const numericValue = txt.replace(/[^\d]/g, "")
+                                                    onChange(numericValue ? parseInt(numericValue, 10) : 0)
+                                                }}
+                                                onBlur={onBlur}
+                                                placeholder="0"
+                                                keyboardType="number-pad"
+                                                maxLength={2}
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
-                            {errors.age && (
-                                <Text style={styles.errorText}>{String(errors.age.message)}</Text>
+                                </View>
+                                <View style={styles.ageInput}>
+                                    <Text style={styles.ageLabel}>Meses</Text>
+                                    <Controller
+                                        control={control}
+                                        name="age_months"
+                                        render={({ field: { onChange, value, onBlur } }) => (
+                                            <TextInput
+                                                style={styles.input}
+                                                value={(value as number) > 0 ? String(value) : ""}
+                                                onChangeText={(txt) => {
+                                                    const numericValue = txt.replace(/[^\d]/g, "")
+                                                    onChange(numericValue ? parseInt(numericValue, 10) : 0)
+                                                }}
+                                                onBlur={onBlur}
+                                                placeholder="0"
+                                                keyboardType="number-pad"
+                                                maxLength={2}
+                                            />
+                                        )}
+                                    />
+                                </View>
+                            </View>
+                            {errors.age_years && (
+                                <Text style={styles.errorText}>{String(errors.age_years.message)}</Text>
+                            )}
+                            {errors.age_months && (
+                                <Text style={styles.errorText}>{String(errors.age_months.message)}</Text>
                             )}
 
                             <Text style={styles.label}>Especie</Text>
@@ -497,6 +529,21 @@ const getResponsiveStyles = (width: number, height: number) => {
             fontSize: fontSize,
             fontWeight: "500",
             color: "#333",
+        },
+        ageContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 15,
+        },
+        ageInput: {
+            flex: 1,
+        },
+        ageLabel: {
+            fontSize: fontSize - 2,
+            fontWeight: "500",
+            color: "#666",
+            marginBottom: 4,
         },
         input: {
             width: "100%",

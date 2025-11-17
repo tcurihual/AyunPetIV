@@ -31,6 +31,7 @@ import { useReportContext } from "@/context/ReportContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { Colors } from "@/constants/Colors"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
+import { formatAgeFromObject } from "@/utils/ageFormat"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -47,6 +48,7 @@ export default function PublicationDetail() {
     const [loading, setLoading] = useState(true)
     const [pet, setPet] = useState<Pet | null>(null)
     const { publications, getPublicationByPostId } = usePublicationContext()
+    const { deletePublication, refreshPublications } = usePublicationContext()
     const { createAdoptionRequest } = useAdoptionRequestContext()
     const { user } = useAuthContext()
     const { createReport, loading: reportLoading } = useReportContext()
@@ -381,6 +383,51 @@ export default function PublicationDetail() {
         })
     }
 
+    const handleDeletePublication = () => {
+        if (!publicationFromContext?.postId) {
+            Alert.alert("Error", "No se puede eliminar esta publicación")
+            return
+        }
+
+        Alert.alert(
+            "Confirmar eliminación",
+            `¿Estás seguro de que deseas eliminar la publicación de "${publicationFromContext.name}"? Esta acción no se puede deshacer.`,
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Eliminar",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const petName = publicationFromContext.name
+                            await deletePublication(Number(publicationFromContext.postId))
+                            
+                            // Navegar a la pantalla de éxito con animación
+                            router.replace({
+                                pathname: "/(shelter)/deletion-success" as any,
+                                params: {
+                                    petName: petName
+                                }
+                            })
+                            
+                            // Recargar publicaciones después de un delay para asegurar consistencia
+                            // Esto se ejecuta DESPUÉS de navegar, evitando el error 404
+                            setTimeout(() => {
+                                refreshPublications()
+                            }, 1000)
+                        } catch (error: any) {
+                            console.error("Error deleting publication:", error)
+                            Alert.alert("Error", error?.message || "No se pudo eliminar la publicación")
+                        }
+                    }
+                }
+            ]
+        )
+    }
+
     if (loading) {
         return (
             <View style={styles.center}>
@@ -515,6 +562,15 @@ export default function PublicationDetail() {
                                         >
                                             <Text style={styles.editButtonText}>
                                                 ✏️ Editar Publicación
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={styles.deleteButton}
+                                            onPress={handleDeletePublication}
+                                        >
+                                            <Text style={styles.deleteButtonText}>
+                                                🗑️ Eliminar Publicación
                                             </Text>
                                         </TouchableOpacity>
 
@@ -703,6 +759,21 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     editButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
+    deleteButton: {
+        backgroundColor: Colors.danger,
+        borderRadius: 8,
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+        marginBottom: 10,
+    },
+    deleteButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
     sendRequestButton: {
         backgroundColor: Colors.primary,
         borderRadius: 8,

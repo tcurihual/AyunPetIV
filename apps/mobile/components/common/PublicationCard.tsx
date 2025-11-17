@@ -6,6 +6,7 @@ import { Pet } from "@/interfaces/pet"
 import { Colors } from "@/constants/Colors"
 import { useAuthContext } from "@/context/AuthContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
+import { formatAgeFromObject } from "@/utils/ageFormat"
 
 interface PublicationCardProps {
     pet: Pet
@@ -62,16 +63,6 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         }
     })
 
-    const formatAge = (age?: string | number) => {
-        if (age === undefined || age === null || age === "" || age === "undefined")
-            return "Desconocida"
-        const numericAge = Number(age)
-        if (isNaN(numericAge)) return String(age)
-        if (numericAge <= 0) return "Cachorro"
-        if (numericAge === 1) return "1 año"
-        return `${numericAge} años`
-    }
-
     return (
         <Animated.View
             style={[styles.card, animatedStyle]}
@@ -87,11 +78,11 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
                     {pet.name}
                 </Animated.Text>
                 <Text style={styles.details}>
-                    {`${translateSpeciesToSpanish(
-                        (pet as any).type || ""
-                    )} • ${translateGenderToSpanish(pet.gender || "")} • ${formatAge(pet.age)}`}
+                    {`${translateSpeciesToSpanish((pet as any).type || "")} • ${translateGenderToSpanish(pet.gender || "")}`}
                 </Text>
-
+                <Text style={styles.ageText}>
+                    {formatAgeFromObject(pet)}
+                </Text>
                 <Text style={styles.publisher}>Publicado por: {pet.publisher}</Text>
             </View>
             <TouchableOpacity
@@ -142,6 +133,12 @@ const styles = StyleSheet.create({
     details: {
         fontSize: 13,
         color: "#666",
+        marginBottom: 2,
+    },
+    ageText: {
+        fontSize: 12,
+        color: "#555",
+        fontWeight: "500",
         marginBottom: 2,
     },
     publisher: {

@@ -6,6 +6,7 @@ export type LocalPet = {
   name: string
   gender: "Macho" | "Hembra"
   ageYears: number
+  ageMonths?: number
   species: "Perro" | "Gato" | "Otro"
   description?: string
   imageUrls: string[]

@@ -23,7 +23,8 @@ type PetFormData = {
     name: string
     species: string
     gender: string
-    age: number
+    age_years: number
+    age_months: number
     size: string
     description: string
     sterilized: boolean
@@ -39,7 +40,8 @@ export default function EditPublication() {
         name: "",
         species: "dog",
         gender: "male",
-        age: 1,
+        age_years: 0,
+        age_months: 0,
         size: "medium",
         description: "",
         sterilized: false,
@@ -87,7 +89,8 @@ export default function EditPublication() {
                 name: publication.name || "",
                 species: publication.species || "dog",
                 gender: publication.gender || "male",
-                age: parseInt(publication.age || "0") || 1,
+                age_years: (publication as any).age_years || parseInt(publication.age || "0") || 0,
+                age_months: (publication as any).age_months || 0,
                 size: publication.size || "medium",
                 description: publication.description || "",
                 sterilized: publication.sterilized || false,
@@ -150,7 +153,8 @@ export default function EditPublication() {
                     name: formData.name,
                     species: formData.species,
                     gender: formData.gender,
-                    age: formData.age,
+                    age_years: formData.age_years,
+                    age_months: formData.age_months,
                     size: formData.size,
                     sterilized: formData.sterilized,
                 },
@@ -269,14 +273,36 @@ export default function EditPublication() {
                         </View>
 
                         <View style={styles.halfField}>
-                            <Text style={styles.label}>Edad:</Text>
+                            <Text style={styles.label}>Edad (años):</Text>
                             <TextInput
                                 style={styles.input}
-                                value={formData.age.toString()}
-                                onChangeText={(text) =>
-                                    setFormData({ ...formData, age: parseInt(text) || 1 })
-                                }
+                                value={formData.age_years > 0 ? formData.age_years.toString() : ""}
+                                onChangeText={(text) => {
+                                    const numericValue = text.replace(/[^\d]/g, "")
+                                    setFormData({ 
+                                        ...formData, 
+                                        age_years: numericValue ? parseInt(numericValue, 10) : 0 
+                                    })
+                                }}
                                 keyboardType="numeric"
+                                placeholder="0"
+                            />
+                        </View>
+                        
+                        <View style={styles.halfField}>
+                            <Text style={styles.label}>Edad (meses):</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={formData.age_months > 0 ? formData.age_months.toString() : ""}
+                                onChangeText={(text) => {
+                                    const numericValue = text.replace(/[^\d]/g, "")
+                                    setFormData({ 
+                                        ...formData, 
+                                        age_months: numericValue ? parseInt(numericValue, 10) : 0 
+                                    })
+                                }}
+                                keyboardType="numeric"
+                                placeholder="0"
                             />
                         </View>
                     </View>

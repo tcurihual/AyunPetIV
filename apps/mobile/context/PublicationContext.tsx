@@ -10,7 +10,8 @@ interface CreatePublicationPayload {
         species: string
         name: string
         gender: string
-        age: number
+        age_years: number
+        age_months: number
         size: string
         sterilized: boolean
     }
@@ -26,7 +27,8 @@ interface UpdatePublicationPayload {
         species?: string
         name?: string
         gender?: string
-        age?: number
+        age_years?: number
+        age_months?: number
         size?: string
         sterilized?: boolean
     }
@@ -87,6 +89,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
     const [totalPages, setTotalPages] = useState<number>(1)
     const [hasMore, setHasMore] = useState<boolean>(true)
     const { user, status } = useAuthContext()
+    const [deletingPublicationId, setDeletingPublicationId] = useState<number | null>(null)
 
     const buildPublicationItem = React.useCallback(
         (post: any, pet: any, creator?: any): PublicationItem => {
@@ -264,12 +267,22 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 })
 
                 return mapped
-            } catch (e) {
-                console.error("Error al obtener publicación por postId:", e)
+            } catch (e: any) {
+                // Si es un 404 y es la publicación que acabamos de eliminar, no mostrar error
+                if (e?.response?.status === 404 && deletingPublicationId === numericId) {
+                    return null
+                }
+                // Si es un 404 normal (no relacionado con eliminación)
+                if (e?.response?.status === 404) {
+                    console.log(`ℹ️ Publicación ${numericId} no encontrada (puede haber sido eliminada)`)
+                    return null
+                }
+                // Mostrar otros errores
+                console.error("❌ Error al obtener publicación por postId:", e?.response?.data?.message || e.message || e)
                 return null
             }
         },
-        [publications, buildPublicationItem]
+        [publications, buildPublicationItem, deletingPublicationId]
     )
 
     async function createPublication(data: CreatePublicationPayload): Promise<{ post: any; pet: any; images: any[] }> {
@@ -287,8 +300,8 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 description: data.post.description,
                 species: (String(data.pet.species) ?? "").toLowerCase(),
                 gender: (String(data.pet.gender) ?? "").toLowerCase(),
-                age_years: data.pet.age,
-                age_months: 0,
+                age_years: data.pet.age_years,
+                age_months: data.pet.age_months,
                 size: (String(data.pet.size) ?? "").toLowerCase(),
                 sterilized: data.pet.sterilized,
                 name: data.pet.name,
@@ -338,9 +351,11 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             if (data.post?.description) payload.description = data.post.description
             if (data.pet?.species) payload.species = String(data.pet.species).toLowerCase()
             if (data.pet?.gender) payload.gender = String(data.pet.gender).toLowerCase()
-            if (data.pet?.age !== undefined) {
-                payload.age_years = data.pet.age
-                payload.age_months = 0
+            if (data.pet?.age_years !== undefined) {
+                payload.age_years = data.pet.age_years
+            }
+            if (data.pet?.age_months !== undefined) {
+                payload.age_months = data.pet.age_months
             }
             if (data.pet?.size) payload.size = String(data.pet.size).toLowerCase()
             if (data.pet?.sterilized !== undefined) payload.sterilized = data.pet.sterilized
@@ -383,10 +398,16 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         if (!user) throw new Error("Usuario no autenticado")
         setLoading(true)
         setError(null)
+        
+        // Marcar que estamos eliminando esta publicación
+        setDeletingPublicationId(id)
 
         try {
             await http.delete(`/v1/adoptions/publications/${id}`)
-            await getPublications(true)
+            
+            // Actualizar el estado local removiendo la publicación eliminada
+            // en lugar de hacer una llamada al servidor
+            setPublications(prev => prev.filter(pub => Number(pub.postId) !== id))
         } catch (e: any) {
             console.error("Error al eliminar publicación:", e)
             const msg = e?.response?.data?.message || "Error al eliminar la publicación"
@@ -394,6 +415,10 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             throw new Error(msg)
         } finally {
             setLoading(false)
+            // Limpiar la bandera después de 2 segundos
+            setTimeout(() => {
+                setDeletingPublicationId(null)
+            }, 2000)
         }
     }
 
