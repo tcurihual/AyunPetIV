@@ -14,6 +14,7 @@ import RequestCard, { RequestStatus } from "@/components/common/RequestCard"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { Colors } from "@/constants/Colors"
+import { useFocusEffect } from "expo-router"
 
 function mapStatus(serverStatus: string | undefined): RequestStatus {
     switch (serverStatus) {
@@ -41,6 +42,13 @@ export default function Requests() {
     const [resolved, setResolved] = React.useState<
         Record<number, { name?: string; imageUri?: string }>
     >({})
+
+    useFocusEffect(
+        React.useCallback(() => {
+            refreshRequests()
+            setLastLoaded(Date.now())
+        }, [])
+    )
 
     // Al cambiar las solicitudes, intentamos resolver los postId que faltan
     React.useEffect(() => {
@@ -128,10 +136,6 @@ export default function Requests() {
                         <Text style={styles.sub}>Revisa tus solicitudes de adopción</Text>
                         <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
                             Total: {adoptionRequests?.length ?? 0}
-                        </Text>
-                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
-                            Última carga:{" "}
-                            {lastLoaded ? new Date(lastLoaded).toLocaleTimeString() : "-"}
                         </Text>
                     </View>
                 }
