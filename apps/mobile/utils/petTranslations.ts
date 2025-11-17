@@ -78,6 +78,16 @@ export const translateGenderToBackend = (gender: string): string => {
 }
 
 export const translateGenderToSpanish = (gender: string): "Macho" | "Hembra" => {
+    if (!gender) return "Macho"
+    
+    // Normalizar el género a minúsculas para comparación
+    const normalized = gender.trim().toLowerCase()
+    
+    // Manejar casos en minúsculas (como vienen de la BD)
+    if (normalized === "male" || normalized === "macho") return "Macho"
+    if (normalized === "female" || normalized === "hembra") return "Hembra"
+    
+    // Intentar con la traducción directa (por si viene capitalizado)
     const translation =
         GenderTranslations.toSpanish[gender as keyof typeof GenderTranslations.toSpanish]
     return translation || "Macho"

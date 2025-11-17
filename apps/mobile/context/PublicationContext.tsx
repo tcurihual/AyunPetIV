@@ -68,7 +68,7 @@ interface PublicationContextType {
     getPublicationByPostId: (postId: number) => Promise<PublicationItem | null>
     getPublications: (reset?: boolean) => Promise<void>
     loadMorePublications: () => Promise<void>
-    createPublication: (data: CreatePublicationPayload) => Promise<Post>
+    createPublication: (data: CreatePublicationPayload) => Promise<{ post: any; pet: any; images: any[] }>
     updatePublication: (id: number, data: UpdatePublicationPayload) => Promise<Post>
     deletePublication: (id: number) => Promise<void>
     refreshPublications: () => Promise<void>
@@ -272,7 +272,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         [publications, buildPublicationItem]
     )
 
-    async function createPublication(data: CreatePublicationPayload): Promise<Post> {
+    async function createPublication(data: CreatePublicationPayload): Promise<{ post: any; pet: any; images: any[] }> {
         if (!user) throw new Error("Usuario no autenticado")
         if (user.role !== 21 && user.role !== 22)
             throw new Error("No tienes permisos para crear publicaciones.")
@@ -315,7 +315,8 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             }
 
             await getPublications(true)
-            return response.data.data.post
+            // La respuesta del backend incluye { post, pet, images }
+            return response.data.data
         } catch (e: any) {
             console.error("Error al crear publicación:", e)
             const msg = e?.response?.data?.message || "Error al crear la publicación"

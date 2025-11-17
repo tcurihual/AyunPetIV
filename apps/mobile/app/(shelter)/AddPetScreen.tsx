@@ -157,18 +157,25 @@ const AddPetScreen = () => {
 
             const newPost = await createPublication(payload as any)
             console.log("📝 Publicación creada:", newPost)
-            console.log("📝 Post ID:", newPost.id)
+            console.log("📝 Post completo:", JSON.stringify(newPost, null, 2))
+
+            // El API retorna { post, pet, images }
+            const postId = newPost.post?.id
+            const petId = newPost.pet?.id
+
+            console.log("📝 Post ID:", postId)
+            console.log("📝 Pet ID:", petId)
 
             // 3) Guardar post_form (asociar preguntas seleccionadas a la publicación)
-            if (selectedQuestionIds.length > 0) {
+            if (selectedQuestionIds.length > 0 && postId) {
                 try {
                     console.log(
-                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
+                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${postId}`
                     )
                     for (const questionId of selectedQuestionIds) {
                         console.log(`   → Asociando pregunta ${questionId}...`)
                         await createPostForm({
-                            post_id: newPost.id,
+                            post_id: postId,
                             question_id: questionId,
                         })
                         console.log(`   ✅ Pregunta ${questionId} asociada`)
@@ -185,7 +192,7 @@ const AddPetScreen = () => {
 
             // 4) Guardar publicación local (AsyncStorage) como referencia rápida en mobile
             const petLocal: LocalPet = {
-                id: String(newPost.pet.id ?? Date.now()),
+                id: String(petId ?? Date.now()),
                 ownerName,
                 name: data.name,
                 gender: translateGenderToSpanish(data.gender),
@@ -197,8 +204,15 @@ const AddPetScreen = () => {
             }
             await addLocalPet(petLocal)
 
-            Alert.alert("OK", "Mascota publicada correctamente")
-            router.push("/(shelter)/publication/all-publications")
+            // Navegar a la pantalla de éxito con los datos de la publicación
+            router.replace({
+                pathname: "/(shelter)/publication-success",
+                params: {
+                    petName: data.name,
+                    postId: String(postId ?? ""),
+                    petId: String(petId ?? ""),
+                },
+            })
         } catch (e: any) {
             console.error(e)
             Alert.alert("Error", e?.message ?? "No se pudo publicar la mascota")
