@@ -60,7 +60,8 @@ const AddPetScreen = () => {
             species: "Dog",
             gender: "Male",
             size: "Small",
-            age: 0,
+            age_years: 0,
+            age_months: 0,
             sterilized: false,
             description: "",
         } as PetFormInput,
@@ -142,7 +143,8 @@ const AddPetScreen = () => {
                     species: data.species,
                     name: data.name,
                     gender: data.gender,
-                    age: data.age,
+                    age_years: data.age_years,
+                    age_months: data.age_months,
                     size: data.size,
                     sterilized: data.sterilized,
                 },
@@ -157,18 +159,25 @@ const AddPetScreen = () => {
 
             const newPost = await createPublication(payload as any)
             console.log("📝 Publicación creada:", newPost)
-            console.log("📝 Post ID:", newPost.id)
+            console.log("📝 Post completo:", JSON.stringify(newPost, null, 2))
+
+            // El API retorna { post, pet, images }
+            const postId = newPost.post?.id
+            const petId = newPost.pet?.id
+
+            console.log("📝 Post ID:", postId)
+            console.log("📝 Pet ID:", petId)
 
             // 3) Guardar post_form (asociar preguntas seleccionadas a la publicación)
-            if (selectedQuestionIds.length > 0) {
+            if (selectedQuestionIds.length > 0 && postId) {
                 try {
                     console.log(
-                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${newPost.id}`
+                        `📋 Asociando ${selectedQuestionIds.length} preguntas al post ${postId}`
                     )
                     for (const questionId of selectedQuestionIds) {
                         console.log(`   → Asociando pregunta ${questionId}...`)
                         await createPostForm({
-                            post_id: newPost.id,
+                            post_id: postId,
                             question_id: questionId,
                         })
                         console.log(`   ✅ Pregunta ${questionId} asociada`)
@@ -185,11 +194,12 @@ const AddPetScreen = () => {
 
             // 4) Guardar publicación local (AsyncStorage) como referencia rápida en mobile
             const petLocal: LocalPet = {
-                id: String(newPost.pet.id ?? Date.now()),
+                id: String(petId ?? Date.now()),
                 ownerName,
                 name: data.name,
                 gender: translateGenderToSpanish(data.gender),
-                ageYears: data.age,
+                ageYears: data.age_years,
+                ageMonths: data.age_months,
                 species: translateSpeciesToSpanish(data.species) ?? "Otro",
                 description: "",
                 imageUrls: [], // las URLs de media se resuelven luego desde el servicio Media cuando se consulten
@@ -197,8 +207,15 @@ const AddPetScreen = () => {
             }
             await addLocalPet(petLocal)
 
-            Alert.alert("OK", "Mascota publicada correctamente")
-            router.push("/(shelter)/publication/all-publications")
+            // Navegar a la pantalla de éxito con los datos de la publicación
+            router.replace({
+                pathname: "/(shelter)/publication-success",
+                params: {
+                    petName: data.name,
+                    postId: String(postId ?? ""),
+                    petId: String(petId ?? ""),
+                },
+            })
         } catch (e: any) {
             console.error(e)
             Alert.alert("Error", e?.message ?? "No se pudo publicar la mascota")
@@ -245,26 +262,55 @@ const AddPetScreen = () => {
                             )}
 
                             <Text style={styles.label}>Edad</Text>
-                            <Controller
-                                control={control}
-                                name="age"
-                                render={({ field: { onChange, value, onBlur } }) => (
-                                    <TextInput
-                                        style={styles.input}
-                                        value={(value as number) > 0 ? String(value) : ""}
-                                        onChangeText={(txt) => {
-                                            const numericValue = txt.replace(/[^\d]/g, "")
-                                            onChange(numericValue ? parseInt(numericValue, 10) : 0)
-                                        }}
-                                        onBlur={onBlur}
-                                        placeholder="Edad en años (ej: 3)"
-                                        keyboardType="number-pad"
-                                        maxLength={2}
+                            <View style={styles.ageContainer}>
+                                <View style={styles.ageInput}>
+                                    <Text style={styles.ageLabel}>Años</Text>
+                                    <Controller
+                                        control={control}
+                                        name="age_years"
+                                        render={({ field: { onChange, value, onBlur } }) => (
+                                            <TextInput
+                                                style={styles.input}
+                                                value={(value as number) > 0 ? String(value) : ""}
+                                                onChangeText={(txt) => {
+                                                    const numericValue = txt.replace(/[^\d]/g, "")
+                                                    onChange(numericValue ? parseInt(numericValue, 10) : 0)
+                                                }}
+                                                onBlur={onBlur}
+                                                placeholder="0"
+                                                keyboardType="number-pad"
+                                                maxLength={2}
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
-                            {errors.age && (
-                                <Text style={styles.errorText}>{String(errors.age.message)}</Text>
+                                </View>
+                                <View style={styles.ageInput}>
+                                    <Text style={styles.ageLabel}>Meses</Text>
+                                    <Controller
+                                        control={control}
+                                        name="age_months"
+                                        render={({ field: { onChange, value, onBlur } }) => (
+                                            <TextInput
+                                                style={styles.input}
+                                                value={(value as number) > 0 ? String(value) : ""}
+                                                onChangeText={(txt) => {
+                                                    const numericValue = txt.replace(/[^\d]/g, "")
+                                                    onChange(numericValue ? parseInt(numericValue, 10) : 0)
+                                                }}
+                                                onBlur={onBlur}
+                                                placeholder="0"
+                                                keyboardType="number-pad"
+                                                maxLength={2}
+                                            />
+                                        )}
+                                    />
+                                </View>
+                            </View>
+                            {errors.age_years && (
+                                <Text style={styles.errorText}>{String(errors.age_years.message)}</Text>
+                            )}
+                            {errors.age_months && (
+                                <Text style={styles.errorText}>{String(errors.age_months.message)}</Text>
                             )}
 
                             <Text style={styles.label}>Especie</Text>
@@ -483,6 +529,21 @@ const getResponsiveStyles = (width: number, height: number) => {
             fontSize: fontSize,
             fontWeight: "500",
             color: "#333",
+        },
+        ageContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 15,
+        },
+        ageInput: {
+            flex: 1,
+        },
+        ageLabel: {
+            fontSize: fontSize - 2,
+            fontWeight: "500",
+            color: "#666",
+            marginBottom: 4,
         },
         input: {
             width: "100%",

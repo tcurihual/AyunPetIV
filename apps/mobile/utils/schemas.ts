@@ -101,17 +101,25 @@ export const PetFormSchema = z.object({
         .string("Debes ingresar el nombre de tu mascota")
         .min(3, "El nombre debe tener al menos 3 caracteres"),
     gender: z.enum(["Male", "Female"]),
-    age: z.coerce
-        .number("Debe ingresar una edad")
+    age_years: z.coerce
+        .number("Debe ingresar años")
         .int("Debe ser un número entero")
-        .min(0, "La edad no puede ser negativa")
-        .max(40, "Revisa la edad (máx 40)"),
+        .min(0, "Los años no pueden ser negativos")
+        .max(40, "Revisa los años (máx 40)"),
+    age_months: z.coerce
+        .number("Debe ingresar meses")
+        .int("Debe ser un número entero")
+        .min(0, "Los meses no pueden ser negativos")
+        .max(11, "Los meses deben estar entre 0 y 11"),
     size: z.enum(["Small", "Medium", "Large"]),
     sterilized: z.boolean(),
     description: z
         .string("Debes ingresar una descripción")
         .min(10, "La descripción debe tener al menos 10 caracteres")
         .max(500, "La descripción es muy larga (máximo 500 caracteres)"),
+}).refine((data) => data.age_years > 0 || data.age_months > 0, {
+    message: "Debes ingresar al menos años o meses",
+    path: ["age_years"],
 })
 
 export const MessageFormSchema = z.object({
