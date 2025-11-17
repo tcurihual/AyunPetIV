@@ -20,17 +20,31 @@ import { useAuthContext } from "@/context/AuthContext"
 import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
 import { Colors } from "../../constants/Colors"
+import * as ImagePicker from "expo-image-picker"
+import type { ImagePickerAsset } from "expo-image-picker"
 
 export default function MyProfileScreen() {
     const { user, signOut, updateUser } = useAuthContext()
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
+    const [selectedImage, setSelectedImage] = useState<ImagePickerAsset | null>(null)
 
-    // Placeholder local para foto de perfil
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        })
+
+        if (!result.canceled) {
+            setSelectedImage(result.assets[0])
+        }
+    }
+
     const placeholderImage = require("@images/pp_placeholder.png")
 
-    // Cargar foto de perfil
     useEffect(() => {
         const loadProfilePicture = async () => {
             if (user?.id) {
@@ -42,17 +56,9 @@ export default function MyProfileScreen() {
         loadProfilePicture()
     }, [user?.id])
 
-    // Determinar qué imagen mostrar
     const getAvatarSource = () => {
-        // Si hay foto de perfil del servidor, usar esa
-        if (profilePictureUrl) {
-            return { uri: profilePictureUrl }
-        }
-        // Si hay avatar en el contexto y no es la URL de randomuser, usar esa
-        if (user?.avatar && !user.avatar.includes("randomuser.me")) {
-            return { uri: user.avatar }
-        }
-        // Sino, usar el placeholder local
+        if (profilePictureUrl) return { uri: profilePictureUrl }
+        if (user?.avatar && !user.avatar.includes("randomuser.me")) return { uri: user.avatar }
         return placeholderImage
     }
 
@@ -69,13 +75,12 @@ export default function MyProfileScreen() {
         control,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting, isDirty },
+        formState: { errors, isSubmitting },
     } = useForm<UserProfileData>({
         resolver: zodResolver(UserProfileSchema),
         defaultValues: {
             id: userData.id,
             name: userData.name,
-            // El email no se incluye en el formulario para evitar su modificación
             address: userData.address || "",
             description: userData.description || "",
         },
@@ -83,57 +88,41 @@ export default function MyProfileScreen() {
 
     const onSubmit = async (data: UserProfileData) => {
         try {
-            console.log("Datos a actualizar:", data)
+            const formData = new FormData()
 
-            // Llamar al API para actualizar el perfil
-            const response = await userService.updateProfile({
-                name: data.name,
-                address: data.address,
-                description: data.description,
-            })
+            formData.append("name", data.name ?? "")
+            formData.append("address", data.address ?? "")
+            formData.append("description", data.description ?? "")
 
-            console.log("Respuesta del servidor:", response)
+            if (selectedImage) {
+                formData.append("image", {
+                    uri: selectedImage.uri,
+                    name: "profile.jpg",
+                    type: "image/jpeg",
+                } as any)
+            }
 
-            // Actualizar el contexto con los nuevos datos
+            formData.append("mural", "")
+
+            await userService.updateProfile(formData)
+
             await updateUser({
                 name: data.name,
                 address: data.address,
                 description: data.description,
             })
 
-            Alert.alert("Éxito", "Perfil actualizado correctamente")
+            Alert.alert("Éxito", "Perfil actualizado")
             setIsEditing(false)
-        } catch (error: any) {
-            console.error("Error al actualizar perfil:", error)
-            const errorMessage =
-                error?.response?.data?.message ||
-                error?.message ||
-                "No se pudo actualizar el perfil"
-            Alert.alert("Error", errorMessage)
+        } catch (error) {
+            console.error("Error en onSubmit:", error)
+            Alert.alert("Error", "No se pudo actualizar el perfil")
         }
     }
 
     const handleCancelEdit = () => {
         reset()
         setIsEditing(false)
-    }
-
-    const handleSignOut = () => {
-        Alert.alert("Cerrar Sesión", "¿Estás seguro de que deseas cerrar sesión?", [
-            { text: "Cancelar", style: "cancel" },
-            {
-                text: "Cerrar Sesión",
-                style: "destructive",
-                onPress: async () => {
-                    try {
-                        await signOut()
-                    } catch (error) {
-                        console.error("Error al cerrar sesión:", error)
-                        Alert.alert("Error", "No se pudo cerrar la sesión")
-                    }
-                },
-            },
-        ])
     }
 
     return (
@@ -164,16 +153,13 @@ export default function MyProfileScreen() {
                 </View>
 
                 <View style={styles.buttonSection}>
-                    <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                        <Text style={styles.signOutButtonText}>Cerrar Sesión</Text>
-                    </TouchableOpacity>
-
                     <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                         <Text style={styles.editButtonText}>Editar Perfil</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
+            {/* MODAL DE EDICIÓN */}
             <Modal
                 visible={isEditing}
                 animationType="slide"
@@ -186,8 +172,8 @@ export default function MyProfileScreen() {
                 >
                     <ScrollView
                         contentContainerStyle={styles.editFormScrollContent}
-                        showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
                     >
                         <View style={styles.editForm}>
                             <Text style={styles.editTitle}>Editar Perfil</Text>
@@ -199,7 +185,6 @@ export default function MyProfileScreen() {
                                 placeholder="Ingresa tu nombre completo"
                             />
 
-                            {/* Campo de email en modo solo lectura - no editable */}
                             <View style={styles.readOnlyField}>
                                 <Text style={styles.readOnlyLabel}>Correo electrónico</Text>
                                 <Text style={styles.readOnlyValue}>{userData.email}</Text>
@@ -229,6 +214,27 @@ export default function MyProfileScreen() {
                                     numberOfLines: 4,
                                 }}
                             />
+
+                            <View style={{ marginTop: 20, alignItems: "center" }}>
+                                <Text style={{ fontWeight: "600", marginBottom: 10 }}>
+                                    Foto de Perfil
+                                </Text>
+
+                                <TouchableOpacity onPress={pickImage}>
+                                    <Image
+                                        source={
+                                            selectedImage
+                                                ? { uri: selectedImage.uri }
+                                                : getAvatarSource()
+                                        }
+                                        style={{ width: 120, height: 120, borderRadius: 16 }}
+                                    />
+                                </TouchableOpacity>
+
+                                <Text style={{ marginTop: 10, color: "#666" }}>
+                                    Toca la imagen para cambiarla
+                                </Text>
+                            </View>
 
                             <View style={styles.editButtonSection}>
                                 <TouchableOpacity
@@ -267,10 +273,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 20,
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
         elevation: 3,
     },
     profileImage: {
@@ -282,9 +284,7 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 24,
         fontWeight: "bold",
-        color: "#333",
         marginBottom: 20,
-        textAlign: "center",
     },
     infoSection: {
         width: "100%",
@@ -293,20 +293,16 @@ const styles = StyleSheet.create({
     infoLabel: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#333",
     },
     infoText: {
         fontSize: 16,
         color: "#666",
-        lineHeight: 22,
         textAlign: "justify",
     },
     buttonSection: {
         flexDirection: "row",
         width: "100%",
         marginTop: 20,
-        justifyContent: "center",
-        alignItems: "center",
         gap: 10,
     },
     signOutButton: {
@@ -315,15 +311,10 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
-        justifyContent: "center",
-        marginHorizontal: 5,
     },
     signOutButtonText: {
-        fontSize: 14,
-        fontWeight: "700",
         color: "#fff",
-        textAlign: "center",
-        gap: 10,
+        fontWeight: "700",
     },
     editButton: {
         flex: 1,
@@ -331,38 +322,19 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
-        justifyContent: "center",
-        marginHorizontal: 5,
     },
     editButtonText: {
-        fontSize: 14,
-        fontWeight: "700",
         color: "#000",
-        textAlign: "center",
-        gap: 10,
-    },
-    deleteButton: {
-        width: "30%",
-        backgroundColor: Colors.danger,
-        borderRadius: 12,
-        paddingVertical: 12,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    deleteButtonText: {
-        fontSize: 14,
         fontWeight: "700",
-        color: "#fff",
-        textAlign: "center",
     },
+
+    // MODAL
     editFormOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.6)",
         justifyContent: "flex-end",
     },
     editFormScrollContent: {
-        flexGrow: 1,
-        justifyContent: "flex-end",
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
@@ -370,73 +342,59 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
         padding: 20,
-        minHeight: "60%",
-        maxHeight: "90%",
     },
     editTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        textAlign: "center",
+        fontSize: 22,
+        fontWeight: "700",
         marginBottom: 20,
-        color: "#333",
-    },
-    editButtonSection: {
-        flexDirection: "row",
-        gap: 15,
-        marginTop: 20,
-    },
-    cancelButton: {
-        flex: 1,
-        backgroundColor: "#f1f3f4",
-        borderRadius: 12,
-        paddingVertical: 15,
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#ddd",
-    },
-    cancelButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#666",
-    },
-    saveButton: {
-        flex: 1,
-        backgroundColor: Colors.secondary,
-        borderRadius: 12,
-        paddingVertical: 15,
-        alignItems: "center",
-    },
-    saveButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#fff",
+        textAlign: "center",
     },
     readOnlyField: {
-        marginBottom: 20,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        backgroundColor: Colors.light.background,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.light.background,
+        marginVertical: 10,
     },
     readOnlyLabel: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#666",
-        marginBottom: 6,
+        color: "#555",
     },
     readOnlyValue: {
         fontSize: 16,
         color: "#333",
-        marginBottom: 4,
+        marginTop: 4,
     },
     readOnlyHelper: {
         fontSize: 12,
-        color: "#999",
-        fontStyle: "italic",
+        color: "#888",
+        marginTop: 2,
+    },
+    editButtonSection: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 25,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: "#ccc",
+        borderRadius: 12,
+        paddingVertical: 12,
+        marginRight: 10,
+        alignItems: "center",
+    },
+    cancelButtonText: {
+        fontWeight: "700",
+        color: "#333",
+    },
+    saveButton: {
+        flex: 1,
+        backgroundColor: Colors.primary,
+        borderRadius: 12,
+        paddingVertical: 12,
+        marginLeft: 10,
+        alignItems: "center",
+    },
+    saveButtonText: {
+        fontWeight: "700",
+        color: "#000",
     },
 })

@@ -1,28 +1,31 @@
-import multer from "multer"
+import multer, { FileFilterCallback } from "multer"
+import type { Request } from "express"
 
-/**
- * Configuración de multer para manejar documentos de solicitud de dador
- * Acepta imágenes y PDFs
- */
+const storage = multer.memoryStorage()
+
+// Tipos permitidos para documentos y perfiles
+const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"]
+
+const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true)
+    } else {
+        cb(new Error("Solo se permiten imágenes (JPEG, PNG, WEBP) o PDFs"))
+    }
+}
+
 export const uploadGiverDocuments = multer({
-    storage: multer.memoryStorage(),
+    storage,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB por archivo
+        fileSize: 10 * 1024 * 1024, // 10MB
     },
-    fileFilter: (req, file, cb) => {
-        // Aceptar imágenes y PDFs
-        const allowedMimeTypes = [
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp",
-            "application/pdf",
-        ]
+    fileFilter,
+}).array("documents", 5)
 
-        if (allowedMimeTypes.includes(file.mimetype)) {
-            cb(null, true)
-        } else {
-            cb(new Error("Solo se permiten imágenes (JPEG, PNG, WEBP) o archivos PDF"))
-        }
-    },
-})
+export const uploadProfile = multer({
+    storage,
+    fileFilter,
+}).fields([
+    { name: "image", maxCount: 1 },
+    { name: "mural", maxCount: 1 },
+])

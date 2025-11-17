@@ -17,8 +17,13 @@ export const userService = {
      * @param data - Datos del perfil a actualizar (name, address, description)
      * @returns Usuario actualizado
      */
-    updateProfile: async (data: UpdateProfileData): Promise<any> => {
-        const response = await http.patch(`/v1/entities/users/me`, data)
+    updateProfile: async (data: UpdateProfileData | FormData): Promise<any> => {
+        const isFormData = data instanceof FormData
+
+        const response = await http.patch(`/v1/entities/users/me`, data, {
+            headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+        })
+
         return response.data
     },
 
