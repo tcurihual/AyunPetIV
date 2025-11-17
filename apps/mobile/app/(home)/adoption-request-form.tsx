@@ -213,12 +213,19 @@ export default function AdoptionRequestForm() {
                         >
                             {submitting ? (
                                 <>
-                                    <ActivityIndicator size="small" color={Colors.light.textSecondary} />
+                                    <ActivityIndicator
+                                        size="small"
+                                        color={Colors.light.textSecondary}
+                                    />
                                     <Text style={styles.submitButtonText}>Enviando...</Text>
                                 </>
                             ) : (
                                 <>
-                                    <Ionicons name="send-outline" size={20} color={Colors.light.textSecondary }/>
+                                    <Ionicons
+                                        name="send-outline"
+                                        size={20}
+                                        color={Colors.light.textSecondary}
+                                    />
                                     <Text style={styles.submitButtonText}>
                                         Enviar solicitud de adopción
                                     </Text>
@@ -253,7 +260,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.dark.text,
+        color: Colors.light.text,
     },
     content: {
         flex: 1,
@@ -261,7 +268,7 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: Colors.light.background,
+        backgroundColor: Colors.light.card,
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -280,7 +287,7 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: Colors.dark.text,
+        color: Colors.light.text,
         marginBottom: 4,
     },
     petSubtext: {
@@ -294,7 +301,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: Colors.dark.text,
+        color: Colors.light.text,
         marginBottom: 8,
     },
     sectionDescription: {
@@ -303,13 +310,13 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     messageInput: {
-        backgroundColor: Colors.light.textSecondary,
+        backgroundColor: "#FFFFFF",
         borderRadius: 12,
         borderWidth: 1,
         borderColor: Colors.primary,
         padding: 16,
         fontSize: 15,
-        color: Colors.dark.text,
+        color: Colors.light.text,
         minHeight: 120,
     },
     footer: {
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
     submitButtonText: {
         fontSize: 16,
         fontWeight: "600",
-        color: Colors.dark.text,
+        color: Colors.light.text,
         marginLeft: 8,
     },
     loadingContainer: {

@@ -854,7 +854,7 @@ const useThemeStyles = (width: number, height: number, colors: any) => {
             padding: 8,
         },
         header: {
-            backgroundColor: Colors.light.background,
+            backgroundColor: Colors.primary,
             width: "112%",
             height: headerHeight,
             alignItems: "center",

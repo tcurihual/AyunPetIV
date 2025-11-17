@@ -9,7 +9,6 @@ import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { Colors } from "@/constants/Colors"
 
 export default function RequestDetail() {
-
     const { id } = useLocalSearchParams<{ id: string }>()
     const router = useRouter()
     const { user: authUser } = useAuthContext()
@@ -26,12 +25,8 @@ export default function RequestDetail() {
     const [error, setError] = useState<string | null>(null)
     const [request, setRequest] = useState<any | null>(null)
 
-    const [resolvedPetPhoto, setResolvedPetPhoto] = useState<string | null>(
-        null
-    )
-    const [resolvedPetName, setResolvedPetName] = useState<string | null>(
-        null
-    )
+    const [resolvedPetPhoto, setResolvedPetPhoto] = useState<string | null>(null)
+    const [resolvedPetName, setResolvedPetName] = useState<string | null>(null)
     const [editableMessage, setEditableMessage] = useState<string>("")
     const [savingMessage, setSavingMessage] = useState(false)
     const [messageError, setMessageError] = useState<string | null>(null)
@@ -79,11 +74,20 @@ export default function RequestDetail() {
         async function resolvePublication() {
             if (!request) return
             if (!resolvedPetPhoto) {
-                const img = (request.postImages && request.postImages[0]) || (request.petImages && request.petImages[0]) || null
+                const img =
+                    (request.postImages && request.postImages[0]) ||
+                    (request.petImages && request.petImages[0]) ||
+                    null
                 if (img) setResolvedPetPhoto(img)
             }
             if (!resolvedPetName) {
-                const n = request.post?.pet?.name || request.post?.title || request.post_title || request.title || request.pet?.name || null
+                const n =
+                    request.post?.pet?.name ||
+                    request.post?.title ||
+                    request.post_title ||
+                    request.title ||
+                    request.pet?.name ||
+                    null
                 if (n) setResolvedPetName(n)
             }
             if (resolvedPetName && resolvedPetPhoto) return
@@ -94,10 +98,10 @@ export default function RequestDetail() {
                 if (!mounted) return
                 if (pub) {
                     if (!resolvedPetName && pub.name) setResolvedPetName(pub.name)
-                    if (!resolvedPetPhoto && pub.image && (pub.image as any).uri) setResolvedPetPhoto((pub.image as any).uri)
+                    if (!resolvedPetPhoto && pub.image && (pub.image as any).uri)
+                        setResolvedPetPhoto((pub.image as any).uri)
                 }
-            } catch (e) {
-            }
+            } catch (e) {}
         }
 
         resolvePublication()
@@ -110,7 +114,9 @@ export default function RequestDetail() {
     const requesterName =
         request?.user?.name ||
         request?.requester_name ||
-        (authUser && request?.requester_id && Number(request.requester_id) === Number(authUser.id) ? authUser.name : "--")
+        (authUser && request?.requester_id && Number(request.requester_id) === Number(authUser.id)
+            ? authUser.name
+            : "--")
     const rawDate = request?.createdAt || request?.createdat || request?.created_at
     const date = rawDate ? new Date(rawDate).toLocaleString() : "--"
     const message =
@@ -182,7 +188,11 @@ export default function RequestDetail() {
                             message: editableMessage,
                         },
                     }
-                } else if (prev.data && typeof prev.data === "object" && !Array.isArray(prev.data)) {
+                } else if (
+                    prev.data &&
+                    typeof prev.data === "object" &&
+                    !Array.isArray(prev.data)
+                ) {
                     next.data = {
                         ...prev.data,
                         message: editableMessage,
@@ -215,12 +225,15 @@ export default function RequestDetail() {
             } else {
                 router.replace("/(home)/(requests)")
             }
-            
+
             if (serverMessage) {
                 Alert.alert("Operación completada", serverMessage)
             }
         } catch (e: any) {
-            Alert.alert("Error", e?.response?.data?.message || e?.message || "No se pudo eliminar la solicitud")
+            Alert.alert(
+                "Error",
+                e?.response?.data?.message || e?.message || "No se pudo eliminar la solicitud"
+            )
         }
     }
 
@@ -230,7 +243,10 @@ export default function RequestDetail() {
             const confirmationCode = result?.confirmationCode
             const serverMessage = result?.message
             if (serverMessage || confirmationCode) {
-                const messageLines = [serverMessage, confirmationCode ? `Código: ${confirmationCode}` : null]
+                const messageLines = [
+                    serverMessage,
+                    confirmationCode ? `Código: ${confirmationCode}` : null,
+                ]
                     .filter(Boolean)
                     .join("\n")
                 Alert.alert("Solicitud aceptada", messageLines || "Solicitud aceptada")
@@ -240,7 +256,10 @@ export default function RequestDetail() {
             await refreshRequests()
             router.replace("/(home)/(requests)")
         } catch (e: any) {
-            Alert.alert("Error", e?.response?.data?.message || e?.message || "No se pudo aceptar la solicitud")
+            Alert.alert(
+                "Error",
+                e?.response?.data?.message || e?.message || "No se pudo aceptar la solicitud"
+            )
         }
     }
 
@@ -264,7 +283,12 @@ export default function RequestDetail() {
         }
     }
 
-    if (loading) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator /></View>
+    if (loading)
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator />
+            </View>
+        )
     if (error) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
     if (!request) return <View style={{ flex: 1 }} />
 
@@ -285,13 +309,13 @@ export default function RequestDetail() {
             {isRequester && (
                 <View style={{ padding: 12, gap: 16 }}>
                     <View style={{ gap: 8 }}>
-                        <Text style={{ fontWeight: "700", color: Colors.dark.text }}>
+                        <Text style={{ fontWeight: "700", color: Colors.light.text }}>
                             Mensaje para el cuidador
                         </Text>
                         {!isEditingMessage ? (
                             <View
                                 style={{
-                                    backgroundColor: Colors.light.textSecondary,
+                                    backgroundColor: "#FFFFFF",
                                     borderRadius: 8,
                                     borderWidth: 1,
                                     borderColor: Colors.light.border,
@@ -333,7 +357,7 @@ export default function RequestDetail() {
                                     }}
                                     editable={!savingMessage}
                                     style={{
-                                        backgroundColor: Colors.light.textSecondary,
+                                        backgroundColor: "#FFFFFF",
                                         borderRadius: 8,
                                         borderWidth: 1,
                                         borderColor: Colors.light.border,
