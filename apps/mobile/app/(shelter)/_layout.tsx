@@ -23,7 +23,8 @@ export default function ShelterLayout() {
         pathname !== "/(shelter)" &&
         pathname !== "/(shelter)/" &&
         pathname !== "/" &&
-        !pathname.endsWith("/(shelter)")
+        !pathname.endsWith("/(shelter)") &&
+        !pathname.includes("/publication-success")
     let backButtonStyle = {}
 
     return (
