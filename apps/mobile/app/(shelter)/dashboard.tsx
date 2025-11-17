@@ -52,7 +52,9 @@ export default function ShelterDashboard() {
     } = useAdoptionRequestContext()
 
     useEffect(() => {
-        getPublications()
+        // Forzar reset al obtener publicaciones desde la vista de dashboard
+        // para evitar duplicar resultados si el PublicationProvider ya cargó items
+        getPublications(true)
         getAdoptionRequests()
     }, [])
 
