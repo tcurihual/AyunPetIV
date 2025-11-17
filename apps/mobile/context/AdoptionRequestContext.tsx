@@ -117,7 +117,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 }
             }
 
-            if (user.role === 21 && user.id) {
+            // Filtrar para givers (rol 21) y shelters (rol 22) - ambos pueden recibir solicitudes
+            if ((user.role === 21 || user.role === 22) && user.id) {
                 const numericUserId = Number(user.id)
                 if (Number.isFinite(numericUserId)) {
                     found = found.filter((req: any) => {
@@ -251,8 +252,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
             throw new Error("No hay cambios para actualizar")
         }
 
-        // Solo los dadores pueden actualizar el estado de una solicitud
-        if (wantsStatus && user.role !== 21) {
+        // Solo los dadores y shelters pueden actualizar el estado de una solicitud
+        if (wantsStatus && user.role !== 21 && user.role !== 22) {
             throw new Error("Solo los dadores de adopción pueden actualizar el estado")
         }
 
@@ -306,8 +307,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         if (!user) {
             throw new Error("Usuario no autenticado")
         }
-        if (user.role !== 21) {
-            throw new Error("Solo los dadores pueden aceptar solicitudes")
+        if (user.role !== 21 && user.role !== 22) {
+            throw new Error("Solo los dadores y shelters pueden aceptar solicitudes")
         }
 
         setLoading(true)

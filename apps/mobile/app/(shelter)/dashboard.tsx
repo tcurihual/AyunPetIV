@@ -12,18 +12,47 @@ import { Colors } from "@/constants/Colors"
 function parseDateAny(d: any): Date | null {
     if (!d) return null
     if (d instanceof Date) return d
+    
+    // Si es un número
     if (typeof d === "number") {
+        // Timestamp en segundos (10 dígitos) - convertir a milisegundos
         if (d.toString().length === 10) return new Date(d * 1000)
+        // Timestamp en milisegundos (13 dígitos)
         return new Date(d)
     }
-    const parsed = Date.parse(d)
-    if (!isNaN(parsed)) return new Date(parsed)
+    
+    // Si es un string, intentar parsearlo
+    if (typeof d === "string") {
+        // Si tiene formato ISO sin timezone (ej: "2025-11-17T22:15:43.041629")
+        // Asumimos que es hora local de Chile (UTC-3), no UTC
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(d) && !d.includes('Z') && !d.includes('+') && !/\d{2}:\d{2}-/.test(d)) {
+            // Parsear como UTC y restar 3 horas para obtener hora local
+            const utcDate = new Date(d + 'Z')
+            return new Date(utcDate.getTime() - (3 * 60 * 60 * 1000))
+        }
+        
+        // Formato ISO 8601 o timestamp de PostgreSQL con timezone
+        const parsed = Date.parse(d)
+        if (!isNaN(parsed)) {
+            return new Date(parsed)
+        }
+    }
+    
     return null
 }
 
 function timeAgoFrom(date: Date | null) {
     if (!date) return "hace un tiempo"
-    const diffMs = Date.now() - date.getTime()
+    
+    const now = Date.now()
+    const dateTime = date.getTime()
+    const diffMs = now - dateTime
+    
+    // Si la fecha es futura o inválida
+    if (diffMs < 0) {
+        return "ahora mismo"
+    }
+    
     const diffSec = Math.floor(diffMs / 1000)
     if (diffSec < 60) return `${diffSec}s`
     const diffMin = Math.floor(diffSec / 60)
@@ -33,17 +62,18 @@ function timeAgoFrom(date: Date | null) {
     const diffD = Math.floor(diffH / 24)
     if (diffD < 30) return `${diffD}d`
     const diffM = Math.floor(diffD / 30)
-    if (diffM < 12) return `${diffM}m`
+    if (diffM < 12) return `${diffM}mes${diffM > 1 ? 'es' : ''}`
     const diffY = Math.floor(diffM / 12)
-    return `${diffY}a`
+    return `${diffY}año${diffY > 1 ? 's' : ''}`
 }
 
 export default function ShelterDashboard() {
     const router = useRouter()
     const { user } = useAuthContext()
     const [selectedBarValue, setSelectedBarValue] = useState<string | null>(null)
+    const [postsData, setPostsData] = useState<Record<number, any>>({}) // Mapa de post_id a datos del post
 
-    const { publications = [], loading: isLoadingPubs, getPublications } = usePublicationContext()
+    const { publications = [], loading: isLoadingPubs, getPublications, getPublicationByPostId } = usePublicationContext()
 
     const {
         adoptionRequests = [],
@@ -52,11 +82,50 @@ export default function ShelterDashboard() {
     } = useAdoptionRequestContext()
 
     useEffect(() => {
-        // Forzar reset al obtener publicaciones desde la vista de dashboard
-        // para evitar duplicar resultados si el PublicationProvider ya cargó items
-        getPublications(true)
-        getAdoptionRequests()
-    }, [])
+        // Cargar publicaciones y solicitudes del usuario actual
+        if (user && user.id) {
+            // Cargar solo las publicaciones del usuario actual
+            const userId = Number(user.id)
+            if (Number.isFinite(userId)) {
+                getPublications(true, userId)
+            } else {
+                getPublications(true)
+            }
+            getAdoptionRequests()
+        }
+    }, [user?.id])
+
+    // Cargar datos de los posts para obtener nombres de mascotas
+    useEffect(() => {
+        async function loadPostsData() {
+            if (!adoptionRequests || adoptionRequests.length === 0) return
+            
+            const postIds = [...new Set(adoptionRequests.map((r: any) => r.post_id).filter(Boolean))]
+            if (postIds.length === 0) return
+            
+            try {
+                const newPostsData: Record<number, any> = {}
+                
+                // Cargar datos de cada post usando el método del contexto
+                for (const postId of postIds) {
+                    try {
+                        const publication = await getPublicationByPostId(postId)
+                        if (publication) {
+                            newPostsData[postId] = publication
+                        }
+                    } catch (err) {
+                        console.warn(`No se pudo cargar post ${postId}`)
+                    }
+                }
+                
+                setPostsData(newPostsData)
+            } catch (error) {
+                console.error("Error cargando datos de posts:", error)
+            }
+        }
+        
+        loadPostsData()
+    }, [adoptionRequests, getPublicationByPostId])
 
     const bgColor = useThemeColor({}, "background")
     const cardColor = useThemeColor({}, "card")
@@ -90,29 +159,33 @@ export default function ShelterDashboard() {
                 }
             }
 
-            const numericUserId = Number(user.id)
-
-            const giverPublications = (publications || []).filter((p: any) => {
-                const cid = p?.creatorId ?? p?.creator_id ?? p?.ownerId ?? p?.owner_id
-                return Number(cid) === numericUserId
-            })
+            // Las publicaciones ya vienen filtradas por el contexto
+            const giverPublications = publications || []
 
             const giverPubIds = new Set(
                 giverPublications.map((p: any) => p.postId ?? p.id ?? p?.post?.id)
             )
 
+            // Las solicitudes ya vienen filtradas por el contexto para rol 21 y 22
+            // Filtrar también las solicitudes que puedan estar marcadas como eliminadas
             const giverRequests = (adoptionRequests || []).filter((r: any) => {
-                const postId = r?.post?.id ?? r?.postId ?? r?.publicationId ?? r?.publication?.id
-                return postId && giverPubIds.has(postId)
+                const status = String(r.status ?? r.state ?? "").toLowerCase()
+                // Excluir solicitudes eliminadas o canceladas
+                return status !== "deleted" && status !== "cancelled" && status !== "cancelado" && status !== "eliminado"
             })
 
-            const publicacionesDisponibles = giverPublications.filter(
-                (p: any) => (p.status ?? p.state) === "ACTIVE"
-            ).length
+            // Normalizar el status a minúsculas para comparación
+            const publicacionesDisponibles = giverPublications.filter((p: any) => {
+                const status = String(p.status ?? p.state ?? "").toLowerCase()
+                return status === "active" || status === "activo" || status === ""
+            }).length
+            
             const totalSolicitudes = giverRequests.length
-            const adopcionesTotales = giverRequests.filter(
-                (r: any) => (r.status ?? r.state) === "APPROVED"
-            ).length
+            
+            const adopcionesTotales = giverRequests.filter((r: any) => {
+                const status = String(r.status ?? r.state ?? "").toLowerCase()
+                return status === "approved" || status === "aprobado" || status === "aceptado"
+            }).length
 
             const kpiData = [
                 { label: "Adopciones Totales", value: adopcionesTotales },
@@ -120,15 +193,20 @@ export default function ShelterDashboard() {
                 { label: "Solicitudes Totales", value: totalSolicitudes },
             ]
 
-            const pendientes = giverRequests.filter(
-                (r: any) => (r.status ?? r.state) === "PENDING"
-            ).length
-            const aceptadas = giverRequests.filter(
-                (r: any) => (r.status ?? r.state) === "APPROVED"
-            ).length
-            const rechazadas = giverRequests.filter(
-                (r: any) => (r.status ?? r.state) === "REJECTED"
-            ).length
+            const pendientes = giverRequests.filter((r: any) => {
+                const status = String(r.status ?? r.state ?? "").toLowerCase()
+                return status === "pending" || status === "pendiente"
+            }).length
+            
+            const aceptadas = giverRequests.filter((r: any) => {
+                const status = String(r.status ?? r.state ?? "").toLowerCase()
+                return status === "approved" || status === "aprobado" || status === "aceptado"
+            }).length
+            
+            const rechazadas = giverRequests.filter((r: any) => {
+                const status = String(r.status ?? r.state ?? "").toLowerCase()
+                return status === "rejected" || status === "rechazado"
+            }).length
 
             const solicitudesData = [
                 { text: "Pendientes", value: pendientes, color: "#FFC107" },
@@ -153,14 +231,21 @@ export default function ShelterDashboard() {
                 frontColor: barChartColors[index % barChartColors.length],
             }))
 
-            const days = 24
+            const days = 7 // Reducido a 7 días para mejor visualización
             const today = new Date()
             const dayStarts: Date[] = []
+            const dayLabels: string[] = []
+            
             for (let i = days - 1; i >= 0; i--) {
                 const dt = new Date(today)
                 dt.setHours(0, 0, 0, 0)
                 dt.setDate(dt.getDate() - i)
                 dayStarts.push(dt)
+                
+                // Generar etiquetas para el eje X
+                const dayName = dt.toLocaleDateString('es-ES', { weekday: 'short' })
+                const dayNumber = dt.getDate()
+                dayLabels.push(`${dayName}\n${dayNumber}`)
             }
 
             const counts = dayStarts.map((start, idx) => {
@@ -173,7 +258,15 @@ export default function ShelterDashboard() {
                     if (!d) return acc
                     return d >= start && d < end ? acc + 1 : acc
                 }, 0)
-                return { value: count }
+                
+                // Asegurar que el valor nunca sea negativo
+                const finalCount = Math.max(0, count)
+                
+                return { 
+                    value: finalCount,
+                    label: dayLabels[idx],
+                    dataPointText: finalCount > 0 ? String(finalCount) : ''
+                }
             })
 
             const recientesSorted = [...giverRequests]
@@ -192,21 +285,57 @@ export default function ShelterDashboard() {
                 .slice(0, 6)
 
             const recientesData = recientesSorted.map((r: any) => {
-                const requester = r.requester ?? r.user ?? r.requesterInfo ?? {}
+                const requester = r.requester ?? r.user ?? r.requesterInfo ?? r.requester_info ?? {}
                 const who =
-                    requester?.name ?? requester?.fullName ?? r.requesterName ?? r.name ?? "Anon"
+                    requester?.name ?? 
+                    requester?.fullName ?? 
+                    requester?.full_name ??
+                    r.requesterName ?? 
+                    r.requester_name ??
+                    r.name ?? 
+                    "Usuario Anónimo"
+
+                // Obtener datos del post desde el mapa cargado
+                const postData = r.post_id ? postsData[r.post_id] : null
+                
+                // Obtener el nombre de la mascota
+                const petName = 
+                    postData?.name ??       // PublicationItem.name
+                    r.post?.pet?.name ??
+                    r.post?.name ??
+                    r.pet?.name ??
+                    r.petName ??
+                    r.pet_name ??
+                    null
 
                 const species =
+                    postData?.species ??    // PublicationItem.species
                     r.post?.pet?.species ??
                     r.post?.species ??
                     r.pet?.species ??
                     r.species ??
                     "mascota"
+                
+                // Traducir especie al español con artículo correcto
+                const getSpeciesText = (spec: string) => {
+                    const s = String(spec).toLowerCase()
+                    if (s === "dog" || s === "perro") return "un perro"
+                    if (s === "cat" || s === "gato") return "un gato"
+                    if (s === "bird" || s === "ave" || s === "pájaro") return "un ave"
+                    if (s === "rabbit" || s === "conejo") return "un conejo"
+                    if (s === "hamster" || s === "hámster") return "un hámster"
+                    return "una mascota"
+                }
+                
+                const speciesText = getSpeciesText(species)
+                    
                 const date = parseDateAny(
                     r.createdAt ?? r.created_at ?? r.created ?? r.updatedAt ?? r.updated_at
                 )
+                
                 const when = timeAgoFrom(date)
-                return { who, what: species, when }
+                
+                return { who, petName, speciesText, when }
             })
 
             return {
@@ -216,7 +345,7 @@ export default function ShelterDashboard() {
                 lineSeries: counts,
                 recientesData,
             }
-        }, [publications, adoptionRequests, user, tintColor])
+        }, [publications, adoptionRequests, user, tintColor, postsData])
 
     const handleTabPress = (tab: string) => {
         if (tab === "home") return router.replace("/(shelter)/dashboard")
@@ -242,19 +371,45 @@ export default function ShelterDashboard() {
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Actividad (Solicitudes por día)</Text>
-                <LineChart
-                    data={lineSeries}
-                    areaChart
-                    curved
-                    isAnimated
-                    animationDuration={900}
-                    thickness={3}
-                    startFillColor={helpers.tint.backgroundColor || tintColor}
-                    endFillColor={styles.card.backgroundColor || cardColor}
-                    startOpacity={0.9}
-                    endOpacity={0.15}
-                    hideRules
-                />
+                <View style={styles.lineChartContainer}>
+                    <LineChart
+                        data={lineSeries}
+                        areaChart
+                        curved
+                        isAnimated
+                        animationDuration={900}
+                        thickness={3}
+                        startFillColor={helpers.tint.backgroundColor || tintColor}
+                        endFillColor={styles.card.backgroundColor || cardColor}
+                        startOpacity={0.9}
+                        endOpacity={0.15}
+                        color={tintColor}
+                        width={300}
+                        height={180}
+                        spacing={40}
+                        initialSpacing={10}
+                        endSpacing={10}
+                        noOfSections={4}
+                        maxValue={Math.max(...lineSeries.map(d => Math.max(0, d.value)), 5)}
+                        yAxisColor="#e5e7eb"
+                        xAxisColor="#e5e7eb"
+                        yAxisThickness={1}
+                        xAxisThickness={1}
+                        yAxisTextStyle={{ color: helpers.mutedText.color, fontSize: 10 }}
+                        xAxisLabelTextStyle={{ color: helpers.mutedText.color, fontSize: 9, textAlign: 'center' }}
+                        hideDataPoints={false}
+                        dataPointsColor={tintColor}
+                        dataPointsRadius={4}
+                        textShiftY={-8}
+                        textShiftX={-5}
+                        textFontSize={10}
+                        textColor={helpers.text.color}
+                        hideRules={false}
+                        rulesType="solid"
+                        rulesColor="#f0f0f0"
+                        showVerticalLines={false}
+                    />
+                </View>
             </View>
             <View style={styles.kpiRow}>
                 {kpiData.map((k, i) => (
@@ -342,37 +497,41 @@ export default function ShelterDashboard() {
             </View>
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Solicitudes recientes</Text>
-                <View style={styles.recientesContainer}>
-                    <ScrollView
-                        style={styles.recientesScrollView}
-                        showsVerticalScrollIndicator={true}
-                        nestedScrollEnabled={true}
-                    >
-                        {recientesData.length === 0 && (
-                            <Text style={[styles.listText, { padding: 12 }]}>
-                                No hay solicitudes recientes
-                            </Text>
-                        )}
-                        {recientesData.map((r: any, i: number) => (
-                            <View
-                                key={i}
-                                style={[
-                                    styles.listItem,
-                                    i < recientesData.length - 1 && styles.listDivider,
-                                ]}
-                            >
-                                <View style={styles.bullet} />
-                                <Text style={styles.listText}>
-                                    <Text style={{ fontWeight: "700", color: helpers.text.color }}>
-                                        {r.who}
+                {recientesData.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No hay solicitudes recientes</Text>
+                    </View>
+                ) : (
+                    <View style={styles.recientesContainer}>
+                        <ScrollView
+                            style={styles.recientesScrollView}
+                            showsVerticalScrollIndicator={true}
+                            nestedScrollEnabled={true}
+                        >
+                            {recientesData.map((r: any, i: number) => (
+                                <View
+                                    key={i}
+                                    style={[
+                                        styles.listItem,
+                                        i < recientesData.length - 1 && styles.listDivider,
+                                    ]}
+                                >
+                                    <View style={styles.bullet} />
+                                    <Text style={styles.listText}>
+                                        <Text style={{ fontWeight: "700", color: helpers.text.color }}>
+                                            {r.who}
+                                        </Text>
+                                        {" solicitó adoptar a "}
+                                        <Text style={{ fontWeight: "600", color: helpers.text.color }}>
+                                            {r.petName || r.speciesText}
+                                        </Text>
                                     </Text>
-                                    solicitó adoptar un {r.what}
-                                </Text>
-                                <Text style={styles.time}>{r.when}</Text>
-                            </View>
-                        ))}
-                    </ScrollView>
-                </View>
+                                    <Text style={styles.time}>{r.when}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
             </View>
             <View style={{ height: 24 }} />
         </ScrollView>
@@ -438,6 +597,14 @@ function createStyles(colors: {
             overflow: "hidden",
         },
 
+        lineChartContainer: {
+            alignItems: "center",
+            paddingHorizontal: 5,
+            paddingVertical: 15,
+            paddingBottom: 20,
+            overflow: "hidden",
+        },
+
         kpiRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
         kpi: {
             flex: 1,
@@ -478,11 +645,23 @@ function createStyles(colors: {
             fontWeight: "500",
         },
         recientesContainer: {
-            height: 200,
+            minHeight: 200,
+            maxHeight: 600,
             borderRadius: 8,
             backgroundColor:
                 colors.tabIconSelected === "#ccc" ? "#f9fafb" : colors.tabIconSelected + "20",
-            padding: 4,
+            padding: 8,
+        },
+        emptyContainer: {
+            padding: 20,
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 80,
+        },
+        emptyText: {
+            fontSize: 14,
+            color: "#9ca3af",
+            textAlign: "center",
         },
         recientesScrollView: {
             flex: 1,
@@ -491,19 +670,33 @@ function createStyles(colors: {
         listItem: {
             flexDirection: "row",
             alignItems: "center",
-            paddingVertical: 10,
+            paddingVertical: 12,
             justifyContent: "space-between",
+            gap: 8,
         },
-        listDivider: { borderBottomWidth: 1, borderBottomColor: "#e6e7eb", paddingBottom: 10 },
+        listDivider: { borderBottomWidth: 1, borderBottomColor: "#e6e7eb", paddingBottom: 12 },
         bullet: {
             width: 10,
             height: 10,
             borderRadius: 5,
             backgroundColor: colors.tint,
-            marginRight: 12,
+            marginRight: 10,
+            flexShrink: 0,
         },
-        listText: { flex: 1, color: colors.text },
-        time: { marginLeft: 12, color: "#9ca3af", fontSize: 12 },
+        listText: { 
+            flex: 1, 
+            color: colors.text, 
+            fontSize: 14,
+            lineHeight: 20,
+        },
+        time: { 
+            marginLeft: 8, 
+            color: "#9ca3af", 
+            fontSize: 11,
+            flexShrink: 0,
+            minWidth: 50,
+            textAlign: 'right',
+        },
     })
     return { styles, helpers }
 }

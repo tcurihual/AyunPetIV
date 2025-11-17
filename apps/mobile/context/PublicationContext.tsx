@@ -68,7 +68,7 @@ interface PublicationContextType {
     totalPages: number
     hasMore: boolean
     getPublicationByPostId: (postId: number) => Promise<PublicationItem | null>
-    getPublications: (reset?: boolean) => Promise<void>
+    getPublications: (reset?: boolean, ownerId?: number) => Promise<void>
     loadMorePublications: () => Promise<void>
     createPublication: (data: CreatePublicationPayload) => Promise<{ post: any; pet: any; images: any[] }>
     updatePublication: (id: number, data: UpdatePublicationPayload) => Promise<Post>
@@ -139,7 +139,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         }
     }, [status])
 
-    async function getPublications(reset: boolean = false): Promise<void> {
+    async function getPublications(reset: boolean = false, ownerId?: number): Promise<void> {
         // Si reset es true, volvemos a la página 1, de lo contrario cargamos la página actual
         const pageToLoad = reset ? 1 : currentPage
 
@@ -153,6 +153,19 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         setError(null)
 
         try {
+            // Construir la URL con parámetros opcionales
+            let url = `/v1/adoptions/publications?page=${pageToLoad}&pageSize=20`
+            
+            // Si no se especifica ownerId, filtrar solo publicaciones activas para el feed general
+            if (!ownerId) {
+                url += `&status=active`
+            }
+            
+            // Si se especifica ownerId, cargar TODAS las publicaciones del usuario (no solo activas)
+            if (ownerId) {
+                url += `&ownerId=${ownerId}`
+            }
+
             const response = await http.get<{
                 status: number
                 message: string
@@ -167,7 +180,7 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                     pageSize: number
                     totalPages: number
                 }
-            }>(`/v1/adoptions/publications?status=active&page=${pageToLoad}&pageSize=20`)
+            }>(url)
 
             const transformed: PublicationItem[] = response.data.data.items.map((item) =>
                 buildPublicationItem(item.post, item.pet, item.creator)
