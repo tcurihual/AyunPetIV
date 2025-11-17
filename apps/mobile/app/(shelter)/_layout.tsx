@@ -15,25 +15,17 @@ export default function ShelterLayout() {
     const [menuVisible, setMenuVisible] = useState(false)
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
-    // const { user } = useAuthContext()
-
-    // if (!user) return <Redirect href="/(auth)/login" />
-
-    const showBackButton =
-        pathname !== "/(shelter)" &&
-        pathname !== "/(shelter)/" &&
-        pathname !== "/" &&
-        !pathname.endsWith("/(shelter)")
-    let backButtonStyle = {}
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.navBackground }]}>
             <StatusBar style="inverted" />
 
             <Header onMenuPress={() => setMenuVisible(true)} />
+
             <Slot />
 
-            {showBackButton && <BackButton style={backButtonStyle} />}
+            {/* ❌ QUITAR BackButton del layout */}
+            {/* {showBackButton && <BackButton style={backButtonStyle} />} */}
 
             <BottomNavbar />
 
