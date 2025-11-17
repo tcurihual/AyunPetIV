@@ -23,7 +23,7 @@ router.patch("/:userId/reject", requireRole(19), rejectGiverRequest)
 router.post(
     "/submit",
     requireRole(20), // Solo usuarios normales (adoptantes)
-    uploadGiverDocuments.array("documents", 10),
+    uploadGiverDocuments,
     submitGiverRequest
 )
 
