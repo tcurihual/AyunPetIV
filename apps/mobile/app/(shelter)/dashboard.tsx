@@ -130,8 +130,17 @@ export default function ShelterDashboard() {
     const bgColor = useThemeColor({}, "background")
     const cardColor = useThemeColor({}, "card")
     const textColor = useThemeColor({}, "text")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const textTertiaryColor = useThemeColor({}, "textTertiary")
     const tintColor = useThemeColor({}, "tint")
     const tabIconSelectedColor = useThemeColor({}, "tabIconSelected")
+    const backgroundSecondary = useThemeColor({}, "backgroundSecondary")
+    const borderLight = useThemeColor({}, "borderLight")
+    const chartAxisColor = useThemeColor({}, "chartAxis")
+    const chartRulesColor = useThemeColor({}, "chartRules")
+    const warningColor = useThemeColor({}, "warning")
+    const successColor = useThemeColor({}, "success")
+    const dangerColor = useThemeColor({}, "danger")
 
     const { styles, helpers } = useMemo(
         () =>
@@ -139,12 +148,18 @@ export default function ShelterDashboard() {
                 background: bgColor,
                 card: cardColor,
                 text: textColor,
+                textMuted: textMutedColor,
+                textTertiary: textTertiaryColor,
                 tint: tintColor,
                 yellow: Colors.yellow,
                 purple: Colors.purple,
                 tabIconSelected: tabIconSelectedColor,
+                backgroundSecondary: backgroundSecondary,
+                borderLight: borderLight,
+                chartAxis: chartAxisColor,
+                chartRules: chartRulesColor,
             }),
-        [bgColor, cardColor, textColor, tintColor, tabIconSelectedColor]
+        [bgColor, cardColor, textColor, textMutedColor, textTertiaryColor, tintColor, tabIconSelectedColor, backgroundSecondary, borderLight, chartAxisColor, chartRulesColor]
     )
 
     const { kpiData, solicitudesData, publicacionesData, lineSeries, recientesData } =
@@ -209,9 +224,9 @@ export default function ShelterDashboard() {
             }).length
 
             const solicitudesData = [
-                { text: "Pendientes", value: pendientes, color: "#FFC107" },
-                { text: "Aceptadas", value: aceptadas, color: Colors.light.success },
-                { text: "Rechazadas", value: rechazadas, color: Colors.danger },
+                { text: "Pendientes", value: pendientes, color: warningColor },
+                { text: "Aceptadas", value: aceptadas, color: successColor },
+                { text: "Rechazadas", value: rechazadas, color: dangerColor },
             ]
 
             const groupedPubs = giverPublications.reduce(
@@ -379,8 +394,8 @@ export default function ShelterDashboard() {
                         isAnimated
                         animationDuration={900}
                         thickness={3}
-                        startFillColor={helpers.tint.backgroundColor || tintColor}
-                        endFillColor={styles.card.backgroundColor || cardColor}
+                        startFillColor={tintColor}
+                        endFillColor={cardColor}
                         startOpacity={0.9}
                         endOpacity={0.15}
                         color={tintColor}
@@ -391,22 +406,22 @@ export default function ShelterDashboard() {
                         endSpacing={10}
                         noOfSections={4}
                         maxValue={Math.max(...lineSeries.map(d => Math.max(0, d.value)), 5)}
-                        yAxisColor="#e5e7eb"
-                        xAxisColor="#e5e7eb"
+                        yAxisColor={chartAxisColor}
+                        xAxisColor={chartAxisColor}
                         yAxisThickness={1}
                         xAxisThickness={1}
-                        yAxisTextStyle={{ color: helpers.mutedText.color, fontSize: 10 }}
-                        xAxisLabelTextStyle={{ color: helpers.mutedText.color, fontSize: 9, textAlign: 'center' }}
+                        yAxisTextStyle={{ color: textMutedColor, fontSize: 10 }}
+                        xAxisLabelTextStyle={{ color: textMutedColor, fontSize: 9, textAlign: 'center' }}
                         hideDataPoints={false}
                         dataPointsColor={tintColor}
                         dataPointsRadius={4}
                         textShiftY={-8}
                         textShiftX={-5}
                         textFontSize={10}
-                        textColor={helpers.text.color}
+                        textColor={textColor}
                         hideRules={false}
                         rulesType="solid"
-                        rulesColor="#f0f0f0"
+                        rulesColor={chartRulesColor}
                         showVerticalLines={false}
                     />
                 </View>
@@ -447,19 +462,19 @@ export default function ShelterDashboard() {
                         barWidth={18}
                         isAnimated
                         noOfSections={4}
-                        xAxisLabelTextStyle={{ color: helpers.mutedText.color, fontSize: 12 }}
-                        yAxisTextStyle={{ color: helpers.mutedText.color }}
+                        xAxisLabelTextStyle={{ color: textMutedColor, fontSize: 12 }}
+                        yAxisTextStyle={{ color: textMutedColor }}
                         spacing={30}
                         width={300}
                         height={180}
                         xAxisThickness={1}
                         yAxisThickness={1}
                         rulesType="solid"
-                        rulesColor="#e5e7eb"
+                        rulesColor={chartAxisColor}
                         showVerticalLines={false}
                         hideRules={false}
-                        yAxisColor="#e5e7eb"
-                        xAxisColor="#e5e7eb"
+                        yAxisColor={chartAxisColor}
+                        xAxisColor={chartAxisColor}
                     />
                 </View>
             </View>
@@ -542,19 +557,25 @@ function createStyles(colors: {
     background: string
     card: string
     text: string
+    textMuted: string
+    textTertiary: string
     tint: string
     yellow: string
     purple: string
     tabIconSelected: string
+    backgroundSecondary: string
+    borderLight: string
+    chartAxis: string
+    chartRules: string
 }) {
     // 1. Mueve los helpers aquí
     const helpers = {
         text: { color: colors.text },
-        mutedText: { color: "#6b7280" }, // (Este color deberías añadirlo a Colors.ts)
+        mutedText: { color: colors.textMuted },
         tint: { backgroundColor: colors.tint },
         tabIconSelected: { backgroundColor: colors.tabIconSelected },
         yellow: { backgroundColor: colors.yellow },
-        purple: { backgroundColor: colors.purple }, // Añadí el que faltaba
+        purple: { backgroundColor: colors.purple },
     }
 
     // 2. Deja StyleSheet.create SOLO con estilos de componentes
@@ -578,7 +599,7 @@ function createStyles(colors: {
         cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: colors.text },
 
         selectedValueContainer: {
-            backgroundColor: "#f3f4f6", // (Este color deberías añadirlo a Colors.ts)
+            backgroundColor: colors.backgroundSecondary,
             padding: 8,
             borderRadius: 8,
             marginBottom: 12,
@@ -648,8 +669,7 @@ function createStyles(colors: {
             minHeight: 200,
             maxHeight: 600,
             borderRadius: 8,
-            backgroundColor:
-                colors.tabIconSelected === "#ccc" ? "#f9fafb" : colors.tabIconSelected + "20",
+            backgroundColor: colors.backgroundSecondary,
             padding: 8,
         },
         emptyContainer: {
@@ -660,7 +680,7 @@ function createStyles(colors: {
         },
         emptyText: {
             fontSize: 14,
-            color: "#9ca3af",
+            color: colors.textTertiary,
             textAlign: "center",
         },
         recientesScrollView: {
@@ -674,7 +694,7 @@ function createStyles(colors: {
             justifyContent: "space-between",
             gap: 8,
         },
-        listDivider: { borderBottomWidth: 1, borderBottomColor: "#e6e7eb", paddingBottom: 12 },
+        listDivider: { borderBottomWidth: 1, borderBottomColor: colors.borderLight, paddingBottom: 12 },
         bullet: {
             width: 10,
             height: 10,
@@ -691,7 +711,7 @@ function createStyles(colors: {
         },
         time: { 
             marginLeft: 8, 
-            color: "#9ca3af", 
+            color: colors.textTertiary, 
             fontSize: 11,
             flexShrink: 0,
             minWidth: 50,

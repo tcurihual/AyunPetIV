@@ -18,6 +18,7 @@ import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { Ionicons } from "@expo/vector-icons"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export default function ShelterRequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -26,6 +27,14 @@ export default function ShelterRequestDetail() {
     const { refreshRequests, updateAdoptionRequest, acceptAdoptionRequest, validateAdoptionCode } =
         useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
+
+    // Theme colors
+    const bgColor = useThemeColor({}, 'background')
+    const cardColor = useThemeColor({}, 'card')
+    const textColor = useThemeColor({}, 'text')
+    const textSecondaryColor = useThemeColor({}, 'textSecondary')
+    const borderColor = useThemeColor({}, 'border')
+    const tintColor = useThemeColor({}, 'tint')
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -230,18 +239,18 @@ export default function ShelterRequestDetail() {
 
     if (loading)
         return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator />
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }}>
+                <ActivityIndicator color={textColor} />
             </View>
         )
     if (error)
         return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <Text>{error}</Text>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }}>
+                <Text style={{ color: textColor }}>{error}</Text>
             </View>
         )
     if (!request)
-        return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
+        return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }} />
 
     const postId = request.postid || request.post_id || request.post?.id
 
@@ -277,7 +286,7 @@ export default function ShelterRequestDetail() {
         <ScrollView
             contentContainerStyle={{
                 padding: 16,
-                backgroundColor: Colors.light.background,
+                backgroundColor: bgColor,
                 flexGrow: 1,
             }}
         >
@@ -294,7 +303,7 @@ export default function ShelterRequestDetail() {
             />
 
             <View style={{ marginTop: 16, gap: 12 }}>
-                <Text style={{ fontWeight: "700", color: Colors.light.text }}>
+                <Text style={{ fontWeight: "700", color: textColor }}>
                     Notas sobre la solicitud
                 </Text>
                 <TextInput
@@ -307,17 +316,17 @@ export default function ShelterRequestDetail() {
                     }}
                     editable={!savingMessage}
                     style={{
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: cardColor,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: Colors.light.border,
+                        borderColor: borderColor,
                         padding: 12,
                         minHeight: 110,
                         textAlignVertical: "top",
-                        color: "#1F2933",
+                        color: textColor,
                     }}
                     placeholder="Agrega notas internas sobre esta solicitud..."
-                    placeholderTextColor={Colors.light.textSecondary}
+                    placeholderTextColor={textSecondaryColor}
                 />
                 {messageError ? <Text style={{ color: Colors.danger }}>{messageError}</Text> : null}
                 <Pressable
@@ -326,14 +335,14 @@ export default function ShelterRequestDetail() {
                     style={{
                         backgroundColor:
                             savingMessage || editableMessage === message
-                                ? Colors.light.border
-                                : Colors.secondary,
+                                ? borderColor
+                                : tintColor,
                         padding: 12,
                         borderRadius: 8,
                         alignItems: "center",
                     }}
                 >
-                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                    <Text style={{ color: "#000", fontWeight: "700" }}>
                         {savingMessage ? "Guardando..." : "Guardar notas"}
                     </Text>
                 </Pressable>
@@ -341,11 +350,11 @@ export default function ShelterRequestDetail() {
                 {/* Botón para ver respuestas del formulario */}
                 <TouchableOpacity
                     onPress={handleViewFormResponses}
-                    style={styles.viewResponsesButton}
+                    style={[styles.viewResponsesButton, { backgroundColor: cardColor, borderColor: tintColor }]}
                 >
-                    <Ionicons name="clipboard-outline" size={20} color={Colors.secondary} />
-                    <Text style={styles.viewResponsesText}>Ver Respuestas del Formulario</Text>
-                    <Ionicons name="chevron-forward-outline" size={20} color={Colors.secondary} />
+                    <Ionicons name="clipboard-outline" size={20} color={tintColor} />
+                    <Text style={[styles.viewResponsesText, { color: tintColor }]}>Ver Respuestas del Formulario</Text>
+                    <Ionicons name="chevron-forward-outline" size={20} color={tintColor} />
                 </TouchableOpacity>
             </View>
         </ScrollView>
@@ -357,18 +366,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#F0F8FF",
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: Colors.secondary,
         marginTop: 8,
     },
     viewResponsesText: {
         flex: 1,
         fontSize: 15,
         fontWeight: "600",
-        color: Colors.secondary,
         marginLeft: 12,
     },
 })

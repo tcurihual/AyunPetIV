@@ -11,6 +11,7 @@ import Input from "@ui/Input"
 import { useAlert } from "@/context/AlertContext"
 import BackButton from "@/components/common/BackButton"
 import { Colors } from "@/constants/Colors"
+import { useTheme } from "@/context/ThemeContext"
 
 const { width } = Dimensions.get("window")
 
@@ -24,6 +25,7 @@ export default function VerifyEmailScreen() {
     const { showAlert } = useAlert()
     const { from, email: emailParam } = useLocalSearchParams<{ from?: string; email?: string }>()
     const [loading, setLoading] = useState(false)
+    const { theme } = useTheme()
 
     const { control, handleSubmit } = useForm({
         resolver: zodResolver(schema),
@@ -59,23 +61,15 @@ export default function VerifyEmailScreen() {
     }
 
     return (
-        <KeyboardAwareScrollView contentContainerStyle={styles.container}>
+        <KeyboardAwareScrollView contentContainerStyle={[styles.container, { backgroundColor: Colors[theme].background }]}>
             {from === "login" && (
                 <View style={styles.backContainer}>
-                    <BackButton
-                        floating={false}
-                        style={{
-                            backgroundColor: Colors.light.card,
-                            borderRadius: width * 0.06,
-                            padding: width * 0.02,
-                            elevation: 3,
-                        }}
-                    />
+                    <BackButton floating={false} />
                 </View>
             )}
 
-            <Text style={styles.title}>Verificación de correo</Text>
-            <Text style={styles.subtitle}>Ingresa el código que recibiste en tu correo</Text>
+            <Text style={[styles.title, { color: Colors[theme].text }]}>Verificación de correo</Text>
+            <Text style={[styles.subtitle, { color: Colors[theme].textSecondary }]}>Ingresa el código que recibiste en tu correo</Text>
 
             <Input name="email" control={control} label="Correo" placeholder="tuemail@gmail.com" />
             <Input
@@ -109,7 +103,6 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: "center",
         padding: 24,
-        backgroundColor: Colors.light.background,
     },
     backContainer: {
         position: "absolute",
@@ -120,25 +113,23 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: "bold",
-        color: Colors.primary,
         marginBottom: 8,
         textAlign: "center",
     },
     subtitle: {
         fontSize: 16,
-        color: Colors.light.textSecondary,
         marginBottom: 24,
         textAlign: "center",
     },
     button: {
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.yellow,
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: "center",
         marginTop: 16,
     },
     buttonText: {
-        color: Colors.light.text,
+        color: "#000",
         fontWeight: "600",
         fontSize: 16,
     },

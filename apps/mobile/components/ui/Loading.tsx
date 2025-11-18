@@ -1,16 +1,19 @@
 import React from "react"
 import { View, StyleSheet, Modal } from "react-native"
 import LottieView from "lottie-react-native"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 type Props = {
     visible: boolean
 }
 
 export default function Loading({ visible }: Props) {
+    const bgColor = useThemeColor({}, "background")
+    
     if (!visible) return null
     return (
         <Modal visible={visible} transparent animationType="fade">
-            <View style={styles.container}>
+            <View style={[styles.container, { backgroundColor: bgColor }]}>
                 <LottieView
                     source={require("@animations/Dog-walking.json")}
                     autoPlay
@@ -25,7 +28,6 @@ export default function Loading({ visible }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
         justifyContent: "center",
         alignItems: "center",
     },

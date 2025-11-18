@@ -188,7 +188,7 @@ export default function ShelterIndex() {
                         }}
                     >
                         <Text style={styles.categoryEmoji}>🐾</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                        <Text style={[styles.categoryText, { color: selectedCategory === "all" && !showOnlyMine ? "#000" : themeColors.text }]}>
                             Todas
                         </Text>
                     </TouchableOpacity>
@@ -207,7 +207,7 @@ export default function ShelterIndex() {
                         }}
                     >
                         <Text style={styles.categoryEmoji}>📝</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>Mías</Text>
+                        <Text style={[styles.categoryText, { color: showOnlyMine ? "#000" : themeColors.text }]}>Mías</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -221,7 +221,7 @@ export default function ShelterIndex() {
                         onPress={() => setSelectedCategory("dog")}
                     >
                         <Text style={styles.categoryEmoji}>🐕</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                        <Text style={[styles.categoryText, { color: selectedCategory === "dog" ? "#000" : themeColors.text }]}>
                             Perro
                         </Text>
                     </TouchableOpacity>
@@ -237,7 +237,7 @@ export default function ShelterIndex() {
                         onPress={() => setSelectedCategory("cat")}
                     >
                         <Text style={styles.categoryEmoji}>🐱</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>Gato</Text>
+                        <Text style={[styles.categoryText, { color: selectedCategory === "cat" ? "#000" : themeColors.text }]}>Gato</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -255,7 +255,7 @@ export default function ShelterIndex() {
                     >
                         <Image
                             source={require("@/assets/images/filtrar.png")}
-                            style={styles.categoryIcon}
+                            style={[styles.categoryIcon, { tintColor: themeColors.icon }]}
                         />
                     </TouchableOpacity>
                 </View>

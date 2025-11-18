@@ -16,6 +16,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import {Colors} from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export default function ShelterRequests() {
     const router = useRouter()
@@ -28,6 +29,12 @@ export default function ShelterRequests() {
     const [resolved, setResolved] = React.useState<
         Record<number, { name?: string; imageUri?: string }>
     >({})
+
+    // Theme colors
+    const bgColor = useThemeColor({}, 'background')
+    const textColor = useThemeColor({}, 'text')
+    const textSecondaryColor = useThemeColor({}, 'textSecondary')
+    const textMutedColor = useThemeColor({}, 'textMuted')
 
     React.useEffect(() => {
         let mounted = true
@@ -89,7 +96,7 @@ export default function ShelterRequests() {
 
     const renderEmpty = () => (
         <View style={{ padding: 16 }}>
-            <Text style={{ color: "#6B6B6B" }}>No tienes solicitudes recibidas aún.</Text>
+            <Text style={{ color: textMutedColor }}>No tienes solicitudes recibidas aún.</Text>
         </View>
     )
 
@@ -120,25 +127,25 @@ export default function ShelterRequests() {
     if (loading && (!adoptionRequests || adoptionRequests.length === 0)) {
         return (
             <SafeAreaView
-                style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+                style={[styles.container, { backgroundColor: bgColor, justifyContent: "center", alignItems: "center" }]}
             >
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={textColor} />
             </SafeAreaView>
         )
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
             <FlatList
                 contentContainerStyle={{ padding: 16, paddingBottom: 90 }}
                 ListHeaderComponent={
                     <View style={{ gap: 6, marginBottom: 8 }}>
-                        <Text style={styles.h1}>Solicitudes de adopción</Text>
-                        <Text style={styles.sub}>Gestiona las solicitudes de tus mascotas</Text>
-                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
+                        <Text style={[styles.h1, { color: textColor }]}>Solicitudes de adopción</Text>
+                        <Text style={[styles.sub, { color: textSecondaryColor }]}>Gestiona las solicitudes de tus mascotas</Text>
+                        <Text style={{ color: textMutedColor, fontSize: 12 }}>
                             Total: {adoptionRequests?.length ?? 0}
                         </Text>
-                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
+                        <Text style={{ color: textMutedColor, fontSize: 12 }}>
                             Última carga:{" "}
                             {lastLoaded ? new Date(lastLoaded).toLocaleTimeString() : "-"}
                         </Text>
@@ -214,7 +221,7 @@ export default function ShelterRequests() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.light.background },
-    h1: { fontSize: 22, fontWeight: "900", color: Colors.light.text },
-    sub: { color: "#6B6B6B" },
+    container: { flex: 1 },
+    h1: { fontSize: 22, fontWeight: "900" },
+    sub: {},
 })

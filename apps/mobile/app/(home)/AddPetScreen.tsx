@@ -60,7 +60,6 @@ const AddPetScreen = () => {
         background: useThemeColor({}, "background"),
         card: useThemeColor({}, "card"),
         text: useThemeColor({}, "text"),
-        textInverted: useThemeColor({}, "textInverted"),
         textMuted: useThemeColor({}, "textMuted"),
         textSecondary: useThemeColor({}, "textSecondary"),
         primary: useThemeColor({}, "primary"),
@@ -68,7 +67,11 @@ const AddPetScreen = () => {
         disabled: useThemeColor({}, "disabled"),
         shadow: useThemeColor({}, "shadow"),
         brandYellow: Colors.yellow,
+        textOnYellow: "#000", // Texto negro sobre fondo amarillo
     }
+    
+    // Para el Picker: usamos gris oscuro que se vea en ambos fondos
+    const pickerItemColor = '#333333'
 
     const styles = useMemo(
         () => getResponsiveStyles(width, height, themeColors),
@@ -224,6 +227,7 @@ const AddPetScreen = () => {
                                         onChangeText={onChange}
                                         onBlur={onBlur}
                                         placeholder="Nombre de la mascota"
+                                        placeholderTextColor={themeColors.textMuted}
                                         autoCapitalize="sentences"
                                         returnKeyType="next"
                                         blurOnSubmit={false}
@@ -248,6 +252,7 @@ const AddPetScreen = () => {
                                         }}
                                         onBlur={onBlur}
                                         placeholder="Edad en años (ej: 3)"
+                                        placeholderTextColor={themeColors.textMuted}
                                         keyboardType="number-pad"
                                         maxLength={2}
                                     />
@@ -263,12 +268,18 @@ const AddPetScreen = () => {
                                 name="species"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: themeColors.text }}
+                                            dropdownIconColor={themeColors.text}
+                                        >
                                             {SpeciesTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -287,12 +298,18 @@ const AddPetScreen = () => {
                                 name="gender"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: themeColors.text }}
+                                            dropdownIconColor={themeColors.text}
+                                        >
                                             {GenderTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -311,12 +328,18 @@ const AddPetScreen = () => {
                                 name="size"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: themeColors.text }}
+                                            dropdownIconColor={themeColors.text}
+                                        >
                                             {SizeTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -387,7 +410,6 @@ const getResponsiveStyles = (
         background: string
         card: string
         text: string
-        textInverted: string
         textMuted: string
         textSecondary: string
         primary: string
@@ -395,6 +417,7 @@ const getResponsiveStyles = (
         disabled: string
         shadow: string
         brandYellow: string
+        textOnYellow: string
     }
 ) => {
     const isSmallScreen = width < 350
@@ -445,7 +468,7 @@ const getResponsiveStyles = (
         headerTitle: {
             fontSize: titleSize,
             fontWeight: "600",
-            color: colors.textInverted,
+            color: colors.textOnYellow,
             textAlign: "center",
         },
         formContent: {
@@ -475,7 +498,7 @@ const getResponsiveStyles = (
             fontSize: fontSize,
             borderWidth: 1,
             borderColor: colors.primary,
-            color: colors.textInverted,
+            color: colors.text,
         },
         pickerWrapper: {
             marginBottom: 15,
@@ -543,7 +566,7 @@ const getResponsiveStyles = (
             backgroundColor: colors.disabled,
         },
         submitButtonText: {
-            color: colors.textInverted,
+            color: colors.textOnYellow,
             fontWeight: "600",
             fontSize: fontSize,
         },

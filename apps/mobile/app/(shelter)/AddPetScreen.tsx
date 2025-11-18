@@ -35,6 +35,8 @@ import { Colors } from "@/constants/Colors"
 import { QuestionSelector } from "@/components/common/QuestionSelector"
 import { usePostFormContext } from "@/context/PostFormContext"
 import { Camera } from "expo-camera"
+import { useThemeColor } from "@/hooks/useThemeColor"
+import { useTheme } from "@/context/ThemeContext"
 
 type PetFormInput = z.input<typeof PetFormSchema>
 type PetFormOutput = z.output<typeof PetFormSchema>
@@ -46,7 +48,21 @@ const AddPetScreen = () => {
     const { createPublication } = usePublications()
     const { create: createPostForm } = usePostFormContext()
     const { width, height } = Dimensions.get("window")
-    const styles = getResponsiveStyles(width, height)
+    const { theme } = useTheme()
+    
+    // Theme colors
+    const bgColor = useThemeColor({}, 'background')
+    const cardColor = useThemeColor({}, 'card')
+    const textColor = useThemeColor({}, 'text')
+    const textSecondaryColor = useThemeColor({}, 'textSecondary')
+    const textMutedColor = useThemeColor({}, 'textMuted')
+    const borderColor = useThemeColor({}, 'border')
+    const tintColor = useThemeColor({}, 'tint')
+    
+    // Para el Picker: usamos gris oscuro que se vea en ambos fondos
+    const pickerItemColor = '#333333'
+    
+    const styles = getResponsiveStyles(width, height, bgColor, cardColor, textColor, textSecondaryColor, textMutedColor, borderColor, tintColor)
 
     const {
         control,
@@ -251,6 +267,7 @@ const AddPetScreen = () => {
                                         onChangeText={onChange}
                                         onBlur={onBlur}
                                         placeholder="Nombre de la mascota"
+                                        placeholderTextColor={textMutedColor}
                                         autoCapitalize="sentences"
                                         returnKeyType="next"
                                         blurOnSubmit={false}
@@ -278,6 +295,7 @@ const AddPetScreen = () => {
                                                 }}
                                                 onBlur={onBlur}
                                                 placeholder="0"
+                                                placeholderTextColor={textMutedColor}
                                                 keyboardType="number-pad"
                                                 maxLength={2}
                                             />
@@ -299,6 +317,7 @@ const AddPetScreen = () => {
                                                 }}
                                                 onBlur={onBlur}
                                                 placeholder="0"
+                                                placeholderTextColor={textMutedColor}
                                                 keyboardType="number-pad"
                                                 maxLength={2}
                                             />
@@ -319,12 +338,18 @@ const AddPetScreen = () => {
                                 name="species"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: textColor }}
+                                            dropdownIconColor={textColor}
+                                        >
                                             {SpeciesTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -343,12 +368,18 @@ const AddPetScreen = () => {
                                 name="gender"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: textColor }}
+                                            dropdownIconColor={textColor}
+                                        >
                                             {GenderTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -367,12 +398,18 @@ const AddPetScreen = () => {
                                 name="size"
                                 render={({ field: { onChange, value } }) => (
                                     <View style={styles.pickerWrapper}>
-                                        <Picker selectedValue={value} onValueChange={onChange}>
+                                        <Picker 
+                                            selectedValue={value} 
+                                            onValueChange={onChange}
+                                            style={{ color: textColor }}
+                                            dropdownIconColor={textColor}
+                                        >
                                             {SizeTranslations.options.map((option) => (
                                                 <Picker.Item
                                                     key={option.value}
                                                     label={option.label}
                                                     value={option.value}
+                                                    color={pickerItemColor}
                                                 />
                                             ))}
                                         </Picker>
@@ -410,6 +447,7 @@ const AddPetScreen = () => {
                                         onChangeText={onChange}
                                         onBlur={onBlur}
                                         placeholder="Describe a la mascota, su personalidad, comportamiento..."
+                                        placeholderTextColor={textMutedColor}
                                         multiline
                                         numberOfLines={6}
                                         textAlignVertical="top"
@@ -461,7 +499,17 @@ const AddPetScreen = () => {
     )
 }
 
-const getResponsiveStyles = (width: number, height: number) => {
+const getResponsiveStyles = (
+    width: number, 
+    height: number,
+    bgColor: string,
+    cardColor: string,
+    textColor: string,
+    textSecondaryColor: string,
+    textMutedColor: string,
+    borderColor: string,
+    tintColor: string
+) => {
     const isSmallScreen = width < 350
     const isMediumScreen = width >= 350 && width < 400
     const isTablet = width >= 768
@@ -478,17 +526,17 @@ const getResponsiveStyles = (width: number, height: number) => {
     return StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: Colors.light.background,
+            backgroundColor: bgColor,
         },
         scrollContainer: {
             flex: 1,
-            backgroundColor: Colors.light.background,
+            backgroundColor: bgColor,
         },
         cardWrapper: {
             padding: containerPadding,
         },
         cardContainer: {
-            backgroundColor: "#fff",
+            backgroundColor: cardColor,
             borderRadius: 16,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
@@ -496,25 +544,25 @@ const getResponsiveStyles = (width: number, height: number) => {
             shadowRadius: 4,
             elevation: 3,
             overflow: "hidden",
-            marginBottom: 20, // Espacio para que se vean las sombras
+            marginBottom: 20,
         },
         header: {
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: headerPadding,
             paddingHorizontal: 16,
-            backgroundColor: `${Colors.yellow}`,
+            backgroundColor: tintColor,
             marginTop: 0,
             marginBottom: 0,
         },
         headerTitle: {
             fontSize: titleSize,
             fontWeight: "600",
-            color: "#222",
+            color: "#000",
             textAlign: "center",
         },
         formContent: {
-            backgroundColor: "#fff",
+            backgroundColor: cardColor,
             paddingHorizontal: formPadding,
             paddingVertical: formPadding,
             borderRadius: 16,
@@ -522,13 +570,13 @@ const getResponsiveStyles = (width: number, height: number) => {
         label: {
             fontSize: fontSize,
             fontWeight: "500",
-            color: "#333",
+            color: textColor,
             marginBottom: 8,
         },
         labelInline: {
             fontSize: fontSize,
             fontWeight: "500",
-            color: "#333",
+            color: textColor,
         },
         ageContainer: {
             flexDirection: "row",
@@ -542,20 +590,20 @@ const getResponsiveStyles = (width: number, height: number) => {
         ageLabel: {
             fontSize: fontSize - 2,
             fontWeight: "500",
-            color: "#666",
+            color: textMutedColor,
             marginBottom: 4,
         },
         input: {
             width: "100%",
             height: inputHeight,
-            backgroundColor: "#fff",
+            backgroundColor: cardColor,
             borderRadius: 12,
             paddingHorizontal: 15,
             marginBottom: 15,
             fontSize: fontSize,
             borderWidth: 1,
-            borderColor: Colors.secondary,
-            color: "#222",
+            borderColor: borderColor,
+            color: textColor,
         },
         textArea: {
             height: 120,
@@ -565,8 +613,8 @@ const getResponsiveStyles = (width: number, height: number) => {
         pickerWrapper: {
             marginBottom: 15,
             borderWidth: 1,
-            borderColor: Colors.secondary,
-            backgroundColor: "#fff",
+            borderColor: borderColor,
+            backgroundColor: cardColor,
             borderRadius: 12,
             overflow: "hidden",
         },
@@ -589,15 +637,15 @@ const getResponsiveStyles = (width: number, height: number) => {
             justifyContent: "center",
             paddingVertical: 12,
             paddingHorizontal: 15,
-            backgroundColor: "#fff",
+            backgroundColor: cardColor,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: Colors.secondary,
+            borderColor: borderColor,
             gap: 8,
             marginBottom: 20,
         },
         photoButtonText: {
-            color: "#666",
+            color: textMutedColor,
             fontSize: 14,
             fontWeight: "500",
         },
@@ -612,7 +660,7 @@ const getResponsiveStyles = (width: number, height: number) => {
         submitButton: {
             width: "100%",
             height: buttonHeight,
-            backgroundColor: `${Colors.yellow}`,
+            backgroundColor: tintColor,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
@@ -625,10 +673,10 @@ const getResponsiveStyles = (width: number, height: number) => {
             shadowRadius: 4,
         },
         submitButtonDisabled: {
-            backgroundColor: Colors.light.disabled,
+            backgroundColor: borderColor,
         },
         submitButtonText: {
-            color: "#222",
+            color: "#000",
             fontWeight: "600",
             fontSize: fontSize,
         },

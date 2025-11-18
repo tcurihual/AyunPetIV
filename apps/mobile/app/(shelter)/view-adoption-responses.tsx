@@ -13,6 +13,7 @@ import { usePostResponsesContext } from "@/context/PostResponsesContext"
 import { usePostFormContext } from "@/context/PostFormContext"
 import { useAuthContext } from "@/context/AuthContext"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 interface GroupedResponse {
     questionContent: string
@@ -29,6 +30,16 @@ export default function ViewAdoptionResponses() {
     const requesterId = params.requesterId ? Number(params.requesterId) : null
 
     const [groupedResponses, setGroupedResponses] = useState<GroupedResponse[]>([])
+
+    // Colores dinámicos
+    const bgColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const tintColor = useThemeColor({}, "tint")
+    const dangerColor = useThemeColor({}, "danger")
+    const borderColor = useThemeColor({}, "border")
 
     const { user } = useAuthContext()
     const { responses, loading, listByPublication } = usePostResponsesContext()
@@ -100,11 +111,11 @@ export default function ViewAdoptionResponses() {
 
     if (isNaN(postId)) {
         return (
-            <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
-                <Text style={styles.errorText}>ID de publicación inválido</Text>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Text style={styles.backButtonText}>Volver</Text>
+            <View style={[styles.errorContainer, { backgroundColor: bgColor }]}>
+                <Ionicons name="alert-circle-outline" size={48} color={dangerColor} />
+                <Text style={[styles.errorText, { color: textColor }]}>ID de publicación inválido</Text>
+                <TouchableOpacity style={[styles.backButton, { backgroundColor: tintColor }]} onPress={() => router.back()}>
+                    <Text style={[styles.backButtonText, { color: textColor }]}>Volver</Text>
                 </TouchableOpacity>
             </View>
         )
@@ -112,11 +123,11 @@ export default function ViewAdoptionResponses() {
 
     if (user?.role !== 21) {
         return (
-            <View style={styles.errorContainer}>
-                <Ionicons name="lock-closed-outline" size={48} color={Colors.danger} />
-                <Text style={styles.errorText}>Solo los dadores pueden ver las respuestas</Text>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Text style={styles.backButtonText}>Volver</Text>
+            <View style={[styles.errorContainer, { backgroundColor: bgColor }]}>
+                <Ionicons name="lock-closed-outline" size={48} color={dangerColor} />
+                <Text style={[styles.errorText, { color: textColor }]}>Solo los dadores pueden ver las respuestas</Text>
+                <TouchableOpacity style={[styles.backButton, { backgroundColor: tintColor }]} onPress={() => router.back()}>
+                    <Text style={[styles.backButtonText, { color: textColor }]}>Volver</Text>
                 </TouchableOpacity>
             </View>
         )
@@ -124,29 +135,29 @@ export default function ViewAdoptionResponses() {
 
     if (loading && groupedResponses.length === 0) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.yellow} />
-                <Text style={styles.loadingText}>Cargando respuestas...</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: bgColor }]}>
+                <ActivityIndicator size="large" color={tintColor} />
+                <Text style={[styles.loadingText, { color: textColor }]}>Cargando respuestas...</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
+        <View style={[styles.container, { backgroundColor: bgColor }]}>
+            <View style={[styles.header, { backgroundColor: tintColor }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backIconButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.dark.text} />
+                    <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Respuestas del formulario</Text>
                 <View style={{ width: 24 }} />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={styles.petInfoCard}>
-                    <Ionicons name="paw-outline" size={32} color={Colors.yellow} />
+                <View style={[styles.petInfoCard, { backgroundColor: cardColor }]}>
+                    <Ionicons name="paw-outline" size={32} color={tintColor} />
                     <View style={styles.petInfoText}>
-                        <Text style={styles.petName}>{petName}</Text>
-                        <Text style={styles.petSubtext}>
+                        <Text style={[styles.petName, { color: textColor }]}>{petName}</Text>
+                        <Text style={[styles.petSubtext, { color: textSecondaryColor }]}>
                             {groupedResponses.length} respuesta
                             {groupedResponses.length === 1 ? "" : "s"} recibida
                             {groupedResponses.length === 1 ? "" : "s"}
@@ -155,9 +166,9 @@ export default function ViewAdoptionResponses() {
                 </View>
 
                 {loading && (
-                    <View style={styles.loadingCard}>
-                        <ActivityIndicator size="small" color={Colors.yellow} />
-                        <Text style={styles.loadingCardText}>Cargando datos...</Text>
+                    <View style={[styles.loadingCard, { backgroundColor: cardColor }]}>
+                        <ActivityIndicator size="small" color={tintColor} />
+                        <Text style={[styles.loadingCardText, { color: textColor }]}>Cargando datos...</Text>
                     </View>
                 )}
 
@@ -166,10 +177,10 @@ export default function ViewAdoptionResponses() {
                         <Ionicons
                             name="document-text-outline"
                             size={64}
-                            color={Colors.light.textSecondary}
+                            color={textMutedColor}
                         />
-                        <Text style={styles.emptyTitle}>No hay formulario configurado</Text>
-                        <Text style={styles.emptyText}>
+                        <Text style={[styles.emptyTitle, { color: textColor }]}>No hay formulario configurado</Text>
+                        <Text style={[styles.emptyText, { color: textSecondaryColor }]}>
                             Esta publicación no tiene preguntas asociadas
                         </Text>
                     </View>
@@ -178,10 +189,10 @@ export default function ViewAdoptionResponses() {
                         <Ionicons
                             name="chatbubbles-outline"
                             size={64}
-                            color={Colors.light.textSecondary}
+                            color={textMutedColor}
                         />
-                        <Text style={styles.emptyTitle}>Sin respuestas</Text>
-                        <Text style={styles.emptyText}>
+                        <Text style={[styles.emptyTitle, { color: textColor }]}>Sin respuestas</Text>
+                        <Text style={[styles.emptyText, { color: textSecondaryColor }]}>
                             {requesterId
                                 ? "Este solicitante aún no ha respondido el formulario"
                                 : "Cuando alguien solicite adopción y responda el formulario, las respuestas aparecerán aquí"}
@@ -190,21 +201,21 @@ export default function ViewAdoptionResponses() {
                 ) : (
                     <View style={styles.responsesContainer}>
                         {groupedResponses.map((item, index) => (
-                            <View key={index} style={styles.responseCard}>
+                            <View key={index} style={[styles.responseCard, { backgroundColor: cardColor, borderColor: borderColor }]}>
                                 <View style={styles.questionHeader}>
-                                    <View style={styles.questionIconContainer}>
+                                    <View style={[styles.questionIconContainer, { backgroundColor: tintColor }]}>
                                         <Ionicons
                                             name={getTypeIcon(item.questionType)}
                                             size={20}
-                                            color={Colors.light.text}
+                                            color="#000"
                                         />
                                     </View>
-                                    <Text style={styles.questionText}>{item.questionContent}</Text>
+                                    <Text style={[styles.questionText, { color: textColor }]}>{item.questionContent}</Text>
                                 </View>
 
                                 <View style={styles.answerContainer}>
-                                    <Text style={styles.answerLabel}>Respuesta:</Text>
-                                    <Text style={styles.answerText}>
+                                    <Text style={[styles.answerLabel, { color: textSecondaryColor }]}>Respuesta:</Text>
+                                    <Text style={[styles.answerText, { color: textColor }]}>
                                         {getAnswerDisplay(item.answer, item.questionType)}
                                     </Text>
                                 </View>
@@ -214,9 +225,9 @@ export default function ViewAdoptionResponses() {
                                         <Ionicons
                                             name="person-outline"
                                             size={14}
-                                            color={Colors.light.textSecondary}
+                                            color={textMutedColor}
                                         />
-                                        <Text style={styles.metaText}>
+                                        <Text style={[styles.metaText, { color: textMutedColor }]}>
                                             Usuario ID: {item.respondedBy}
                                         </Text>
                                     </View>
@@ -226,13 +237,13 @@ export default function ViewAdoptionResponses() {
                     </View>
                 )}
 
-                <View style={styles.infoBox}>
+                <View style={[styles.infoBox, { backgroundColor: cardColor, borderColor: borderColor }]}>
                     <Ionicons
                         name="information-circle-outline"
                         size={20}
-                        color={Colors.light.text}
+                        color={textColor}
                     />
-                    <Text style={styles.infoText}>
+                    <Text style={[styles.infoText, { color: textSecondaryColor }]}>
                         {requesterId
                             ? "Estas son las respuestas de este solicitante específico al formulario que configuraste."
                             : "Estas son todas las respuestas al formulario que configuraste para esta publicación."}
@@ -246,7 +257,6 @@ export default function ViewAdoptionResponses() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
     },
     header: {
         flexDirection: "row",
@@ -254,7 +264,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingVertical: 16,
-        backgroundColor: Colors.yellow,
         borderBottomWidth: 1,
         borderBottomColor: Colors.primary,
     },
@@ -264,7 +273,6 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.light.text,
     },
     content: {
         flex: 1,
@@ -272,7 +280,6 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
         margin: 16,
         padding: 16,
         borderRadius: 12,
@@ -281,8 +288,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 4,
         elevation: 3,
-        borderWidth: 1,
-        borderColor: "#F0F0F0",
     },
     petInfoText: {
         marginLeft: 16,
@@ -291,35 +296,29 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: Colors.light.text,
         marginBottom: 4,
     },
     petSubtext: {
         fontSize: 14,
-        color: Colors.light.textSecondary,
     },
     loadingCard: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: Colors.light.background,
         margin: 16,
         padding: 16,
         borderRadius: 12,
-        borderWidth: 1,
         borderColor: Colors.yellow,
     },
     loadingCardText: {
         marginLeft: 12,
         fontSize: 14,
-        color: Colors.light.text,
         fontWeight: "500",
     },
     responsesContainer: {
         paddingHorizontal: 16,
     },
     responseCard: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -329,7 +328,6 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
         borderWidth: 1,
-        borderColor: "#F0F0F0",
     },
     questionHeader: {
         flexDirection: "row",
@@ -340,18 +338,14 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: Colors.light.background,
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
-        borderWidth: 1,
-        borderColor: Colors.yellow,
     },
     questionText: {
         flex: 1,
         fontSize: 15,
         fontWeight: "600",
-        color: Colors.light.text,
         lineHeight: 20,
     },
     answerContainer: {
@@ -364,14 +358,12 @@ const styles = StyleSheet.create({
     answerLabel: {
         fontSize: 12,
         fontWeight: "600",
-        color: Colors.light.textSecondary,
         marginBottom: 4,
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
     answerText: {
         fontSize: 16,
-        color: Colors.light.text,
         lineHeight: 22,
     },
     metaInfo: {
@@ -380,29 +372,25 @@ const styles = StyleSheet.create({
         marginTop: 12,
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: Colors.light.background,
+        borderTopColor: Colors.light.border,
     },
     metaText: {
         fontSize: 12,
-        color: Colors.light.textSecondary,
         marginLeft: 4,
     },
     infoBox: {
         flexDirection: "row",
         alignItems: "flex-start",
-        backgroundColor: Colors.light.card,
         margin: 16,
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: Colors.yellow,
     },
     infoText: {
         flex: 1,
-        fontSize: 13,
-        color: Colors.light.text,
         marginLeft: 12,
-        lineHeight: 18,
+        fontSize: 14,
+        lineHeight: 20,
     },
     emptyContainer: {
         alignItems: "center",
@@ -412,13 +400,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.light.textSecondary,
         marginTop: 16,
         marginBottom: 8,
     },
     emptyText: {
         fontSize: 14,
-        color: Colors.light.textSecondary,
         textAlign: "center",
         lineHeight: 20,
     },
@@ -426,36 +412,30 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: Colors.light.background,
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: Colors.light.textSecondary,
     },
     errorContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: Colors.light.background,
         padding: 32,
     },
     errorText: {
         marginTop: 16,
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.danger,
         textAlign: "center",
     },
     backButton: {
         marginTop: 24,
         paddingHorizontal: 32,
         paddingVertical: 12,
-        backgroundColor: Colors.yellow,
         borderRadius: 8,
     },
     backButtonText: {
-        color: Colors.dark.text,
         fontSize: 16,
         fontWeight: "600",
     },

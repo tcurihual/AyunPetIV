@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
+    useColorScheme,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -18,6 +19,7 @@ import { DynamicQuestionForm, QuestionAnswer } from "@/components/common/Dynamic
 import { useAlert } from "@/context/AlertContext"
 import { useAuthContext } from "@/context/AuthContext"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export default function AdoptionRequestForm() {
     const router = useRouter()
@@ -33,6 +35,14 @@ export default function AdoptionRequestForm() {
     const { createAdoptionRequest } = useAdoptionRequestContext()
     const { showAlert } = useAlert()
     const { user } = useAuthContext()
+
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+    const backgroundColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const borderColor = useThemeColor({}, "border")
 
     useEffect(() => {
         console.log("🔍 AdoptionRequestForm - Usuario actual:", JSON.stringify(user, null, 2))
@@ -92,9 +102,9 @@ export default function AdoptionRequestForm() {
 
     if (isNaN(postId)) {
         return (
-            <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
-                <Text style={styles.errorText}>ID de publicación inválido</Text>
+            <View style={[styles.errorContainer, { backgroundColor }]}>
+                <Ionicons name="alert-circle-outline" size={48} color={themeColors.danger} />
+                <Text style={[styles.errorText, { color: themeColors.danger }]}>ID de publicación inválido</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                     <Text style={styles.backButtonText}>Volver</Text>
                 </TouchableOpacity>
@@ -104,18 +114,18 @@ export default function AdoptionRequestForm() {
 
     if (loadingQuestions && postFormItems.length === 0) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={[styles.loadingContainer, { backgroundColor }]}>
                 <ActivityIndicator size="large" color={Colors.yellow} />
-                <Text style={styles.loadingText}>Cargando formulario...</Text>
+                <Text style={[styles.loadingText, { color: textSecondaryColor }]}>Cargando formulario...</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backIconButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.dark.text} />
+                    <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Solicitar adopción</Text>
                 <View style={{ width: 24 }} />
@@ -129,29 +139,30 @@ export default function AdoptionRequestForm() {
                     disabled={submitting}
                     headerComponent={
                         <>
-                            <View style={styles.petInfoCard}>
+                            <View style={[styles.petInfoCard, { backgroundColor: cardColor, borderColor }]}>
                                 <Ionicons name="paw-outline" size={32} color={Colors.yellow} />
                                 <View style={styles.petInfoText}>
-                                    <Text style={styles.petName}>{petName}</Text>
-                                    <Text style={styles.petSubtext}>
+                                    <Text style={[styles.petName, { color: textColor }]}>{petName}</Text>
+                                    <Text style={[styles.petSubtext, { color: textSecondaryColor }]}>
                                         Completa el formulario para solicitar la adopción
                                     </Text>
                                 </View>
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>
+                                <Text style={[styles.sectionTitle, { color: textColor }]}>
                                     <Ionicons name="chatbubble-outline" size={16} /> Mensaje para el
                                     dador
                                 </Text>
-                                <Text style={styles.sectionDescription}>
+                                <Text style={[styles.sectionDescription, { color: textSecondaryColor }]}>
                                     Cuéntale al dador por qué quieres adoptar a {petName}
                                 </Text>
                                 <TextInput
-                                    style={styles.messageInput}
+                                    style={[styles.messageInput, { backgroundColor: cardColor, borderColor, color: textColor }]}
                                     value={adoptionMessage}
                                     onChangeText={setAdoptionMessage}
                                     placeholder={`Ejemplo: Me gustaría adoptar a ${petName} porque...`}
+                                    placeholderTextColor={textSecondaryColor}
                                     multiline
                                     numberOfLines={5}
                                     textAlignVertical="top"
@@ -160,11 +171,11 @@ export default function AdoptionRequestForm() {
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>
+                                <Text style={[styles.sectionTitle, { color: textColor }]}>
                                     <Ionicons name="clipboard-outline" size={16} /> Formulario
                                     adicional
                                 </Text>
-                                <Text style={styles.sectionDescription}>
+                                <Text style={[styles.sectionDescription, { color: textSecondaryColor }]}>
                                     El dador ha solicitado que respondas estas preguntas
                                 </Text>
                             </View>
@@ -174,29 +185,30 @@ export default function AdoptionRequestForm() {
             ) : (
                 <>
                     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                        <View style={styles.petInfoCard}>
+                        <View style={[styles.petInfoCard, { backgroundColor: cardColor, borderColor }]}>
                             <Ionicons name="paw-outline" size={32} color={Colors.yellow} />
                             <View style={styles.petInfoText}>
-                                <Text style={styles.petName}>{petName}</Text>
-                                <Text style={styles.petSubtext}>
+                                <Text style={[styles.petName, { color: textColor }]}>{petName}</Text>
+                                <Text style={[styles.petSubtext, { color: textSecondaryColor }]}>
                                     Completa el formulario para solicitar la adopción
                                 </Text>
                             </View>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>
+                            <Text style={[styles.sectionTitle, { color: textColor }]}>
                                 <Ionicons name="chatbubble-outline" size={16} /> Mensaje para el
                                 dador
                             </Text>
-                            <Text style={styles.sectionDescription}>
+                            <Text style={[styles.sectionDescription, { color: textSecondaryColor }]}>
                                 Cuéntale al dador por qué quieres adoptar a {petName}
                             </Text>
                             <TextInput
-                                style={styles.messageInput}
+                                style={[styles.messageInput, { backgroundColor: cardColor, borderColor, color: textColor }]}
                                 value={adoptionMessage}
                                 onChangeText={setAdoptionMessage}
                                 placeholder={`Ejemplo: Me gustaría adoptar a ${petName} porque...`}
+                                placeholderTextColor={textSecondaryColor}
                                 multiline
                                 numberOfLines={5}
                                 textAlignVertical="top"
@@ -205,9 +217,9 @@ export default function AdoptionRequestForm() {
                         </View>
                     </ScrollView>
 
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { backgroundColor, borderTopColor: borderColor }]}>
                         <TouchableOpacity
-                            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                            style={[styles.submitButton, submitting && { backgroundColor: borderColor, shadowOpacity: 0 }]}
                             onPress={() => handleSubmitForm([])}
                             disabled={submitting}
                         >
@@ -215,7 +227,7 @@ export default function AdoptionRequestForm() {
                                 <>
                                     <ActivityIndicator
                                         size="small"
-                                        color={Colors.light.textSecondary}
+                                        color="#000"
                                     />
                                     <Text style={styles.submitButtonText}>Enviando...</Text>
                                 </>
@@ -224,7 +236,7 @@ export default function AdoptionRequestForm() {
                                     <Ionicons
                                         name="send-outline"
                                         size={20}
-                                        color={Colors.light.textSecondary}
+                                        color="#000"
                                     />
                                     <Text style={styles.submitButtonText}>
                                         Enviar solicitud de adopción
@@ -242,7 +254,6 @@ export default function AdoptionRequestForm() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
     },
     header: {
         flexDirection: "row",
@@ -260,7 +271,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.light.text,
+        color: "#000",
     },
     content: {
         flex: 1,
@@ -268,12 +279,10 @@ const styles = StyleSheet.create({
     petInfoCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: Colors.light.card,
         margin: 16,
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: Colors.primary,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -287,12 +296,10 @@ const styles = StyleSheet.create({
     petName: {
         fontSize: 20,
         fontWeight: "700",
-        color: Colors.light.text,
         marginBottom: 4,
     },
     petSubtext: {
         fontSize: 14,
-        color: Colors.light.textSecondary,
     },
     section: {
         marginHorizontal: 16,
@@ -301,29 +308,22 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: Colors.light.text,
         marginBottom: 8,
     },
     sectionDescription: {
         fontSize: 14,
-        color: Colors.light.textSecondary,
         marginBottom: 12,
     },
     messageInput: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: Colors.primary,
         padding: 16,
         fontSize: 15,
-        color: Colors.light.text,
         minHeight: 120,
     },
     footer: {
         padding: 16,
-        backgroundColor: Colors.light.background,
         borderTopWidth: 1,
-        borderTopColor: Colors.primary,
     },
     submitButton: {
         flexDirection: "row",
@@ -338,39 +338,31 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
-    submitButtonDisabled: {
-        backgroundColor: Colors.primary,
-        shadowOpacity: 0,
-    },
     submitButtonText: {
         fontSize: 16,
         fontWeight: "600",
-        color: Colors.light.text,
+        color: "#000",
         marginLeft: 8,
     },
     loadingContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: Colors.light.background,
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: Colors.light.textSecondary,
     },
     errorContainer: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: Colors.light.background,
         padding: 32,
     },
     errorText: {
         marginTop: 16,
         fontSize: 18,
         fontWeight: "600",
-        color: Colors.danger,
         textAlign: "center",
     },
     backButton: {
@@ -381,7 +373,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     backButtonText: {
-        color: Colors.dark.text,
+        color: "#000",
         fontSize: 16,
         fontWeight: "600",
     },

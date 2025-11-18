@@ -31,6 +31,7 @@ import { useReportContext } from "@/context/ReportContext"
 import type { PublicationItem } from "@/context/PublicationContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -41,6 +42,15 @@ const isLocalId = (id: string) => id.startsWith("local-")
 export default function PublicationDetail() {
     const router = useRouter()
     const { id } = useLocalSearchParams<{ id: string }>()
+    
+    const bgColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
+    
     const [showReportModal, setShowReportModal] = useState(false)
     const [reportingCommentId, setReportingCommentId] = useState<string | number | null>(null)
     const [reportType, setReportType] = useState<"comment" | "publication">("comment")
@@ -385,24 +395,24 @@ export default function PublicationDetail() {
 
     if (loading) {
         return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" />
-                <Text style={styles.gray}>Cargando publicación…</Text>
+            <View style={[styles.center, { backgroundColor: bgColor }]}>
+                <ActivityIndicator size="large" color={tintColor} />
+                <Text style={[styles.gray, { color: textMutedColor }]}>Cargando publicación…</Text>
             </View>
         )
     }
 
     if (!pet) {
         return (
-            <View style={styles.center}>
-                <Text style={styles.empty}>Publicación no encontrada</Text>
+            <View style={[styles.center, { backgroundColor: bgColor }]}>
+                <Text style={[styles.empty, { color: textColor }]}>Publicación no encontrada</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.screenContainer}>
-            <Animated.View style={styles.container} sharedTransitionTag={`pet-card-${pet.id}`}>
+        <View style={[styles.screenContainer, { backgroundColor: bgColor }]}>
+            <Animated.View style={[styles.container, { backgroundColor: cardColor }]} sharedTransitionTag={`pet-card-${pet.id}`}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                     <View style={styles.infoContainer}>
                         <View style={styles.imageContainer}>
@@ -418,7 +428,7 @@ export default function PublicationDetail() {
 
                         <View style={styles.infoContainer}>
                             <Animated.Text
-                                style={styles.petName}
+                                style={[styles.petName, { color: textColor }]}
                                 sharedTransitionTag={`pet-name-${pet.id}`}
                             >
                                 Nombre: {pet.name}
@@ -426,42 +436,42 @@ export default function PublicationDetail() {
 
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
-                                    <Text style={styles.infoLabel}>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Especie:{" "}
-                                        <Text style={styles.infoValue}>
+                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
                                             {translateSpeciesToSpanish((pet as any).type || "")}
                                         </Text>
                                     </Text>
-                                    <Text style={styles.infoLabel}>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Género:{" "}
-                                        <Text style={styles.infoValue}>
+                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
                                             {translateGenderToSpanish(pet.gender || "")}
                                         </Text>
                                     </Text>
-                                    <Text style={styles.infoLabel}>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Edad:{" "}
-                                        <Text style={styles.infoValue}>{formatAge(pet.age)}</Text>
+                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>{formatAge(pet.age)}</Text>
                                     </Text>
                                 </View>
                                 <View style={styles.infoColumn}>
-                                    <Text style={styles.infoLabel}>Publicado por:</Text>
-                                    <Text style={styles.publisherName}>{pet.publisher}</Text>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>Publicado por:</Text>
+                                    <Text style={[styles.publisherName, { color: textSecondaryColor }]}>{pet.publisher}</Text>
                                 </View>
                             </View>
 
                             {pet.description ? (
                                 <View style={styles.descriptionContainer}>
-                                    <Text style={styles.descriptionLabel}>Descripción: </Text>
-                                    <Text style={styles.descriptionText}>{pet.description}</Text>
+                                    <Text style={[styles.descriptionLabel, { color: textColor }]}>Descripción: </Text>
+                                    <Text style={[styles.descriptionText, { color: textSecondaryColor }]}>{pet.description}</Text>
                                 </View>
                             ) : null}
 
                             <View style={styles.commentsContainer}>
-                                <Text style={styles.commentsTitle}>
+                                <Text style={[styles.commentsTitle, { color: textColor }]}>
                                     Comentarios ({comments.length})
                                 </Text>
 
-                                <View style={styles.commentForm}>
+                                <View style={[styles.commentForm, { backgroundColor: bgColor, borderColor }]}>
                                     <Input
                                         name="description"
                                         control={control}
@@ -498,15 +508,15 @@ export default function PublicationDetail() {
                                         ))}
                                     </View>
                                 ) : messagesLoading ? (
-                                    <View style={styles.commentsPlaceholder}>
-                                        <ActivityIndicator size="small" color={Colors.secondary} />
-                                        <Text style={styles.commentsPlaceholderText}>
+                                    <View style={[styles.commentsPlaceholder, { backgroundColor: cardColor }]}>
+                                        <ActivityIndicator size="small" color={tintColor} />
+                                        <Text style={[styles.commentsPlaceholderText, { color: textMutedColor }]}>
                                             Cargando comentarios...
                                         </Text>
                                     </View>
                                 ) : (
-                                    <View style={styles.commentsPlaceholder}>
-                                        <Text style={styles.commentsPlaceholderText}>
+                                    <View style={[styles.commentsPlaceholder, { backgroundColor: cardColor }]}>
+                                        <Text style={[styles.commentsPlaceholderText, { color: textMutedColor }]}>
                                             Sé el primero en comentar...
                                         </Text>
                                     </View>
@@ -563,14 +573,15 @@ export default function PublicationDetail() {
                 }}
             >
                 <View style={styles.modalBackdrop}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Enviar Solicitud de Adopción</Text>
-                        <Text style={styles.modalSubtitle}>
+                    <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
+                        <Text style={[styles.modalTitle, { color: textColor }]}>Enviar Solicitud de Adopción</Text>
+                        <Text style={[styles.modalSubtitle, { color: textSecondaryColor }]}>
                             Agrega un mensaje para el cuidador si lo deseas.
                         </Text>
                         <TextInput
-                            style={styles.modalInput}
+                            style={[styles.modalInput, { backgroundColor: bgColor, color: textColor, borderColor }]}
                             placeholder="Escribe tu mensaje..."
+                            placeholderTextColor={textMutedColor}
                             multiline
                             numberOfLines={4}
                             value={requestMessage}
@@ -582,7 +593,7 @@ export default function PublicationDetail() {
                         ) : null}
                         <View style={styles.modalActions}>
                             <TouchableOpacity
-                                style={styles.modalCancelButton}
+                                style={[styles.modalCancelButton, { backgroundColor: bgColor, borderColor }]}
                                 onPress={() => {
                                     if (!submittingRequest) {
                                         setShowRequestModal(false)
@@ -591,7 +602,7 @@ export default function PublicationDetail() {
                                 }}
                                 disabled={submittingRequest}
                             >
-                                <Text style={styles.modalCancelText}>Cancelar</Text>
+                                <Text style={[styles.modalCancelText, { color: textColor }]}>Cancelar</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[
@@ -614,10 +625,9 @@ export default function PublicationDetail() {
 }
 
 const styles = StyleSheet.create({
-    screenContainer: { flex: 1, backgroundColor: "#fff", padding: 16 },
+    screenContainer: { flex: 1, padding: 16 },
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
         borderRadius: 16,
         overflow: "hidden",
         shadowColor: "#000",
@@ -634,11 +644,11 @@ const styles = StyleSheet.create({
     },
     mainImage: { width: "100%", height: "100%" },
     infoContainer: { padding: 20, flex: 1 },
-    petName: { fontSize: 18, fontWeight: "bold", color: "#222", marginBottom: 16 },
+    petName: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
     infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
     infoColumn: { flex: 1 },
-    infoLabel: { fontSize: 14, color: "#222", marginBottom: 8, fontWeight: "500" },
-    infoValue: { fontWeight: "normal", color: "#666" },
+    infoLabel: { fontSize: 14, marginBottom: 8, fontWeight: "500" },
+    infoValue: { fontWeight: "normal" },
     publisherRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -662,18 +672,16 @@ const styles = StyleSheet.create({
     publisherAvatarText: {
         fontSize: 12,
         fontWeight: "bold",
-        color: "#222",
     },
-    publisherName: { fontSize: 14, color: "#666", fontWeight: "400" },
+    publisherName: { fontSize: 14, fontWeight: "400" },
     descriptionContainer: { marginTop: 12, marginBottom: 24 },
-    descriptionLabel: { fontSize: 14, fontWeight: "500", color: "#222", marginBottom: 4 },
-    descriptionText: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "justify" },
+    descriptionLabel: { fontSize: 14, fontWeight: "500", marginBottom: 4 },
+    descriptionText: { fontSize: 14, lineHeight: 20, textAlign: "justify" },
     commentsContainer: { marginTop: 8 },
-    commentsTitle: { fontSize: 16, fontWeight: "bold", color: "#222", marginBottom: 12 },
+    commentsTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 12 },
     commentForm: {
         marginBottom: 16,
         padding: 12,
-        backgroundColor: "#F9F9F9",
         borderRadius: 8,
     },
     commentButton: {
@@ -687,14 +695,13 @@ const styles = StyleSheet.create({
     commentButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
     commentsList: { gap: 12 },
     commentsPlaceholder: {
-        backgroundColor: Colors.light.background,
         borderRadius: 8,
         padding: 20,
         alignItems: "center",
         justifyContent: "center",
         minHeight: 80,
     },
-    commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
+    commentsPlaceholderText: { fontSize: 14, fontStyle: "italic" },
     buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
     sendRequestButton: {
         backgroundColor: Colors.primary,
@@ -735,7 +742,6 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: "100%",
-        backgroundColor: "#fff",
         borderRadius: 16,
         padding: 20,
         shadowColor: "#000",
@@ -744,16 +750,15 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         elevation: 5,
     },
-    modalTitle: { fontSize: 18, fontWeight: "700", color: "#222" },
-    modalSubtitle: { fontSize: 14, color: "#555", marginTop: 8, marginBottom: 12 },
+    modalTitle: { fontSize: 18, fontWeight: "700" },
+    modalSubtitle: { fontSize: 14, marginTop: 8, marginBottom: 12 },
     modalInput: {
-        backgroundColor: "#F8F8F8",
         borderRadius: 8,
         padding: 12,
         textAlignVertical: "top",
         minHeight: 100,
         fontSize: 14,
-        color: "#333",
+        borderWidth: 1,
     },
     modalError: { color: Colors.danger, marginTop: 8 },
     modalActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
@@ -761,10 +766,10 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 8,
-        backgroundColor: Colors.light.border,
         marginRight: 12,
+        borderWidth: 1,
     },
-    modalCancelText: { color: "#333", fontWeight: "600" },
+    modalCancelText: { fontWeight: "600" },
     modalConfirmButton: {
         paddingVertical: 10,
         paddingHorizontal: 18,

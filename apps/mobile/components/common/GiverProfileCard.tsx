@@ -1,5 +1,6 @@
 import React from "react"
 import { View, Text, StyleSheet, Image, FlatList } from "react-native"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export type Publication = { id: string; title: string; image?: string }
 export type GiverProfile = {
@@ -13,21 +14,28 @@ export type GiverProfile = {
 type Props = { profile: GiverProfile }
 
 export function GiverProfileCard({ profile }: Props) {
+    const cardBgColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const borderColor = useThemeColor({}, "border")
+    const disabledColor = useThemeColor({}, "disabled")
+    const backgroundSecondary = useThemeColor({}, "backgroundSecondary")
+
     return (
-        <View style={s.card}>
+        <View style={[s.card, { backgroundColor: cardBgColor, borderColor: borderColor }]}>
             <View style={s.header}>
                 {profile.avatar ? (
-                    <Image source={{ uri: profile.avatar }} style={s.avatar} />
+                    <Image source={{ uri: profile.avatar }} style={[s.avatar, { backgroundColor: disabledColor }]} />
                 ) : (
-                    <View style={[s.avatar, s.fallback]} />
+                    <View style={[s.avatar, s.fallback, { backgroundColor: backgroundSecondary }]} />
                 )}
                 <View style={{ flex: 1 }}>
-                    <Text style={s.name}>{profile.name}</Text>
-                    {!!profile.bio && <Text style={s.bio}>{profile.bio}</Text>}
+                    <Text style={[s.name, { color: textColor }]}>{profile.name}</Text>
+                    {!!profile.bio && <Text style={[s.bio, { color: textMutedColor }]}>{profile.bio}</Text>}
                 </View>
             </View>
 
-            <Text style={s.section}>Publicaciones activas</Text>
+            <Text style={[s.section, { color: textColor }]}>Publicaciones activas</Text>
             <FlatList
                 data={profile.activePublications}
                 keyExtractor={(p) => p.id}
@@ -36,11 +44,11 @@ export function GiverProfileCard({ profile }: Props) {
                 renderItem={({ item }) => (
                     <View style={s.pub}>
                         {item.image ? (
-                            <Image source={{ uri: item.image }} style={s.pubImg} />
+                            <Image source={{ uri: item.image }} style={[s.pubImg, { backgroundColor: disabledColor }]} />
                         ) : (
-                            <View style={[s.pubImg, s.pubFallback]} />
+                            <View style={[s.pubImg, s.pubFallback, { backgroundColor: backgroundSecondary }]} />
                         )}
-                        <Text numberOfLines={1} style={s.pubTitle}>
+                        <Text numberOfLines={1} style={[s.pubTitle, { color: textColor }]}>
                             {item.title}
                         </Text>
                     </View>
@@ -54,19 +62,17 @@ const s = StyleSheet.create({
     card: {
         padding: 14,
         borderRadius: 14,
-        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: "#eee",
         gap: 10,
     },
     header: { flexDirection: "row", gap: 12, alignItems: "center" },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#eee" },
-    fallback: { backgroundColor: "#ddd" },
+    avatar: { width: 48, height: 48, borderRadius: 24 },
+    fallback: {},
     name: { fontSize: 16, fontWeight: "700" },
-    bio: { color: "#4b5563" },
+    bio: {},
     section: { marginTop: 6, fontWeight: "700" },
     pub: { width: 120, marginRight: 10 },
-    pubImg: { width: 120, height: 90, borderRadius: 10, backgroundColor: "#eee" },
-    pubFallback: { backgroundColor: "#ddd" },
+    pubImg: { width: 120, height: 90, borderRadius: 10 },
+    pubFallback: {},
     pubTitle: { marginTop: 4, fontSize: 12 },
 })
