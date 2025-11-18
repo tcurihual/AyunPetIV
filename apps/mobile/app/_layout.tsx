@@ -44,6 +44,9 @@ function RootLayoutNav() {
     return (
         <LoadingProvider>
             <AuthProvider>
+                {/* ✔️ AuthRedirect colocado JUSTO después del AuthProvider */}
+                <AuthRedirect />
+
                 <AlertProvider>
                     <ModalProvider>
                         <QuestionProvider>
@@ -76,7 +79,6 @@ function RootLayoutNav() {
 
                                                                 <ModalHost />
                                                                 <Alert />
-                                                                <AuthRedirect />
                                                                 <StatusBar style="auto" />
                                                             </NavThemeProvider>
                                                         </LoadingHandlerBridge>

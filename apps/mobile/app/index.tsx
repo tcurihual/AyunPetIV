@@ -1,15 +1,12 @@
 import React, { useEffect } from "react"
 import { View, Image, Alert, BackHandler, Text } from "react-native"
 import LottieView from "lottie-react-native"
-import { Ionicons } from "@expo/vector-icons"
 import NetInfo from "@react-native-community/netinfo"
-import { useRouter } from "expo-router"
 import { Colors } from "@/constants/Colors"
 
 export default function Index() {
-    const router = useRouter()
-
     useEffect(() => {
+        // Mantener solo la validación de conexión
         checkConnection()
     }, [])
 
@@ -28,9 +25,10 @@ export default function Index() {
                 return showNoInternet()
             }
 
-            setTimeout(() => {
-                router.replace("/(auth)")
-            }, 5000)
+            // 👉 IMPORTANTE:
+            // YA NO HACEMOS router.replace("/(auth)")
+            // AuthRedirect es quien redirige automáticamente
+            // según el estado de autenticación.
         } catch {
             showNoInternet()
         }
