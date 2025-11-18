@@ -23,6 +23,7 @@ export interface RequestDetailProps {
     date: string
     status: Status
     message?: string
+    confirmationCode?: string | null
     onAccept?: () => void
     onReject?: () => void
     onConfirmCode?: (code: string) => void
@@ -35,6 +36,7 @@ export default function RequestDetailCard({
     date,
     status,
     message,
+    confirmationCode,
     onAccept,
     onReject,
     onConfirmCode,
@@ -110,6 +112,7 @@ export default function RequestDetailCard({
                             <Text style={{ fontWeight: "700", color: textColor }}>
                                 Tu código de adopción es:
                             </Text>
+
                             <Text
                                 style={{
                                     fontSize: 24,
@@ -118,8 +121,9 @@ export default function RequestDetailCard({
                                     marginTop: 6,
                                 }}
                             >
-                                {code || "9F27C"}
+                                {confirmationCode || "Código no disponible"}
                             </Text>
+
                             <Text style={{ color: textSecondaryColor, marginTop: 4, textAlign: "center" }}>
                                 Entrégaselo al dador o refugio para completar la adopción.
                             </Text>
