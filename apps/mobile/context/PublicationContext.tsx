@@ -70,7 +70,9 @@ interface PublicationContextType {
     getPublicationByPostId: (postId: number) => Promise<PublicationItem | null>
     getPublications: (reset?: boolean, ownerId?: number) => Promise<void>
     loadMorePublications: () => Promise<void>
-    createPublication: (data: CreatePublicationPayload) => Promise<{ post: any; pet: any; images: any[] }>
+    createPublication: (
+        data: CreatePublicationPayload
+    ) => Promise<{ post: any; pet: any; images: any[] }>
     updatePublication: (id: number, data: UpdatePublicationPayload) => Promise<Post>
     deletePublication: (id: number) => Promise<void>
     refreshPublications: () => Promise<void>
@@ -155,12 +157,12 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         try {
             // Construir la URL con parámetros opcionales
             let url = `/v1/adoptions/publications?page=${pageToLoad}&pageSize=20`
-            
+
             // Si no se especifica ownerId, filtrar solo publicaciones activas para el feed general
             if (!ownerId) {
                 url += `&status=active`
             }
-            
+
             // Si se especifica ownerId, cargar TODAS las publicaciones del usuario (no solo activas)
             if (ownerId) {
                 url += `&ownerId=${ownerId}`
@@ -247,9 +249,15 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
             setTotalPages(response.data.data.totalPages)
             setHasMore(response.data.data.page < response.data.data.totalPages)
         } catch (e: any) {
-            console.error("Error al cargar más publicaciones:", e)
+            const status = e?.response?.status
+
+            if (status === 404 || status === 500) {
+                setHasMore(false)
+                return
+            }
+
             setError(e?.response?.data?.message || "Error al cargar más publicaciones")
-            // Revertir el incremento de página si falla
+
             setCurrentPage((prev) => prev - 1)
         } finally {
             setLoadingMore(false)
@@ -287,18 +295,25 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
                 }
                 // Si es un 404 normal (no relacionado con eliminación)
                 if (e?.response?.status === 404) {
-                    console.log(`ℹ️ Publicación ${numericId} no encontrada (puede haber sido eliminada)`)
+                    console.log(
+                        `ℹ️ Publicación ${numericId} no encontrada (puede haber sido eliminada)`
+                    )
                     return null
                 }
                 // Mostrar otros errores
-                console.error("❌ Error al obtener publicación por postId:", e?.response?.data?.message || e.message || e)
+                console.error(
+                    "❌ Error al obtener publicación por postId:",
+                    e?.response?.data?.message || e.message || e
+                )
                 return null
             }
         },
         [publications, buildPublicationItem, deletingPublicationId]
     )
 
-    async function createPublication(data: CreatePublicationPayload): Promise<{ post: any; pet: any; images: any[] }> {
+    async function createPublication(
+        data: CreatePublicationPayload
+    ): Promise<{ post: any; pet: any; images: any[] }> {
         if (!user) throw new Error("Usuario no autenticado")
         if (user.role !== 21 && user.role !== 22)
             throw new Error("No tienes permisos para crear publicaciones.")
@@ -411,16 +426,16 @@ export const PublicationProvider: React.FC<React.PropsWithChildren> = ({ childre
         if (!user) throw new Error("Usuario no autenticado")
         setLoading(true)
         setError(null)
-        
+
         // Marcar que estamos eliminando esta publicación
         setDeletingPublicationId(id)
 
         try {
             await http.delete(`/v1/adoptions/publications/${id}`)
-            
+
             // Actualizar el estado local removiendo la publicación eliminada
             // en lugar de hacer una llamada al servidor
-            setPublications(prev => prev.filter(pub => Number(pub.postId) !== id))
+            setPublications((prev) => prev.filter((pub) => Number(pub.postId) !== id))
         } catch (e: any) {
             console.error("Error al eliminar publicación:", e)
             const msg = e?.response?.data?.message || "Error al eliminar la publicación"

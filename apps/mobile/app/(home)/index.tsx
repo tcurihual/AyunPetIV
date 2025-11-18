@@ -35,16 +35,19 @@ const toAbsoluteMediaUrl = (u?: string): string | undefined => {
 export default function Home() {
     const router = useRouter()
     const { user } = useAuthContext()
-    const { petsForHome, loading, loadingMore, hasMore, error, refreshPublications, loadMorePublications, clearError } = usePublications()
+    const {
+        petsForHome,
+        loading,
+        loadingMore,
+        hasMore,
+        error,
+        refreshPublications,
+        loadMorePublications,
+        clearError,
+    } = usePublications()
 
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
-
-    //    const petsForHome = petsData
-    //    const loading = false
-    //    const error = null
-    //    const refreshPublications = async () => {}
-    //    const clearError = () => {}
 
     const { showAlert } = useAlert()
 
@@ -73,6 +76,7 @@ export default function Home() {
     useEffect(() => {
         if (error) {
             showAlert(error, "error")
+            console.log("fakin Error", error)
             clearError()
         }
     }, [error, showAlert, clearError])
@@ -159,7 +163,7 @@ export default function Home() {
 
     const renderFooter = () => {
         if (!loadingMore) return null
-        
+
         return (
             <View style={styles.footerLoader}>
                 <ActivityIndicator size="small" color={themeColors.tint} />
@@ -202,7 +206,12 @@ export default function Home() {
                         onPress={() => setSelectedCategory("dog")}
                     >
                         <Text style={styles.categoryEmoji}>🐕</Text>
-                        <Text style={[styles.categoryText, { color: selectedCategory === "dog" ? "#000" : themeColors.text }]}>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: selectedCategory === "dog" ? "#000" : themeColors.text },
+                            ]}
+                        >
                             Perro
                         </Text>
                     </TouchableOpacity>
@@ -218,7 +227,14 @@ export default function Home() {
                         onPress={() => setSelectedCategory("cat")}
                     >
                         <Text style={styles.categoryEmoji}>🐱</Text>
-                        <Text style={[styles.categoryText, { color: selectedCategory === "cat" ? "#000" : themeColors.text }]}>Gato</Text>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: selectedCategory === "cat" ? "#000" : themeColors.text },
+                            ]}
+                        >
+                            Gato
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity

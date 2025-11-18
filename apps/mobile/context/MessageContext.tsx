@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useCallback } from "react"
 import { http } from "@/services/http"
 import { useAuthContext } from "./AuthContext"
-import { Message } from "@/utils/types"
 
 interface CreateMessagePayload {
     creatorId: number
