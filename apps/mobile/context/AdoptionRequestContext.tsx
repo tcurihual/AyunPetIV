@@ -7,6 +7,7 @@ type AdoptionRequestRecord = AdoptionRequest & {
     postImages?: string[]
     petImages?: string[]
     requester_name?: string | null
+    confirmationCode?: string | null
 }
 
 interface CreateAdoptionRequestPayload {
@@ -26,10 +27,15 @@ interface AdoptionRequestContextType {
     getAdoptionRequests: () => Promise<void>
     createAdoptionRequest: (data: CreateAdoptionRequestPayload) => Promise<AdoptionRequestRecord>
     updateAdoptionRequest: (id: number, data: UpdateAdoptionRequestPayload) => Promise<void>
-    acceptAdoptionRequest: (
-        id: number
-    ) => Promise<{ confirmationCode?: string | null; expiresAt?: string | null; message?: string | null }>
-    validateAdoptionCode: (payload: { requestId: number; code: string }) => Promise<{ status: string | null; message?: string | null }>
+    acceptAdoptionRequest: (id: number) => Promise<{
+        confirmationCode?: string | null
+        expiresAt?: string | null
+        message?: string | null
+    }>
+    validateAdoptionCode: (payload: {
+        requestId: number
+        code: string
+    }) => Promise<{ status: string | null; message?: string | null }>
     deleteAdoptionRequest: (id: number) => Promise<any>
     refreshRequests: () => Promise<void>
 }
@@ -64,10 +70,8 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         setError(null)
 
         try {
-            
             const response = await http.get<any>("/v1/adoptions/adoption-requests")
 
-            
             const payload = response?.data
 
             function extractRequests(input: any): any[] {
@@ -76,7 +80,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 if (Array.isArray(input) && input.length > 0 && typeof input[0] === "object") {
                     return input
                 }
-                
+
                 if (input.values) {
                     if (Array.isArray(input.values.requests)) return input.values.requests
                     if (Array.isArray(input.values.items)) return input.values.items
@@ -148,12 +152,48 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                 }
             }
 
-            if (found.length === 0 && payload && typeof payload === "object" && (payload.id || payload.adoption_request)) {
+            if (
+                found.length === 0 &&
+                payload &&
+                typeof payload === "object" &&
+                (payload.id || payload.adoption_request)
+            ) {
                 const single = payload.adoption_request ? payload.adoption_request : payload
                 found = [single]
             }
 
-            setAdoptionRequests(found)
+            found = found.map((req: any) => {
+                const confirmation =
+                    req.confirmationCode ||
+                    req.values?.confirmationCode ||
+                    req.data?.confirmationCode ||
+                    req.adoption_request?.confirmationCode ||
+                    null
+
+                return {
+                    ...req,
+                    confirmationCode: confirmation,
+                }
+            })
+
+            setAdoptionRequests((prev) =>
+                found.map((req: any) => {
+                    const existing = prev.find((r) => r.id === req.id)
+
+                    // Intenta encontrar el código por si viene suelto
+                    const incomingCode =
+                        req.confirmationCode ||
+                        req.values?.confirmationCode ||
+                        req.data?.confirmationCode ||
+                        req.adoption_request?.confirmationCode ||
+                        null
+
+                    return {
+                        ...req,
+                        confirmationCode: incomingCode || existing?.confirmationCode || null,
+                    }
+                })
+            )
         } catch (e: any) {
             const errorMessage =
                 e?.response?.data?.message || "Error al obtener solicitudes de adopción"
@@ -219,7 +259,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
             }
 
             // Actualizar el estado local con la nueva solicitud
-    setAdoptionRequests((prev) => [newRequest, ...prev])
+            setAdoptionRequests((prev) => [newRequest, ...prev])
 
             return newRequest
         } catch (e: any) {
@@ -297,9 +337,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         }
     }
 
-    async function acceptAdoptionRequest(
-        id: number
-    ): Promise<{
+    async function acceptAdoptionRequest(id: number): Promise<{
         confirmationCode?: string | null
         expiresAt?: string | null
         message?: string | null
@@ -317,8 +355,12 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
         try {
             const resp = await http.post(`/v1/adoptions/adoption-requests/${id}/confirm-accept`)
 
+            console.log("🔥 RESPUESTA COMPLETA AL ACEPTAR:", JSON.stringify(resp.data, null, 2))
             const confirmationCode =
                 resp?.data?.values?.confirmationCode || resp?.data?.confirmationCode || null
+
+            console.log("🔥 confirmationCode extraído:", confirmationCode)
+
             const expiresAt = resp?.data?.values?.expiresAt || resp?.data?.expiresAt || null
             const message = resp?.data?.values?.message || resp?.data?.message || null
 
@@ -328,6 +370,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
                         ? {
                               ...req,
                               status: "approved",
+                              confirmationCode: confirmationCode || req.confirmationCode || null,
                           }
                         : req
                 )
@@ -383,8 +426,7 @@ export const AdoptionRequestProvider: React.FC<React.PropsWithChildren> = ({ chi
 
             return { status, message }
         } catch (e: any) {
-            const errorMessage =
-                e?.response?.data?.message || "Error al validar código de adopción"
+            const errorMessage = e?.response?.data?.message || "Error al validar código de adopción"
             setError(errorMessage)
             console.error("Error validating adoption code:", e)
             throw e

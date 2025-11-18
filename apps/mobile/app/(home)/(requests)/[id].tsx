@@ -13,6 +13,7 @@ export default function RequestDetail() {
     const router = useRouter()
     const { user: authUser } = useAuthContext()
     const {
+        adoptionRequests,
         deleteAdoptionRequest,
         refreshRequests,
         updateAdoptionRequest,
@@ -58,7 +59,17 @@ export default function RequestDetail() {
                     reqObj = raw
                 }
 
-                setRequest(reqObj)
+                setRequest({
+                    ...reqObj,
+                    confirmationCode:
+                        reqObj.confirmationCode ||
+                        reqObj.values?.confirmationCode ||
+                        reqObj.data?.confirmationCode ||
+                        reqObj.adoption_request?.confirmationCode ||
+                        null,
+                })
+
+                console.log("🔍 Request detail raw:", JSON.stringify(reqObj, null, 2))
             } catch (e: any) {
                 setError(e?.response?.data?.message || e?.message || "Error al obtener solicitud")
             } finally {
@@ -253,7 +264,6 @@ export default function RequestDetail() {
             } else {
                 Alert.alert("Solicitud aceptada")
             }
-            await refreshRequests()
             router.replace("/(home)/(requests)")
         } catch (e: any) {
             Alert.alert(
@@ -292,6 +302,9 @@ export default function RequestDetail() {
     if (error) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
     if (!request) return <View style={{ flex: 1 }} />
 
+    // Buscar la solicitud en el contexto como fallback
+    const globalMatch = adoptionRequests.find((r) => r.id === Number(id))
+
     return (
         <View style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <RequestDetailCard
@@ -301,6 +314,10 @@ export default function RequestDetail() {
                 date={date}
                 status={statusLabel}
                 message={isRequester ? undefined : message}
+                /** 🔥 Código real entregado por backend (para el adoptante rol 20) */
+                confirmationCode={
+                    request?.confirmationCode || globalMatch?.confirmationCode || null
+                }
                 onAccept={isPostOwner ? handleAccept : undefined}
                 onReject={isRequester ? undefined : isPostOwner ? handleDelete : undefined}
                 onConfirmCode={isPostOwner ? handleConfirmCode : undefined}
