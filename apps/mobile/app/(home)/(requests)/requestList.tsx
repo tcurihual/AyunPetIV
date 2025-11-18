@@ -7,6 +7,7 @@ import {
     FlatList,
     ActivityIndicator,
     RefreshControl,
+    useColorScheme,
 } from "react-native"
 import { useAuthContext } from "@/context/AuthContext"
 import { useRouter } from "expo-router"
@@ -15,6 +16,7 @@ import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { Colors } from "@/constants/Colors"
 import { useFocusEffect } from "expo-router"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 function mapStatus(serverStatus: string | undefined): RequestStatus {
     switch (serverStatus) {
@@ -37,6 +39,13 @@ export default function Requests() {
     const { user } = useAuthContext()
     const [lastLoaded, setLastLoaded] = React.useState<number | null>(null)
     const [refreshing, setRefreshing] = React.useState(false)
+
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+    const backgroundColor = useThemeColor({}, "background")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
 
     // cache local para publicaciones resueltas por postId => { name, imageUri }
     const [resolved, setResolved] = React.useState<
@@ -100,7 +109,7 @@ export default function Requests() {
 
     const renderEmpty = () => (
         <View style={{ padding: 16 }}>
-            <Text style={{ color: "#6B6B6B" }}>No tienes solicitudes de adopción aún.</Text>
+            <Text style={{ color: textMutedColor }}>No tienes solicitudes de adopción aún.</Text>
         </View>
     )
 
@@ -119,22 +128,22 @@ export default function Requests() {
     if (loading) {
         return (
             <SafeAreaView
-                style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+                style={[styles.container, { backgroundColor, justifyContent: "center", alignItems: "center" }]}
             >
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={themeColors.icon} />
             </SafeAreaView>
         )
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor }]}>
             <FlatList
                 contentContainerStyle={{ padding: 16, paddingBottom: 90 }}
                 ListHeaderComponent={
                     <View style={{ gap: 6, marginBottom: 8 }}>
-                        <Text style={styles.h1}>Mis Solicitudes</Text>
-                        <Text style={styles.sub}>Revisa tus solicitudes de adopción</Text>
-                        <Text style={{ color: "#6B6B6B", fontSize: 12 }}>
+                        <Text style={[styles.h1, { color: textColor }]}>Mis Solicitudes</Text>
+                        <Text style={[styles.sub, { color: textSecondaryColor }]}>Revisa tus solicitudes de adopción</Text>
+                        <Text style={{ color: textMutedColor, fontSize: 12 }}>
                             Total: {adoptionRequests?.length ?? 0}
                         </Text>
                     </View>
@@ -205,7 +214,7 @@ export default function Requests() {
 
             {error && (
                 <View style={{ padding: 12 }}>
-                    <Text style={{ color: Colors.danger }}>{error}</Text>
+                    <Text style={{ color: themeColors.danger }}>{error}</Text>
                 </View>
             )}
         </SafeAreaView>
@@ -213,7 +222,7 @@ export default function Requests() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.light.background },
-    h1: { fontSize: 22, fontWeight: "900", color: Colors.light.text },
-    sub: { color: "#6B6B6B" },
+    container: { flex: 1 },
+    h1: { fontSize: 22, fontWeight: "900" },
+    sub: {},
 })

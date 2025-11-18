@@ -21,6 +21,7 @@ import { useLoading } from "@/context/LoadingContext"
 import { Colors } from "@/constants/Colors"
 import { FileInfo } from "@/services/http"
 import { userService } from "@/services/user"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export default function RequestGiverScreen() {
     const router = useRouter()
@@ -28,6 +29,14 @@ export default function RequestGiverScreen() {
     const { showAlert } = useAlert()
     const { withLoading } = useLoading()
     const [documents, setDocuments] = useState<FileInfo[]>([])
+
+    // Theme colors
+    const backgroundColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const borderColor = useThemeColor({}, "border")
+    const bgSecondaryColor = useThemeColor({}, "backgroundSecondary")
 
     // Verificar si ya tiene una solicitud pendiente (si tiene archivos en Media)
     // Ya no usamos validated=false porque ahora el usuario mantiene acceso
@@ -184,7 +193,7 @@ export default function RequestGiverScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["bottom"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Solicitud para Ser Dador</Text>
             </View>
@@ -198,18 +207,18 @@ export default function RequestGiverScreen() {
                     // Mostrar mensaje si ya tiene solicitud pendiente
                     <View style={styles.pendingContainer}>
                         <Ionicons name="hourglass-outline" size={64} color="#F9C80E" />
-                        <Text style={styles.pendingTitle}>Solicitud en Revisión</Text>
-                        <Text style={styles.pendingText}>
+                        <Text style={[styles.pendingTitle, { color: textColor }]}>Solicitud en Revisión</Text>
+                        <Text style={[styles.pendingText, { color: textSecondaryColor }]}>
                             Ya tienes una solicitud pendiente de validación.
                         </Text>
-                        <Text style={styles.pendingText}>
+                        <Text style={[styles.pendingText, { color: textSecondaryColor }]}>
                             Nuestro equipo está revisando tus documentos. Mientras tanto, puedes
                             seguir usando la app como adoptante con normalidad. Te notificaremos por
                             correo electrónico cuando tu solicitud sea procesada.
                         </Text>
-                        <View style={styles.pendingInfoBox}>
-                            <Ionicons name="mail-outline" size={20} color="#666" />
-                            <Text style={styles.pendingInfoText}>
+                        <View style={[styles.pendingInfoBox, { backgroundColor: bgSecondaryColor, borderColor }]}>
+                            <Ionicons name="mail-outline" size={20} color={textSecondaryColor} />
+                            <Text style={[styles.pendingInfoText, { color: textSecondaryColor }]}>
                                 Recibirás un correo de confirmación cuando tu cuenta sea validada
                             </Text>
                         </View>
@@ -219,15 +228,15 @@ export default function RequestGiverScreen() {
                     </View>
                 ) : (
                     <>
-                        <View style={styles.infoCard}>
+                        <View style={[styles.infoCard, { backgroundColor: cardColor, borderColor }]}>
                             <Ionicons name="information-circle" size={48} color={Colors.yellow} />
-                            <Text style={styles.infoTitle}>¿Qué necesitas?</Text>
-                            <Text style={styles.infoText}>
+                            <Text style={[styles.infoTitle, { color: textColor }]}>¿Qué necesitas?</Text>
+                            <Text style={[styles.infoText, { color: textSecondaryColor }]}>
                                 Para convertirte en dador de mascotas, necesitamos que subas
                                 documentos que validen tu identidad y capacidad para dar mascotas en
                                 adopción.
                             </Text>
-                            <Text style={styles.infoText}>
+                            <Text style={[styles.infoText, { color: textSecondaryColor }]}>
                                 Ejemplos: Certificado de antecedentes, cédula de identidad,
                                 comprobante de domicilio, etc.
                             </Text>
@@ -241,8 +250,8 @@ export default function RequestGiverScreen() {
                             </Text>
                         </View>
 
-                        <Text style={styles.sectionTitle}>Documentos ({documents.length}/10)</Text>
-                        <Text style={styles.sectionSubtitle}>
+                        <Text style={[styles.sectionTitle, { color: textColor }]}>Documentos ({documents.length}/10)</Text>
+                        <Text style={[styles.sectionSubtitle, { color: textSecondaryColor }]}>
                             Puedes subir imágenes (JPG, PNG) o archivos PDF
                         </Text>
 
@@ -250,7 +259,7 @@ export default function RequestGiverScreen() {
                         {documents.length > 0 && (
                             <View style={styles.documentsContainer}>
                                 {documents.map((doc, index) => (
-                                    <View key={index} style={styles.documentItem}>
+                                    <View key={index} style={[styles.documentItem, { backgroundColor: cardColor, borderColor }]}>
                                         <View style={styles.documentInfo}>
                                             <Ionicons
                                                 name={
@@ -261,7 +270,7 @@ export default function RequestGiverScreen() {
                                                 size={24}
                                                 color={Colors.yellow}
                                             />
-                                            <Text style={styles.documentName} numberOfLines={1}>
+                                            <Text style={[styles.documentName, { color: textColor }]} numberOfLines={1}>
                                                 {doc.name}
                                             </Text>
                                         </View>
@@ -282,7 +291,7 @@ export default function RequestGiverScreen() {
                             onPress={showUploadOptions}
                             disabled={documents.length >= 10}
                         >
-                            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+                            <Ionicons name="add-circle-outline" size={24} color="#000" />
                             <Text style={styles.uploadButtonText}>Agregar Documento</Text>
                         </TouchableOpacity>
 
@@ -298,9 +307,9 @@ export default function RequestGiverScreen() {
                             <Text style={styles.submitButtonText}>Enviar Solicitud</Text>
                         </TouchableOpacity>
 
-                        <View style={styles.noteCard}>
-                            <Ionicons name="time-outline" size={20} color="#666" />
-                            <Text style={styles.noteText}>
+                        <View style={[styles.noteCard, { backgroundColor: cardColor, borderColor }]}>
+                            <Ionicons name="time-outline" size={20} color={textSecondaryColor} />
+                            <Text style={[styles.noteText, { color: textSecondaryColor }]}>
                                 Una vez enviada tu solicitud, nuestro equipo la revisará en 24-48
                                 horas hábiles. Mientras tanto, podrás seguir usando la app con
                                 normalidad como adoptante. Recibirás un correo cuando tu solicitud
@@ -338,24 +347,22 @@ const styles = StyleSheet.create({
         paddingBottom: 30,
     },
     infoCard: {
-        backgroundColor: "#FFF9E6",
         padding: 20,
         marginHorizontal: 20,
         marginTop: 20,
         borderRadius: 12,
         alignItems: "center",
         marginBottom: 24,
+        borderWidth: 1,
     },
     infoTitle: {
         fontSize: 18,
         fontWeight: "bold",
         marginTop: 12,
         marginBottom: 8,
-        color: "#333",
     },
     infoText: {
         fontSize: 14,
-        color: "#666",
         textAlign: "center",
         marginBottom: 8,
         lineHeight: 20,
@@ -363,13 +370,11 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "bold",
-        color: "#333",
         marginBottom: 4,
         paddingHorizontal: 20,
     },
     sectionSubtitle: {
         fontSize: 13,
-        color: "#666",
         marginBottom: 16,
         paddingHorizontal: 20,
     },
@@ -381,10 +386,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#f8f9fa",
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
+        borderWidth: 1,
     },
     documentInfo: {
         flexDirection: "row",
@@ -395,7 +400,6 @@ const styles = StyleSheet.create({
     documentName: {
         marginLeft: 12,
         fontSize: 14,
-        color: "#333",
         flex: 1,
     },
     uploadButton: {
@@ -435,17 +439,16 @@ const styles = StyleSheet.create({
     },
     noteCard: {
         flexDirection: "row",
-        backgroundColor: "#f8f9fa",
         padding: 16,
         borderRadius: 8,
         marginBottom: 24,
         marginHorizontal: 20,
+        borderWidth: 1,
     },
     noteText: {
         flex: 1,
         marginLeft: 12,
         fontSize: 13,
-        color: "#666",
         lineHeight: 18,
     },
     pendingContainer: {
@@ -458,32 +461,29 @@ const styles = StyleSheet.create({
     pendingTitle: {
         fontSize: 22,
         fontWeight: "bold",
-        color: "#333",
         marginTop: 20,
         marginBottom: 16,
         textAlign: "center",
     },
     pendingText: {
         fontSize: 16,
-        color: "#666",
         textAlign: "center",
         marginBottom: 12,
         lineHeight: 24,
     },
     pendingInfoBox: {
         flexDirection: "row",
-        backgroundColor: "#FFF9E6",
         padding: 16,
         borderRadius: 8,
         marginTop: 20,
         marginBottom: 30,
         alignItems: "center",
+        borderWidth: 1,
     },
     pendingInfoText: {
         flex: 1,
         marginLeft: 12,
         fontSize: 14,
-        color: "#666",
         lineHeight: 20,
     },
     backButton: {

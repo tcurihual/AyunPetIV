@@ -273,7 +273,7 @@ function createStyles(colors: {
             alignItems: "center",
             flex: 1,
         },
-        buttonText: { color: colors.text, fontWeight: "bold" },
+        buttonText: { color: "#000", fontWeight: "bold" },
         sectionTitle: { fontSize: 16, fontWeight: "bold", color: colors.text, marginBottom: 12 },
         grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
         card: {
@@ -296,7 +296,7 @@ function createStyles(colors: {
             borderRadius: 8,
             alignItems: "center",
         },
-        infoButtonText: { fontSize: 12, fontWeight: "bold", color: colors.text },
+        infoButtonText: { fontSize: 12, fontWeight: "bold", color: "#000" },
         emptyCard: {
             backgroundColor: colors.card,
             borderRadius: 12,

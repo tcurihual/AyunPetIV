@@ -32,6 +32,7 @@ import type { PublicationItem } from "@/context/PublicationContext"
 import { Colors } from "@/constants/Colors"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 import { formatAgeFromObject } from "@/utils/ageFormat"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 type MessageFormData = z.infer<typeof MessageFormSchema>
 
@@ -60,6 +61,15 @@ export default function PublicationDetail() {
         updateMessage,
         deleteMessage,
     } = useMessageContext()
+
+    // Theme colors
+    const bgColor = useThemeColor({}, 'background')
+    const cardColor = useThemeColor({}, 'card')
+    const textColor = useThemeColor({}, 'text')
+    const textSecondaryColor = useThemeColor({}, 'textSecondary')
+    const textMutedColor = useThemeColor({}, 'textMuted')
+    const borderColor = useThemeColor({}, 'border')
+    const tintColor = useThemeColor({}, 'tint')
 
     const {
         control,
@@ -430,24 +440,24 @@ export default function PublicationDetail() {
 
     if (loading) {
         return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" />
-                <Text style={styles.gray}>Cargando publicación…</Text>
+            <View style={[styles.center, { backgroundColor: bgColor }]}>
+                <ActivityIndicator size="large" color={textColor} />
+                <Text style={[styles.gray, { color: textMutedColor }]}>Cargando publicación…</Text>
             </View>
         )
     }
 
     if (!pet) {
         return (
-            <View style={styles.center}>
-                <Text style={styles.empty}>Publicación no encontrada</Text>
+            <View style={[styles.center, { backgroundColor: bgColor }]}>
+                <Text style={[styles.empty, { color: textColor }]}>Publicación no encontrada</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.screenContainer}>
-            <Animated.View style={styles.container} sharedTransitionTag={`pet-card-${pet.id}`}>
+        <View style={[styles.screenContainer, { backgroundColor: bgColor }]}>
+            <Animated.View style={[styles.container, { backgroundColor: cardColor }]} sharedTransitionTag={`pet-card-${pet.id}`}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                     <View style={styles.infoContainer}>
                         <View style={styles.imageContainer}>
@@ -463,7 +473,7 @@ export default function PublicationDetail() {
 
                         <View style={styles.infoContainer}>
                             <Animated.Text
-                                style={styles.petName}
+                                style={[styles.petName, { color: textColor }]}
                                 sharedTransitionTag={`pet-name-${pet.id}`}
                             >
                                 Nombre: {pet.name}
@@ -471,44 +481,44 @@ export default function PublicationDetail() {
 
                             <View style={styles.infoRow}>
                                 <View style={styles.infoColumn}>
-                                    <Text style={styles.infoLabel}>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Especie:{" "}
-                                        <Text style={styles.infoValue}>
+                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
                                             {translateSpeciesToSpanish((pet as any).type || "")}
                                         </Text>
                                     </Text>
 
-                                    <Text style={styles.infoLabel}>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Género:{" "}
-                                        <Text style={styles.infoValue}>
+                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
                                             {translateGenderToSpanish(pet.gender || "")}
                                         </Text>
                                     </Text>
 
-                                    <Text style={styles.infoLabel}>
-                                        Edad: <Text style={styles.infoValue}>{pet.age}</Text>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
+                                        Edad: <Text style={[styles.infoValue, { color: textSecondaryColor }]}>{pet.age}</Text>
                                     </Text>
                                 </View>
 
                                 <View style={styles.infoColumn}>
-                                    <Text style={styles.infoLabel}>Publicado por:</Text>
-                                    <Text style={styles.publisherName}>{pet.publisher}</Text>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>Publicado por:</Text>
+                                    <Text style={[styles.publisherName, { color: textSecondaryColor }]}>{pet.publisher}</Text>
                                 </View>
                             </View>
 
                             {pet.description ? (
                                 <View style={styles.descriptionContainer}>
-                                    <Text style={styles.descriptionLabel}>Descripción: </Text>
-                                    <Text style={styles.descriptionText}>{pet.description}</Text>
+                                    <Text style={[styles.descriptionLabel, { color: textColor }]}>Descripción: </Text>
+                                    <Text style={[styles.descriptionText, { color: textSecondaryColor }]}>{pet.description}</Text>
                                 </View>
                             ) : null}
 
                             <View style={styles.commentsContainer}>
-                                <Text style={styles.commentsTitle}>
+                                <Text style={[styles.commentsTitle, { color: textColor }]}>
                                     Comentarios ({comments.length})
                                 </Text>
 
-                                <View style={styles.commentForm}>
+                                <View style={[styles.commentForm, { backgroundColor: bgColor }]}>
                                     <Input
                                         name="description"
                                         control={control}
@@ -545,8 +555,8 @@ export default function PublicationDetail() {
                                         ))}
                                     </View>
                                 ) : (
-                                    <View style={styles.commentsPlaceholder}>
-                                        <Text style={styles.commentsPlaceholderText}>
+                                    <View style={[styles.commentsPlaceholder, { backgroundColor: cardColor }]}>
+                                        <Text style={[styles.commentsPlaceholderText, { color: textMutedColor }]}>
                                             Sé el primero en comentar...
                                         </Text>
                                     </View>
@@ -687,10 +697,9 @@ export default function PublicationDetail() {
 }
 
 const styles = StyleSheet.create({
-    screenContainer: { flex: 1, backgroundColor: "#fff", padding: 16 },
+    screenContainer: { flex: 1, padding: 16 },
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
         borderRadius: 16,
         overflow: "hidden",
         shadowColor: "#000",
@@ -707,21 +716,20 @@ const styles = StyleSheet.create({
     },
     mainImage: { width: "100%", height: "100%" },
     infoContainer: { padding: 20, flex: 1 },
-    petName: { fontSize: 18, fontWeight: "bold", color: "#222", marginBottom: 16 },
+    petName: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
     infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
     infoColumn: { flex: 1 },
-    infoLabel: { fontSize: 14, color: "#222", marginBottom: 8, fontWeight: "500" },
-    infoValue: { fontWeight: "normal", color: "#666" },
-    publisherName: { fontSize: 14, color: "#666", fontWeight: "400" },
+    infoLabel: { fontSize: 14, marginBottom: 8, fontWeight: "500" },
+    infoValue: { fontWeight: "normal" },
+    publisherName: { fontSize: 14, fontWeight: "400" },
     descriptionContainer: { marginTop: 12, marginBottom: 24 },
-    descriptionLabel: { fontSize: 14, fontWeight: "500", color: "#222", marginBottom: 4 },
-    descriptionText: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "justify" },
+    descriptionLabel: { fontSize: 14, fontWeight: "500", marginBottom: 4 },
+    descriptionText: { fontSize: 14, lineHeight: 20, textAlign: "justify" },
     commentsContainer: { marginTop: 8 },
-    commentsTitle: { fontSize: 16, fontWeight: "bold", color: "#222", marginBottom: 12 },
+    commentsTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 12 },
     commentForm: {
         marginBottom: 16,
         padding: 12,
-        backgroundColor: "#F9F9F9",
         borderRadius: 8,
     },
     commentButton: {
@@ -735,14 +743,13 @@ const styles = StyleSheet.create({
     commentButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
     commentsList: { gap: 12 },
     commentsPlaceholder: {
-        backgroundColor: Colors.light.background,
         borderRadius: 8,
         padding: 20,
         alignItems: "center",
         justifyContent: "center",
         minHeight: 80,
     },
-    commentsPlaceholderText: { fontSize: 14, color: "#999", fontStyle: "italic" },
+    commentsPlaceholderText: { fontSize: 14, fontStyle: "italic" },
     buttonContainer: { marginTop: 30, marginBottom: 20, paddingHorizontal: 20 },
     editButton: {
         backgroundColor: Colors.secondary,

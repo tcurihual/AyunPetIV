@@ -106,7 +106,7 @@ export default function Header({ onMenuPress }: HeaderProps) {
                     />
                 ) : (
                     <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
-                        {/* 6. Color de icono fijo (negro) para contrastar con fondo 'tint' */}
+                        {/* Icono de menú siempre negro sobre fondo amarillo */}
                         <Ionicons name="menu" size={width * 0.07} color="#000" />
                     </TouchableOpacity>
                 )}

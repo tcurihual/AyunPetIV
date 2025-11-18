@@ -11,6 +11,7 @@ import { useQuestionContext } from "@/context/QuestionContext"
 import { useAuthContext } from "@/context/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 interface QuestionSelectorProps {
     selectedIds: number[]
@@ -26,6 +27,14 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
     const { questions, loading, error, getQuestions } = useQuestionContext()
     const { user } = useAuthContext()
     const [expanded, setExpanded] = useState(false)
+
+    // Theme colors
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const borderColor = useThemeColor({}, "border")
+    const bgSecondaryColor = useThemeColor({}, "backgroundSecondary")
 
     useEffect(() => {
         // Cargar todas las preguntas solo cuando el usuario esté disponible
@@ -94,16 +103,16 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
 
     if (loading && questions.length === 0) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={[styles.loadingContainer, { backgroundColor: cardColor }]}>
                 <ActivityIndicator size="small" color={Colors.yellow} />
-                <Text style={styles.loadingText}>Cargando preguntas...</Text>
+                <Text style={[styles.loadingText, { color: textSecondaryColor }]}>Cargando preguntas...</Text>
             </View>
         )
     }
 
     if (error) {
         return (
-            <View style={styles.errorContainer}>
+            <View style={[styles.errorContainer, { backgroundColor: cardColor, borderColor }]}>
                 <Ionicons name="alert-circle-outline" size={24} color="#DC2626" />
                 <Text style={styles.errorText}>{error}</Text>
             </View>
@@ -112,10 +121,10 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
 
     if (questions.length === 0) {
         return (
-            <View style={styles.emptyContainer}>
-                <Ionicons name="help-circle-outline" size={48} color="#9CA3AF" />
-                <Text style={styles.emptyText}>No hay preguntas disponibles</Text>
-                <Text style={styles.emptySubtext}>
+            <View style={[styles.emptyContainer, { backgroundColor: cardColor }]}>
+                <Ionicons name="help-circle-outline" size={48} color={textMutedColor} />
+                <Text style={[styles.emptyText, { color: textSecondaryColor }]}>No hay preguntas disponibles</Text>
+                <Text style={[styles.emptySubtext, { color: textMutedColor }]}>
                     Contacta al administrador para crear preguntas
                 </Text>
             </View>
@@ -123,14 +132,14 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: cardColor, borderColor }]}>
             <TouchableOpacity
                 style={styles.header}
                 onPress={() => setExpanded(!expanded)}
                 disabled={disabled}
             >
                 <View style={styles.headerLeft}>
-                    <Ionicons name="list-outline" size={24} color="#1C1C1C" />
+                    <Ionicons name="list-outline" size={24} color="#000" />
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.headerTitle}>Formulario de adopción</Text>
                         <Text style={styles.headerSubtitle}>
@@ -143,7 +152,7 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
                 <Ionicons
                     name={expanded ? "chevron-up-outline" : "chevron-down-outline"}
                     size={24}
-                    color="#6B7280"
+                    color="#000"
                 />
             </TouchableOpacity>
 
@@ -156,7 +165,8 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
                                 key={question.id}
                                 style={[
                                     styles.questionItem,
-                                    isSelected && styles.questionItemSelected,
+                                    { borderBottomColor: borderColor },
+                                    isSelected && [styles.questionItemSelected, { backgroundColor: bgSecondaryColor }],
                                     disabled && styles.questionItemDisabled,
                                 ]}
                                 onPress={() => toggleQuestion(question.id)}
@@ -166,17 +176,19 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
                                     <View
                                         style={[
                                             styles.checkbox,
+                                            { borderColor },
                                             isSelected && styles.checkboxSelected,
                                         ]}
                                     >
                                         {isSelected && (
-                                            <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                                            <Ionicons name="checkmark" size={16} color="#000" />
                                         )}
                                     </View>
                                     <View style={styles.questionContent}>
                                         <Text
                                             style={[
                                                 styles.questionText,
+                                                { color: textColor },
                                                 isSelected && styles.questionTextSelected,
                                             ]}
                                         >
@@ -186,9 +198,9 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
                                             <Ionicons
                                                 name={getQuestionTypeIcon(question.type)}
                                                 size={14}
-                                                color="#6B7280"
+                                                color={textMutedColor}
                                             />
-                                            <Text style={styles.questionType}>
+                                            <Text style={[styles.questionType, { color: textMutedColor }]}>
                                                 {getQuestionTypeLabel(question.type)}
                                             </Text>
                                         </View>
@@ -201,8 +213,8 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
             )}
 
             {expanded && selectedIds.length > 0 && (
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>
+                <View style={[styles.footer, { backgroundColor: bgSecondaryColor, borderTopColor: borderColor }]}>
+                    <Text style={[styles.footerText, { color: textSecondaryColor }]}>
                         Los adoptantes responderán estas preguntas al solicitar adopción
                     </Text>
                 </View>
@@ -213,10 +225,8 @@ export const QuestionSelector: React.FC<QuestionSelectorProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#FFFEF7",
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#E0D0A0",
         marginVertical: 8,
         overflow: "hidden",
     },
@@ -239,12 +249,13 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: "#000",
     },
     headerSubtitle: {
         fontSize: 13,
-        color: "#6B7280",
         marginTop: 2,
+        color: "#000",
+        opacity: 0.7,
     },
     questionsList: {
         maxHeight: 300,
@@ -254,10 +265,9 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         padding: 12,
         borderBottomWidth: 1,
-        borderBottomColor: "#FFF9E6",
     },
     questionItemSelected: {
-        backgroundColor: "#FFF9E6",
+        // backgroundColor aplicado inline
     },
     questionItemDisabled: {
         opacity: 0.5,
@@ -272,7 +282,6 @@ const styles = StyleSheet.create({
         height: 24,
         borderRadius: 6,
         borderWidth: 2,
-        borderColor: "#E0D0A0",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
@@ -287,12 +296,10 @@ const styles = StyleSheet.create({
     },
     questionText: {
         fontSize: 15,
-        color: "#1C1C1C",
         lineHeight: 20,
     },
     questionTextSelected: {
         fontWeight: "600",
-        color: "#1C1C1C",
     },
     questionMeta: {
         flexDirection: "row",
@@ -301,37 +308,31 @@ const styles = StyleSheet.create({
     },
     questionType: {
         fontSize: 12,
-        color: "#6B7280",
         marginLeft: 4,
     },
     footer: {
         padding: 12,
-        backgroundColor: "#FFF9E6",
         borderTopWidth: 1,
-        borderTopColor: "#E0D0A0",
     },
     footerText: {
         fontSize: 12,
-        color: "#6B7280",
         textAlign: "center",
         fontStyle: "italic",
     },
     loadingContainer: {
         padding: 24,
         alignItems: "center",
+        borderRadius: 12,
     },
     loadingText: {
         marginTop: 8,
         fontSize: 14,
-        color: "#6B7280",
     },
     errorContainer: {
         padding: 24,
         alignItems: "center",
-        backgroundColor: "#FEF2F2",
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#FCA5A5",
     },
     errorText: {
         marginTop: 8,
@@ -342,17 +343,16 @@ const styles = StyleSheet.create({
     emptyContainer: {
         padding: 32,
         alignItems: "center",
+        borderRadius: 12,
     },
     emptyText: {
         marginTop: 12,
         fontSize: 16,
         fontWeight: "600",
-        color: "#6B7280",
     },
     emptySubtext: {
         marginTop: 4,
         fontSize: 13,
-        color: "#9CA3AF",
         textAlign: "center",
     },
 })

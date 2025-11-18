@@ -7,6 +7,7 @@ import { Colors } from "@/constants/Colors"
 import { useAuthContext } from "@/context/AuthContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
 import { formatAgeFromObject } from "@/utils/ageFormat"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 interface PublicationCardProps {
     pet: Pet
@@ -16,6 +17,14 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
     const router = useRouter()
     const pathname = usePathname()
     const { user } = useAuthContext()
+
+    const cardBgColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const textTertiaryColor = useThemeColor({}, "textTertiary")
+    const tintColor = useThemeColor({}, "tint")
+    const disabledColor = useThemeColor({}, "disabled")
 
     const scale = useSharedValue(1)
 
@@ -65,34 +74,43 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
 
     return (
         <Animated.View
-            style={[styles.card, animatedStyle]}
+            style={[
+                styles.card,
+                { backgroundColor: cardBgColor },
+                animatedStyle
+            ]}
             sharedTransitionTag={`pet-card-${pet.id}`}
         >
             <Animated.Image
-                style={styles.image}
+                style={[styles.image, { backgroundColor: disabledColor }]}
                 source={typeof pet.image === "string" ? { uri: pet.image } : pet.image}
                 sharedTransitionTag={`pet-image-${pet.id}`}
             />
             <View style={styles.infoContainer}>
-                <Animated.Text style={styles.name} sharedTransitionTag={`pet-name-${pet.id}`}>
+                <Animated.Text 
+                    style={[styles.name, { color: textColor }]} 
+                    sharedTransitionTag={`pet-name-${pet.id}`}
+                >
                     {pet.name}
                 </Animated.Text>
-                <Text style={styles.details}>
+                <Text style={[styles.details, { color: textSecondaryColor }]}>
                     {`${translateSpeciesToSpanish((pet as any).type || "")} • ${translateGenderToSpanish(pet.gender || "")}`}
                 </Text>
-                <Text style={styles.ageText}>
+                <Text style={[styles.ageText, { color: textMutedColor }]}>
                     {formatAgeFromObject(pet)}
                 </Text>
-                <Text style={styles.publisher}>Publicado por: {pet.publisher}</Text>
+                <Text style={[styles.publisher, { color: textTertiaryColor }]}>
+                    Publicado por: {pet.publisher}
+                </Text>
             </View>
             <TouchableOpacity
-                style={styles.button}
+                style={[styles.button, { backgroundColor: tintColor }]}
                 onPress={handleViewDetails}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.8}
             >
-                <Text style={styles.buttonText}>Ver Información</Text>
+                <Text style={[styles.buttonText, { color: "#000" }]}>Ver Información</Text>
             </TouchableOpacity>
         </Animated.View>
     )
@@ -100,7 +118,6 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff",
         borderRadius: 16,
         overflow: "hidden",
         marginHorizontal: 4,
@@ -116,7 +133,6 @@ const styles = StyleSheet.create({
         height: 140,
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
-        backgroundColor: "#eee",
     },
     infoContainer: {
         paddingHorizontal: 12,
@@ -127,27 +143,22 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 16,
         fontWeight: "bold",
-        color: "#222",
         marginBottom: 2,
     },
     details: {
         fontSize: 13,
-        color: "#666",
         marginBottom: 2,
     },
     ageText: {
         fontSize: 12,
-        color: "#555",
         fontWeight: "500",
         marginBottom: 2,
     },
     publisher: {
         fontSize: 12,
-        color: "#999",
         marginBottom: 4,
     },
     button: {
-        backgroundColor: `${Colors.yellow}`,
         borderRadius: 8,
         paddingVertical: 8,
         marginHorizontal: 12,
@@ -157,7 +168,6 @@ const styles = StyleSheet.create({
     buttonText: {
         fontSize: 15,
         fontWeight: "bold",
-        color: "#222",
     },
 })
 

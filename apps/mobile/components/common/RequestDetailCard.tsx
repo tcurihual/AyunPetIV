@@ -11,6 +11,8 @@ import {
     StyleSheet,
 } from "react-native"
 import { useAuthContext } from "@/context/AuthContext"
+import { useThemeColor } from "@/hooks/useThemeColor"
+import { Colors } from "@/constants/Colors"
 
 export type Status = "Pendiente" | "Aceptada" | "Rechazada" | "Completada"
 
@@ -41,11 +43,25 @@ export default function RequestDetailCard({
     const role = user?.role
     const [code, setCode] = useState("")
 
+    const cardBgColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const bgColor = useThemeColor({}, "background")
+    const borderColor = useThemeColor({}, "border")
+    const infoColor = useThemeColor({}, "info")
+
+    // Obtener estilos de estado según el tema
+    const statusPending = Colors.light.statusPending
+    const statusApproved = Colors.light.statusApproved
+    const statusCompleted = Colors.light.statusCompleted
+    const statusRejected = Colors.light.statusRejected
+
     const statusStyles: Record<Status, { bg: string; fg: string }> = {
-        Pendiente: { bg: "#FFE8A3", fg: "#6A4B00" },
-        Aceptada: { bg: "#D1F3DA", fg: "#0E6B2B" },
-        Completada: { bg: "#B4E1FA", fg: "#0F4C75" },
-        Rechazada: { bg: "#FAD2D2", fg: "#8B1A1A" },
+        Pendiente: statusPending,
+        Aceptada: statusApproved,
+        Completada: statusCompleted,
+        Rechazada: statusRejected,
     }
 
     const st = statusStyles[status]
@@ -63,48 +79,48 @@ export default function RequestDetailCard({
             >
                 <Image source={{ uri: petPhoto }} style={styles.photo} />
 
-                <View style={styles.card}>
+                <View style={[styles.card, { backgroundColor: cardBgColor }]}>
                     <View style={styles.titleRow}>
-                        <Text style={styles.petName}>{petName}</Text>
+                        <Text style={[styles.petName, { color: textColor }]}>{petName}</Text>
                         <View style={[styles.badge, { backgroundColor: st.bg }]}>
                             <Text style={[styles.badgeText, { color: st.fg }]}>{status}</Text>
                         </View>
                     </View>
 
-                    <Text style={styles.sectionTitle}>Detalles de solicitud:</Text>
+                    <Text style={[styles.sectionTitle, { color: textColor }]}>Detalles de solicitud:</Text>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Solicitante: </Text>
-                        <Text style={styles.value}>{requester}</Text>
+                        <Text style={[styles.label, { color: textColor }]}>Solicitante: </Text>
+                        <Text style={[styles.value, { color: textColor }]}>{requester}</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Fecha: </Text>
-                        <Text style={styles.value}>{date}</Text>
+                        <Text style={[styles.label, { color: textColor }]}>Fecha: </Text>
+                        <Text style={[styles.value, { color: textColor }]}>{date}</Text>
                     </View>
 
                     {message && (
                         <View style={[styles.row, { alignItems: "flex-start" }]}>
-                            <Text style={styles.label}>Mensaje: </Text>
-                            <Text style={[styles.value, { flex: 1 }]}>{message}</Text>
+                            <Text style={[styles.label, { color: textColor }]}>Mensaje: </Text>
+                            <Text style={[styles.value, { flex: 1, color: textColor }]}>{message}</Text>
                         </View>
                     )}
 
                     {/* Mostrar código de adopción si es usuario adoptante */}
                     {role === 20 && status === "Aceptada" && (
                         <View style={{ marginTop: 10, alignItems: "center" }}>
-                            <Text style={{ fontWeight: "700", color: "#333" }}>
+                            <Text style={{ fontWeight: "700", color: textColor }}>
                                 Tu código de adopción es:
                             </Text>
                             <Text
                                 style={{
                                     fontSize: 24,
                                     fontWeight: "900",
-                                    color: "#2563EB",
+                                    color: infoColor,
                                     marginTop: 6,
                                 }}
                             >
                                 {code || "9F27C"}
                             </Text>
-                            <Text style={{ color: "#666", marginTop: 4, textAlign: "center" }}>
+                            <Text style={{ color: textSecondaryColor, marginTop: 4, textAlign: "center" }}>
                                 Entrégaselo al dador o refugio para completar la adopción.
                             </Text>
                         </View>
@@ -137,8 +153,9 @@ export default function RequestDetailCard({
                             {status === "Aceptada" && (
                                 <View style={{ marginTop: 10 }}>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { backgroundColor: bgColor, color: textColor, borderColor }]}
                                         placeholder="Ingrese código de adopción"
+                                        placeholderTextColor={textMutedColor}
                                         value={code}
                                         onChangeText={setCode}
                                     />
@@ -161,7 +178,6 @@ export default function RequestDetailCard({
 const styles = StyleSheet.create({
     photo: { width: "90%", height: 220, borderRadius: 2, marginVertical: 12, alignSelf: "center" },
     card: {
-        backgroundColor: "#fff",
         width: "95%",
         alignSelf: "center",
         borderRadius: 14,
@@ -170,23 +186,21 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    petName: { fontSize: 22, fontWeight: "900", color: "#1C1C1C" },
+    petName: { fontSize: 22, fontWeight: "900" },
     badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
     badgeText: { fontSize: 12, fontWeight: "800" },
-    sectionTitle: { marginTop: 6, fontSize: 14, fontWeight: "800", color: "#1C1C1C" },
+    sectionTitle: { marginTop: 6, fontSize: 14, fontWeight: "800" },
     row: { flexDirection: "row", alignItems: "center" },
-    label: { fontWeight: "800", color: "#1C1C1C" },
-    value: { color: "#444" },
+    label: { fontWeight: "800" },
+    value: {},
     btn: { marginTop: 10, borderRadius: 10, paddingVertical: 12, alignItems: "center" },
     btnAccept: { backgroundColor: "#2E8B57" },
     btnReject: { backgroundColor: "#C0392B" },
     btnText: { fontWeight: "800", color: "#fff" },
     input: {
         borderWidth: 1,
-        borderColor: "#CCC",
         borderRadius: 8,
         marginTop: 6,
         padding: 8,
-        color: "#333",
     },
 })

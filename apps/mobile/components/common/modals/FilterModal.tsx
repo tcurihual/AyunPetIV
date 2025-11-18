@@ -13,6 +13,7 @@ import {
     Platform,
 } from "react-native"
 import Animated, { FadeInUp, FadeOutDown } from "react-native-reanimated"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 interface FilterModalProps {
     visible: boolean
@@ -30,6 +31,14 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
     const [selectedType, setSelectedType] = useState<string>("all")
     const [selectedGender, setSelectedGender] = useState<string>("all")
     const [selectedAge, setSelectedAge] = useState<string>("all")
+    
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const bgColor = useThemeColor({}, "background")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
 
     const typeOptions = [
         { value: "all", label: "Todos", icon: "🐾" },
@@ -75,11 +84,19 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
     ) => (
         <TouchableOpacity
             key={value}
-            style={[styles.optionButton, selectedValue === value && styles.optionButtonActive]}
+            style={[
+                styles.optionButton, 
+                { backgroundColor: bgColor, borderColor },
+                selectedValue === value && styles.optionButtonActive
+            ]}
             onPress={() => onSelect(value)}
         >
             {icon && <Text style={styles.optionIcon}>{icon}</Text>}
-            <Text style={[styles.optionText, selectedValue === value && styles.optionTextActive]}>
+            <Text style={[
+                styles.optionText, 
+                { color: textSecondaryColor },
+                selectedValue === value && styles.optionTextActive
+            ]}>
                 {label}
             </Text>
         </TouchableOpacity>
@@ -92,17 +109,17 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
             {/* Fondo táctil para cerrar */}
             <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-            <Animated.View entering={FadeInUp} exiting={FadeOutDown} style={styles.modalContainer}>
-                <View style={styles.header}>
-                    <Text style={styles.title}>Filtrar Mascotas</Text>
-                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                        <Text style={styles.closeText}>✕</Text>
+            <Animated.View entering={FadeInUp} exiting={FadeOutDown} style={[styles.modalContainer, { backgroundColor: cardColor }]}>
+                <View style={[styles.header, { borderBottomColor: borderColor }]}>
+                    <Text style={[styles.title, { color: textColor }]}>Filtrar Mascotas</Text>
+                    <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: bgColor }]}>
+                        <Text style={[styles.closeText, { color: textSecondaryColor }]}>✕</Text>
                     </TouchableOpacity>
                 </View>
 
                 <ScrollView style={styles.content}>
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Tipo de Mascota</Text>
+                        <Text style={[styles.sectionTitle, { color: textColor }]}>Tipo de Mascota</Text>
                         <View style={styles.optionsContainer}>
                             {typeOptions.map((option) =>
                                 renderOptionButton(
@@ -117,7 +134,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
                     </View>
 
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Sexo</Text>
+                        <Text style={[styles.sectionTitle, { color: textColor }]}>Sexo</Text>
                         <View style={styles.optionsContainer}>
                             {genderOptions.map((option) =>
                                 renderOptionButton(
@@ -131,7 +148,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
                     </View>
 
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Edad</Text>
+                        <Text style={[styles.sectionTitle, { color: textColor }]}>Edad</Text>
                         <View style={styles.optionsContainer}>
                             {ageOptions.map((option) =>
                                 renderOptionButton(
@@ -145,9 +162,9 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApplyFilt
                     </View>
                 </ScrollView>
 
-                <View style={styles.footer}>
-                    <TouchableOpacity style={styles.clearButton} onPress={handleClearFilters}>
-                        <Text style={styles.clearButtonText}>Limpiar</Text>
+                <View style={[styles.footer, { borderTopColor: borderColor }]}>
+                    <TouchableOpacity style={[styles.clearButton, { backgroundColor: bgColor, borderColor }]} onPress={handleClearFilters}>
+                        <Text style={[styles.clearButtonText, { color: textSecondaryColor }]}>Limpiar</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilters}>
@@ -168,7 +185,6 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     modalContainer: {
-        backgroundColor: "#fff",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         height: height * 0.7,
@@ -180,24 +196,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: "#E0E0E0",
     },
     title: {
         fontSize: 20,
         fontWeight: "bold",
-        color: "#222",
     },
     closeButton: {
         width: 30,
         height: 30,
         borderRadius: 15,
-        backgroundColor: "#F0F0F0",
         justifyContent: "center",
         alignItems: "center",
     },
     closeText: {
         fontSize: 16,
-        color: "#666",
     },
     content: {
         flex: 1,
@@ -209,7 +221,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#222",
         marginBottom: 12,
     },
     optionsContainer: {
@@ -220,22 +231,22 @@ const styles = StyleSheet.create({
     optionButton: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#F5F5F5",
         borderRadius: 20,
         paddingVertical: 10,
         paddingHorizontal: 16,
         marginBottom: 8,
         gap: 6,
+        borderWidth: 1,
     },
     optionButtonActive: {
         backgroundColor: Colors.yellow,
+        borderColor: Colors.yellow,
     },
     optionIcon: {
         fontSize: 16,
     },
     optionText: {
         fontSize: 14,
-        color: "#666",
         fontWeight: "500",
     },
     optionTextActive: {
@@ -247,19 +258,17 @@ const styles = StyleSheet.create({
         padding: 20,
         gap: 12,
         borderTopWidth: 1,
-        borderTopColor: "#E0E0E0",
     },
     clearButton: {
         flex: 1,
-        backgroundColor: "#F0F0F0",
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: "center",
+        borderWidth: 1,
     },
     clearButtonText: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#666",
     },
     applyButton: {
         flex: 2,
