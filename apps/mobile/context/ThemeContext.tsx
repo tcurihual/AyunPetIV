@@ -7,6 +7,8 @@ type Theme = "light" | "dark"
 type ThemeContextType = {
     theme: Theme
     setTheme: (theme: Theme) => void
+    forceTheme: Theme | null
+    setForceTheme: (theme: Theme | null) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -16,6 +18,7 @@ const THEME_STORAGE_KEY = "app-theme"
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const systemTheme = useColorScheme() ?? "light"
     const [theme, setThemeState] = useState<Theme>(systemTheme)
+    const [forceTheme, setForceTheme] = useState<Theme | null>(null)
 
     // 1. Cargar la preferencia guardada al iniciar la app
     useEffect(() => {
@@ -46,7 +49,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         )
     }
 
-    return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
+    // El tema efectivo es el forzado (si existe) o el del usuario
+    const effectiveTheme = forceTheme ?? theme
+
+    return (
+        <ThemeContext.Provider value={{ theme: effectiveTheme, setTheme, forceTheme, setForceTheme }}>
+            {children}
+        </ThemeContext.Provider>
+    )
 }
 
 // Hook para usar el contexto en cualquier componente

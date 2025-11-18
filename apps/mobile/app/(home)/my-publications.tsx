@@ -16,6 +16,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { getPetsByOwner, getPetImage } from "@/services/petAsyncStorage"
 import { toMediaUrl } from "@/utils/mediaUrl"
 import {Colors} from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 const { width } = Dimensions.get("window")
 
@@ -44,6 +45,12 @@ export default function MyPublications() {
     const [selectedFilter, setSelectedFilter] = useState<FilterType>("all")
     const [items, setItems] = useState<PubItem[]>([])
     const [refreshing, setRefreshing] = useState(false)
+
+    // Theme colors
+    const backgroundColor = useThemeColor({}, "background")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const disabledColor = useThemeColor({}, "disabled")
 
     const filters = [
         { key: "all", label: "Todas" },
@@ -114,12 +121,12 @@ export default function MyPublications() {
     )
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor }]}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Mis Publicaciones</Text>
             </View>
 
-            <Text style={styles.subtitle}>Revisa tus publicaciones de adopción</Text>
+            <Text style={[styles.subtitle, { color: textSecondaryColor }]}>Revisa tus publicaciones de adopción</Text>
 
             <View style={styles.filtersContainer}>
                 {filters.map((filter) => (
@@ -127,6 +134,7 @@ export default function MyPublications() {
                         key={filter.key}
                         style={[
                             styles.filterButton,
+                            { backgroundColor: disabledColor },
                             selectedFilter === filter.key && styles.filterButtonActive,
                         ]}
                         onPress={() => setSelectedFilter(filter.key as FilterType)}
@@ -134,6 +142,7 @@ export default function MyPublications() {
                         <Text
                             style={[
                                 styles.filterText,
+                                { color: textSecondaryColor },
                                 selectedFilter === filter.key && styles.filterTextActive,
                             ]}
                         >
@@ -152,7 +161,7 @@ export default function MyPublications() {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 ListEmptyComponent={
                     <View style={{ padding: 24 }}>
-                        <Text style={{ textAlign: "center", color: "#666" }}>
+                        <Text style={{ textAlign: "center", color: textSecondaryColor }}>
                             Aún no tienes publicaciones.
                         </Text>
                     </View>
@@ -163,7 +172,7 @@ export default function MyPublications() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.light.background },
+    container: { flex: 1 },
     header: {
         alignItems: "center",
         justifyContent: "center",
@@ -172,7 +181,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
     },
     headerTitle: { fontSize: 18, fontWeight: "600", color: "#000" },
-    subtitle: { fontSize: 14, color: "#666", paddingHorizontal: 20, paddingVertical: 15 },
+    subtitle: { fontSize: 14, paddingHorizontal: 20, paddingVertical: 15 },
     filtersContainer: {
         flexDirection: "row",
         paddingHorizontal: 20,
@@ -181,13 +190,12 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     filterButton: {
-        backgroundColor: Colors.light.disabled,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
     },
     filterButtonActive: { backgroundColor: Colors.primary },
-    filterText: { fontSize: 14, color: "#666", fontWeight: "500" },
+    filterText: { fontSize: 14, fontWeight: "500" },
     filterTextActive: { color: "#000", fontWeight: "600" },
     listContainer: { paddingHorizontal: 20, paddingBottom: 20 },
 })

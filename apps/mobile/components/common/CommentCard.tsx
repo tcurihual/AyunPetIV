@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export type Comment = {
     id: string | number
@@ -31,6 +32,14 @@ export function CommentCard({
     const [isEditing, setIsEditing] = useState(false)
     const [editText, setEditText] = useState(comment.text)
     const [isLoading, setIsLoading] = useState(false)
+    
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const bgColor = useThemeColor({}, "background")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
 
     const isOwner = comment.ownerId === currentUserId
     const canEdit = isOwner
@@ -82,25 +91,25 @@ export function CommentCard({
     }
 
     return (
-        <View style={s.card}>
+        <View style={[s.card, { backgroundColor: cardColor, borderColor }]}>
             <View style={s.header}>
                 {comment.ownerAvatar ? (
                     <Image source={{ uri: comment.ownerAvatar }} style={s.avatar} />
                 ) : (
-                    <View style={[s.avatar, s.avatarFallback]}>
-                        <Ionicons name="person" size={20} color="#999" />
+                    <View style={[s.avatar, s.avatarFallback, { backgroundColor: bgColor }]}>
+                        <Ionicons name="person" size={20} color={textMutedColor} />
                     </View>
                 )}
                 <View style={{ flex: 1 }}>
-                    <Text style={s.owner}>{comment.ownerName}</Text>
-                    <Text style={s.date}>{new Date(comment.createdAt).toLocaleString()}</Text>
+                    <Text style={[s.owner, { color: textColor }]}>{comment.ownerName}</Text>
+                    <Text style={[s.date, { color: textMutedColor }]}>{new Date(comment.createdAt).toLocaleString()}</Text>
                 </View>
 
                 {/* Botones de acción */}
                 <View style={s.actions}>
                     {canEdit && !isEditing && (
                         <TouchableOpacity onPress={() => setIsEditing(true)} disabled={isLoading}>
-                            <Ionicons name="create-outline" size={20} color="#7c3aed" />
+                            <Ionicons name="create-outline" size={20} color={tintColor} />
                         </TouchableOpacity>
                     )}
                     {canDelete && (
@@ -120,22 +129,23 @@ export function CommentCard({
             {isEditing ? (
                 <View style={s.editContainer}>
                     <TextInput
-                        style={s.editInput}
+                        style={[s.editInput, { backgroundColor: bgColor, color: textColor, borderColor }]}
                         value={editText}
                         onChangeText={setEditText}
+                        placeholderTextColor={textMutedColor}
                         multiline
                         autoFocus
                     />
                     <View style={s.editButtons}>
                         <TouchableOpacity
-                            style={[s.editButton, s.cancelButton]}
+                            style={[s.editButton, s.cancelButton, { backgroundColor: bgColor, borderColor }]}
                             onPress={() => {
                                 setEditText(comment.text)
                                 setIsEditing(false)
                             }}
                             disabled={isLoading}
                         >
-                            <Text style={s.cancelButtonText}>Cancelar</Text>
+                            <Text style={[s.cancelButtonText, { color: textColor }]}>Cancelar</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[s.editButton, s.saveButton]}
@@ -149,7 +159,7 @@ export function CommentCard({
                     </View>
                 </View>
             ) : (
-                <Text style={s.text}>{comment.text}</Text>
+                <Text style={[s.text, { color: textColor }]}>{comment.text}</Text>
             )}
         </View>
     )
@@ -159,9 +169,7 @@ const s = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: "#eee",
         gap: 8,
     },
     header: { flexDirection: "row", alignItems: "center", gap: 10 },
@@ -169,23 +177,21 @@ const s = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: "#eee",
         alignItems: "center",
         justifyContent: "center",
     },
-    avatarFallback: { backgroundColor: "#ddd" },
+    avatarFallback: {},
     owner: { fontWeight: "700", fontSize: 14 },
-    date: { color: "#6b7280", fontSize: 12 },
+    date: { fontSize: 12 },
     actions: {
         flexDirection: "row",
         gap: 12,
         alignItems: "center",
     },
-    text: { color: "#111827", lineHeight: 20 },
+    text: { lineHeight: 20 },
     editContainer: { gap: 8 },
     editInput: {
         borderWidth: 1,
-        borderColor: "#d1d5db",
         borderRadius: 8,
         padding: 10,
         fontSize: 14,
@@ -201,16 +207,15 @@ const s = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 6,
+        borderWidth: 1,
     },
-    cancelButton: {
-        backgroundColor: "#f3f4f6",
-    },
+    cancelButton: {},
     cancelButtonText: {
-        color: "#374151",
         fontWeight: "600",
     },
     saveButton: {
         backgroundColor: "#7c3aed",
+        borderColor: "#7c3aed",
     },
     saveButtonText: {
         color: "#fff",

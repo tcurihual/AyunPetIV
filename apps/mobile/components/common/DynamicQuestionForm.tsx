@@ -7,10 +7,12 @@ import {
     TouchableOpacity,
     ScrollView,
     Switch,
+    useColorScheme,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { PostFormItem } from "@/context/PostFormContext"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export interface QuestionAnswer {
     id_post_form: number
@@ -35,6 +37,15 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
     const [answers, setAnswers] = useState<Record<number, string>>({})
     const [errors, setErrors] = useState<Record<number, string>>({})
     const [submitting, setSubmitting] = useState(false)
+
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+    const backgroundColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const borderColor = useThemeColor({}, "border")
 
     const updateAnswer = (postFormId: number, value: string) => {
         setAnswers((prev) => ({ ...prev, [postFormId]: value }))
@@ -97,10 +108,11 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
             case "text":
                 return (
                     <TextInput
-                        style={[styles.textInput, error && styles.inputError]}
+                        style={[styles.textInput, { backgroundColor: cardColor, borderColor, color: textColor }, error && { borderColor: themeColors.danger }]}
                         value={answer}
                         onChangeText={(value) => updateAnswer(item.id, value)}
                         placeholder="Escribe tu respuesta..."
+                        placeholderTextColor={textMutedColor}
                         multiline
                         numberOfLines={3}
                         editable={!disabled && !submitting}
@@ -110,10 +122,11 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
             case "number":
                 return (
                     <TextInput
-                        style={[styles.textInput, error && styles.inputError]}
+                        style={[styles.textInput, { backgroundColor: cardColor, borderColor, color: textColor }, error && { borderColor: themeColors.danger }]}
                         value={answer}
                         onChangeText={(value) => updateAnswer(item.id, value)}
                         placeholder="Ingresa un número..."
+                        placeholderTextColor={textMutedColor}
                         keyboardType="numeric"
                         editable={!disabled && !submitting}
                     />
@@ -125,7 +138,8 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
                         <TouchableOpacity
                             style={[
                                 styles.booleanOption,
-                                answer === "true" && styles.booleanOptionSelected,
+                                { backgroundColor: cardColor, borderColor },
+                                answer === "true" && { borderColor: Colors.yellow, backgroundColor: cardColor },
                             ]}
                             onPress={() => updateAnswer(item.id, "true")}
                             disabled={disabled || submitting}
@@ -133,12 +147,12 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
                             <Ionicons
                                 name={answer === "true" ? "checkmark-circle" : "ellipse-outline"}
                                 size={24}
-                                color={answer === "true" ? "#34C759" : "#9CA3AF"}
+                                color={answer === "true" ? "#34C759" : textMutedColor}
                             />
                             <Text
                                 style={[
                                     styles.booleanText,
-                                    answer === "true" && styles.booleanTextSelected,
+                                    { color: answer === "true" ? textColor : textMutedColor },
                                 ]}
                             >
                                 Sí
@@ -148,7 +162,8 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
                         <TouchableOpacity
                             style={[
                                 styles.booleanOption,
-                                answer === "false" && styles.booleanOptionSelected,
+                                { backgroundColor: cardColor, borderColor },
+                                answer === "false" && { borderColor: Colors.yellow, backgroundColor: cardColor },
                             ]}
                             onPress={() => updateAnswer(item.id, "false")}
                             disabled={disabled || submitting}
@@ -156,12 +171,12 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
                             <Ionicons
                                 name={answer === "false" ? "close-circle" : "ellipse-outline"}
                                 size={24}
-                                color={answer === "false" ? "#DC2626" : "#9CA3AF"}
+                                color={answer === "false" ? "#DC2626" : textMutedColor}
                             />
                             <Text
                                 style={[
                                     styles.booleanText,
-                                    answer === "false" && styles.booleanTextSelected,
+                                    { color: answer === "false" ? textColor : textMutedColor },
                                 ]}
                             >
                                 No
@@ -174,10 +189,11 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
             case "multiselect":
                 return (
                     <TextInput
-                        style={[styles.textInput, error && styles.inputError]}
+                        style={[styles.textInput, { backgroundColor: cardColor, borderColor, color: textColor }, error && { borderColor: themeColors.danger }]}
                         value={answer}
                         onChangeText={(value) => updateAnswer(item.id, value)}
                         placeholder="Escribe tu respuesta..."
+                        placeholderTextColor={textMutedColor}
                         editable={!disabled && !submitting}
                     />
                 )
@@ -185,10 +201,11 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
             default:
                 return (
                     <TextInput
-                        style={[styles.textInput, error && styles.inputError]}
+                        style={[styles.textInput, { backgroundColor: cardColor, borderColor, color: textColor }, error && { borderColor: themeColors.danger }]}
                         value={answer}
                         onChangeText={(value) => updateAnswer(item.id, value)}
                         placeholder="Escribe tu respuesta..."
+                        placeholderTextColor={textMutedColor}
                         editable={!disabled && !submitting}
                     />
                 )
@@ -208,38 +225,38 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
 
     if (postFormItems.length === 0) {
         return (
-            <View style={styles.emptyContainer}>
-                <Ionicons name="document-text-outline" size={48} color="#9CA3AF" />
-                <Text style={styles.emptyText}>No hay preguntas para responder</Text>
+            <View style={[styles.emptyContainer, { backgroundColor }]}>
+                <Ionicons name="document-text-outline" size={48} color={textMutedColor} />
+                <Text style={[styles.emptyText, { color: textMutedColor }]}>No hay preguntas para responder</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor }]}>
             <ScrollView style={styles.questionsContainer}>
                 {headerComponent && <>{headerComponent}</>}
 
-                <View style={styles.formHeader}>
-                    <Ionicons name="clipboard-outline" size={24} color="#1C1C1C" />
-                    <Text style={styles.headerTitle}>Formulario de adopción</Text>
+                <View style={[styles.formHeader, { backgroundColor: cardColor, borderColor }]}>
+                    <Ionicons name="clipboard-outline" size={24} color={textColor} />
+                    <Text style={[styles.headerTitle, { color: textColor }]}>Formulario de adopción</Text>
                 </View>
 
                 {postFormItems.map((item, index) => (
-                    <View key={item.id} style={styles.questionCard}>
+                    <View key={item.id} style={[styles.questionCard, { backgroundColor: cardColor, borderColor }]}>
                         <View style={styles.questionHeader}>
                             <View style={styles.questionNumberContainer}>
                                 <Text style={styles.questionNumber}>{index + 1}</Text>
                             </View>
                             <View style={styles.questionTitleContainer}>
-                                <Text style={styles.questionText}>{item.question.content}</Text>
+                                <Text style={[styles.questionText, { color: textColor }]}>{item.question.content}</Text>
                                 <View style={styles.questionMeta}>
                                     <Ionicons
                                         name={getQuestionIcon(item.question.type)}
                                         size={14}
-                                        color="#6B7280"
+                                        color={textSecondaryColor}
                                     />
-                                    <Text style={styles.requiredBadge}>Obligatoria</Text>
+                                    <Text style={[styles.requiredBadge, { color: themeColors.danger }]}>Obligatoria</Text>
                                 </View>
                             </View>
                         </View>
@@ -248,8 +265,8 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
                             {renderQuestionInput(item)}
                             {errors[item.id] && (
                                 <View style={styles.errorContainer}>
-                                    <Ionicons name="alert-circle" size={16} color="#DC2626" />
-                                    <Text style={styles.errorText}>{errors[item.id]}</Text>
+                                    <Ionicons name="alert-circle" size={16} color={themeColors.danger} />
+                                    <Text style={[styles.errorText, { color: themeColors.danger }]}>{errors[item.id]}</Text>
                                 </View>
                             )}
                         </View>
@@ -260,19 +277,19 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
             <TouchableOpacity
                 style={[
                     styles.submitButton,
-                    (disabled || submitting) && styles.submitButtonDisabled,
+                    (disabled || submitting) && { backgroundColor: borderColor, shadowOpacity: 0 },
                 ]}
                 onPress={handleSubmit}
                 disabled={disabled || submitting}
             >
                 {submitting ? (
                     <>
-                        <Ionicons name="sync-outline" size={20} color="#1C1C1C" />
+                        <Ionicons name="sync-outline" size={20} color="#000" />
                         <Text style={styles.submitButtonText}>Enviando...</Text>
                     </>
                 ) : (
                     <>
-                        <Ionicons name="send-outline" size={20} color="#1C1C1C" />
+                        <Ionicons name="send-outline" size={20} color="#000" />
                         <Text style={styles.submitButtonText}>{submitButtonText}</Text>
                     </>
                 )}
@@ -284,30 +301,24 @@ export const DynamicQuestionForm: React.FC<DynamicQuestionFormProps> = ({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFEF7",
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
         padding: 16,
-        backgroundColor: "#FFF9E6",
         borderBottomWidth: 1,
-        borderBottomColor: "#E0D0A0",
     },
     formHeader: {
         flexDirection: "row",
         alignItems: "center",
         padding: 16,
-        backgroundColor: "#FFF9E6",
         borderBottomWidth: 1,
-        borderBottomColor: "#E0D0A0",
         marginBottom: 16,
         borderRadius: 12,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#1C1C1C",
         marginLeft: 12,
     },
     questionsContainer: {
@@ -315,12 +326,10 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     questionCard: {
-        backgroundColor: "#FFF9E6",
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: "#E0D0A0",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -343,7 +352,7 @@ const styles = StyleSheet.create({
     questionNumber: {
         fontSize: 16,
         fontWeight: "700",
-        color: "#1C1C1C",
+        color: "#000",
     },
     questionTitleContainer: {
         flex: 1,
@@ -351,7 +360,6 @@ const styles = StyleSheet.create({
     questionText: {
         fontSize: 16,
         fontWeight: "500",
-        color: "#1C1C1C",
         lineHeight: 22,
         marginBottom: 6,
     },
@@ -361,7 +369,6 @@ const styles = StyleSheet.create({
     },
     requiredBadge: {
         fontSize: 12,
-        color: "#DC2626",
         marginLeft: 6,
         fontWeight: "500",
     },
@@ -369,18 +376,11 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     textInput: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#E0D0A0",
         padding: 12,
         fontSize: 15,
-        color: "#1C1C1C",
         minHeight: 44,
-    },
-    inputError: {
-        borderColor: "#DC2626",
-        backgroundColor: "#FEF2F2",
     },
     booleanContainer: {
         flexDirection: "row",
@@ -394,21 +394,11 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         borderWidth: 2,
-        borderColor: "#E0D0A0",
-        backgroundColor: "#FFFFFF",
-    },
-    booleanOptionSelected: {
-        borderColor: Colors.yellow,
-        backgroundColor: "#FFF9E6",
     },
     booleanText: {
         fontSize: 16,
         fontWeight: "500",
-        color: "#6B7280",
         marginLeft: 8,
-    },
-    booleanTextSelected: {
-        color: "#1C1C1C",
     },
     errorContainer: {
         flexDirection: "row",
@@ -417,7 +407,6 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 13,
-        color: "#DC2626",
         marginLeft: 4,
     },
     submitButton: {
@@ -434,14 +423,10 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
-    submitButtonDisabled: {
-        backgroundColor: "#E0D0A0",
-        shadowOpacity: 0,
-    },
     submitButtonText: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#1C1C1C",
+        color: "#000",
         marginLeft: 8,
     },
     emptyContainer: {
@@ -453,7 +438,6 @@ const styles = StyleSheet.create({
     emptyText: {
         marginTop: 16,
         fontSize: 16,
-        color: "#6B7280",
         textAlign: "center",
     },
 })

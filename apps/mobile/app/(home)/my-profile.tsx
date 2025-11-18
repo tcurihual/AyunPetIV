@@ -20,6 +20,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { userService } from "@/services/user"
 import { useRouter } from "expo-router"
 import { Colors } from "../../constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 import * as ImagePicker from "expo-image-picker"
 import type { ImagePickerAsset } from "expo-image-picker"
 
@@ -29,6 +30,17 @@ export default function MyProfileScreen() {
     const [isEditing, setIsEditing] = useState(false)
     const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
     const [selectedImage, setSelectedImage] = useState<ImagePickerAsset | null>(null)
+
+    // Colores dinámicos
+    const bgColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const tintColor = useThemeColor({}, "tint")
+    const dangerColor = useThemeColor({}, "danger")
+    const borderColor = useThemeColor({}, "border")
+    const disabledColor = useThemeColor({}, "disabled")
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -126,35 +138,35 @@ export default function MyProfileScreen() {
     }
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <View style={styles.profileCard}>
+        <ScrollView style={[styles.container, { backgroundColor: bgColor }]} showsVerticalScrollIndicator={false}>
+            <View style={[styles.profileCard, { backgroundColor: cardColor }]}>
                 <Image source={getAvatarSource()} style={styles.profileImage} />
 
-                <Text style={styles.userName}>{userData.name}</Text>
+                <Text style={[styles.userName, { color: textColor }]}>{userData.name}</Text>
 
                 <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Email: </Text>
-                    <Text style={styles.infoText}>{userData.email}</Text>
+                    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>Email: </Text>
+                    <Text style={[styles.infoText, { color: textColor }]}>{userData.email}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>RUT: </Text>
-                    <Text style={styles.infoText}>{userData.rut}</Text>
+                    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>RUT: </Text>
+                    <Text style={[styles.infoText, { color: textColor }]}>{userData.rut}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Descripción: </Text>
-                    <Text style={styles.infoText}>{userData.description}</Text>
+                    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>Descripción: </Text>
+                    <Text style={[styles.infoText, { color: textColor }]}>{userData.description}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Dirección: </Text>
-                    <Text style={styles.infoText}>{userData.address}</Text>
+                    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>Dirección: </Text>
+                    <Text style={[styles.infoText, { color: textColor }]}>{userData.address}</Text>
                 </View>
 
                 <View style={styles.buttonSection}>
-                    <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
-                        <Text style={styles.editButtonText}>Editar Perfil</Text>
+                    <TouchableOpacity style={[styles.editButton, { backgroundColor: tintColor }]} onPress={() => setIsEditing(true)}>
+                        <Text style={[styles.editButtonText, { color: "#000" }]}>Editar Perfil</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -167,7 +179,7 @@ export default function MyProfileScreen() {
                 onRequestClose={handleCancelEdit}
             >
                 <KeyboardAvoidingView
-                    style={styles.editFormOverlay}
+                    style={[styles.editFormOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                 >
                     <ScrollView
@@ -175,8 +187,8 @@ export default function MyProfileScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        <View style={styles.editForm}>
-                            <Text style={styles.editTitle}>Editar Perfil</Text>
+                        <View style={[styles.editForm, { backgroundColor: cardColor }]}>
+                            <Text style={[styles.editTitle, { color: textColor }]}>Editar Perfil</Text>
 
                             <Input
                                 name="name"
@@ -185,10 +197,10 @@ export default function MyProfileScreen() {
                                 placeholder="Ingresa tu nombre completo"
                             />
 
-                            <View style={styles.readOnlyField}>
-                                <Text style={styles.readOnlyLabel}>Correo electrónico</Text>
-                                <Text style={styles.readOnlyValue}>{userData.email}</Text>
-                                <Text style={styles.readOnlyHelper}>
+                            <View style={[styles.readOnlyField, { backgroundColor: bgColor }]}>
+                                <Text style={[styles.readOnlyLabel, { color: textSecondaryColor }]}>Correo electrónico</Text>
+                                <Text style={[styles.readOnlyValue, { color: textColor }]}>{userData.email}</Text>
+                                <Text style={[styles.readOnlyHelper, { color: textMutedColor }]}>
                                     El correo electrónico no puede ser modificado
                                 </Text>
                             </View>
@@ -216,7 +228,7 @@ export default function MyProfileScreen() {
                             />
 
                             <View style={{ marginTop: 20, alignItems: "center" }}>
-                                <Text style={{ fontWeight: "600", marginBottom: 10 }}>
+                                <Text style={{ fontWeight: "600", marginBottom: 10, color: textColor }}>
                                     Foto de Perfil
                                 </Text>
 
@@ -231,25 +243,25 @@ export default function MyProfileScreen() {
                                     />
                                 </TouchableOpacity>
 
-                                <Text style={{ marginTop: 10, color: "#666" }}>
+                                <Text style={{ marginTop: 10, color: textMutedColor }}>
                                     Toca la imagen para cambiarla
                                 </Text>
                             </View>
 
                             <View style={styles.editButtonSection}>
                                 <TouchableOpacity
-                                    style={styles.cancelButton}
+                                    style={[styles.cancelButton, { borderColor: borderColor }]}
                                     onPress={handleCancelEdit}
                                 >
-                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                    <Text style={[styles.cancelButtonText, { color: textColor }]}>Cancelar</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={styles.saveButton}
+                                    style={[styles.saveButton, { backgroundColor: tintColor }]}
                                     onPress={handleSubmit(onSubmit)}
                                     disabled={isSubmitting}
                                 >
-                                    <Text style={styles.saveButtonText}>
+                                    <Text style={[styles.saveButtonText, { color: "#000" }]}>
                                         {isSubmitting ? "Guardando..." : "Guardar"}
                                     </Text>
                                 </TouchableOpacity>
@@ -265,15 +277,17 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
         padding: 20,
     },
     profileCard: {
-        backgroundColor: "#fff",
         borderRadius: 16,
         padding: 20,
         alignItems: "center",
         elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
     },
     profileImage: {
         width: 200,
@@ -296,7 +310,6 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: 16,
-        color: "#666",
         textAlign: "justify",
     },
     buttonSection: {
@@ -318,20 +331,17 @@ const styles = StyleSheet.create({
     },
     editButton: {
         flex: 1,
-        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: "center",
     },
     editButtonText: {
-        color: "#000",
         fontWeight: "700",
     },
 
     // MODAL
     editFormOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.6)",
         justifyContent: "flex-end",
     },
     editFormScrollContent: {
@@ -339,7 +349,6 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     editForm: {
-        backgroundColor: "#fff",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
@@ -352,20 +361,19 @@ const styles = StyleSheet.create({
     },
     readOnlyField: {
         marginVertical: 10,
+        padding: 12,
+        borderRadius: 8,
     },
     readOnlyLabel: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#555",
     },
     readOnlyValue: {
         fontSize: 16,
-        color: "#333",
         marginTop: 4,
     },
     readOnlyHelper: {
         fontSize: 12,
-        color: "#888",
         marginTop: 2,
     },
     editButtonSection: {
@@ -375,19 +383,17 @@ const styles = StyleSheet.create({
     },
     cancelButton: {
         flex: 1,
-        backgroundColor: "#ccc",
         borderRadius: 12,
         paddingVertical: 12,
         marginRight: 10,
         alignItems: "center",
+        borderWidth: 1,
     },
     cancelButtonText: {
         fontWeight: "700",
-        color: "#333",
     },
     saveButton: {
         flex: 1,
-        backgroundColor: Colors.primary,
         borderRadius: 12,
         paddingVertical: 12,
         marginLeft: 10,
@@ -395,6 +401,5 @@ const styles = StyleSheet.create({
     },
     saveButtonText: {
         fontWeight: "700",
-        color: "#000",
     },
 })

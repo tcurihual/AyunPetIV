@@ -1,5 +1,6 @@
 import React from "react"
 import { Modal, View, Text, Button, StyleSheet } from "react-native"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 interface SessionExpiredModalProps {
     visible: boolean
@@ -7,12 +8,15 @@ interface SessionExpiredModalProps {
 }
 
 const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({ visible, onAccept }) => {
+    const cardBgColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>Sesión expirada</Text>
-                    <Text style={styles.message}>
+                <View style={[styles.container, { backgroundColor: cardBgColor }]}>
+                    <Text style={[styles.title, { color: textColor }]}>Sesión expirada</Text>
+                    <Text style={[styles.message, { color: textColor }]}>
                         Tu sesión ya no es válida. Por favor, inicia sesión nuevamente.
                     </Text>
                     <Button title="Ir a inicio de sesión" onPress={onAccept} />
@@ -30,7 +34,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     container: {
-        backgroundColor: "#fff",
         borderRadius: 10,
         padding: 24,
         width: "80%",

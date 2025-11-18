@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from "react-native"
 import { Controller, Control, FieldValues, Path, RegisterOptions } from "react-hook-form"
 import { Ionicons } from "@expo/vector-icons"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 type InputType = "text" | "email" | "password" | "number"
 
@@ -28,6 +29,13 @@ export default function Input<T extends FieldValues>({
 }: Props<T>) {
     const [show, setShow] = useState(false)
     const isPassword = type === "password"
+    
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const cardColor = useThemeColor({}, "card")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
 
     // Extraer onChangeText de inputProps si existe
     const { onChangeText: externalOnChangeText, ...restInputProps } = inputProps || {}
@@ -44,15 +52,15 @@ export default function Input<T extends FieldValues>({
             rules={rules}
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
-                    {!!label && <Text style={styles.label}>{label}</Text>}
-                    {!!helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
+                    {!!label && <Text style={[styles.label, { color: textColor }]}>{label}</Text>}
+                    {!!helperText && !error && <Text style={[styles.helperText, { color: textSecondaryColor }]}>{helperText}</Text>}
                     {!!error && <Text style={styles.error}>{String(error.message || "")}</Text>}
 
-                    <View style={[styles.inputWrapper, !!error && styles.inputWrapperError]}>
+                    <View style={[styles.inputWrapper, { borderColor: tintColor, backgroundColor: cardColor }, !!error && styles.inputWrapperError]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { color: textColor }]}
                             placeholder={placeholder}
-                            placeholderTextColor="#A0A0A0"
+                            placeholderTextColor={textMutedColor}
                             value={(value as string | number | undefined)?.toString() ?? ""}
                             onChangeText={(txt) => {
                                 // Primero ejecutar el handler interno
@@ -83,7 +91,7 @@ export default function Input<T extends FieldValues>({
                                 <Ionicons
                                     name={show ? "eye-off-outline" : "eye-outline"}
                                     size={22}
-                                    color="#7c3aed"
+                                    color={tintColor}
                                 />
                             </TouchableOpacity>
                         )}
@@ -96,11 +104,10 @@ export default function Input<T extends FieldValues>({
 
 const styles = StyleSheet.create({
     container: { width: "100%", marginBottom: 18 },
-    label: { marginBottom: 6, fontWeight: "600", fontSize: 16, color: "#111827" },
+    label: { marginBottom: 6, fontWeight: "600", fontSize: 16 },
     helperText: {
         marginBottom: 6,
         fontSize: 12,
-        color: "#6b7280",
         fontStyle: "italic",
         lineHeight: 16,
     },
@@ -108,11 +115,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         borderWidth: 1.5,
-        borderColor: "#7c3aed",
         borderRadius: 12,
         paddingHorizontal: 12,
         paddingVertical: 2,
-        backgroundColor: "#fff",
         minHeight: 50,
     },
     inputWrapperError: { borderColor: "#dc2626" },
@@ -120,7 +125,6 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         paddingVertical: 12,
-        color: "#111827",
     },
     toggleButton: {
         paddingHorizontal: 8,

@@ -1,7 +1,8 @@
 import React from "react"
-import { StyleSheet, TouchableOpacity, Dimensions, StyleProp, ViewStyle } from "react-native"
+import { StyleSheet, TouchableOpacity, Dimensions, StyleProp, ViewStyle, useColorScheme } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { Colors } from "@/constants/Colors"
 
 const { width } = Dimensions.get("window")
 
@@ -12,16 +13,22 @@ type BackButtonProps = {
 
 export default function BackButton({ style, floating = true }: BackButtonProps) {
     const router = useRouter()
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
 
     return (
         <TouchableOpacity
-            style={[floating ? styles.button : styles.inlineButton, style]}
+            style={[
+                floating ? styles.button : styles.inlineButton,
+                { backgroundColor: themeColors.card },
+                style
+            ]}
             onPress={() => {
                 if (router.canGoBack()) router.back()
                 else router.replace("/(home)")
             }}
         >
-            <Ionicons name="arrow-back" size={width * 0.07} color="#000" />
+            <Ionicons name="arrow-back" size={width * 0.07} color={themeColors.text} />
         </TouchableOpacity>
     )
 }
@@ -31,7 +38,6 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 135,
         left: 10,
-        backgroundColor: "#fff",
         borderRadius: width * 0.08,
         padding: width * 0.03,
         shadowColor: "#000",
@@ -42,7 +48,6 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     inlineButton: {
-        backgroundColor: "#fff",
         borderRadius: width * 0.06,
         padding: width * 0.02,
         elevation: 3,

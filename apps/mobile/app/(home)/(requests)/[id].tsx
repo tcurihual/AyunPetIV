@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { View, Alert, ActivityIndicator, Text, Pressable, TextInput } from "react-native"
+import { View, Alert, ActivityIndicator, Text, Pressable, TextInput, useColorScheme } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import RequestDetailCard, { Status } from "@/components/common/RequestDetailCard"
 import { http } from "@/services/http"
@@ -7,6 +7,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { Colors } from "@/constants/Colors"
+import { useThemeColor } from "@/hooks/useThemeColor"
 
 export default function RequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -20,6 +21,14 @@ export default function RequestDetail() {
         validateAdoptionCode,
     } = useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
+
+    const colorScheme = useColorScheme() ?? "light"
+    const themeColors = Colors[colorScheme]
+    const backgroundColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const borderColor = useThemeColor({}, "border")
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -285,15 +294,15 @@ export default function RequestDetail() {
 
     if (loading)
         return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator />
+            <View style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator color={themeColors.icon} />
             </View>
         )
-    if (error) return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }} />
-    if (!request) return <View style={{ flex: 1 }} />
+    if (error) return <View style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }} />
+    if (!request) return <View style={{ flex: 1, backgroundColor }} />
 
     return (
-        <View style={{ flex: 1, backgroundColor: Colors.light.background }}>
+        <View style={{ flex: 1, backgroundColor }}>
             <RequestDetailCard
                 petPhoto={resolvedPetPhoto || "https://placehold.co/400x400?text=Mascota"}
                 petName={resolvedPetName || "Mascota"}
@@ -309,20 +318,20 @@ export default function RequestDetail() {
             {isRequester && (
                 <View style={{ padding: 12, gap: 16 }}>
                     <View style={{ gap: 8 }}>
-                        <Text style={{ fontWeight: "700", color: Colors.light.text }}>
+                        <Text style={{ fontWeight: "700", color: textColor }}>
                             Mensaje para el cuidador
                         </Text>
                         {!isEditingMessage ? (
                             <View
                                 style={{
-                                    backgroundColor: "#FFFFFF",
+                                    backgroundColor: cardColor,
                                     borderRadius: 8,
                                     borderWidth: 1,
-                                    borderColor: Colors.light.border,
+                                    borderColor: borderColor,
                                     padding: 12,
                                 }}
                             >
-                                <Text style={{ color: "#1F2933" }}>
+                                <Text style={{ color: textColor }}>
                                     {message ? message : "Sin mensaje"}
                                 </Text>
                                 <Pressable
@@ -334,13 +343,13 @@ export default function RequestDetail() {
                                     style={{
                                         marginTop: 12,
                                         alignSelf: "flex-start",
-                                        backgroundColor: Colors.secondary,
+                                        backgroundColor: themeColors.secondary,
                                         paddingVertical: 8,
                                         paddingHorizontal: 16,
                                         borderRadius: 8,
                                     }}
                                 >
-                                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                                    <Text style={{ color: "#000", fontWeight: "700" }}>
                                         Editar mensaje
                                     </Text>
                                 </Pressable>
@@ -357,20 +366,20 @@ export default function RequestDetail() {
                                     }}
                                     editable={!savingMessage}
                                     style={{
-                                        backgroundColor: "#FFFFFF",
+                                        backgroundColor: cardColor,
                                         borderRadius: 8,
                                         borderWidth: 1,
-                                        borderColor: Colors.light.border,
+                                        borderColor: borderColor,
                                         padding: 12,
                                         minHeight: 110,
                                         textAlignVertical: "top",
-                                        color: "#1F2933",
+                                        color: textColor,
                                     }}
                                     placeholder="Agrega un mensaje para el cuidador..."
-                                    placeholderTextColor={Colors.light.textSecondary}
+                                    placeholderTextColor={textSecondaryColor}
                                 />
                                 {messageError ? (
-                                    <Text style={{ color: Colors.danger }}>{messageError}</Text>
+                                    <Text style={{ color: themeColors.danger }}>{messageError}</Text>
                                 ) : null}
                                 <View style={{ flexDirection: "row", gap: 10 }}>
                                     <Pressable
@@ -380,8 +389,8 @@ export default function RequestDetail() {
                                             flex: 1,
                                             backgroundColor:
                                                 !messageChanged || savingMessage
-                                                    ? Colors.light.border
-                                                    : Colors.secondary,
+                                                    ? borderColor
+                                                    : themeColors.secondary,
                                             padding: 12,
                                             borderRadius: 8,
                                             alignItems: "center",
@@ -400,13 +409,13 @@ export default function RequestDetail() {
                                         disabled={savingMessage}
                                         style={{
                                             flex: 1,
-                                            backgroundColor: Colors.light.border,
+                                            backgroundColor: borderColor,
                                             padding: 12,
                                             borderRadius: 8,
                                             alignItems: "center",
                                         }}
                                     >
-                                        <Text style={{ color: "#1F2933", fontWeight: "700" }}>
+                                        <Text style={{ color: textColor, fontWeight: "700" }}>
                                             Cancelar
                                         </Text>
                                     </Pressable>
@@ -417,13 +426,13 @@ export default function RequestDetail() {
                     <Pressable
                         onPress={handleDelete}
                         style={{
-                            backgroundColor: Colors.danger,
+                            backgroundColor: themeColors.danger,
                             padding: 12,
                             borderRadius: 8,
                             alignItems: "center",
                         }}
                     >
-                        <Text style={{ color: "#fff", fontWeight: "800" }}>Eliminar solicitud</Text>
+                        <Text style={{ color: "#000", fontWeight: "800" }}>Eliminar solicitud</Text>
                     </Pressable>
                 </View>
             )}

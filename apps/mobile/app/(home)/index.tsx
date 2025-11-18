@@ -202,7 +202,7 @@ export default function Home() {
                         onPress={() => setSelectedCategory("dog")}
                     >
                         <Text style={styles.categoryEmoji}>🐕</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>
+                        <Text style={[styles.categoryText, { color: selectedCategory === "dog" ? "#000" : themeColors.text }]}>
                             Perro
                         </Text>
                     </TouchableOpacity>
@@ -218,7 +218,7 @@ export default function Home() {
                         onPress={() => setSelectedCategory("cat")}
                     >
                         <Text style={styles.categoryEmoji}>🐱</Text>
-                        <Text style={[styles.categoryText, { color: themeColors.text }]}>Gato</Text>
+                        <Text style={[styles.categoryText, { color: selectedCategory === "cat" ? "#000" : themeColors.text }]}>Gato</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -236,7 +236,7 @@ export default function Home() {
                     >
                         <Image
                             source={require("@/assets/images/filtrar.png")}
-                            style={styles.categoryIcon}
+                            style={[styles.categoryIcon, { tintColor: themeColors.icon }]}
                         />
                     </TouchableOpacity>
 
