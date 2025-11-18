@@ -76,7 +76,6 @@ export default function Home() {
     useEffect(() => {
         if (error) {
             showAlert(error, "error")
-            console.log("fakin Error", error)
             clearError()
         }
     }, [error, showAlert, clearError])
