@@ -63,13 +63,13 @@ export default function PublicationDetail() {
     } = useMessageContext()
 
     // Theme colors
-    const bgColor = useThemeColor({}, 'background')
-    const cardColor = useThemeColor({}, 'card')
-    const textColor = useThemeColor({}, 'text')
-    const textSecondaryColor = useThemeColor({}, 'textSecondary')
-    const textMutedColor = useThemeColor({}, 'textMuted')
-    const borderColor = useThemeColor({}, 'border')
-    const tintColor = useThemeColor({}, 'tint')
+    const bgColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const textMutedColor = useThemeColor({}, "textMuted")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
 
     const {
         control,
@@ -405,7 +405,7 @@ export default function PublicationDetail() {
             [
                 {
                     text: "Cancelar",
-                    style: "cancel"
+                    style: "cancel",
                 },
                 {
                     text: "Eliminar",
@@ -414,15 +414,15 @@ export default function PublicationDetail() {
                         try {
                             const petName = publicationFromContext.name
                             await deletePublication(Number(publicationFromContext.postId))
-                            
+
                             // Navegar a la pantalla de éxito con animación
                             router.replace({
                                 pathname: "/(shelter)/deletion-success" as any,
                                 params: {
-                                    petName: petName
-                                }
+                                    petName: petName,
+                                },
                             })
-                            
+
                             // Recargar publicaciones después de un delay para asegurar consistencia
                             // Esto se ejecuta DESPUÉS de navegar, evitando el error 404
                             setTimeout(() => {
@@ -430,10 +430,13 @@ export default function PublicationDetail() {
                             }, 1000)
                         } catch (error: any) {
                             console.error("Error deleting publication:", error)
-                            Alert.alert("Error", error?.message || "No se pudo eliminar la publicación")
+                            Alert.alert(
+                                "Error",
+                                error?.message || "No se pudo eliminar la publicación"
+                            )
                         }
-                    }
-                }
+                    },
+                },
             ]
         )
     }
@@ -457,7 +460,7 @@ export default function PublicationDetail() {
 
     return (
         <View style={[styles.screenContainer, { backgroundColor: bgColor }]}>
-            <Animated.View style={[styles.container, { backgroundColor: cardColor }]} sharedTransitionTag={`pet-card-${pet.id}`}>
+            <Animated.View style={[styles.container, { backgroundColor: cardColor }]}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                     <View style={styles.infoContainer}>
                         <View style={styles.imageContainer}>
@@ -467,15 +470,11 @@ export default function PublicationDetail() {
                                 }
                                 style={styles.mainImage}
                                 resizeMode="cover"
-                                sharedTransitionTag={`pet-image-${pet.id}`}
                             />
                         </View>
 
                         <View style={styles.infoContainer}>
-                            <Animated.Text
-                                style={[styles.petName, { color: textColor }]}
-                                sharedTransitionTag={`pet-name-${pet.id}`}
-                            >
+                            <Animated.Text style={[styles.petName, { color: textColor }]}>
                                 Nombre: {pet.name}
                             </Animated.Text>
 
@@ -483,33 +482,69 @@ export default function PublicationDetail() {
                                 <View style={styles.infoColumn}>
                                     <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Especie:{" "}
-                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
+                                        <Text
+                                            style={[
+                                                styles.infoValue,
+                                                { color: textSecondaryColor },
+                                            ]}
+                                        >
                                             {translateSpeciesToSpanish((pet as any).type || "")}
                                         </Text>
                                     </Text>
 
                                     <Text style={[styles.infoLabel, { color: textColor }]}>
                                         Género:{" "}
-                                        <Text style={[styles.infoValue, { color: textSecondaryColor }]}>
+                                        <Text
+                                            style={[
+                                                styles.infoValue,
+                                                { color: textSecondaryColor },
+                                            ]}
+                                        >
                                             {translateGenderToSpanish(pet.gender || "")}
                                         </Text>
                                     </Text>
 
                                     <Text style={[styles.infoLabel, { color: textColor }]}>
-                                        Edad: <Text style={[styles.infoValue, { color: textSecondaryColor }]}>{pet.age}</Text>
+                                        Edad:{" "}
+                                        <Text
+                                            style={[
+                                                styles.infoValue,
+                                                { color: textSecondaryColor },
+                                            ]}
+                                        >
+                                            {pet.age}
+                                        </Text>
                                     </Text>
                                 </View>
 
                                 <View style={styles.infoColumn}>
-                                    <Text style={[styles.infoLabel, { color: textColor }]}>Publicado por:</Text>
-                                    <Text style={[styles.publisherName, { color: textSecondaryColor }]}>{pet.publisher}</Text>
+                                    <Text style={[styles.infoLabel, { color: textColor }]}>
+                                        Publicado por:
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            styles.publisherName,
+                                            { color: textSecondaryColor },
+                                        ]}
+                                    >
+                                        {pet.publisher}
+                                    </Text>
                                 </View>
                             </View>
 
                             {pet.description ? (
                                 <View style={styles.descriptionContainer}>
-                                    <Text style={[styles.descriptionLabel, { color: textColor }]}>Descripción: </Text>
-                                    <Text style={[styles.descriptionText, { color: textSecondaryColor }]}>{pet.description}</Text>
+                                    <Text style={[styles.descriptionLabel, { color: textColor }]}>
+                                        Descripción:{" "}
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            styles.descriptionText,
+                                            { color: textSecondaryColor },
+                                        ]}
+                                    >
+                                        {pet.description}
+                                    </Text>
                                 </View>
                             ) : null}
 
@@ -555,8 +590,18 @@ export default function PublicationDetail() {
                                         ))}
                                     </View>
                                 ) : (
-                                    <View style={[styles.commentsPlaceholder, { backgroundColor: cardColor }]}>
-                                        <Text style={[styles.commentsPlaceholderText, { color: textMutedColor }]}>
+                                    <View
+                                        style={[
+                                            styles.commentsPlaceholder,
+                                            { backgroundColor: cardColor },
+                                        ]}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.commentsPlaceholderText,
+                                                { color: textMutedColor },
+                                            ]}
+                                        >
                                             Sé el primero en comentar...
                                         </Text>
                                     </View>

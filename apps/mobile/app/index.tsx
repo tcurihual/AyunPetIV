@@ -2,13 +2,15 @@ import React, { useEffect } from "react"
 import { View, Image, Alert, BackHandler, Text } from "react-native"
 import LottieView from "lottie-react-native"
 import NetInfo from "@react-native-community/netinfo"
-import { Colors } from "@/constants/Colors"
+import { useRouter } from "expo-router"
 
 export default function Index() {
-    // useEffect(() => {
-    //     // Mantener solo la validación de conexión
-    //     checkConnection()
-    // }, [])
+    const router = useRouter()
+    useEffect(() => {
+        checkConnection()
+    }, [])
+
+    const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
     const checkConnection = async () => {
         try {
@@ -21,6 +23,10 @@ export default function Index() {
             try {
                 const response = await fetch("https://www.google.com", { method: "HEAD" })
                 if (!response.ok) throw new Error("Sin internet real")
+
+                await delay(5000) 
+
+                router.replace("/(auth)")
             } catch {
                 return showNoInternet()
             }

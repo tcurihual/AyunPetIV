@@ -11,7 +11,8 @@ import {
     RefreshControl,
     useColorScheme,
 } from "react-native"
-import { useRouter } from "expo-router"
+import { useRouter, useFocusEffect } from "expo-router"
+
 import PublicationCard from "@/components/common/PublicationCard"
 import FilterModal, { FilterOptions } from "@/components/common/modals/FilterModal"
 import { useAuthContext } from "@/context/AuthContext"
@@ -95,6 +96,12 @@ export default function ShelterIndex() {
             clearError()
         }
     }, [error])
+
+    useFocusEffect(
+        useCallback(() => {
+            refreshPublications()
+        }, [])
+    )
 
     // Filtrar publicaciones (TODAS por defecto, con opción de ver solo las mías)
     const filteredPets = useMemo(() => {
@@ -188,7 +195,17 @@ export default function ShelterIndex() {
                         }}
                     >
                         <Text style={styles.categoryEmoji}>🐾</Text>
-                        <Text style={[styles.categoryText, { color: selectedCategory === "all" && !showOnlyMine ? "#000" : themeColors.text }]}>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                {
+                                    color:
+                                        selectedCategory === "all" && !showOnlyMine
+                                            ? "#000"
+                                            : themeColors.text,
+                                },
+                            ]}
+                        >
                             Todas
                         </Text>
                     </TouchableOpacity>
@@ -207,7 +224,14 @@ export default function ShelterIndex() {
                         }}
                     >
                         <Text style={styles.categoryEmoji}>📝</Text>
-                        <Text style={[styles.categoryText, { color: showOnlyMine ? "#000" : themeColors.text }]}>Mías</Text>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: showOnlyMine ? "#000" : themeColors.text },
+                            ]}
+                        >
+                            Mías
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -221,7 +245,12 @@ export default function ShelterIndex() {
                         onPress={() => setSelectedCategory("dog")}
                     >
                         <Text style={styles.categoryEmoji}>🐕</Text>
-                        <Text style={[styles.categoryText, { color: selectedCategory === "dog" ? "#000" : themeColors.text }]}>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: selectedCategory === "dog" ? "#000" : themeColors.text },
+                            ]}
+                        >
                             Perro
                         </Text>
                     </TouchableOpacity>
@@ -237,7 +266,14 @@ export default function ShelterIndex() {
                         onPress={() => setSelectedCategory("cat")}
                     >
                         <Text style={styles.categoryEmoji}>🐱</Text>
-                        <Text style={[styles.categoryText, { color: selectedCategory === "cat" ? "#000" : themeColors.text }]}>Gato</Text>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: selectedCategory === "cat" ? "#000" : themeColors.text },
+                            ]}
+                        >
+                            Gato
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
