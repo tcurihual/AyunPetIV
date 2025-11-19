@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from "react"
-import { View, Alert, ActivityIndicator, Text, Pressable, TextInput, useColorScheme } from "react-native"
+import {
+    View,
+    Alert,
+    ActivityIndicator,
+    Text,
+    Pressable,
+    TextInput,
+    useColorScheme,
+} from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import * as SecureStore from "expo-secure-store"
+
 import RequestDetailCard, { Status } from "@/components/common/RequestDetailCard"
 import { http } from "@/services/http"
 import { useAuthContext } from "@/context/AuthContext"
@@ -8,6 +18,7 @@ import { usePublicationContext } from "@/context/PublicationContext"
 import { useAdoptionRequestContext } from "@/context/AdoptionRequestContext"
 import { Colors } from "@/constants/Colors"
 import { useThemeColor } from "@/hooks/useThemeColor"
+import { useNotifications } from "@/context/NotificationContext"
 
 export default function RequestDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -22,6 +33,7 @@ export default function RequestDetail() {
         validateAdoptionCode,
     } = useAdoptionRequestContext()
     const { getPublicationByPostId } = usePublicationContext()
+    const { lastAdoptionInfo } = useNotifications()
 
     const colorScheme = useColorScheme() ?? "light"
     const themeColors = Colors[colorScheme]
@@ -34,6 +46,7 @@ export default function RequestDetail() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [request, setRequest] = useState<any | null>(null)
+    const [localConfirmationCode, setLocalConfirmationCode] = useState<string | null>(null)
 
     const [resolvedPetPhoto, setResolvedPetPhoto] = useState<string | null>(null)
     const [resolvedPetName, setResolvedPetName] = useState<string | null>(null)
@@ -43,10 +56,31 @@ export default function RequestDetail() {
     const [isEditingMessage, setIsEditingMessage] = useState(false)
 
     useEffect(() => {
+        if (!request || !lastAdoptionInfo) return
+
+        if (lastAdoptionInfo.requestId === Number(request.id)) {
+            if (lastAdoptionInfo.code) {
+                setLocalConfirmationCode(lastAdoptionInfo.code)
+            }
+            refreshRequests().catch(() => {})
+        }
+    }, [lastAdoptionInfo])
+
+    useEffect(() => {
+        let cancelled = false
         async function load() {
-            if (!id) return
-            setLoading(true)
-            setError(null)
+            if (!id) {
+                if (!cancelled) {
+                    setLoading(false)
+                }
+                return
+            }
+
+            if (!cancelled) {
+                setLoading(true)
+                setError(null)
+            }
+
             try {
                 const resp = await http.get(`/v1/adoptions/adoption-requests/${id}`)
                 const raw = resp.data
@@ -68,26 +102,45 @@ export default function RequestDetail() {
                     reqObj = raw
                 }
 
-                setRequest({
-                    ...reqObj,
-                    confirmationCode:
-                        reqObj.confirmationCode ||
-                        reqObj.values?.confirmationCode ||
-                        reqObj.data?.confirmationCode ||
-                        reqObj.adoption_request?.confirmationCode ||
-                        null,
-                })
+                if (!cancelled) {
+                    setRequest({
+                        ...reqObj,
+                        confirmationCode:
+                            reqObj.confirmationCode ||
+                            reqObj.values?.confirmationCode ||
+                            reqObj.data?.confirmationCode ||
+                            reqObj.adoption_request?.confirmationCode ||
+                            null,
+                    })
+                }
 
                 console.log("🔍 Request detail raw:", JSON.stringify(reqObj, null, 2))
             } catch (e: any) {
-                setError(e?.response?.data?.message || e?.message || "Error al obtener solicitud")
+                if (!cancelled) {
+                    setError(
+                        e?.response?.data?.message || e?.message || "Error al obtener solicitud"
+                    )
+                }
             } finally {
-                setLoading(false)
+                if (!cancelled) {
+                    setLoading(false)
+                }
             }
         }
 
         load()
+
+        return () => {
+            cancelled = true
+        }
     }, [id])
+
+    useEffect(() => {
+        const updated = adoptionRequests.find((r) => r.id === Number(id))
+        if (updated && updated.confirmationCode !== request?.confirmationCode) {
+            setRequest((prev: any) => ({ ...prev, confirmationCode: updated.confirmationCode }))
+        }
+    }, [adoptionRequests])
 
     useEffect(() => {
         let mounted = true
@@ -160,6 +213,23 @@ export default function RequestDetail() {
         setEditableMessage(message ?? "")
         setIsEditingMessage(false)
     }, [message])
+
+    useEffect(() => {
+        ;(async () => {
+            try {
+                const [storedReqId, storedCode] = await Promise.all([
+                    SecureStore.getItemAsync("last_adoption_request_id"),
+                    SecureStore.getItemAsync("last_adoption_confirmation_code"),
+                ])
+
+                if (storedReqId && storedCode && Number(storedReqId) === Number(id)) {
+                    setLocalConfirmationCode(storedCode)
+                }
+            } catch (err) {
+                console.log("Error leyendo código desde SecureStore", err)
+            }
+        })()
+    }, [id])
 
     const messageChanged = editableMessage !== message
 
@@ -304,15 +374,25 @@ export default function RequestDetail() {
 
     if (loading)
         return (
-            <View style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }}>
+            <View
+                style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }}
+            >
                 <ActivityIndicator color={themeColors.icon} />
             </View>
         )
-    if (error) return <View style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }} />
+    if (error)
+        return (
+            <View
+                style={{ flex: 1, backgroundColor, justifyContent: "center", alignItems: "center" }}
+            />
+        )
     if (!request) return <View style={{ flex: 1, backgroundColor }} />
 
     // Buscar la solicitud en el contexto como fallback
     const globalMatch = adoptionRequests.find((r) => r.id === Number(id))
+
+    const confirmationCodeToShow =
+        localConfirmationCode || request?.confirmationCode || globalMatch?.confirmationCode || null
 
     return (
         <View style={{ flex: 1, backgroundColor }}>
@@ -324,9 +404,7 @@ export default function RequestDetail() {
                 status={statusLabel}
                 message={isRequester ? undefined : message}
                 /** 🔥 Código real entregado por backend (para el adoptante rol 20) */
-                confirmationCode={
-                    request?.confirmationCode || globalMatch?.confirmationCode || null
-                }
+                confirmationCode={confirmationCodeToShow}
                 onAccept={isPostOwner ? handleAccept : undefined}
                 onReject={isRequester ? undefined : isPostOwner ? handleDelete : undefined}
                 onConfirmCode={isPostOwner ? handleConfirmCode : undefined}
@@ -396,7 +474,9 @@ export default function RequestDetail() {
                                     placeholderTextColor={textSecondaryColor}
                                 />
                                 {messageError ? (
-                                    <Text style={{ color: themeColors.danger }}>{messageError}</Text>
+                                    <Text style={{ color: themeColors.danger }}>
+                                        {messageError}
+                                    </Text>
                                 ) : null}
                                 <View style={{ flexDirection: "row", gap: 10 }}>
                                     <Pressable

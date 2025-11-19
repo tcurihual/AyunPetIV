@@ -2,7 +2,7 @@ import type { Response } from "express"
 import { AppError, AppResponse } from "@repo/utils"
 import type { AuthenticatedRequest, SavedPost } from "@repo/utils"
 import { supabase } from "../index"
-
+import { getMultipleEntityImages } from "../utils/mediaService"
 
 const parseId = (v: string) => {
     const n = Number(v)
@@ -19,7 +19,6 @@ export const listSavedPosts = async (req: AuthenticatedRequest, res: Response) =
         const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10))
         const offset = (page - 1) * pageSize
 
-        // Obtener publicaciones guardadas con información completa
         const { data, error, count } = await supabase
             .from("saved_post")
             .select(
@@ -36,7 +35,17 @@ export const listSavedPosts = async (req: AuthenticatedRequest, res: Response) =
                     updated_at,
                     creator_id,
                     pet_id,
-                    pet:pet_id (*)
+                    pet:pet_id (
+                        id,
+                        name,
+                        species,
+                        gender,
+                        size,
+                        sterilized,
+                        adopted,
+                        age_years,
+                        age_months
+                    )
                 )
             `,
                 { count: "exact" }
@@ -47,23 +56,76 @@ export const listSavedPosts = async (req: AuthenticatedRequest, res: Response) =
 
         if (error) throw new AppError(500, error.message)
 
-        const items = (data ?? []).map((row) => ({
-            id: row.id,
-            post_id: row.post_id,
-            user_id: row.user_id,
-            post: row.post,
-        }))
+        const items = data ?? []
+
+        const postIds = items
+            .map((row: any) => row.post_id)
+            .filter((id: any) => typeof id === "number" && Number.isFinite(id))
+
+        if (postIds.length === 0) {
+            return AppResponse(res, 200, "Listado de publicaciones guardadas", {
+                items: [],
+                total: count ?? 0,
+                page,
+                pageSize,
+                totalPages: Math.ceil((count ?? 0) / pageSize),
+            })
+        }
+
+        const headers = req.user
+            ? {
+                  "x-user-id": String(req.user.id),
+                  "x-user-role": String(req.user.role ?? ""),
+              }
+            : undefined
+
+        const postImagesMap = await getMultipleEntityImages("publications", postIds, headers)
+
+        const mappedItems = items.map((row: any) => {
+            const rawPost = row.post
+            const rawPet = rawPost?.pet
+
+            const images: string[] = postImagesMap[String(row.post_id)] || []
+
+            const postWithImages = rawPost
+                ? {
+                      ...rawPost,
+                      images,
+                  }
+                : null
+
+            const petWithImages = rawPet
+                ? {
+                      ...rawPet,
+                      images,
+                  }
+                : null
+
+            return {
+                id: row.id,
+                post_id: row.post_id,
+                user_id: row.user_id,
+                post: postWithImages
+                    ? {
+                          ...postWithImages,
+                          pet: petWithImages,
+                      }
+                    : null,
+            }
+        })
 
         return AppResponse(res, 200, "Listado de publicaciones guardadas", {
-            items,
+            items: mappedItems,
             total: count ?? 0,
             page,
             pageSize,
             totalPages: Math.ceil((count ?? 0) / pageSize),
         })
     } catch (e) {
-        if (e instanceof AppError) throw e
-        throw new AppError(500, "Error al obtener publicaciones guardadas")
+        if (e instanceof AppError) {
+            return AppResponse(res, e.statusCode ?? 500, e.message, null)
+        }
+        return AppResponse(res, 500, "Error al obtener publicaciones guardadas", null)
     }
 }
 

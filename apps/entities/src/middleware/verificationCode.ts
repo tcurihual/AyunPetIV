@@ -13,5 +13,5 @@ export const validateVerificationCodeR = z.object({
 })
 
 export const userIdParamR = z.object({
-    userId: z.string().transform((val) => parseInt(val, 10)),
+    user_id: z.string().transform((val) => parseInt(val, 10)),
 })

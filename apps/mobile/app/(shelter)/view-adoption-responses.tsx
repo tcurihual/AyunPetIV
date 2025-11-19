@@ -113,20 +113,30 @@ export default function ViewAdoptionResponses() {
         return (
             <View style={[styles.errorContainer, { backgroundColor: bgColor }]}>
                 <Ionicons name="alert-circle-outline" size={48} color={dangerColor} />
-                <Text style={[styles.errorText, { color: textColor }]}>ID de publicación inválido</Text>
-                <TouchableOpacity style={[styles.backButton, { backgroundColor: tintColor }]} onPress={() => router.back()}>
+                <Text style={[styles.errorText, { color: textColor }]}>
+                    ID de publicación inválido
+                </Text>
+                <TouchableOpacity
+                    style={[styles.backButton, { backgroundColor: tintColor }]}
+                    onPress={() => router.back()}
+                >
                     <Text style={[styles.backButtonText, { color: textColor }]}>Volver</Text>
                 </TouchableOpacity>
             </View>
         )
     }
 
-    if (user?.role !== 21) {
+    if (user?.role !== 21 && user?.role !== 22) {
         return (
             <View style={[styles.errorContainer, { backgroundColor: bgColor }]}>
                 <Ionicons name="lock-closed-outline" size={48} color={dangerColor} />
-                <Text style={[styles.errorText, { color: textColor }]}>Solo los dadores pueden ver las respuestas</Text>
-                <TouchableOpacity style={[styles.backButton, { backgroundColor: tintColor }]} onPress={() => router.back()}>
+                <Text style={[styles.errorText, { color: textColor }]}>
+                    Solo los dadores pueden ver las respuestas
+                </Text>
+                <TouchableOpacity
+                    style={[styles.backButton, { backgroundColor: tintColor }]}
+                    onPress={() => router.back()}
+                >
                     <Text style={[styles.backButtonText, { color: textColor }]}>Volver</Text>
                 </TouchableOpacity>
             </View>
@@ -137,7 +147,9 @@ export default function ViewAdoptionResponses() {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: bgColor }]}>
                 <ActivityIndicator size="large" color={tintColor} />
-                <Text style={[styles.loadingText, { color: textColor }]}>Cargando respuestas...</Text>
+                <Text style={[styles.loadingText, { color: textColor }]}>
+                    Cargando respuestas...
+                </Text>
             </View>
         )
     }
@@ -168,30 +180,28 @@ export default function ViewAdoptionResponses() {
                 {loading && (
                     <View style={[styles.loadingCard, { backgroundColor: cardColor }]}>
                         <ActivityIndicator size="small" color={tintColor} />
-                        <Text style={[styles.loadingCardText, { color: textColor }]}>Cargando datos...</Text>
+                        <Text style={[styles.loadingCardText, { color: textColor }]}>
+                            Cargando datos...
+                        </Text>
                     </View>
                 )}
 
                 {postFormItems.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons
-                            name="document-text-outline"
-                            size={64}
-                            color={textMutedColor}
-                        />
-                        <Text style={[styles.emptyTitle, { color: textColor }]}>No hay formulario configurado</Text>
+                        <Ionicons name="document-text-outline" size={64} color={textMutedColor} />
+                        <Text style={[styles.emptyTitle, { color: textColor }]}>
+                            No hay formulario configurado
+                        </Text>
                         <Text style={[styles.emptyText, { color: textSecondaryColor }]}>
                             Esta publicación no tiene preguntas asociadas
                         </Text>
                     </View>
                 ) : groupedResponses.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons
-                            name="chatbubbles-outline"
-                            size={64}
-                            color={textMutedColor}
-                        />
-                        <Text style={[styles.emptyTitle, { color: textColor }]}>Sin respuestas</Text>
+                        <Ionicons name="chatbubbles-outline" size={64} color={textMutedColor} />
+                        <Text style={[styles.emptyTitle, { color: textColor }]}>
+                            Sin respuestas
+                        </Text>
                         <Text style={[styles.emptyText, { color: textSecondaryColor }]}>
                             {requesterId
                                 ? "Este solicitante aún no ha respondido el formulario"
@@ -201,20 +211,37 @@ export default function ViewAdoptionResponses() {
                 ) : (
                     <View style={styles.responsesContainer}>
                         {groupedResponses.map((item, index) => (
-                            <View key={index} style={[styles.responseCard, { backgroundColor: cardColor, borderColor: borderColor }]}>
+                            <View
+                                key={index}
+                                style={[
+                                    styles.responseCard,
+                                    { backgroundColor: cardColor, borderColor: borderColor },
+                                ]}
+                            >
                                 <View style={styles.questionHeader}>
-                                    <View style={[styles.questionIconContainer, { backgroundColor: tintColor }]}>
+                                    <View
+                                        style={[
+                                            styles.questionIconContainer,
+                                            { backgroundColor: tintColor },
+                                        ]}
+                                    >
                                         <Ionicons
                                             name={getTypeIcon(item.questionType)}
                                             size={20}
                                             color="#000"
                                         />
                                     </View>
-                                    <Text style={[styles.questionText, { color: textColor }]}>{item.questionContent}</Text>
+                                    <Text style={[styles.questionText, { color: textColor }]}>
+                                        {item.questionContent}
+                                    </Text>
                                 </View>
 
                                 <View style={styles.answerContainer}>
-                                    <Text style={[styles.answerLabel, { color: textSecondaryColor }]}>Respuesta:</Text>
+                                    <Text
+                                        style={[styles.answerLabel, { color: textSecondaryColor }]}
+                                    >
+                                        Respuesta:
+                                    </Text>
                                     <Text style={[styles.answerText, { color: textColor }]}>
                                         {getAnswerDisplay(item.answer, item.questionType)}
                                     </Text>
@@ -237,12 +264,13 @@ export default function ViewAdoptionResponses() {
                     </View>
                 )}
 
-                <View style={[styles.infoBox, { backgroundColor: cardColor, borderColor: borderColor }]}>
-                    <Ionicons
-                        name="information-circle-outline"
-                        size={20}
-                        color={textColor}
-                    />
+                <View
+                    style={[
+                        styles.infoBox,
+                        { backgroundColor: cardColor, borderColor: borderColor },
+                    ]}
+                >
+                    <Ionicons name="information-circle-outline" size={20} color={textColor} />
                     <Text style={[styles.infoText, { color: textSecondaryColor }]}>
                         {requesterId
                             ? "Estas son las respuestas de este solicitante específico al formulario que configuraste."

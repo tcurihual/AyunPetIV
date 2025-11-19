@@ -492,6 +492,16 @@ export const confirmAccept = async (req: Request, res: Response) => {
             .eq("id", id)
         if (updErr) throw new AppError(500, updErr.message)
 
+        const { error: postErr } = await supabase
+            .from("post")
+            .update({
+                status: "inactive", // o "in_review", "reserved", etc.
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", request.post_id as number)
+
+        if (postErr) throw new AppError(500, postErr.message)
+
         const code = String(Math.floor(100000 + Math.random() * 900000))
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
@@ -557,7 +567,12 @@ export const confirmAccept = async (req: Request, res: Response) => {
 
             // 🔔 Enviar notificación push al adoptante
             if (request.requester_id) {
-                sendAdoptionApprovedNotification(request.requester_id, petName, request.id, code).catch((err: any) => {
+                sendAdoptionApprovedNotification(
+                    request.requester_id,
+                    petName,
+                    request.id,
+                    code
+                ).catch((err: any) => {
                     console.error("Error al enviar notificación push de aprobación:", err)
                 })
             }
@@ -896,7 +911,11 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
             throw new Error("Error al actualizar la solicitud de adopción")
 
         // 🔔 Enviar notificación push si el estado cambió a "rejected"
-        if (payload.status === "rejected" && existingRequest.requester_id && existingRequest.post_id) {
+        if (
+            payload.status === "rejected" &&
+            existingRequest.requester_id &&
+            existingRequest.post_id
+        ) {
             try {
                 // Obtener el nombre de la mascota para la notificación
                 const { data: post } = await supabase
@@ -912,7 +931,7 @@ export const updateAdoptionRequest = async (req: AuthenticatedRequest, res: Resp
                         .select("name")
                         .eq("post_id", post.id)
                         .maybeSingle()
-                    
+
                     if (pet?.name) {
                         petName = pet.name
                     }
@@ -955,7 +974,7 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
 
         const { data: existingRequest, error: findError } = await supabase
             .from("adoption_request")
-            .select("*")
+            .select("id, requester_id, post_id")
             .eq("id", numericId)
             .maybeSingle()
 
@@ -972,12 +991,54 @@ export const deleteAdoptionRequest = async (req: Request, res: Response) => {
             )
         }
 
+        const { data: postForms, error: postFormErr } = await supabase
+            .from("post_form")
+            .select("id")
+            .eq("post_id", existingRequest.post_id as number)
+
+        if (postFormErr) {
+            console.error("Error obteniendo post_form:", postFormErr)
+            return AppResponse(res, 500, "Error al obtener formulario asociado", null)
+        }
+
+        const postFormIds = postForms.map((p) => p.id)
+
+        if (postFormIds.length > 0) {
+            // 2️⃣ Eliminar form_response asociados al post_form y al usuario
+            const { error: deleteFormResponsesErr } = await supabase
+                .from("form_response")
+                .delete()
+                .in("id_post_form", postFormIds)
+                .eq("id_user", existingRequest.requester_id)
+
+            if (deleteFormResponsesErr) {
+                console.error("Error eliminando respuestas del formulario:", deleteFormResponsesErr)
+                return AppResponse(res, 500, "Error al eliminar respuestas del formulario", null)
+            }
+        }
+
         const { error: deleteError } = await supabase
             .from("adoption_request")
             .delete()
             .eq("id", numericId)
 
-        if (deleteError) throw new Error("Error al eliminar la solicitud de adopción")
+        if (deleteError) {
+            console.error("Error eliminando solicitud:", deleteError)
+            return AppResponse(res, 500, "Error al eliminar la solicitud de adopción", null)
+        }
+
+        const { error: postUpdateErr } = await supabase
+            .from("post")
+            .update({
+                status: "active",
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingRequest.post_id as number)
+
+        if (postUpdateErr) {
+            console.error("Error actualizando estado del post:", postUpdateErr)
+            return AppResponse(res, 500, "Solicitud eliminada, pero falló reactivar el post", null)
+        }
 
         return AppResponse(res, 200, "Solicitud de adopción eliminada exitosamente", {})
     } catch (e) {

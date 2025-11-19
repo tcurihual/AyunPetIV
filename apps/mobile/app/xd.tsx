@@ -5,10 +5,10 @@ import NetInfo from "@react-native-community/netinfo"
 import { Colors } from "@/constants/Colors"
 
 export default function Index() {
-    useEffect(() => {
-        // Mantener solo la validación de conexión
-        checkConnection()
-    }, [])
+    // useEffect(() => {
+    //     // Mantener solo la validación de conexión
+    //     checkConnection()
+    // }, [])
 
     const checkConnection = async () => {
         try {
@@ -24,11 +24,6 @@ export default function Index() {
             } catch {
                 return showNoInternet()
             }
-
-            // 👉 IMPORTANTE:
-            // YA NO HACEMOS router.replace("/(auth)")
-            // AuthRedirect es quien redirige automáticamente
-            // según el estado de autenticación.
         } catch {
             showNoInternet()
         }

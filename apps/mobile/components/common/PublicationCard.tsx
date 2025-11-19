@@ -1,22 +1,24 @@
-import React from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useRouter, usePathname } from "expo-router"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
-import { Pet } from "@/interfaces/pet"
-import { Colors } from "@/constants/Colors"
+import { Ionicons } from "@expo/vector-icons"
+
 import { useAuthContext } from "@/context/AuthContext"
+import { useSavedPostsContext } from "@/context/SavedPostsContext"
 import { translateSpeciesToSpanish, translateGenderToSpanish } from "@/utils/petTranslations"
-import { formatAgeFromObject } from "@/utils/ageFormat"
 import { useThemeColor } from "@/hooks/useThemeColor"
+import type { PublicationItem } from "@/context/PublicationContext"
 
 interface PublicationCardProps {
-    pet: Pet
+    pet: PublicationItem
 }
 
 const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
     const router = useRouter()
     const pathname = usePathname()
     const { user } = useAuthContext()
+    const { savePost, removeSavedPostByPostId, checkIfPostIsSaved } = useSavedPostsContext()
 
     const cardBgColor = useThemeColor({}, "card")
     const textColor = useThemeColor({}, "text")
@@ -28,32 +30,79 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
 
     const scale = useSharedValue(1)
 
+    // ⭐ estados de guardado
+    const [isSaved, setIsSaved] = useState(false)
+    const [saving, setSaving] = useState(false)
+
+    // id real del post: preferir postId, si no usar id
+    const postId = Number(pet.postId ?? pet.id)
+
+    const imageSource = pet.image // ya viene normalizado en PublicationItem
+
+    useEffect(() => {
+        if (!user) return
+        if (!Number.isFinite(postId)) return
+
+        let isMounted = true
+
+        const checkSaved = async () => {
+            try {
+                const res = await checkIfPostIsSaved(postId)
+                if (isMounted) setIsSaved(res.is_saved)
+            } catch (err) {
+                console.log("Error checking if post is saved:", err)
+            }
+        }
+
+        checkSaved()
+        return () => {
+            isMounted = false
+        }
+    }, [user, postId, checkIfPostIsSaved])
+
+    const handleToggleSave = useCallback(async () => {
+        if (!user || saving) return
+        if (!Number.isFinite(postId)) return
+
+        setSaving(true)
+        try {
+            if (isSaved) {
+                await removeSavedPostByPostId(postId)
+                setIsSaved(false)
+            } else {
+                await savePost(postId)
+                setIsSaved(true)
+            }
+        } catch (err) {
+            console.log("Error toggling saved post:", err)
+        } finally {
+            setSaving(false)
+        }
+    }, [user, saving, isSaved, postId, savePost, removeSavedPostByPostId])
+
     const handleViewDetails = () => {
-        console.log(
-            "🔵 PublicationCard: Clicked, pet.id:",
-            pet.id,
-            "pathname:",
-            pathname,
-            "user role:",
-            user?.role
-        )
+        if (!Number.isFinite(postId)) return
+
         scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
         setTimeout(() => {
             const isShelter = user?.role === 21 || user?.role === 22
             const route = isShelter ? "/(shelter)/publication/[id]" : "/(home)/publication/[id]"
 
             console.log(
-                "🔵 PublicationCard: isShelter:",
-                isShelter,
-                "Navigating to:",
-                route,
-                "with id:",
-                pet.id
+                "🔵 PublicationCard: Clicked",
+                "postId:",
+                postId,
+                "pathname:",
+                pathname,
+                "user role:",
+                user?.role
             )
+
             router.push({
                 pathname: route as any,
-                params: { id: String(pet.id) },
+                params: { id: String(postId) },
             })
+
             scale.value = withSpring(1, { damping: 15, stiffness: 300 })
         }, 100)
     }
@@ -66,43 +115,53 @@ const PublicationCard: React.FC<PublicationCardProps> = ({ pet }) => {
         scale.value = withSpring(1, { damping: 15, stiffness: 250 })
     }
 
-    const animatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ scale: scale.value }],
-        }
-    })
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }))
+
+    const species = (pet.species ?? pet.type ?? "").toString()
+    const gender = (pet.gender ?? "").toString()
 
     return (
-        <Animated.View
-            style={[
-                styles.card,
-                { backgroundColor: cardBgColor },
-                animatedStyle
-            ]}
-            sharedTransitionTag={`pet-card-${pet.id}`}
-        >
-            <Animated.Image
-                style={[styles.image, { backgroundColor: disabledColor }]}
-                source={typeof pet.image === "string" ? { uri: pet.image } : pet.image}
-                sharedTransitionTag={`pet-image-${pet.id}`}
-            />
-            <View style={styles.infoContainer}>
-                <Animated.Text 
-                    style={[styles.name, { color: textColor }]} 
-                    sharedTransitionTag={`pet-name-${pet.id}`}
+        <Animated.View style={[styles.card, { backgroundColor: cardBgColor }, animatedStyle]}>
+            {user && Number.isFinite(postId) && (
+                <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={handleToggleSave}
+                    disabled={saving}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
+                    <Ionicons
+                        name={isSaved ? "heart" : "heart-outline"}
+                        size={20}
+                        color={isSaved ? "#e63946" : textSecondaryColor}
+                    />
+                </TouchableOpacity>
+            )}
+
+            {imageSource && (
+                <Animated.Image
+                    style={[styles.image, { backgroundColor: disabledColor }]}
+                    source={imageSource}
+                />
+            )}
+
+            <View style={styles.infoContainer}>
+                <Animated.Text style={[styles.name, { color: textColor }]}>
                     {pet.name}
                 </Animated.Text>
+
                 <Text style={[styles.details, { color: textSecondaryColor }]}>
-                    {`${translateSpeciesToSpanish((pet as any).type || "")} • ${translateGenderToSpanish(pet.gender || "")}`}
+                    {`${translateSpeciesToSpanish(species)} • ${translateGenderToSpanish(gender)}`}
                 </Text>
-                <Text style={[styles.ageText, { color: textMutedColor }]}>
-                    {formatAgeFromObject(pet)}
-                </Text>
+
+                <Text style={[styles.ageText, { color: textMutedColor }]}>{pet.age}</Text>
+
                 <Text style={[styles.publisher, { color: textTertiaryColor }]}>
                     Publicado por: {pet.publisher}
                 </Text>
             </View>
+
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: tintColor }]}
                 onPress={handleViewDetails}
@@ -127,6 +186,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
         flex: 1,
+        position: "relative",
     },
     image: {
         width: "100%",
@@ -168,6 +228,15 @@ const styles = StyleSheet.create({
     buttonText: {
         fontSize: 15,
         fontWeight: "bold",
+    },
+    heartButton: {
+        position: "absolute",
+        top: 8,
+        right: 8,
+        zIndex: 10,
+        backgroundColor: "rgba(0,0,0,0.35)",
+        borderRadius: 20,
+        padding: 6,
     },
 })
 

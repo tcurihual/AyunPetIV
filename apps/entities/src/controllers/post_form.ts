@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 import { z } from "zod"
 import { supabase } from "../index"
-import { AppResponse } from "@repo/utils"
 
 const TABLE = "post_form"
 

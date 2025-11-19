@@ -27,7 +27,6 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
     const { user, signOut } = useAuthContext()
     const slideAnim = useRef(new Animated.Value(-width * 0.7)).current
 
-    // 4. Usar el hook de Tema y obtener los colores
     const { theme, setTheme } = useTheme()
     const themeColors = Colors[theme]
 
@@ -65,8 +64,7 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
     const handleNavigate = (path: string) => {
         handleClose(() => {
             requestAnimationFrame(() => {
-                // Para vistas comunes (settings, about, help), redirigir según el rol
-                const commonViews = ["/settings", "/about", "/help"]
+                const commonViews = ["/settings", "/about", "/help", "/savedPosts"]
                 const pathSegment = path.split("/").pop() || ""
 
                 if (commonViews.some((view) => pathSegment === view.slice(1))) {
@@ -184,13 +182,22 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                             </TouchableOpacity>
                         )}
 
-                        {/* --- 8. EL NUEVO BOTÓN DE MODO OSCURO --- */}
-                        <View style={[styles.item, styles.switchItem]}>
+                        <TouchableOpacity
+                            style={styles.item}
+                            onPress={() => handleNavigate("/(home)/savedPosts")}
+                        >
                             <Ionicons
-                                name="contrast-outline"
+                                name="heart-outline"
                                 size={22}
                                 color={themeColors.text} // Color de texto
                             />
+                            <Text style={[styles.text, { color: themeColors.text }]}>
+                                Publicaciones Guardadas
+                            </Text>
+                        </TouchableOpacity>
+
+                        <View style={[styles.item, styles.switchItem]}>
+                            <Ionicons name="contrast-outline" size={22} color={themeColors.text} />
                             <Text style={[styles.text, { color: themeColors.text }]}>
                                 Modo Oscuro
                             </Text>
@@ -204,13 +211,12 @@ export default function DropdownMenu({ onClose }: DropdownMenuProps) {
                                 thumbColor={themeColors.card}
                             />
                         </View>
-                        {/* --- FIN DEL CAMBIO --- */}
 
                         <TouchableOpacity
                             style={[
                                 styles.item,
                                 styles.logout,
-                                { borderTopColor: themeColors.background }, // 9. Borde dinámico
+                                { borderTopColor: themeColors.background },
                             ]}
                             onPress={async () => {
                                 await signOut()

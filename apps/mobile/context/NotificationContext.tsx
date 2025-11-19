@@ -10,9 +10,9 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef } from "react"
 import * as Notifications from "expo-notifications"
-import { Platform } from "react-native"
 import { useRouter } from "expo-router"
-import { http } from "@/services/http"
+import * as SecureStore from "expo-secure-store"
+
 import { useAuthContext } from "./AuthContext"
 import {
     registerForPushNotifications,
@@ -21,6 +21,11 @@ import {
     NotificationData,
 } from "@/services/notifications"
 
+interface LastAdoptionInfo {
+    requestId: number | null
+    code: string | null
+}
+
 interface NotificationContextType {
     expoPushToken: string | null
     notification: Notifications.Notification | null
@@ -28,6 +33,7 @@ interface NotificationContextType {
     isRegistering: boolean
     registerToken: () => Promise<void>
     sendTestNotification: () => Promise<void>
+    lastAdoptionInfo: LastAdoptionInfo | null
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null)
@@ -37,6 +43,7 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
     const [notification, setNotification] = useState<Notifications.Notification | null>(null)
     const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
     const [isRegistering, setIsRegistering] = useState<boolean>(false)
+    const [lastAdoptionInfo, setLastAdoptionInfo] = useState<LastAdoptionInfo | null>(null)
 
     const { user, status } = useAuthContext()
     const router = useRouter()
@@ -104,6 +111,24 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
         }
     }
 
+    async function handleAdoptionApprovedFromData(data: NotificationData) {
+        if (data.type !== "adoption_approved") return
+
+        const requestId = data.requestId ? Number(data.requestId) : null
+        const code = typeof data.confirmationCode === "string" ? data.confirmationCode : null
+
+        // Guardar en SecureStore (opcional, ya lo estabas haciendo)
+        if (requestId && code) {
+            await SecureStore.setItemAsync("last_adoption_request_id", String(requestId))
+            await SecureStore.setItemAsync("last_adoption_confirmation_code", code)
+        }
+
+        // Guardar en memoria para que el resto de la app reaccione
+        setLastAdoptionInfo({ requestId, code })
+
+        console.log("💾 Último código de adopción:", { requestId, code })
+    }
+
     /**
      * Envía una notificación de prueba local
      */
@@ -147,38 +172,42 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
      * Efecto: Configurar listeners de notificaciones
      */
     useEffect(() => {
-        // Listener para notificaciones recibidas mientras la app está en primer plano
+        // Listener: notificación recibida con la app en primer plano
         notificationListener.current = Notifications.addNotificationReceivedListener(
-            (notification: Notifications.Notification) => {
+            async (notification: Notifications.Notification) => {
                 console.log("📩 Notificación recibida:", notification)
                 setNotification(notification)
 
-                // Opcional: Puedes actualizar el contexto de adopciones aquí
                 const data = notification.request.content.data as NotificationData
+
+                await handleAdoptionApprovedFromData(data)
+
                 if (data.type?.includes("adoption")) {
-                    // Refrescar solicitudes de adopción en segundo plano
-                    console.log("🔄 Detectada notificación de adopción, considera refrescar datos")
+                    console.log(
+                        "🔄 Detectada notificación de adopción, refrescar datos si es necesario"
+                    )
                 }
             }
         )
 
-        // Listener para cuando el usuario toca una notificación
+        // Listener: el usuario toca la notificación
         responseListener.current = Notifications.addNotificationResponseReceivedListener(
-            (response: Notifications.NotificationResponse) => {
+            async (response: Notifications.NotificationResponse) => {
                 console.log("📲 Usuario tocó la notificación")
+
+                const data = response.notification.request.content.data as NotificationData
+
+                await handleAdoptionApprovedFromData(data)
+
                 handleNotificationResponse(response, router)
-                clearBadge() // Limpiar badge cuando el usuario interactúa
+                clearBadge()
             }
         )
 
-        // Limpiar listeners al desmontar
+        // Cleanup
         return () => {
-            if (notificationListener.current) {
-                Notifications.removeNotificationSubscription(notificationListener.current)
-            }
-            if (responseListener.current) {
-                Notifications.removeNotificationSubscription(responseListener.current)
-            }
+            notificationListener.current?.remove()
+            responseListener.current?.remove()
         }
     }, [router])
 
@@ -196,6 +225,7 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
         isRegistering,
         registerToken,
         sendTestNotification,
+        lastAdoptionInfo,
     }
 
     return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

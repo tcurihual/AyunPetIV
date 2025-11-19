@@ -29,12 +29,12 @@ export default function ShelterRequestDetail() {
     const { getPublicationByPostId } = usePublicationContext()
 
     // Theme colors
-    const bgColor = useThemeColor({}, 'background')
-    const cardColor = useThemeColor({}, 'card')
-    const textColor = useThemeColor({}, 'text')
-    const textSecondaryColor = useThemeColor({}, 'textSecondary')
-    const borderColor = useThemeColor({}, 'border')
-    const tintColor = useThemeColor({}, 'tint')
+    const bgColor = useThemeColor({}, "background")
+    const cardColor = useThemeColor({}, "card")
+    const textColor = useThemeColor({}, "text")
+    const textSecondaryColor = useThemeColor({}, "textSecondary")
+    const borderColor = useThemeColor({}, "border")
+    const tintColor = useThemeColor({}, "tint")
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -239,18 +239,41 @@ export default function ShelterRequestDetail() {
 
     if (loading)
         return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }}>
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: bgColor,
+                }}
+            >
                 <ActivityIndicator color={textColor} />
             </View>
         )
     if (error)
         return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }}>
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: bgColor,
+                }}
+            >
                 <Text style={{ color: textColor }}>{error}</Text>
             </View>
         )
     if (!request)
-        return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: bgColor }} />
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: bgColor,
+                }}
+            />
+        )
 
     const postId = request.postid || request.post_id || request.post?.id
 
@@ -303,7 +326,7 @@ export default function ShelterRequestDetail() {
             />
 
             <View style={{ marginTop: 16, gap: 12 }}>
-                <Text style={{ fontWeight: "700", color: textColor }}>
+                {/* <Text style={{ fontWeight: "700", color: textColor }}>
                     Notas sobre la solicitud
                 </Text>
                 <TextInput
@@ -345,15 +368,20 @@ export default function ShelterRequestDetail() {
                     <Text style={{ color: "#000", fontWeight: "700" }}>
                         {savingMessage ? "Guardando..." : "Guardar notas"}
                     </Text>
-                </Pressable>
+                </Pressable> */}
 
                 {/* Botón para ver respuestas del formulario */}
                 <TouchableOpacity
                     onPress={handleViewFormResponses}
-                    style={[styles.viewResponsesButton, { backgroundColor: cardColor, borderColor: tintColor }]}
+                    style={[
+                        styles.viewResponsesButton,
+                        { backgroundColor: cardColor, borderColor: tintColor },
+                    ]}
                 >
                     <Ionicons name="clipboard-outline" size={20} color={tintColor} />
-                    <Text style={[styles.viewResponsesText, { color: tintColor }]}>Ver Respuestas del Formulario</Text>
+                    <Text style={[styles.viewResponsesText, { color: tintColor }]}>
+                        Ver Respuestas del Formulario
+                    </Text>
                     <Ionicons name="chevron-forward-outline" size={20} color={tintColor} />
                 </TouchableOpacity>
             </View>

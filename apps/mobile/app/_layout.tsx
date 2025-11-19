@@ -25,6 +25,7 @@ import ModalHost from "@common/modals/ModalHost"
 import { Alert } from "@/components/ui/Alert"
 import AuthRedirect from "@/features/AuthRedirect"
 import { ThemeProvider, useTheme } from "../context/ThemeContext"
+import { SavedPostsProvider } from "@/context/SavedPostsContext"
 
 export { ErrorBoundary } from "expo-router"
 
@@ -44,9 +45,7 @@ function RootLayoutNav() {
     return (
         <LoadingProvider>
             <AuthProvider>
-                {/* ✔️ AuthRedirect colocado JUSTO después del AuthProvider */}
                 <AuthRedirect />
-
                 <AlertProvider>
                     <ModalProvider>
                         <QuestionProvider>
@@ -56,33 +55,35 @@ function RootLayoutNav() {
                                         <ReportProvider>
                                             <AdoptionRequestProvider>
                                                 <PublicationProvider>
-                                                    <NotificationProvider>
-                                                        <LoadingHandlerBridge>
-                                                            <NavThemeProvider
-                                                                value={
-                                                                    theme === "dark"
-                                                                        ? DarkTheme
-                                                                        : DefaultTheme
-                                                                }
-                                                            >
-                                                                <Stack
-                                                                    screenOptions={{
-                                                                        headerShown: false,
-                                                                    }}
+                                                    <SavedPostsProvider>
+                                                        <NotificationProvider>
+                                                            <LoadingHandlerBridge>
+                                                                <NavThemeProvider
+                                                                    value={
+                                                                        theme === "dark"
+                                                                            ? DarkTheme
+                                                                            : DefaultTheme
+                                                                    }
                                                                 >
-                                                                    <Stack.Screen name="index" />
-                                                                    <Stack.Screen name="(auth)" />
-                                                                    <Stack.Screen name="(home)" />
-                                                                    <Stack.Screen name="(shelter)" />
-                                                                    <Stack.Screen name="+not-found" />
-                                                                </Stack>
+                                                                    <Stack
+                                                                        screenOptions={{
+                                                                            headerShown: false,
+                                                                        }}
+                                                                    >
+                                                                        <Stack.Screen name="index" />
+                                                                        <Stack.Screen name="(auth)" />
+                                                                        <Stack.Screen name="(home)" />
+                                                                        <Stack.Screen name="(shelter)" />
+                                                                        <Stack.Screen name="+not-found" />
+                                                                    </Stack>
 
-                                                                <ModalHost />
-                                                                <Alert />
-                                                                <StatusBar style="auto" />
-                                                            </NavThemeProvider>
-                                                        </LoadingHandlerBridge>
-                                                    </NotificationProvider>
+                                                                    <ModalHost />
+                                                                    <Alert />
+                                                                    <StatusBar style="auto" />
+                                                                </NavThemeProvider>
+                                                            </LoadingHandlerBridge>
+                                                        </NotificationProvider>
+                                                    </SavedPostsProvider>
                                                 </PublicationProvider>
                                             </AdoptionRequestProvider>
                                         </ReportProvider>

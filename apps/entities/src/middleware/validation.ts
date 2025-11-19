@@ -20,7 +20,7 @@ export const validateBody = (schema: z.ZodSchema) => {
     }
 }
 
-export const validateParams = (schema: z.ZodSchema) => {
+export const    validateParams = (schema: z.ZodSchema) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             const validated = schema.parse(req.params)
